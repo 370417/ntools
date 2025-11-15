@@ -1,0 +1,15 @@
+{
+  "name": "attract-watcher",
+  "version": "0.1.0",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node src/index.js"
+  },
+  "author": "",
+  "description": "",
+  "dependencies": {
+    "chokidar": "^4.0.3",
+    "ws": "^8.18.3"
+  }
+}
