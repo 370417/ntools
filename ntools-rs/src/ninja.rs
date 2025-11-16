@@ -18,7 +18,7 @@ const MIN_SURVIVABLE_CRUSHING: f32 = 0.05;
 const RADIUS: f32 = 10.0;
 
 pub struct Ninja {
-    pos: Vec2,
+    pub pos: Vec2,
     pos_old: Vec2,
     speed: Vec2,
     applied_gravity: f32,
@@ -56,6 +56,21 @@ struct CollisionState {
 }
 
 impl Ninja {
+    pub fn new(map_pos: Vec2) -> Ninja {
+        Ninja {
+            pos: 6.0 * map_pos,
+            pos_old: 6.0 * map_pos,
+            speed: Vec2::ZERO,
+            applied_gravity: GRAVITY_FALL,
+            applied_drag: DRAG_REGULAR,
+            applied_friction: FRICTION_GROUND,
+            state: NinjaState::Standing,
+            airborne: false,
+            walled: false,
+            wall_normal: 0.0,
+        }
+    }
+
     /// Update position and speed by applying drag and gravity before collision phase.
     fn integrate(&mut self) {
         self.speed *= self.applied_drag;

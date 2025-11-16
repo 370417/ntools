@@ -1,4 +1,6 @@
-use crate::{grid::{Grid, GridPos}, segment::{extract_path, Segment}, tile::Tile};
+use glam::Vec2;
+
+use crate::{grid::{Grid, GridPos, COLS, ROWS}, segment::{extract_path, Segment}, tile::Tile};
 
 /// Represents a parsed attract file.
 /// An attract file is what gets shown in the game's main menu: a replay of a failed attempt at a level.
@@ -6,7 +8,8 @@ use crate::{grid::{Grid, GridPos}, segment::{extract_path, Segment}, tile::Tile}
 pub struct Attract {
     pub level_name: String,
     pub author_name: String,
-    segments: Grid<Segment>,
+    pub segments: Grid<Segment>,
+    pub ninjas: Vec<Vec2>,
 }
 
 
@@ -56,33 +59,116 @@ impl Attract {
         let author_name = &padded_author_name[0..author_name_len];
         let author_name = str::from_utf8(author_name).map_err(|_| "Author name is not valid utf8")?.to_owned();
 
-        assert_eq!(attract_bytes[183], 0);
+        if attract_bytes[183] != 0 {
+            return Err("Attract input byte 183 should be 0".into());
+        }
 
         let map_data = &attract_bytes[184..8 + map_data_len as usize];
         let tile_len = 23 * 42;
         let object_count_len = 80;
+        let object_data_start = tile_len + object_count_len;
+        let object_data_bytes = map_data.len() - tile_len - object_count_len;
 
-        assert!(map_data.len() >= tile_len + object_count_len);
+        if map_data.len() < tile_len + object_count_len {
+            return Err("Map data too small".into());
+        }
+        if object_data_bytes % 5 != 0 {
+            return Err("Object data len not divisible by 5".into());
+        }
 
         let mut grid = Grid::new();
 
         // First add all outer segments then add all inner segments.
         // This way we don't have to worry about handling inner segments
         // when we are culling overlappping outer segments.
-        for row in 0..23 {
-            for col in 0..42 {
-                let i = row * 42 + col;
+        for row in 0..ROWS {
+            for col in 0..COLS {
+                let i = row * COLS + col;
                 let pos = GridPos::new(col + 1, row + 1);
                 let tile = Tile::from_u8(map_data[i]).ok_or("Invalid tile")?;
                 tile.add_outer_segments_to_grid(pos, &mut grid);
             }
         }
-        for row in 0..23 {
-            for col in 0..42 {
-                let i = row * 42 + col;
+        for row in 0..ROWS {
+            for col in 0..COLS {
+                let i = row * COLS + col;
                 let pos = GridPos::new(col + 1, row + 1);
                 let tile = Tile::from_u8(map_data[i]).ok_or("Invalid tile")?;
                 tile.add_inner_segments_to_grid(pos, &mut grid);
+            }
+        }
+
+        let mut ninjas = Vec::new();
+
+        let num_objects = object_data_bytes / 5;
+        for i in 0..num_objects {
+            let i = object_data_start + i * 5;
+            let object_id = map_data[i];
+            let x = map_data[i + 1];
+            let y = map_data[i + 2];
+            let orientation = map_data[i + 3];
+            let mode = map_data[i + 4];
+
+            match object_id {
+                // Ninja
+                0 => ninjas.push(Vec2::new(x as f32, y as f32)),
+                // Mine
+                1 => {}
+                // Gold
+                2 => {}
+                // Exit door
+                3 => {}
+                // Exit switch
+                4 => {}
+                // Regular door
+                5 => {}
+                // O door
+                6 => {}
+                // O switch
+                7 => {}
+                // C door
+                8 => {}
+                // C switch
+                9 => {}
+                // Launch pad
+                10 => {}
+                // One way
+                11 => {}
+                // Chainsaw drone
+                12 => {}
+                // Laser drone
+                13 => {}
+                // Drone
+                14 => {}
+                // Chaser drone
+                15 => {}
+                // Floor chaser
+                16 => {}
+                // Bounce block
+                17 => {}
+                // Rocket
+                18 => {}
+                // Gauss
+                19 => {}
+                // Thwump
+                20 => {}
+                // Toggle mine
+                21 => {}
+                // Evil ninja
+                22 => {}
+                // Laser turret
+                23 => {}
+                // Boost pad
+                24 => {}
+                // Death ball
+                25 => {}
+                // Mini drone
+                26 => {}
+                // Bat
+                27 => {}
+                // Shove thwump
+                28 => {}
+                _ => return Err("Invalid object id".into()),
             }
         }
         
@@ -90,11 +176,8 @@ impl Attract {
             level_name,
             author_name,
             segments: grid,
+            ninjas,
         })
-    }
-
-    pub fn get_path(&self) -> String {
-        extract_path(&self.segments)
     }
 }
 
@@ -105,11 +188,10 @@ mod tests {
     #[test]
     fn regression_test() {
         // Level "Chamoska Demon"
-        Attract::from_bytes(include_bytes!("testfiles/6876")).unwrap().get_path();
+        extract_path(&Attract::from_bytes(include_bytes!("testfiles/6876")).unwrap().segments);
 
-
-        Attract::from_bytes(include_bytes!("testfiles/22906")).unwrap().get_path();
-        Attract::from_bytes(include_bytes!("testfiles/6861")).unwrap().get_path();
-        Attract::from_bytes(include_bytes!("testfiles/6883")).unwrap().get_path();
+        extract_path(&Attract::from_bytes(include_bytes!("testfiles/22906")).unwrap().segments);
+        extract_path(&Attract::from_bytes(include_bytes!("testfiles/6861")).unwrap().segments);
+        extract_path(&Attract::from_bytes(include_bytes!("testfiles/6883")).unwrap().segments);
     }
 }

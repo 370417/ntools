@@ -1,9 +1,15 @@
 import { createSignal } from 'solid-js';
 import './App.css';
-import { get_level_name, get_path, viewbox } from './assets/ntools_rs';
+import { Replay, viewbox } from './assets/ntools_rs';
 
 function App() {
+    let replay: Replay | undefined = undefined;
+
     const [tilePath, setTilePath] = createSignal('');
+
+    const [frame, setFrame] = createSignal(0);
+
+    const [ninja, setNinja] = createSignal({ x: -50, y: -50 });
 
     const viewboxVal = viewbox();
 
@@ -12,17 +18,22 @@ function App() {
     socket.addEventListener('message', event => {
         const data: Blob = event.data;
         data.bytes().then(bytes => {
-            const path = get_path(bytes);
+            replay?.free();
+            replay = Replay.from_attract(bytes);
+            const path = replay.tiles_path();
             setTilePath(path);
-
-            console.log('Level name', get_level_name(bytes));
+            setNinja({
+                x: replay.ninja_x(),
+                y: replay.ninja_y(),
+            });
         });
     });
 
     return (
         <>
-            <svg viewBox={viewboxVal} width="800">
+            <svg viewBox={viewboxVal} width="1200">
                 <path d={tilePath()} stroke="red" fill-rule="evenodd" />
+                <circle cx={ninja().x} cy={ninja().y} r="10" fill="none" stroke="red" />
             </svg>
         </>
     )

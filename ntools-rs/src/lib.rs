@@ -12,15 +12,15 @@ mod segment;
 mod simulation;
 mod tile;
 
-#[wasm_bindgen]
-pub fn get_path(attract_bytes: Box<[u8]>) -> Result<String, String> {
-    Ok(Attract::from_bytes(&attract_bytes)?.get_path())
-}
+// #[wasm_bindgen]
+// pub fn get_path(attract_bytes: Box<[u8]>) -> Result<String, String> {
+//     Ok(Attract::from_bytes(&attract_bytes)?.get_path())
+// }
 
-#[wasm_bindgen]
-pub fn get_level_name(attract_bytes: Box<[u8]>) -> Result<String, String> {
-    Ok(Attract::from_bytes(&attract_bytes)?.level_name.clone())
-}
+// #[wasm_bindgen]
+// pub fn get_level_name(attract_bytes: Box<[u8]>) -> Result<String, String> {
+//     Ok(Attract::from_bytes(&attract_bytes)?.level_name.clone())
+// }
 
 #[wasm_bindgen]
 pub fn viewbox() -> String {
