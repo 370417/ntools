@@ -150,28 +150,19 @@ impl Segment {
         }
     }
 
-    fn has_endpoint(&self, endpoint: Vec2) -> bool {
-        self.start() == endpoint || self.end() == endpoint
+    pub fn intersect_with_ray(&self, pos: Vec2, delta: Vec2, radius: f32) -> f32 {
+        todo!()
     }
 
-    fn svg_path(&self, curr_pos: &mut Vec2) -> String {
-        if self.start() == *curr_pos {
-            *curr_pos = self.end();
-            match self {
-                Self::Linear { end, .. } => format!("L {} {}", end.x, end.y),
-                Self::Circular { end, curvature, .. } => {
-                    format!("A {} {} 0 0 {} {} {}", TILE_SIZE, TILE_SIZE, curvature.sweep_flag(), end.x, end.y)
-                }
-                _ => todo!(),
+    /// Represent this segment as an svg path command.
+    fn svg_path(&self, curr_pos: Vec2) -> String {
+        assert_eq!(self.start(), curr_pos);
+        match self {
+            Self::Linear { end, .. } => format!("L {} {}", end.x, end.y),
+            Self::Circular { end, curvature, .. } => {
+                format!("A {} {} 0 0 {} {} {}", TILE_SIZE, TILE_SIZE, curvature.sweep_flag(), end.x, end.y)
             }
-        } else if self.end() == *curr_pos {
-            *curr_pos = self.start();
-            match self {
-                Self::Linear { start, .. } => format!("L {} {}", start.x, start.y),
-                _ => todo!(),
-            }
-        } else {
-            panic!("Invalid state - segment does not connect to current_pos");
+            _ => todo!(),
         }
     }
 }
@@ -184,12 +175,12 @@ pub fn extract_path(grid: &Grid<Segment>) -> String {
     while let Some(segment) = segments.pop() {
         let mut curr_pos = segment.start();
         path.push(format!("M {} {}", curr_pos.x, curr_pos.y));
-        path.push(segment.svg_path(&mut curr_pos));
-        dbg!(&segment);
+        path.push(segment.svg_path(curr_pos));
+        curr_pos = segment.end();
         while let Some((i, _)) = find_next_segment(curr_pos, &segments) {
             let segment = segments.remove(i);
-            dbg!(&segment);
-            path.push(segment.svg_path(&mut curr_pos));
+            path.push(segment.svg_path(curr_pos));
+            curr_pos = segment.end();
         }
     }
 
@@ -197,5 +188,5 @@ pub fn extract_path(grid: &Grid<Segment>) -> String {
 }
 
 fn find_next_segment<'a>(curr_pos: Vec2, segments: &'a [Segment]) -> Option<(usize, &'a Segment)> {
-    segments.iter().enumerate().find(|(_, segment)| segment.has_endpoint(curr_pos))
+    segments.iter().enumerate().find(|(_, segment)| segment.start() == curr_pos)
 }

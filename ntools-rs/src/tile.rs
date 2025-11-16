@@ -5,7 +5,7 @@ use crate::{grid::{Grid, GridPos}, segment::{Curvature, Segment}};
 pub const TILE_SIZE: f32 = 24.0;
 pub const TILE_HALF_SIZE: f32 = 12.0;
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub enum Tile {
     /// ```text
     /// +------+
@@ -714,12 +714,12 @@ mod tests {
             Tile::Tile8S,
             Tile::Tile8A,
         ] {
-            if let Some(Segment::Linear { start, end, normal }) = tile.inner_segment(GridPos::new(1, 1)) {
+            if let Some(Segment::Linear { start, end, normal, .. }) = tile.inner_segment(GridPos::new(1, 1)) {
                 assert_eq!((end - start).dot(normal), 0.0);
             }
 
             for direction in [(0, 1), (1, 0), (0, -1), (-1, 0)] {
-                if let Some(Segment::Linear { start, end, normal }) = tile.outer_segment(GridPos::new(1, 1), direction) {
+                if let Some(Segment::Linear { start, end, normal, .. }) = tile.outer_segment(GridPos::new(1, 1), direction) {
                     assert_eq!((end - start).dot(normal), 0.0);
                 }
             }

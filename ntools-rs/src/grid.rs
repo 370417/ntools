@@ -46,6 +46,12 @@ impl <T, const W: usize, const H: usize> Grid<T, W, H> {
     pub fn flat_iter(&self) -> impl Iterator<Item = &T> {
         self.cells.iter().flat_map(|row| row.iter()).flat_map(|cell| cell.iter())
     }
+
+    pub fn iter_rect_region(&self, a: Vec2, b: Vec2) -> impl Iterator<Item = &T> {
+        let grid_pos1 = GridPos::from_world_pos(a).clamp();
+        let grid_pos2 = GridPos::from_world_pos(b).clamp();
+        GridPos::iter_range_inclusive(grid_pos1, grid_pos2).flat_map(|pos| self[pos].iter())
+    }
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -59,6 +65,20 @@ impl GridPos {
         GridPos { x, y }
     }
 
+    pub fn from_world_pos(pos: Vec2) -> GridPos {
+        GridPos {
+            x: (pos.x / TILE_SIZE).floor() as usize,
+            y: (pos.y / TILE_SIZE).floor() as usize,
+        }
+    }
+
+    pub fn clamp(self) -> GridPos {
+        GridPos {
+            x: self.x.clamp(1, COLS),
+            y: self.y.clamp(1, ROWS)
+        }
+    }
+
     pub fn plus(self, (x, y): (i32, i32)) -> GridPos {
         GridPos {
             x: (self.x as i32 + x) as usize,
@@ -70,8 +90,33 @@ impl GridPos {
         self.x > 0 && self.y > 0 && self.x <= COLS && self.y <= ROWS
     }
 
+    // TODO: currently this assumes that the world pos and grid pos are aligned
+    // at tile centers, but it seems like they might need to be aligned at a corner?
     pub fn to_world_pos(self) -> Vec2 {
         Vec2::new(self.x as f32 * TILE_SIZE, self.y as f32 * TILE_SIZE)
+    }
+
+    pub fn min(self, other: GridPos) -> GridPos {
+        GridPos {
+            x: self.x.min(other.x),
+            y: self.y.min(other.y),
+        }
+    }
+
+    pub fn max(self, other: GridPos) -> GridPos {
+        GridPos {
+            x: self.x.max(other.x),
+            y: self.y.max(other.y),
+        }
+    }
+
+    /// Iterate over a rectangular range of grid positions
+    pub fn iter_range_inclusive(a: GridPos, b: GridPos) -> impl Iterator<Item = GridPos> {
+        let min = a.min(b);
+        let max = a.max(b);
+        (min.y..=max.y).flat_map(move |y| {
+            (min.x..=max.x).map(move |x| GridPos { x, y })
+        })
     }
 }
 

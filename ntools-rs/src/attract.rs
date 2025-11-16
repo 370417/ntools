@@ -97,11 +97,11 @@ mod tests {
     #[test]
     fn regression_test() {
         // Level "Chamoska Demon"
-        Attract::from_bytes(include_bytes!("testfiles/6876"));
+        Attract::from_bytes(include_bytes!("testfiles/6876")).get_path();
 
 
-        Attract::from_bytes(include_bytes!("testfiles/22906"));
-        Attract::from_bytes(include_bytes!("testfiles/6861"));
-        Attract::from_bytes(include_bytes!("testfiles/6883"));
+        Attract::from_bytes(include_bytes!("testfiles/22906")).get_path();
+        Attract::from_bytes(include_bytes!("testfiles/6861")).get_path();
+        Attract::from_bytes(include_bytes!("testfiles/6883")).get_path();
     }
 }

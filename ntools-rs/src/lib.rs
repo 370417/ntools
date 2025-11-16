@@ -4,6 +4,7 @@ use wasm_bindgen::prelude::*;
 use crate::{attract::Attract, grid::{COLS, ROWS}, tile::TILE_SIZE};
 
 mod attract;
+mod collision_util;
 mod grid;
 mod ninja;
 mod segment;

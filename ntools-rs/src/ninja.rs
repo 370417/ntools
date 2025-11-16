@@ -17,6 +17,7 @@ const RADIUS: f32 = 10.0;
 
 pub struct Ninja {
     pos: Vec2,
+    pos_old: Vec2,
     speed: Vec2,
     applied_gravity: f32,
     applied_drag: f32,
@@ -40,8 +41,49 @@ enum NinjaState {
     Disabled,
 }
 
+struct CollisionState {
+    speed_old: Vec2,
+    floor_count: u32,
+    wall_count: u32,
+    ceiling_count: u32,
+    floor_normal: Vec2,
+    ceiling_normal: Vec2,
+    is_crushable: bool,
+    crush: Vec2,
+    crush_len: u32,
+}
+
 impl Ninja {
+    /// Update position and speed by applying drag and gravity before collision phase.
     fn integrate(&mut self) {
-        
+        self.speed *= self.applied_drag;
+        self.speed.y += self.applied_gravity;
+        self.pos_old = self.pos;
+        self.pos += self.speed;
+    }
+
+    /// Prepare state needed for collision phase.
+    fn pre_collision(&self) -> CollisionState {
+        CollisionState {
+            speed_old: self.speed,
+            floor_count: 0,
+            wall_count: 0,
+            ceiling_count: 0,
+            floor_normal: Vec2::ZERO,
+            ceiling_normal: Vec2::ZERO,
+            is_crushable: false,
+            crush: Vec2::ZERO,
+            crush_len: 0,
+        }
+    }
+
+    fn collide_vs_objects() {
+        todo!()
+    }
+
+    /// Gather all tile segments in neighbourhood and handle collisions with those.
+    fn collide_vs_tiles(&mut self) {
+        // Interpolation routine mainly to prevent from going through walls.
+        let delta = self.pos - self.pos_old;
     }
 }
