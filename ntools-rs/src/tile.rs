@@ -292,10 +292,10 @@ impl Tile {
     /// An outer segment is a horizontal or vertical segment that can be
     /// flush with an adjacent tile.
     fn outer_segment(&self, pos: GridPos, direction: (i32, i32)) -> Option<Segment> {
-        let upper_left = pos.to_world_pos() + Vec2::new(-TILE_HALF_SIZE, -TILE_HALF_SIZE);
-        let upper_right = pos.to_world_pos() + Vec2::new(TILE_HALF_SIZE, -TILE_HALF_SIZE);
-        let lower_left = pos.to_world_pos() + Vec2::new(-TILE_HALF_SIZE, TILE_HALF_SIZE);
-        let lower_right = pos.to_world_pos() + Vec2::new(TILE_HALF_SIZE, TILE_HALF_SIZE);
+        let upper_left = pos.to_world_pos();
+        let upper_right = pos.to_world_pos() + Vec2::new(TILE_SIZE, 0.0);
+        let lower_left = pos.to_world_pos() + Vec2::new(0.0, TILE_SIZE);
+        let lower_right = pos.to_world_pos() + Vec2::new(TILE_SIZE, TILE_SIZE);
 
         use Tile::*;
         match direction {
@@ -427,10 +427,10 @@ impl Tile {
     /// The inner segment of a tile is the segment that does not form part
     /// of the tile's borders with another tile.
     fn inner_segment(&self, pos: GridPos) -> Option<Segment> {
-        let upper_left = pos.to_world_pos() + Vec2::new(-TILE_HALF_SIZE, -TILE_HALF_SIZE);
-        let upper_right = pos.to_world_pos() + Vec2::new(TILE_HALF_SIZE, -TILE_HALF_SIZE);
-        let lower_left = pos.to_world_pos() + Vec2::new(-TILE_HALF_SIZE, TILE_HALF_SIZE);
-        let lower_right = pos.to_world_pos() + Vec2::new(TILE_HALF_SIZE, TILE_HALF_SIZE);
+        let upper_left = pos.to_world_pos();
+        let upper_right = pos.to_world_pos() + Vec2::new(TILE_SIZE, 0.0);
+        let lower_left = pos.to_world_pos() + Vec2::new(0.0, TILE_SIZE);
+        let lower_right = pos.to_world_pos() + Vec2::new(TILE_SIZE, TILE_SIZE);
 
         use Tile::*;
         match self {

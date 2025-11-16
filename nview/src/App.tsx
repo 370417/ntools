@@ -1,6 +1,12 @@
-import { createSignal } from 'solid-js';
+import { createSignal, Index } from 'solid-js';
 import './App.css';
 import { Replay, viewbox } from './assets/ntools_rs';
+
+type Mine = {
+    x: number;
+    y: number;
+    type: 0 | 1 | 2;
+};
 
 function App() {
     let replay: Replay | undefined = undefined;
@@ -10,6 +16,8 @@ function App() {
     const [frame, setFrame] = createSignal(0);
 
     const [ninja, setNinja] = createSignal({ x: -50, y: -50 });
+
+    const [mines, setMines] = createSignal([] as Mine[]);
 
     const viewboxVal = viewbox();
 
@@ -26,14 +34,39 @@ function App() {
                 x: replay.ninja_x(),
                 y: replay.ninja_y(),
             });
+
+            const minesArr: Mine[] = [];
+            const minesLen = replay.mines_len();
+            for (let i = 0; i < minesLen; i++) {
+                minesArr.push({
+                    x: replay.mine_x(i),
+                    y: replay.mine_y(i),
+                    type: replay.mine_state(i) as 0 | 1 | 2,
+                });
+            }
+            setMines(minesArr);
         });
     });
 
     return (
         <>
             <svg viewBox={viewboxVal} width="1200">
-                <path d={tilePath()} stroke="red" fill-rule="evenodd" />
+                <defs>
+                    <g id="toggled">
+                        <circle r="4" fill="none" stroke="pink" />
+                    </g>
+                    <g id="untoggled">
+                        <circle r="3.5" fill="none" stroke="blue" />
+                    </g>
+                    <g id="toggling">
+                        <circle r="4.5" fill="none" stroke="pink" />
+                    </g>
+                </defs>
+                <Index each={mines()}>
+                    {(mine) => <use href={["#toggled", "#untoggled", "#toggling"][mine().type]} x={mine().x} y={mine().y} />}
+                </Index>
                 <circle cx={ninja().x} cy={ninja().y} r="10" fill="none" stroke="red" />
+                <path d={tilePath()} stroke="red" fill-rule="evenodd" />
             </svg>
         </>
     )

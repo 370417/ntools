@@ -1,6 +1,6 @@
 use glam::Vec2;
 
-use crate::{grid::{Grid, GridPos, COLS, ROWS}, segment::{extract_path, Segment}, tile::Tile};
+use crate::{entity::{mine::Mine, InitialEntities}, grid::{Grid, GridPos, COLS, ROWS}, segment::{extract_path, Segment}, tile::Tile};
 
 /// Represents a parsed attract file.
 /// An attract file is what gets shown in the game's main menu: a replay of a failed attempt at a level.
@@ -9,9 +9,8 @@ pub struct Attract {
     pub level_name: String,
     pub author_name: String,
     pub segments: Grid<Segment>,
-    pub ninjas: Vec<Vec2>,
+    pub entities: InitialEntities,
 }
-
 
 impl Attract {
     /// https://raw.githubusercontent.com/edelkas/NPP_sheet/master/pngs/sheet_2023-02-03.png
@@ -98,7 +97,7 @@ impl Attract {
             }
         }
 
-        let mut ninjas = Vec::new();
+        let mut entities = InitialEntities::new();
 
         let num_objects = object_data_bytes / 5;
         for i in 0..num_objects {
@@ -109,11 +108,13 @@ impl Attract {
             let orientation = map_data[i + 3];
             let mode = map_data[i + 4];
 
+            let pos = Vec2::new(x as f32, y as f32);
+
             match object_id {
                 // Ninja
-                0 => ninjas.push(Vec2::new(x as f32, y as f32)),
+                0 => entities.ninjas.push(pos),
                 // Mine
-                1 => {}
+                1 => entities.mines.push(Mine::new_toggled(6.0 * pos)),
                 // Gold
                 2 => {}
                 // Exit door
@@ -153,7 +154,7 @@ impl Attract {
                 // Thwump
                 20 => {}
                 // Toggle mine
-                21 => {}
+                21 => entities.mines.push(Mine::new_untoggled(6.0 * pos)),
                 // Evil ninja
                 22 => {}
                 // Laser turret
@@ -176,7 +177,7 @@ impl Attract {
             level_name,
             author_name,
             segments: grid,
-            ninjas,
+            entities,
         })
     }
 }

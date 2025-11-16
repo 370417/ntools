@@ -90,8 +90,6 @@ impl GridPos {
         self.x > 0 && self.y > 0 && self.x <= COLS && self.y <= ROWS
     }
 
-    // TODO: currently this assumes that the world pos and grid pos are aligned
-    // at tile centers, but it seems like they might need to be aligned at a corner?
     pub fn to_world_pos(self) -> Vec2 {
         Vec2::new(self.x as f32 * TILE_SIZE, self.y as f32 * TILE_SIZE)
     }
