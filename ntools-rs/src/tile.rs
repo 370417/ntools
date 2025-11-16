@@ -606,7 +606,7 @@ impl Tile {
         }
     }
 
-    pub fn add_outer_segments_to_grid(&self, pos: GridPos, grid: &mut Grid<Segment>) {
+    pub fn add_outer_segments_to_grid(&self, pos: GridPos, segments: &mut Grid<Segment>) {
         for direction in [(0, 1), (1, 0), (0, -1), (-1, 0)] {
             let neighbor_pos = pos.plus(direction);
             if neighbor_pos.in_bounds() {
@@ -617,7 +617,7 @@ impl Tile {
                     // Two walls next to each other should not have a segment
                     // between them.
                     let mut found_overlap = false;
-                    grid[neighbor_pos].retain_mut(|neighbor_segment| {
+                    segments[neighbor_pos].retain_mut(|neighbor_segment| {
                         if neighbor_segment.has_full_overlap(&outer_segment) {
                             found_overlap = true;
                             false
@@ -632,7 +632,7 @@ impl Tile {
                     if !found_overlap {
                         // If there was no overlap with a neighboring segment,
                         // we can simply add this tile's outer segment to the grid
-                        grid[pos].push(outer_segment);
+                        segments[pos].push(outer_segment);
                     }
                 }
             } else {
@@ -644,13 +644,8 @@ impl Tile {
                     if neighbor_segment.has_full_overlap(&outer_segment) {
                         // No need to add a segment because this tile already is a wall
                     } else if neighbor_segment.has_partial_overlap(&outer_segment) {
-                        grid[pos].push(neighbor_segment.without_overlap(&outer_segment));
+                        segments[pos].push(neighbor_segment.without_overlap(&outer_segment));
                     } else {
-                        dbg!(&self);
-                        dbg!(&pos);
-                        dbg!(&direction);
-                        dbg!(&outer_segment);
-                        dbg!(&neighbor_segment);
                         // This case should be impossible. Neighbor segment always
                         // is a full segment, so if we have an outer segment, it
                         // will always overlap at least partially.
@@ -659,15 +654,15 @@ impl Tile {
                 } else {
                     // Since the neighbor doesn't exist in the grid, we need to add its segment
                     // to this grid cell.
-                    grid[pos].push(neighbor_segment);
+                    segments[pos].push(neighbor_segment);
                 }
             }
         }
     }
 
-    pub fn add_inner_segments_to_grid(&self, pos: GridPos, grid: &mut Grid<Segment>) {
+    pub fn add_inner_segments_to_grid(&self, pos: GridPos, segments: &mut Grid<Segment>) {
         if let Some(inner_segment) = self.inner_segment(pos) {
-            grid[pos].push(inner_segment);
+            segments[pos].push(inner_segment);
         }
     }
 }

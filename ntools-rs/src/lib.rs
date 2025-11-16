@@ -7,17 +7,19 @@ mod attract;
 mod collision_util;
 mod grid;
 mod ninja;
+mod replay;
 mod segment;
+mod simulation;
 mod tile;
 
 #[wasm_bindgen]
-pub fn get_path(attract_bytes: Box<[u8]>) -> String {
-    Attract::from_bytes(&attract_bytes).get_path()
+pub fn get_path(attract_bytes: Box<[u8]>) -> Result<String, String> {
+    Ok(Attract::from_bytes(&attract_bytes)?.get_path())
 }
 
 #[wasm_bindgen]
-pub fn get_level_name(attract_bytes: Box<[u8]>) -> String {
-    Attract::from_bytes(&attract_bytes).level_name.clone()
+pub fn get_level_name(attract_bytes: Box<[u8]>) -> Result<String, String> {
+    Ok(Attract::from_bytes(&attract_bytes)?.level_name.clone())
 }
 
 #[wasm_bindgen]

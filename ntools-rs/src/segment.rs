@@ -220,8 +220,8 @@ impl Segment {
     }
 }
 
-pub fn extract_path(grid: &Grid<Segment>) -> String {
-    let mut segments: Vec<Segment> = grid.flat_iter().filter(|s| s.is_from_tile()).map(|s| s.clone()).collect();
+pub fn extract_path(segments: &Grid<Segment>) -> String {
+    let mut segments: Vec<Segment> = segments.flat_iter().filter(|s| s.is_from_tile()).map(|s| s.clone()).collect();
 
     let mut path = Vec::new();
 

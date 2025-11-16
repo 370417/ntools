@@ -13,15 +13,21 @@ pub struct Attract {
 impl Attract {
     /// https://raw.githubusercontent.com/edelkas/NPP_sheet/master/pngs/sheet_2023-02-03.png
     /// https://github.com/edelkas/inne/blob/f88440f834cbf5b64f6564e7e9dceb7e5d8e8882/src/maps.rb#L755
-    pub fn from_bytes(attract_bytes: &[u8]) -> Attract {
-        let map_data_len = u32::from_le_bytes(attract_bytes[0..4].try_into().unwrap());
-        let demo_data_len = u32::from_le_bytes(attract_bytes[4..8].try_into().unwrap());
+    pub fn from_bytes(attract_bytes: &[u8]) -> Result<Attract, String> {
+        if attract_bytes.len() < 184 {
+            return Err("Attract input is too short".into());
+        }
+
+        let map_data_len = u32::from_le_bytes(attract_bytes[0..4].try_into().map_err(|_| "Failed to read map length")?);
+        let demo_data_len = u32::from_le_bytes(attract_bytes[4..8].try_into().map_err(|_| "Failed to read demo length")?);
         let total_len = attract_bytes.len();
 
-        assert_eq!(map_data_len + demo_data_len + 8, total_len as u32);
+        if map_data_len + demo_data_len + 8 != total_len as u32 {
+            return Err("Inconsistent attract input length".into());
+        }
 
-        let _level_id = u32::from_le_bytes(attract_bytes[8..12].try_into().unwrap());
-        let _game_mode = u32::from_le_bytes(attract_bytes[12..16].try_into().unwrap());
+        let _level_id = u32::from_le_bytes(attract_bytes[8..12].try_into().map_err(|_| "Failed to read level id")?);
+        let _game_mode = u32::from_le_bytes(attract_bytes[12..16].try_into().map_err(|_| "Failed to read game mode")?);
         let _unknown1 = &attract_bytes[16..20];
         let _unknown2 = &attract_bytes[20..38];
         let padded_level_name = &attract_bytes[38..166];
@@ -33,9 +39,11 @@ impl Attract {
             len
         };
         let level_name = &padded_level_name[0..level_name_len];
-        let level_name = str::from_utf8(level_name).expect("Level name is not valid utf8").to_owned();
+        let level_name = str::from_utf8(level_name).map_err(|_| "Level name is not valid utf8")?.to_owned();
 
-        assert_eq!(attract_bytes[166], 0);
+        if attract_bytes[166] != 0 {
+            return Err("Attract input byte 166 should be 0".into());
+        }
 
         let padded_author_name = &attract_bytes[167..183];
         let author_name_len = {
@@ -46,7 +54,7 @@ impl Attract {
             len
         };
         let author_name = &padded_author_name[0..author_name_len];
-        let author_name = str::from_utf8(author_name).expect("Author name is not valid utf8").to_owned();
+        let author_name = str::from_utf8(author_name).map_err(|_| "Author name is not valid utf8")?.to_owned();
 
         assert_eq!(attract_bytes[183], 0);
 
@@ -65,7 +73,7 @@ impl Attract {
             for col in 0..42 {
                 let i = row * 42 + col;
                 let pos = GridPos::new(col + 1, row + 1);
-                let tile = Tile::from_u8(map_data[i]).expect("Invalid tile");
+                let tile = Tile::from_u8(map_data[i]).ok_or("Invalid tile")?;
                 tile.add_outer_segments_to_grid(pos, &mut grid);
             }
         }
@@ -73,16 +81,16 @@ impl Attract {
             for col in 0..42 {
                 let i = row * 42 + col;
                 let pos = GridPos::new(col + 1, row + 1);
-                let tile = Tile::from_u8(map_data[i]).expect("Invalid tile");
+                let tile = Tile::from_u8(map_data[i]).ok_or("Invalid tile")?;
                 tile.add_inner_segments_to_grid(pos, &mut grid);
             }
         }
         
-        Attract {
+        Ok(Attract {
             level_name,
             author_name,
             segments: grid,
-        }
+        })
     }
 
     pub fn get_path(&self) -> String {
@@ -97,11 +105,11 @@ mod tests {
     #[test]
     fn regression_test() {
         // Level "Chamoska Demon"
-        Attract::from_bytes(include_bytes!("testfiles/6876")).get_path();
+        Attract::from_bytes(include_bytes!("testfiles/6876")).unwrap().get_path();
 
 
-        Attract::from_bytes(include_bytes!("testfiles/22906")).get_path();
-        Attract::from_bytes(include_bytes!("testfiles/6861")).get_path();
-        Attract::from_bytes(include_bytes!("testfiles/6883")).get_path();
+        Attract::from_bytes(include_bytes!("testfiles/22906")).unwrap().get_path();
+        Attract::from_bytes(include_bytes!("testfiles/6861")).unwrap().get_path();
+        Attract::from_bytes(include_bytes!("testfiles/6883")).unwrap().get_path();
     }
 }

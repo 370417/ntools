@@ -84,15 +84,15 @@ impl Ninja {
     }
 
     /// Gather all tile segments in neighbourhood and handle collisions with those.
-    fn collide_vs_tiles(&mut self, collision_state: &mut CollisionState, grid: &Grid<Segment>) {
+    fn collide_vs_tiles(&mut self, collision_state: &mut CollisionState, segments: &Grid<Segment>) {
         // Interpolation routine mainly to prevent from going through walls.
         let delta = self.pos - self.pos_old;
-        let time = sweep_circle_vs_tiles(self.pos_old, delta, RADIUS * 0.5, grid);
+        let time = sweep_circle_vs_tiles(self.pos_old, delta, RADIUS * 0.5, segments);
         self.pos = self.pos_old + time * delta;
 
         // Find the closest point from the ninja, apply depenetration and update speed. Loop 32 times.
         for _ in 0..32 {
-            let Some(closest_point) = get_single_closest_point(self.pos, RADIUS, grid) else { return };
+            let Some(closest_point) = get_single_closest_point(self.pos, RADIUS, segments) else { return };
             let delta = self.pos - closest_point.point;
             // For now skipping the corner case check
             // https://github.com/SimonV42/nclone/blob/842190b2a216579b5b5c551e0a0b4505fc3381cc/nsim.py#L180
@@ -128,7 +128,7 @@ impl Ninja {
 
     /// Perform logical collisions with entities, check for airborn state,
     /// check for walled state, calculate floor normals, check for impact or crush death.
-    fn post_collision(&mut self, collision_state: &CollisionState, grid: &Grid<Segment>) {
+    fn post_collision(&mut self, collision_state: &CollisionState, segments: &Grid<Segment>) {
         // Perform LOGICAL collisions between the ninja and nearby entities.
         // Also check if the ninja can interact with the walls of entities when applicable.
         // todo
@@ -136,7 +136,7 @@ impl Ninja {
 
         // Check if the ninja can interact with walls from nearby tile segments.
         let rad = RADIUS + 0.1;
-        let segments = grid.iter_rect_region(self.pos - Vec2::new(rad, rad), self.pos + Vec2::new(rad, rad));
+        let segments = segments.iter_rect_region(self.pos - Vec2::new(rad, rad), self.pos + Vec2::new(rad, rad));
 
         for segment in segments {
             let closest = segment.get_closest_point(self.pos).point;
