@@ -1,6 +1,6 @@
 use glam::Vec2;
 
-use crate::{grid::{Grid, COLS, ROWS}, tile::TILE_SIZE};
+use crate::{collision_util::{get_time_of_intersection_circle_vs_arc, get_time_of_intersection_circle_vs_circle, get_time_of_intersection_circle_vs_lineseg}, grid::{Grid, COLS, ROWS}, tile::TILE_SIZE};
 
 /// Represents a solid edge of a tile or door.
 #[derive(Clone, Debug)]
@@ -203,8 +203,26 @@ impl Segment {
         }
     }
 
+    /// Return the time of intersection (as a fraction of a frame) for the collision
+    /// between the segment and a circle moving along a given direction. Return 0 if the circle 
+    /// is already intersecting or 1 if it won't intersect within the frame
     pub fn intersect_with_ray(&self, pos: Vec2, delta: Vec2, radius: f32) -> f32 {
-        todo!()
+        match self {
+            Segment::Linear { start, end, .. } => {
+                let time1 = get_time_of_intersection_circle_vs_circle(pos, delta, *start, radius);
+                let time2 = get_time_of_intersection_circle_vs_circle(pos, delta, *end, radius);
+                let time3 = get_time_of_intersection_circle_vs_lineseg(pos, delta, *start, *end, radius);
+                time1.min(time2).min(time3)
+            }
+            Segment::Circular { start, end, center, .. } => {
+                let quadrant = (start + end - 2.0 * center).signum();
+                let time1 = get_time_of_intersection_circle_vs_circle(pos, delta, *start, radius);
+                let time2 = get_time_of_intersection_circle_vs_circle(pos, delta, *end, radius);
+                let time3 = get_time_of_intersection_circle_vs_arc(pos, delta, *center, quadrant, TILE_SIZE, radius);
+                time1.min(time2).min(time3)
+            }
+            Segment::Door => todo!(),
+        }
     }
 
     /// Represent this segment as an svg path command.

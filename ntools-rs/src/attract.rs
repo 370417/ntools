@@ -10,6 +10,7 @@ pub struct Attract {
     pub author_name: String,
     pub segments: Grid<Segment>,
     pub entities: InitialEntities,
+    pub inputs: Vec<u8>,
 }
 
 impl Attract {
@@ -172,12 +173,33 @@ impl Attract {
                 _ => return Err("Invalid object id".into()),
             }
         }
-        
+
+        let demo_bytes = &attract_bytes[8 + map_data_len as usize..];
+
+        if demo_bytes[0] != 0 {
+            return Err("Demo input byte 0 should be 0".into());
+        }
+
+        let demo_data_len_2 = u32::from_le_bytes(demo_bytes[1..5].try_into().map_err(|_| "Failed to read demo demo length 2")?);
+
+        if demo_data_len != demo_data_len_2 {
+            return Err("Demo data lengths do not match".into());
+        }
+
+        let frame_count = u32::from_le_bytes(demo_bytes[9..13].try_into().map_err(|_| "Failed to read frame count")?);
+
+        let frames = &demo_bytes[30..];
+
+        if frames.len() != frame_count as usize {
+            return Err("Frame count does not match data".into());
+        }
+
         Ok(Attract {
             level_name,
             author_name,
             segments: grid,
             entities,
+            inputs: frames.to_vec(),
         })
     }
 }

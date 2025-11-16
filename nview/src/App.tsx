@@ -23,6 +23,24 @@ function App() {
 
     const socket = new WebSocket('ws://localhost:8080');
 
+    function renderFrame(replay: Replay) {
+        setNinja({
+            x: replay.ninja_x(),
+            y: replay.ninja_y(),
+        });
+
+        const minesArr: Mine[] = [];
+        const minesLen = replay.mines_len();
+        for (let i = 0; i < minesLen; i++) {
+            minesArr.push({
+                x: replay.mine_x(i),
+                y: replay.mine_y(i),
+                type: replay.mine_state(i) as 0 | 1 | 2,
+            });
+        }
+        setMines(minesArr);
+    }
+
     socket.addEventListener('message', event => {
         const data: Blob = event.data;
         data.bytes().then(bytes => {
@@ -30,21 +48,7 @@ function App() {
             replay = Replay.from_attract(bytes);
             const path = replay.tiles_path();
             setTilePath(path);
-            setNinja({
-                x: replay.ninja_x(),
-                y: replay.ninja_y(),
-            });
-
-            const minesArr: Mine[] = [];
-            const minesLen = replay.mines_len();
-            for (let i = 0; i < minesLen; i++) {
-                minesArr.push({
-                    x: replay.mine_x(i),
-                    y: replay.mine_y(i),
-                    type: replay.mine_state(i) as 0 | 1 | 2,
-                });
-            }
-            setMines(minesArr);
+            renderFrame(replay);
         });
     });
 
@@ -68,6 +72,22 @@ function App() {
                 <circle cx={ninja().x} cy={ninja().y} r="10" fill="none" stroke="red" />
                 <path d={tilePath()} stroke="red" fill-rule="evenodd" />
             </svg>
+            <div>
+                <div>
+                    <input type="button" value="⏺" onclick={() => {
+                        if (replay) {
+                            replay.tick(false, false, false, false);
+                            renderFrame(replay);
+                        }
+                    }} />
+                </div>
+                <div>
+                    <input type="button" value={"▶⏸"} />
+                </div>
+                <div>
+                    <input type="range" />
+                </div>
+            </div>
         </>
     )
 }

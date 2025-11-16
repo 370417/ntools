@@ -24,13 +24,14 @@ pub struct Ninja {
     applied_gravity: f32,
     applied_drag: f32,
     applied_friction: f32,
-    state: NinjaState,
+    pub state: NinjaState,
     airborne: bool,
     walled: bool,
     wall_normal: f32,
 }
 
-enum NinjaState {
+#[derive(PartialEq, Eq)]
+pub enum NinjaState {
     Standing,
     Running,
     Skidding,
@@ -43,7 +44,7 @@ enum NinjaState {
     Disabled,
 }
 
-struct CollisionState {
+pub struct CollisionState {
     speed_old: Vec2,
     floor_count: u32,
     wall_count: u32,
@@ -72,7 +73,7 @@ impl Ninja {
     }
 
     /// Update position and speed by applying drag and gravity before collision phase.
-    fn integrate(&mut self) {
+    pub fn integrate(&mut self) {
         self.speed *= self.applied_drag;
         self.speed.y += self.applied_gravity;
         self.pos_old = self.pos;
@@ -80,7 +81,7 @@ impl Ninja {
     }
 
     /// Prepare state needed for collision phase.
-    fn pre_collision(&self) -> CollisionState {
+    pub fn pre_collision(&self) -> CollisionState {
         CollisionState {
             speed_old: self.speed,
             floor_count: 0,
@@ -94,12 +95,12 @@ impl Ninja {
         }
     }
 
-    fn collide_vs_objects() {
+    pub fn collide_vs_objects() {
         todo!()
     }
 
     /// Gather all tile segments in neighbourhood and handle collisions with those.
-    fn collide_vs_tiles(&mut self, collision_state: &mut CollisionState, segments: &Grid<Segment>) {
+    pub fn collide_vs_tiles(&mut self, collision_state: &mut CollisionState, segments: &Grid<Segment>) {
         // Interpolation routine mainly to prevent from going through walls.
         let delta = self.pos - self.pos_old;
         let time = sweep_circle_vs_tiles(self.pos_old, delta, RADIUS * 0.5, segments);
@@ -143,7 +144,7 @@ impl Ninja {
 
     /// Perform logical collisions with entities, check for airborn state,
     /// check for walled state, calculate floor normals, check for impact or crush death.
-    fn post_collision(&mut self, collision_state: &CollisionState, segments: &Grid<Segment>) {
+    pub fn post_collision(&mut self, collision_state: &CollisionState, segments: &Grid<Segment>) {
         // Perform LOGICAL collisions between the ninja and nearby entities.
         // Also check if the ninja can interact with the walls of entities when applicable.
         // todo
