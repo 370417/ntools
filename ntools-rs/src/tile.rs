@@ -441,8 +441,8 @@ impl Tile {
                 normal: Vec2::new(-1.0, -1.0),
             }),
             Tile1W => Some(Segment::Linear {
-                start: lower_right,
-                end: upper_left,
+                start: upper_left,
+                end: lower_right,
                 normal: Vec2::new(1.0, -1.0),
             }),
             Tile1S => Some(Segment::Linear {
