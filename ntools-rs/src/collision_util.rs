@@ -1,6 +1,6 @@
 use glam::Vec2;
 
-use crate::{grid::Grid, segment::Segment};
+use crate::{grid::Grid, segment::{ClosestPoint, Segment}};
 
 /// Fetch all segments from neighbourhood. Return shortest intersection time from interpolation.
 pub fn sweep_circle_vs_tiles(pos_old: Vec2, delta: Vec2, radius: f32, grid: &Grid<Segment>) -> f32 {
@@ -85,4 +85,20 @@ pub fn get_time_of_intersection_circle_vs_arc(center_circle: Vec2, vel: Vec2, ce
     } else {
         1.0
     }
+}
+
+/// Find the closest point belonging to a collidable segment from the given position.
+pub fn get_single_closest_point(pos: Vec2, radius: f32, grid: &Grid<Segment>) -> Option<ClosestPoint> {
+    grid.iter_rect_region(pos - Vec2::new(radius, radius), pos + Vec2::new(radius, radius))
+        .map(|segment| {
+            let closest = segment.get_closest_point(pos);
+            let mut distance_sq = (pos - closest.point).length_squared();
+            if !closest.is_back_facing {
+                // This is to prioritize correct side collisions when multiple close segments.
+                distance_sq -= 0.1;
+            }
+            (distance_sq, closest)
+        }).min_by(|(dist_a, _), (dist_b, _)| {
+            dist_a.partial_cmp(dist_b).unwrap_or(std::cmp::Ordering::Equal)
+        }).map(|(_, closest)| closest)
 }

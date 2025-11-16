@@ -28,6 +28,11 @@ pub enum Curvature {
     Convex,
 }
 
+pub struct ClosestPoint {
+    pub point: Vec2,
+    pub is_back_facing: bool,
+}
+
 impl Curvature {
     /// SVG path sweep flag
     fn sweep_flag(&self) -> u8 {
@@ -59,6 +64,54 @@ impl Segment {
         match self {
             Self::Door => false,
             _ => true,
+        }
+    }
+
+    /// Find the closest point on the segment from the given position.
+    /// is_back_facing is false if the position is facing the segment's outter edge.
+    pub fn get_closest_point(&self, pos: Vec2) -> ClosestPoint {
+        match self {
+            Segment::Linear { start, end, normal } => {
+                let seg = end - start;
+                let delta = pos - start;
+                let u = seg.dot(delta) / seg.length_squared();
+                let u = u.clamp(0.0, 1.0);
+                // If u is between 0 and 1, position is closest to the line segment.
+                // If u is exactly 0 or 1, position is closest to one of the two edges.
+                ClosestPoint {
+                    point: start + u * seg,
+                    is_back_facing: delta.perp_dot(seg) < 0.0, // TODO: cross check this with normal
+                }
+            }
+            Segment::Circular { start, end, center, curvature } => {
+                let quadrant = (start + end - 2.0 * center).signum();
+                let delta = pos - center;
+                if delta.x * quadrant.x > 0.0 && delta.y * quadrant.y > 0.0 {
+                    // Position is closer from arc than its edges.
+                    let dist = delta.length();
+                    ClosestPoint {
+                        // TILE_SIZE represents radius
+                        // TODO: is it a problem to use normalize here?
+                        // should I copy the math exactly from nsim?
+                        point: center + TILE_SIZE * delta.normalize(),
+                        is_back_facing: match curvature {
+                            Curvature::Concave => dist > TILE_SIZE,
+                            Curvature::Convex => dist < TILE_SIZE,
+                        }
+                    }
+                } else {
+                    // If closer to edges of arc, find position of closest point of the two.
+                    ClosestPoint {
+                        point: if (start - pos).length_squared() < (end - pos).length_squared() {
+                            *start
+                        } else {
+                            *end
+                        },
+                        is_back_facing: false,
+                    }
+                }
+            }
+            Segment::Door => todo!(),
         }
     }
 
