@@ -11,9 +11,9 @@ type Mine = {
 function App() {
     let replay: Replay | undefined = undefined;
 
-    const [tilePath, setTilePath] = createSignal('');
+    const [paused, setPaused] = createSignal(true);
 
-    const [frame, setFrame] = createSignal(0);
+    const [tilePath, setTilePath] = createSignal('');
 
     const [ninja, setNinja] = createSignal({ x: -50, y: -50 });
 
@@ -22,6 +22,15 @@ function App() {
     const viewboxVal = viewbox();
 
     const socket = new WebSocket('ws://localhost:8080');
+
+    function tick() {
+        if (!paused() && replay) {
+            replay.tick(false, false, false, false);
+            renderFrame(replay);
+        }
+        requestAnimationFrame(tick);
+    }
+    tick();
 
     function renderFrame(replay: Replay) {
         setNinja({
@@ -74,15 +83,12 @@ function App() {
             </svg>
             <div>
                 <div>
-                    <input type="button" value="⏺" onclick={() => {
-                        if (replay) {
-                            replay.tick(false, false, false, false);
-                            renderFrame(replay);
-                        }
-                    }} />
+                    <input type="button" value="⏺" />
                 </div>
                 <div>
-                    <input type="button" value={"▶⏸"} />
+                    <input type="button" value={"▶⏸"} onclick={() => {
+                        setPaused(!paused());
+                    }} />
                 </div>
                 <div>
                     <input type="range" />

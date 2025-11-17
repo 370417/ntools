@@ -204,6 +204,9 @@ impl Attract {
     }
 }
 
+// TODO: SL-X-19-03 renders with extra mines near the top for some reason.
+// maybe because I am currently ignoring object counts?
+
 #[cfg(test)]
 mod tests {
     use super::*;
