@@ -83,26 +83,19 @@ function App() {
                 <Index each={mines()}>
                     {(mine) => <use href={["#toggled", "#untoggled", "#toggling"][mine().type]} x={mine().x} y={mine().y} />}
                 </Index>
-                <circle cx={ninja().x} cy={ninja().y} r="10" fill="none" stroke="red" />
-                {
-                    // TODO: render as single path instead
-                    LIMBS.map(([i1, i2]) => {
-                        const coords = () => {
-                            let { x, y } = ninja();
-                            let bones = ninjaBones();
-                            let x1 = 0, y1 = 0, x2 = 0, y2 = 0;
-                            if (bones) {
-                                x1 = x + 20 * bones[i1];
-                                y1 = y + 20 * bones[i1 + 13];
-                                x2 = x + 20 * bones[i2];
-                                y2 = y + 20 * bones[i2 + 13];
-                            }
-                            return { x1, y1, x2, y2 };
-                        };
-
-                        return <line x1={coords().x1} y1={coords().y1} x2={coords().x2} y2={coords().y2} stroke="white" />
-                    })
-                }
+                {/* <circle cx={ninja().x} cy={ninja().y} r="10" fill="none" stroke="red" /> */}
+                <path d={(() => {
+                    let { x, y } = ninja();
+                    let bones = ninjaBones();
+                    if (!bones) return '';
+                    return LIMBS.map(([i1, i2]) => {
+                        const x1 = x + 20 * bones[i1];
+                        const y1 = y + 20 * bones[i1 + 13];
+                        const x2 = x + 20 * bones[i2];
+                        const y2 = y + 20 * bones[i2 + 13];
+                        return `M ${x1} ${y1} L ${x2} ${y2}`;
+                    }).join(' ');
+                })()} stroke="white" stroke-linejoin="round" stroke-linecap="round" />
                 <path d={tilePath()} stroke="red" fill-rule="evenodd" />
             </svg>
             <div>
