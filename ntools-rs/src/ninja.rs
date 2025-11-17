@@ -28,9 +28,17 @@ pub struct Ninja {
     airborne: bool,
     walled: bool,
     wall_normal: f32,
+    jump_input_old: bool,
+    jump_duration: u32,
+    jump_buffer: Option<u8>,
+    floor_buffer: Option<u8>,
+    wall_buffer: Option<u8>,
+    launch_pad_buffer: Option<u8>,
+    floor_unit_normal: Vec2,
+    ceiling_unit_normal: Vec2,
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum NinjaState {
     Standing,
     Running,
@@ -56,6 +64,15 @@ pub struct CollisionState {
     crush_len: f32,
 }
 
+impl NinjaState {
+    fn is_grounded(&self) -> bool {
+        match self {
+            Self::Standing | Self::Running | Self::Skidding => true,
+            _ => false,
+        }
+    }
+}
+
 impl Ninja {
     pub fn new(map_pos: Vec2) -> Ninja {
         Ninja {
@@ -69,6 +86,14 @@ impl Ninja {
             airborne: false,
             walled: false,
             wall_normal: 0.0,
+            jump_input_old: false,
+            jump_duration: 0,
+            jump_buffer: None,
+            floor_buffer: None,
+            wall_buffer: None,
+            launch_pad_buffer: None,
+            floor_unit_normal: Vec2::new(0.0, -1.0),
+            ceiling_unit_normal: Vec2::new(0.0, 1.0),
         }
     }
 
@@ -171,5 +196,307 @@ impl Ninja {
             self.walled = true;
             self.wall_normal = wall_normal;
         }
+
+        // Calculate the combined floor normalized normal vector if the ninja has touched any floor.
+        if collision_state.floor_count > 0 {
+            self.airborne = false;
+            self.floor_unit_normal = collision_state.floor_normal.normalize_or(Vec2::new(0.0, -1.0));
+            if self.state != NinjaState::Celebrating && airborne_old {
+                // Check if died from impact
+                let impact_vel = -self.floor_unit_normal.dot(collision_state.speed_old);
+                if impact_vel > MAX_SURVIVABLE_IMPACT - 4.0 / 3.0 * self.floor_unit_normal.y.abs() {
+                    self.speed = collision_state.speed_old;
+                    self.kill(1, self.pos, self.speed * 0.5);
+                }
+            }
+        }
+
+        // Calculate the combined ceiling normalized normal vector if the ninja has touched any ceiling.
+        if collision_state.ceiling_count > 0 {
+            self.ceiling_unit_normal = collision_state.ceiling_normal.normalize_or(Vec2::new(0.0, 1.0));
+            if self.state != NinjaState::Celebrating {
+                // Check if died from impact
+                let impact_vel = -self.ceiling_unit_normal.dot(collision_state.speed_old);
+                if impact_vel > MAX_SURVIVABLE_IMPACT - 4.0 / 3.0 * self.ceiling_unit_normal.y.abs() {
+                    self.speed = collision_state.speed_old;
+                    self.kill(1, self.pos, self.speed * 0.5);
+                }
+            }
+        }
+
+        // Check if ninja died from crushing.
+        if collision_state.is_crushable && collision_state.crush_len > 0.0 {
+            if collision_state.crush.length() / collision_state.crush_len < MIN_SURVIVABLE_CRUSHING {
+                self.kill(2, self.pos, Vec2::ZERO);
+            }
+        }
     }
+
+    fn kill(&mut self, _death_type: u32, _pos: Vec2, _speed: Vec2) {
+        match self.state {
+            NinjaState::AwaitingDeath | NinjaState::Celebrating | NinjaState::Disabled => {
+                // do nothing
+            }
+            _ => {
+                // TODO
+            }
+        }
+    }
+
+    /// Perform floor jump depending on slope angle and direction.
+    fn floor_jump(&mut self, hor_input: f32) {
+        self.jump_buffer = None;
+        self.floor_buffer = None;
+        self.launch_pad_buffer = None;
+        self.state = NinjaState::Jumping;
+        self.applied_gravity = GRAVITY_JUMP;
+        let jump = if self.floor_unit_normal.x == 0.0 {
+            // Jump from flat ground
+            Vec2::new(0.0, -2.0)
+        } else if self.speed.x * self.floor_unit_normal.x >= 0.0 {
+            // Slope jump moving downhill
+            if self.speed.x * hor_input >= 0.0 {
+                Vec2 {
+                    x: 2.0 / 3.0 * self.floor_unit_normal.x,
+                    y: 2.0 * self.floor_unit_normal.y
+                }
+            } else {
+                Vec2::new(0.0, -1.4)
+            }
+        } else {
+            // Slope jump moving uphill
+            if self.speed.x * hor_input > 0.0 {
+                // Forwards jump
+                Vec2::new(0.0, -1.4)
+            } else {
+                // Perp jump
+                self.speed.x = 0.0;
+                Vec2 {
+                    x: 2.0 / 3.0 * self.floor_unit_normal.x,
+                    y: 2.0 * self.floor_unit_normal.y
+                }
+            }
+        };
+        if self.speed.y >= 0.0 {
+            self.speed.y = 0.0;
+        }
+        self.speed += jump;
+        self.pos += jump;
+        self.jump_duration = 0;
+    }
+
+    /// Perform wall jump depending on wall normal and if sliding or not.
+    fn wall_jump(&mut self, hor_input: f32) {
+        let mut jump = if hor_input * self.wall_normal < 0.0 && self.state == NinjaState::WallSliding {
+            Vec2::new(2.0 / 3.0, -1.0)
+        } else {
+            Vec2::new(1.0, -1.4)
+        };
+        self.state = NinjaState::Jumping;
+        self.applied_gravity = GRAVITY_JUMP;
+        if self.speed.x * self.wall_normal < 0.0 {
+            self.speed.x = 0.0;
+        }
+        if self.speed.y > 0.0 {
+            self.speed.y = 0.0;
+        }
+        jump.x *= self.wall_normal;
+        self.speed += jump;
+        self.pos += jump;
+        self.jump_buffer = None;
+        self.wall_buffer = None;
+        self.launch_pad_buffer = None;
+        self.jump_duration = 0;
+    }
+
+    /// Perform launch pad jump.
+    fn launch_pad_jump(&mut self) {
+        todo!()
+    }
+
+    /// Handles all the ninja's actions depending on the inputs and its environment.
+    fn think(&mut self, jump_input: bool, hor_input: f32) {
+        // Logic to determine if you're starting a new jump.
+        let new_jump_check = jump_input && !self.jump_input_old;
+        self.jump_input_old = jump_input;
+
+        // Increment buffers
+        self.launch_pad_buffer = match self.launch_pad_buffer {
+            Some(n) if n < 3 => Some(n + 1),
+            _ => None,
+        };
+        let in_lp_buffer = self.launch_pad_buffer.is_some();
+        self.jump_buffer = match self.jump_buffer {
+            Some(n) if n < 5 => Some(n + 1),
+            _ => None,
+        };
+        let in_jump_buffer = self.jump_buffer.is_some_and(|n| n < 5);
+        self.wall_buffer = match self.wall_buffer {
+            Some(n) if n < 5 => Some(n + 1),
+            _ => None,
+        };
+        let in_wall_buffer = self.wall_buffer.is_some_and(|n| n < 5);
+        self.floor_buffer = match self.floor_buffer {
+            Some(n) if n < 5 => Some(n + 1),
+            _ => None,
+        };
+        let in_floor_buffer = self.floor_buffer.is_some_and(|n| n < 5);
+
+        // Initiate jump buffer if beginning a new jump and airborne.
+        if new_jump_check && self.airborne {
+            self.jump_buffer = Some(0);
+        }
+        // Initiate wall buffer if touched a wall this frame.
+        if self.walled {
+            self.wall_buffer = Some(0);
+        }
+        // Initiate floor buffer if touched a floor this frame.
+        if !self.airborne {
+            self.floor_buffer = Some(0);
+        }
+
+        match self.state {
+            NinjaState::Dead | NinjaState::Disabled => return,
+            NinjaState::AwaitingDeath => {
+                // TODO: self.think_awaiting_death();
+                return;
+            }
+            NinjaState::Celebrating => {
+                self.applied_drag = if self.airborne {
+                    DRAG_REGULAR
+                } else {
+                    DRAG_SLOW
+                };
+                return;
+            }
+            _ => {}
+        }
+
+        if !self.airborne {
+            let speed_x_new = self.speed.x + GROUND_ACCEL * hor_input;
+            if speed_x_new.abs() < MAX_HOR_SPEED {
+                self.speed.x = speed_x_new;
+            }
+            if !self.state.is_grounded() {
+                if self.state == NinjaState::Jumping {
+                    self.applied_gravity = GRAVITY_FALL;
+                }
+                self.state = if self.speed.x * hor_input <= 0.0 {
+                    NinjaState::Skidding
+                } else {
+                    NinjaState::Running
+                };
+            }
+            if !in_jump_buffer && !new_jump_check {
+                // if not jumping
+                self.state = match self.state {
+                    NinjaState::Skidding => {
+                        let projection = self.speed.perp_dot(self.floor_unit_normal).abs();
+                        if hor_input * projection * self.speed.x > 0.0 {
+                            NinjaState::Running
+                        } else if projection < 0.1 && self.floor_unit_normal.x == 0.0 {
+                            NinjaState::Standing
+                        } else if self.speed.y < 0.0 && self.floor_unit_normal.x != 0.0 {
+                            // Up slope friction formula
+                            let speed_scalar = self.speed.length();
+                            let fric_force = (self.speed.x * (1.0 - FRICTION_GROUND) * self.floor_unit_normal.y).abs();
+                            let fric_force2 = speed_scalar - fric_force * self.floor_unit_normal.y * self.floor_unit_normal.y;
+                            self.speed = self.speed / speed_scalar * fric_force2;
+                            NinjaState::Skidding
+                        } else {
+                            self.speed.x *= FRICTION_GROUND;
+                            NinjaState::Skidding
+                        }
+                    }
+                    NinjaState::Running => {
+                        let projection = self.speed.perp_dot(self.floor_unit_normal).abs();
+                        if hor_input * projection * self.speed.x > 0.0 {
+                            if hor_input * self.floor_unit_normal.x >= 0.0 {
+                                // if holding inputs in downhill direction or flat ground
+                                NinjaState::Running
+                            } else if speed_x_new.abs() < MAX_HOR_SPEED {
+                                let boost = GROUND_ACCEL / 2.0 * hor_input;
+                                let boost = boost * Vec2 {
+                                    x: self.floor_unit_normal.y * self.floor_unit_normal.y,
+                                    y: self.floor_unit_normal.y * -self.floor_unit_normal.x,
+                                };
+                                self.speed += boost;
+                                NinjaState::Running
+                            } else {
+                                NinjaState::Skidding
+                            }
+                        } else {
+                            NinjaState::Skidding
+                        }
+                    }
+                    state => {
+                        if hor_input != 0.0 {
+                            NinjaState::Running
+                        } else {
+                            let projection = self.speed.perp_dot(self.floor_unit_normal).abs();
+                            if projection < 0.1 {
+                                self.speed.x *= FRICTION_GROUND_SLOW;
+                                state
+                            } else {
+                                NinjaState::Skidding
+                            }
+                        }
+                    }
+                };
+            } else {
+                self.floor_jump(hor_input);
+            }
+        } else {
+            // If ninja didn't touch floor
+            let speed_x_new = self.speed.x + AIR_ACCEL * hor_input;
+            if speed_x_new.abs() < MAX_HOR_SPEED {
+                self.speed.x = speed_x_new;
+            }
+            if self.state.is_grounded() {
+                self.state = NinjaState::Falling;
+                return;
+            }
+            if self.state == NinjaState::Jumping {
+                self.jump_duration += 1;
+                if !jump_input || self.jump_duration > MAX_JUMP_DURATION {
+                    self.applied_gravity = GRAVITY_FALL;
+                    self.state = NinjaState::Falling;
+                    return;
+                }
+            }
+            if in_jump_buffer || new_jump_check {
+                // If able to perform jump
+                if self.walled || in_wall_buffer {
+                    self.wall_jump(hor_input);
+                    return;
+                }
+                if in_floor_buffer {
+                    self.floor_jump(hor_input);
+                    return;
+                }
+                if in_lp_buffer && new_jump_check {
+                    self.launch_pad_jump();
+                    return;
+                }
+            }
+            if !self.walled {
+                if self.state == NinjaState::WallSliding {
+                    self.state = NinjaState::Falling;
+                }
+            } else if self.state == NinjaState::WallSliding {
+                if hor_input * self.wall_normal <= 0.0 {
+                    self.speed.y *= FRICTION_WALL;
+                } else {
+                    self.state = NinjaState::Falling;
+                }
+            } else if self.speed.y > 0.0 && hor_input * self.wall_normal < 0.0 {
+                if self.state == NinjaState::Jumping {
+                    self.applied_gravity = GRAVITY_FALL;
+                }
+                self.state = NinjaState::WallSliding;
+            }
+        }
+    }
+
 }
+
