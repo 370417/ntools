@@ -31,7 +31,9 @@ impl Replay {
 
     #[wasm_bindgen]
     pub fn tick(&mut self, jump: bool, right: bool, left: bool, suicide: bool) {
-        self.current_sim.tick(Input::new(jump, right, left, suicide), &self.segments);
+        if (self.current_sim.frame as usize) < self.inputs.len() {
+            self.current_sim.tick(Input::from_byte(self.inputs[self.current_sim.frame as usize]), &self.segments);
+        }
     }
 
     pub fn testing_tick(&mut self) {

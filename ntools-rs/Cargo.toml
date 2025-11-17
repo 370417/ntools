@@ -9,3 +9,6 @@ crate-type = ["cdylib"]
 [dependencies]
 glam = { version = "0.30.9", default-features = false, features = ["libm"] }
 wasm-bindgen = "0.2.105"
+
+[profile.release]
+lto = "fat"

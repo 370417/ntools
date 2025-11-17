@@ -315,7 +315,7 @@ impl Ninja {
     }
 
     /// Handles all the ninja's actions depending on the inputs and its environment.
-    fn think(&mut self, jump_input: bool, hor_input: f32) {
+    pub fn think(&mut self, jump_input: bool, hor_input: f32) {
         // Logic to determine if you're starting a new jump.
         let new_jump_check = jump_input && !self.jump_input_old;
         self.jump_input_old = jump_input;
