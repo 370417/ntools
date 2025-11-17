@@ -1,6 +1,8 @@
 use glam::Vec2;
+use rand::{seq::IndexedRandom, RngCore, SeedableRng};
+use rand_xoshiro::{SplitMix64, Xoroshiro64StarStar};
 
-use crate::{collision_util::{get_single_closest_point, sweep_circle_vs_tiles}, grid::Grid, segment::Segment};
+use crate::{anim_data::{get_anim_frame, Bones, DANCES}, collision_util::{get_single_closest_point, sweep_circle_vs_tiles}, grid::Grid, segment::Segment};
 
 const GRAVITY_FALL: f32 = 0.06666666666666665;
 const GRAVITY_JUMP: f32 = 0.01111111111111111;
@@ -23,7 +25,6 @@ pub struct Ninja {
     speed: Vec2,
     applied_gravity: f32,
     applied_drag: f32,
-    applied_friction: f32,
     pub state: NinjaState,
     airborne: bool,
     walled: bool,
@@ -36,6 +37,14 @@ pub struct Ninja {
     launch_pad_buffer: Option<u8>,
     floor_unit_normal: Vec2,
     ceiling_unit_normal: Vec2,
+    anim_state: u32,
+    facing: f32,
+    tilt: f32,
+    anim_rate: f32,
+    anim_frame: usize,
+    frame_residual: f32,
+    dance_end: usize,
+    run_cycle: usize,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -55,7 +64,6 @@ pub enum NinjaState {
 pub struct CollisionState {
     speed_old: Vec2,
     floor_count: u32,
-    wall_count: u32,
     ceiling_count: u32,
     floor_normal: Vec2,
     ceiling_normal: Vec2,
@@ -75,13 +83,12 @@ impl NinjaState {
 
 impl Ninja {
     pub fn new(map_pos: Vec2) -> Ninja {
-        Ninja {
+        let mut ninja = Ninja {
             pos: 6.0 * map_pos,
             pos_old: 6.0 * map_pos,
             speed: Vec2::ZERO,
             applied_gravity: GRAVITY_FALL,
             applied_drag: DRAG_REGULAR,
-            applied_friction: FRICTION_GROUND,
             state: NinjaState::Standing,
             airborne: false,
             walled: false,
@@ -94,7 +101,17 @@ impl Ninja {
             launch_pad_buffer: None,
             floor_unit_normal: Vec2::new(0.0, -1.0),
             ceiling_unit_normal: Vec2::new(0.0, 1.0),
-        }
+            anim_state: 0,
+            facing: 1.0,
+            tilt: 0.0,
+            anim_rate: 0.0,
+            anim_frame: 11,
+            frame_residual: 0.0,
+            dance_end: 0,
+            run_cycle: 0,
+        };
+        ninja.update_graphics(0.0);
+        ninja
     }
 
     /// Update position and speed by applying drag and gravity before collision phase.
@@ -110,7 +127,6 @@ impl Ninja {
         CollisionState {
             speed_old: self.speed,
             floor_count: 0,
-            wall_count: 0,
             ceiling_count: 0,
             floor_normal: Vec2::ZERO,
             ceiling_normal: Vec2::ZERO,
@@ -496,6 +512,136 @@ impl Ninja {
                 self.state = NinjaState::WallSliding;
             }
         }
+    }
+
+    /// Update parameters necessary to draw the limbs of the ninja.
+    pub fn update_graphics(&mut self, hor_input: f32) {
+        let anim_state_old = self.anim_state;
+        if self.state == NinjaState::WallSliding {
+            self.anim_state = 4;
+            self.tilt = 0.0;
+            self.facing = -self.wall_normal.signum();
+            self.anim_rate = self.speed.y;
+        } else if !self.airborne && self.state != NinjaState::Jumping {
+            self.tilt = self.floor_unit_normal.to_angle() + std::f32::consts::PI / 2.0;
+            match self.state {
+                NinjaState::Standing => self.anim_state = 0,
+                NinjaState::Running => {
+                    self.anim_state = 1;
+                    self.anim_rate = self.speed.perp_dot(self.floor_unit_normal).abs();
+                    if hor_input != 0.0 {
+                        self.facing = hor_input;
+                    }
+                }
+                NinjaState::Skidding => {
+                    self.anim_state = 2;
+                    self.anim_rate = self.speed.perp_dot(self.floor_unit_normal).abs();
+                }
+                NinjaState::Celebrating => self.anim_state = 6,
+                _ => {}
+            }
+        } else {
+            self.anim_state = 3;
+            self.anim_rate = self.speed.y;
+            if self.state == NinjaState::Jumping {
+                self.tilt = 0.0;
+            } else {
+                self.tilt *= 0.9;
+            }
+        }
+        if self.state != NinjaState::WallSliding {
+            if self.speed.x.abs() > 0.01 {
+                self.facing = self.speed.x.signum();
+            }
+        }
+
+        if self.anim_state != anim_state_old {
+            match self.anim_state {
+                0 => if self.anim_frame > 0 {
+                    self.anim_frame = 1;
+                }
+                1 => if anim_state_old != 3 {
+                    if anim_state_old == 2 {
+                        self.anim_frame = 39;
+                        self.run_cycle = 162;
+                        self.frame_residual = 0.0;
+                    } else {
+                        self.anim_frame = 12;
+                        self.run_cycle = 0;
+                        self.frame_residual = 0.0;
+                    }
+                } else {
+                    self.anim_frame = 18;
+                    self.run_cycle = 36;
+                    self.frame_residual = 0.0;
+                }
+                2 => self.anim_frame = 0,
+                3 => self.anim_frame = 84,
+                4 => self.anim_frame = 103,
+                6 => {
+                    let dance = DANCES.choose(&mut self.prng()).unwrap_or(&DANCES[0]);
+                    self.anim_frame = dance.0;
+                    self.dance_end = dance.1;
+                }
+                _ => {}
+            }
+        }
+
+        match self.anim_state {
+            0 => if self.anim_frame < 11 {
+                self.anim_frame += 1;
+            }
+            1 => {
+                let new_cycle = self.anim_rate / 0.15 + self.frame_residual;
+                self.frame_residual = new_cycle - new_cycle.floor();
+                self.run_cycle = (self.run_cycle + new_cycle.floor() as usize) % 432;
+                self.anim_frame = self.run_cycle / 6 + 12;
+            }
+            3 => {
+                let rate = if self.anim_rate >= 0.0 {
+                    (self.anim_rate * 0.6).min(1.0).sqrt()
+                } else {
+                    (self.anim_rate * 1.5).max(-1.0)
+                };
+                self.anim_frame = (93 + (9.0 * rate).floor() as isize) as usize;
+            }
+            6 => if self.anim_frame < self.dance_end {
+                self.anim_frame += 1;
+            }
+            _ => {}
+        }
+    }
+
+    /// Calculate the positions of ninja's joints. The positions are fetched from the animation data,
+    /// after applying mirroring, rotation or interpolation if necessary.
+    pub fn calc_ninja_position(&self) -> Bones {
+        let mut bones = get_anim_frame(self.anim_frame);
+        if self.anim_state == 1 {
+            let interpolation = (self.run_cycle % 6) as f32 / 6.0;
+            if interpolation > 0.0 {
+                let next_bones = get_anim_frame(((self.anim_frame as isize - 12) % 72 + 12) as usize);
+                for i in 0..13 {
+                    bones[i] += interpolation * (next_bones[i] - bones[i]);
+                }
+            }
+        }
+        for i in 0..13 {
+            bones[i].x *= self.facing;
+            bones[i] = Vec2::from_angle(self.tilt).rotate(bones[i]);
+        }
+        bones
+    }
+
+    /// Prng based on ninja's state.
+    /// For simplicity, this creates a whole new prng for every random number needed.
+    fn prng(&self) -> Xoroshiro64StarStar {
+        use std::io::Write;
+
+        let mut seed = [0_u8; 8];
+        let _ = (&mut seed[0..4]).write(&self.speed.x.to_le_bytes());
+        let _ = (&mut seed[4..8]).write(&self.speed.y.to_le_bytes());
+
+        Xoroshiro64StarStar::seed_from_u64(SplitMix64::from_seed(seed).next_u64())
     }
 
 }

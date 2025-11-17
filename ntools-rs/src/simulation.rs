@@ -53,6 +53,7 @@ impl Simulation {
             }
             self.ninja.post_collision(&collision_state, segments);
             self.ninja.think(input.jump, hor_input);
+            self.ninja.update_graphics(hor_input);
         }
     }
 }

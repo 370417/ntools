@@ -1,4 +1,4 @@
-import { createSignal, Index } from 'solid-js';
+import { createSignal, For, Index } from 'solid-js';
 import './App.css';
 import { Replay, viewbox } from './assets/ntools_rs';
 
@@ -8,6 +8,8 @@ type Mine = {
     type: 0 | 1 | 2;
 };
 
+const LIMBS = [[0, 12], [1, 12], [2, 8], [3, 9], [4, 10], [5, 11], [6, 7], [8, 0], [9, 0], [10, 1], [11, 1]];
+
 function App() {
     let replay: Replay | undefined = undefined;
 
@@ -16,6 +18,8 @@ function App() {
     const [tilePath, setTilePath] = createSignal('');
 
     const [ninja, setNinja] = createSignal({ x: -50, y: -50 });
+
+    const [ninjaBones, setNinjaBones] = createSignal<Float32Array<ArrayBufferLike> | undefined>(undefined);
 
     const [mines, setMines] = createSignal([] as Mine[]);
 
@@ -37,6 +41,7 @@ function App() {
             x: replay.ninja_x(),
             y: replay.ninja_y(),
         });
+        setNinjaBones(replay.ninja_bones());
 
         const minesArr: Mine[] = [];
         const minesLen = replay.mines_len();
@@ -79,6 +84,25 @@ function App() {
                     {(mine) => <use href={["#toggled", "#untoggled", "#toggling"][mine().type]} x={mine().x} y={mine().y} />}
                 </Index>
                 <circle cx={ninja().x} cy={ninja().y} r="10" fill="none" stroke="red" />
+                {
+                    // TODO: render as single path instead
+                    LIMBS.map(([i1, i2]) => {
+                        const coords = () => {
+                            let { x, y } = ninja();
+                            let bones = ninjaBones();
+                            let x1 = 0, y1 = 0, x2 = 0, y2 = 0;
+                            if (bones) {
+                                x1 = x + 20 * bones[i1];
+                                y1 = y + 20 * bones[i1 + 13];
+                                x2 = x + 20 * bones[i2];
+                                y2 = y + 20 * bones[i2 + 13];
+                            }
+                            return { x1, y1, x2, y2 };
+                        };
+
+                        return <line x1={coords().x1} y1={coords().y1} x2={coords().x2} y2={coords().y2} stroke="white" />
+                    })
+                }
                 <path d={tilePath()} stroke="red" fill-rule="evenodd" />
             </svg>
             <div>

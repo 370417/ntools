@@ -1,6 +1,6 @@
 use wasm_bindgen::prelude::*;
 
-use crate::{attract::Attract, grid::Grid, ninja::Ninja, segment::{extract_path, Segment}, simulation::{Input, Simulation}};
+use crate::{anim_data::flatten_bones, attract::Attract, grid::Grid, ninja::Ninja, segment::{extract_path, Segment}, simulation::{Input, Simulation}};
 
 #[wasm_bindgen]
 pub struct Replay {
@@ -53,6 +53,11 @@ impl Replay {
     #[wasm_bindgen]
     pub fn ninja_y(&self) -> f32 {
         self.current_sim.ninja.pos.y
+    }
+
+    #[wasm_bindgen]
+    pub fn ninja_bones(&self) -> Box<[f32]> {
+        flatten_bones(&self.current_sim.ninja.calc_ninja_position())
     }
 
     #[wasm_bindgen]
