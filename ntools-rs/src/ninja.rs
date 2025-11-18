@@ -2,7 +2,7 @@ use glam::{DVec2, Vec2};
 use rand::{seq::IndexedRandom, RngCore, SeedableRng};
 use rand_xoshiro::{SplitMix64, Xoroshiro64StarStar};
 
-use crate::{anim_data::{get_anim_frame, Bones, DANCES}, collision_util::{get_single_closest_point, sweep_circle_vs_tiles}, grid::Grid, segment::Segment};
+use crate::{anim_data::{get_anim_frame, Bones, DANCES}, collision_util::{get_single_closest_point, sweep_circle_vs_tiles}, grid::Grid, segment::Segment, simulation::{DEBUG_FRAME, FRAME}};
 
 const GRAVITY_FALL: f64 = 0.06666666666666665;
 const GRAVITY_JUMP: f64 = 0.01111111111111111;
@@ -22,7 +22,7 @@ const RADIUS: f64 = 10.0;
 pub struct Ninja {
     pub pos: DVec2,
     pos_old: DVec2,
-    speed: DVec2,
+    pub speed: DVec2,
     applied_gravity: f64,
     applied_drag: f64,
     pub state: NinjaState,
@@ -47,7 +47,7 @@ pub struct Ninja {
     run_cycle: usize,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum NinjaState {
     Standing,
     Running,
@@ -62,14 +62,14 @@ pub enum NinjaState {
 }
 
 pub struct CollisionState {
-    speed_old: DVec2,
-    floor_count: u32,
-    ceiling_count: u32,
-    floor_normal: DVec2,
-    ceiling_normal: DVec2,
-    is_crushable: bool,
-    crush: DVec2,
-    crush_len: f64,
+    pub speed_old: DVec2,
+    pub floor_count: u32,
+    pub ceiling_count: u32,
+    pub floor_normal: DVec2,
+    pub ceiling_normal: DVec2,
+    pub is_crushable: bool,
+    pub crush: DVec2,
+    pub crush_len: f64,
 }
 
 impl NinjaState {
@@ -336,6 +336,11 @@ impl Ninja {
         let new_jump_check = jump_input && !self.jump_input_old;
         self.jump_input_old = jump_input;
 
+        #[cfg(debug_assertions)]
+        if unsafe { FRAME == DEBUG_FRAME } {
+            println!("hihi");
+        }
+
         // Increment buffers
         self.launch_pad_buffer = match self.launch_pad_buffer {
             Some(n) if n < 3 => Some(n + 1),
@@ -392,12 +397,18 @@ impl Ninja {
             let speed_x_new = self.speed.x + GROUND_ACCEL * hor_input;
             if speed_x_new.abs() < MAX_HOR_SPEED {
                 self.speed.x = speed_x_new;
+                #[cfg(debug_assertions)]
+                if unsafe { FRAME == DEBUG_FRAME } {
+                    println!("here speed {}", self.speed.x);
+                }
             }
             if !self.state.is_grounded() {
                 if self.state == NinjaState::Jumping {
                     self.applied_gravity = GRAVITY_FALL;
                 }
                 self.state = if self.speed.x * hor_input <= 0.0 {
+                    #[cfg(debug_assertions)]
+                    println!("set skidding {}", unsafe { FRAME });
                     NinjaState::Skidding
                 } else {
                     NinjaState::Running
@@ -405,9 +416,18 @@ impl Ninja {
             }
             if !in_jump_buffer && !new_jump_check {
                 // if not jumping
+                #[cfg(debug_assertions)]
+                if unsafe { FRAME == DEBUG_FRAME } {
+                    println!("state {:?}", self.state);
+                }
                 self.state = match self.state {
                     NinjaState::Skidding => {
                         let projection = self.speed.perp_dot(self.floor_unit_normal).abs();
+                        #[cfg(debug_assertions)]
+                        if unsafe { FRAME == DEBUG_FRAME } {
+                            println!("projection {}", projection);
+                            println!("speed {}", self.speed.x);
+                        }
                         if hor_input * projection * self.speed.x > 0.0 {
                             NinjaState::Running
                         } else if projection < 0.1 && self.floor_unit_normal.x == 0.0 {
@@ -418,9 +438,13 @@ impl Ninja {
                             let fric_force = (self.speed.x * (1.0 - FRICTION_GROUND) * self.floor_unit_normal.y).abs();
                             let fric_force2 = speed_scalar - fric_force * self.floor_unit_normal.y * self.floor_unit_normal.y;
                             self.speed = self.speed / speed_scalar * fric_force2;
+                            #[cfg(debug_assertions)]
+                            println!("set skidding 2 {}", unsafe { FRAME });
                             NinjaState::Skidding
                         } else {
                             self.speed.x *= FRICTION_GROUND;
+                            #[cfg(debug_assertions)]
+                            println!("set skidding 3 {}", unsafe { FRAME });
                             NinjaState::Skidding
                         }
                     }
@@ -439,9 +463,13 @@ impl Ninja {
                                 self.speed += boost;
                                 NinjaState::Running
                             } else {
-                                NinjaState::Skidding
+                                // #[cfg(debug_assertions)]
+                                // println!("set skidding 4 {}", unsafe { FRAME });
+                                NinjaState::Running
                             }
                         } else {
+                            #[cfg(debug_assertions)]
+                            println!("set skidding 5 {}", unsafe { FRAME });
                             NinjaState::Skidding
                         }
                     }
@@ -454,6 +482,8 @@ impl Ninja {
                                 self.speed.x *= FRICTION_GROUND_SLOW;
                                 state
                             } else {
+                                #[cfg(debug_assertions)]
+                                println!("set skidding 6 {}", unsafe { FRAME });
                                 NinjaState::Skidding
                             }
                         }

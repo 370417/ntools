@@ -31,7 +31,7 @@ impl Replay {
 
     #[wasm_bindgen]
     pub fn tick(&mut self, jump: bool, right: bool, left: bool, suicide: bool) {
-        if (self.current_sim.frame as usize) < self.inputs.len() {
+        if (self.current_sim.frame as usize) < self.inputs.len() /*&& self.current_sim.frame < 1609*/ {
             self.current_sim.tick(Input::from_byte(self.inputs[self.current_sim.frame as usize]), &self.segments);
         }
     }
@@ -102,8 +102,14 @@ mod tests {
                 .collect::<Vec<f64>>())
             .collect::<Vec<Vec<f64>>>();
 
+        // let mut path = format!("M {} {}", replay.current_sim.ninja.pos.x, replay.current_sim.ninja.pos.y);
+
         for i in 0..replay.inputs.len() {
+            if i == 1609 {
+                println!("hi");
+            }
             replay.tick(false, false, false, false);
+            // path += &format!("L {} {}", replay.current_sim.ninja.pos.x, replay.current_sim.ninja.pos.y);
             if i < nsim_pos_log.len() {
                 let x = replay.current_sim.ninja.pos.x;
                 let y = replay.current_sim.ninja.pos.y;
@@ -114,10 +120,12 @@ mod tests {
 
                 if dx.abs() > 0.0 || dy.abs() > 0.000001 {
                     println!("{i} {} {} {} {}", dx, dy, nsim_x, nsim_y);
-                    break;
+                    // break;
                 }
             }
         }
+
+        // println!("{path}");
     }
 
     const NSIM_POS_LOG: &'static str = "372.0 564.0666666666667
