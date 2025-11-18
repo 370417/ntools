@@ -1,48 +1,48 @@
-use glam::Vec2;
+use glam::{DVec2, Vec2};
 use rand::{seq::IndexedRandom, RngCore, SeedableRng};
 use rand_xoshiro::{SplitMix64, Xoroshiro64StarStar};
 
 use crate::{anim_data::{get_anim_frame, Bones, DANCES}, collision_util::{get_single_closest_point, sweep_circle_vs_tiles}, grid::Grid, segment::Segment};
 
-const GRAVITY_FALL: f32 = 0.06666666666666665;
-const GRAVITY_JUMP: f32 = 0.01111111111111111;
-const GROUND_ACCEL: f32 = 0.06666666666666665;
-const AIR_ACCEL: f32 = 0.04444444444444444;
-const DRAG_REGULAR: f32 = 0.9933221725495059; // 0.99^(2/3)
-const DRAG_SLOW: f32 = 0.8617738760127536; // 0.80^(2/3)
-const FRICTION_GROUND: f32 = 0.9459290248857720; // 0.92^(2/3)
-const FRICTION_GROUND_SLOW: f32 = 0.8617738760127536; // 0.80^(2/3)
-const FRICTION_WALL: f32 = 0.9113380468927672; // 0.87^(2/3)
-const MAX_HOR_SPEED: f32 = 3.333333333333333;
+const GRAVITY_FALL: f64 = 0.06666666666666665;
+const GRAVITY_JUMP: f64 = 0.01111111111111111;
+const GROUND_ACCEL: f64 = 0.06666666666666665;
+const AIR_ACCEL: f64 = 0.04444444444444444;
+const DRAG_REGULAR: f64 = 0.9933221725495059; // 0.99^(2/3)
+const DRAG_SLOW: f64 = 0.8617738760127536; // 0.80^(2/3)
+const FRICTION_GROUND: f64 = 0.9459290248857720; // 0.92^(2/3)
+const FRICTION_GROUND_SLOW: f64 = 0.8617738760127536; // 0.80^(2/3)
+const FRICTION_WALL: f64 = 0.9113380468927672; // 0.87^(2/3)
+const MAX_HOR_SPEED: f64 = 3.333333333333333;
 const MAX_JUMP_DURATION: u32 = 45;
-const MAX_SURVIVABLE_IMPACT: f32 = 6.0;
-const MIN_SURVIVABLE_CRUSHING: f32 = 0.05;
-const RADIUS: f32 = 10.0;
+const MAX_SURVIVABLE_IMPACT: f64 = 6.0;
+const MIN_SURVIVABLE_CRUSHING: f64 = 0.05;
+const RADIUS: f64 = 10.0;
 
 pub struct Ninja {
-    pub pos: Vec2,
-    pos_old: Vec2,
-    speed: Vec2,
-    applied_gravity: f32,
-    applied_drag: f32,
+    pub pos: DVec2,
+    pos_old: DVec2,
+    speed: DVec2,
+    applied_gravity: f64,
+    applied_drag: f64,
     pub state: NinjaState,
     airborne: bool,
     walled: bool,
-    wall_normal: f32,
+    wall_normal: f64,
     jump_input_old: bool,
     jump_duration: u32,
     jump_buffer: Option<u8>,
     floor_buffer: Option<u8>,
     wall_buffer: Option<u8>,
     launch_pad_buffer: Option<u8>,
-    floor_unit_normal: Vec2,
-    ceiling_unit_normal: Vec2,
+    floor_unit_normal: DVec2,
+    ceiling_unit_normal: DVec2,
     anim_state: u32,
-    facing: f32,
-    tilt: f32,
-    anim_rate: f32,
+    facing: f64,
+    tilt: f64,
+    anim_rate: f64,
     anim_frame: usize,
-    frame_residual: f32,
+    frame_residual: f64,
     dance_end: usize,
     run_cycle: usize,
 }
@@ -62,14 +62,14 @@ pub enum NinjaState {
 }
 
 pub struct CollisionState {
-    speed_old: Vec2,
+    speed_old: DVec2,
     floor_count: u32,
     ceiling_count: u32,
-    floor_normal: Vec2,
-    ceiling_normal: Vec2,
+    floor_normal: DVec2,
+    ceiling_normal: DVec2,
     is_crushable: bool,
-    crush: Vec2,
-    crush_len: f32,
+    crush: DVec2,
+    crush_len: f64,
 }
 
 impl NinjaState {
@@ -82,11 +82,11 @@ impl NinjaState {
 }
 
 impl Ninja {
-    pub fn new(map_pos: Vec2) -> Ninja {
+    pub fn new(map_pos: DVec2) -> Ninja {
         let mut ninja = Ninja {
             pos: 6.0 * map_pos,
             pos_old: 6.0 * map_pos,
-            speed: Vec2::ZERO,
+            speed: DVec2::ZERO,
             applied_gravity: GRAVITY_FALL,
             applied_drag: DRAG_REGULAR,
             state: NinjaState::Standing,
@@ -99,8 +99,8 @@ impl Ninja {
             floor_buffer: None,
             wall_buffer: None,
             launch_pad_buffer: None,
-            floor_unit_normal: Vec2::new(0.0, -1.0),
-            ceiling_unit_normal: Vec2::new(0.0, 1.0),
+            floor_unit_normal: DVec2::new(0.0, -1.0),
+            ceiling_unit_normal: DVec2::new(0.0, 1.0),
             anim_state: 0,
             facing: 1.0,
             tilt: 0.0,
@@ -128,10 +128,10 @@ impl Ninja {
             speed_old: self.speed,
             floor_count: 0,
             ceiling_count: 0,
-            floor_normal: Vec2::ZERO,
-            ceiling_normal: Vec2::ZERO,
+            floor_normal: DVec2::ZERO,
+            ceiling_normal: DVec2::ZERO,
             is_crushable: false,
-            crush: Vec2::ZERO,
+            crush: DVec2::ZERO,
             crush_len: 0.0,
         }
     }
@@ -168,7 +168,7 @@ impl Ninja {
             collision_state.crush_len += depen_len;
             if self.speed.dot(delta) < 0.0 {
                 // Project velocity onto surface only if moving towards surface
-                let delta_perp = Vec2::new(delta.y, -delta.x);
+                let delta_perp = DVec2::new(delta.y, -delta.x);
                 self.speed = self.speed.perp_dot(delta) / (dist * dist) * delta_perp;
             }
             if delta.y >= -0.0001 {
@@ -193,7 +193,7 @@ impl Ninja {
 
         // Check if the ninja can interact with walls from nearby tile segments.
         let rad = RADIUS + 0.1;
-        let segments = segments.iter_rect_region(self.pos - Vec2::new(rad, rad), self.pos + Vec2::new(rad, rad));
+        let segments = segments.iter_rect_region(self.pos - DVec2::new(rad, rad), self.pos + DVec2::new(rad, rad));
 
         for segment in segments {
             let closest = segment.get_closest_point(self.pos).point;
@@ -216,7 +216,7 @@ impl Ninja {
         // Calculate the combined floor normalized normal vector if the ninja has touched any floor.
         if collision_state.floor_count > 0 {
             self.airborne = false;
-            self.floor_unit_normal = collision_state.floor_normal.normalize_or(Vec2::new(0.0, -1.0));
+            self.floor_unit_normal = collision_state.floor_normal.normalize_or(DVec2::new(0.0, -1.0));
             if self.state != NinjaState::Celebrating && airborne_old {
                 // Check if died from impact
                 let impact_vel = -self.floor_unit_normal.dot(collision_state.speed_old);
@@ -229,7 +229,7 @@ impl Ninja {
 
         // Calculate the combined ceiling normalized normal vector if the ninja has touched any ceiling.
         if collision_state.ceiling_count > 0 {
-            self.ceiling_unit_normal = collision_state.ceiling_normal.normalize_or(Vec2::new(0.0, 1.0));
+            self.ceiling_unit_normal = collision_state.ceiling_normal.normalize_or(DVec2::new(0.0, 1.0));
             if self.state != NinjaState::Celebrating {
                 // Check if died from impact
                 let impact_vel = -self.ceiling_unit_normal.dot(collision_state.speed_old);
@@ -243,12 +243,12 @@ impl Ninja {
         // Check if ninja died from crushing.
         if collision_state.is_crushable && collision_state.crush_len > 0.0 {
             if collision_state.crush.length() / collision_state.crush_len < MIN_SURVIVABLE_CRUSHING {
-                self.kill(2, self.pos, Vec2::ZERO);
+                self.kill(2, self.pos, DVec2::ZERO);
             }
         }
     }
 
-    fn kill(&mut self, _death_type: u32, _pos: Vec2, _speed: Vec2) {
+    fn kill(&mut self, _death_type: u32, _pos: DVec2, _speed: DVec2) {
         match self.state {
             NinjaState::AwaitingDeath | NinjaState::Celebrating | NinjaState::Disabled => {
                 // do nothing
@@ -260,7 +260,7 @@ impl Ninja {
     }
 
     /// Perform floor jump depending on slope angle and direction.
-    fn floor_jump(&mut self, hor_input: f32) {
+    fn floor_jump(&mut self, hor_input: f64) {
         self.jump_buffer = None;
         self.floor_buffer = None;
         self.launch_pad_buffer = None;
@@ -268,26 +268,26 @@ impl Ninja {
         self.applied_gravity = GRAVITY_JUMP;
         let jump = if self.floor_unit_normal.x == 0.0 {
             // Jump from flat ground
-            Vec2::new(0.0, -2.0)
+            DVec2::new(0.0, -2.0)
         } else if self.speed.x * self.floor_unit_normal.x >= 0.0 {
             // Slope jump moving downhill
             if self.speed.x * hor_input >= 0.0 {
-                Vec2 {
+                DVec2 {
                     x: 2.0 / 3.0 * self.floor_unit_normal.x,
                     y: 2.0 * self.floor_unit_normal.y
                 }
             } else {
-                Vec2::new(0.0, -1.4)
+                DVec2::new(0.0, -1.4)
             }
         } else {
             // Slope jump moving uphill
             if self.speed.x * hor_input > 0.0 {
                 // Forwards jump
-                Vec2::new(0.0, -1.4)
+                DVec2::new(0.0, -1.4)
             } else {
                 // Perp jump
                 self.speed.x = 0.0;
-                Vec2 {
+                DVec2 {
                     x: 2.0 / 3.0 * self.floor_unit_normal.x,
                     y: 2.0 * self.floor_unit_normal.y
                 }
@@ -302,11 +302,11 @@ impl Ninja {
     }
 
     /// Perform wall jump depending on wall normal and if sliding or not.
-    fn wall_jump(&mut self, hor_input: f32) {
+    fn wall_jump(&mut self, hor_input: f64) {
         let mut jump = if hor_input * self.wall_normal < 0.0 && self.state == NinjaState::WallSliding {
-            Vec2::new(2.0 / 3.0, -1.0)
+            DVec2::new(2.0 / 3.0, -1.0)
         } else {
-            Vec2::new(1.0, -1.4)
+            DVec2::new(1.0, -1.4)
         };
         self.state = NinjaState::Jumping;
         self.applied_gravity = GRAVITY_JUMP;
@@ -331,7 +331,7 @@ impl Ninja {
     }
 
     /// Handles all the ninja's actions depending on the inputs and its environment.
-    pub fn think(&mut self, jump_input: bool, hor_input: f32) {
+    pub fn think(&mut self, jump_input: bool, hor_input: f64) {
         // Logic to determine if you're starting a new jump.
         let new_jump_check = jump_input && !self.jump_input_old;
         self.jump_input_old = jump_input;
@@ -432,7 +432,7 @@ impl Ninja {
                                 NinjaState::Running
                             } else if speed_x_new.abs() < MAX_HOR_SPEED {
                                 let boost = GROUND_ACCEL / 2.0 * hor_input;
-                                let boost = boost * Vec2 {
+                                let boost = boost * DVec2 {
                                     x: self.floor_unit_normal.y * self.floor_unit_normal.y,
                                     y: self.floor_unit_normal.y * -self.floor_unit_normal.x,
                                 };
@@ -515,7 +515,7 @@ impl Ninja {
     }
 
     /// Update parameters necessary to draw the limbs of the ninja.
-    pub fn update_graphics(&mut self, hor_input: f32) {
+    pub fn update_graphics(&mut self, hor_input: f64) {
         let anim_state_old = self.anim_state;
         if self.state == NinjaState::WallSliding {
             self.anim_state = 4;
@@ -523,7 +523,7 @@ impl Ninja {
             self.facing = -self.wall_normal.signum();
             self.anim_rate = self.speed.y;
         } else if !self.airborne && self.state != NinjaState::Jumping {
-            self.tilt = self.floor_unit_normal.to_angle() + std::f32::consts::PI / 2.0;
+            self.tilt = self.floor_unit_normal.to_angle() + std::f64::consts::PI / 2.0;
             match self.state {
                 NinjaState::Standing => self.anim_state = 0,
                 NinjaState::Running => {
@@ -626,8 +626,8 @@ impl Ninja {
             }
         }
         for i in 0..13 {
-            bones[i].x *= self.facing;
-            bones[i] = Vec2::from_angle(self.tilt).rotate(bones[i]);
+            bones[i].x *= self.facing as f32;
+            bones[i] = Vec2::from_angle(self.tilt as f32).rotate(bones[i]);
         }
         bones
     }

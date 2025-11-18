@@ -1,9 +1,9 @@
-use glam::Vec2;
+use glam::DVec2;
 
 use crate::{grid::{Grid, GridPos}, segment::{Curvature, Segment}};
 
-pub const TILE_SIZE: f32 = 24.0;
-pub const TILE_HALF_SIZE: f32 = 12.0;
+pub const TILE_SIZE: f64 = 24.0;
+pub const TILE_HALF_SIZE: f64 = 12.0;
 
 #[derive(Clone, Copy, Debug)]
 pub enum Tile {
@@ -293,9 +293,9 @@ impl Tile {
     /// flush with an adjacent tile.
     fn outer_segment(&self, pos: GridPos, direction: (i32, i32)) -> Option<Segment> {
         let upper_left = pos.to_world_pos();
-        let upper_right = pos.to_world_pos() + Vec2::new(TILE_SIZE, 0.0);
-        let lower_left = pos.to_world_pos() + Vec2::new(0.0, TILE_SIZE);
-        let lower_right = pos.to_world_pos() + Vec2::new(TILE_SIZE, TILE_SIZE);
+        let upper_right = pos.to_world_pos() + DVec2::new(TILE_SIZE, 0.0);
+        let lower_left = pos.to_world_pos() + DVec2::new(0.0, TILE_SIZE);
+        let lower_right = pos.to_world_pos() + DVec2::new(TILE_SIZE, TILE_SIZE);
 
         use Tile::*;
         match direction {
@@ -312,19 +312,19 @@ impl Tile {
                 Tile8S | Tile8A => Some(Segment::Linear {
                     start: upper_left,
                     end: upper_right,
-                    normal: Vec2::new(0.0, -1.0),
+                    normal: DVec2::new(0.0, -1.0),
                 }),
                 // left half segment
                 Tile2S | Tile5Q | Tile6W => Some(Segment::Linear {
                     start: upper_left,
                     end: (upper_left + upper_right) / 2.0,
-                    normal: Vec2::new(0.0, -1.0),
+                    normal: DVec2::new(0.0, -1.0),
                 }),
                 // right half segment
                 Tile2A | Tile5S | Tile6Q => Some(Segment::Linear {
                     start: (upper_left + upper_right) / 2.0,
                     end: upper_right,
-                    normal: Vec2::new(0.0, -1.0),
+                    normal: DVec2::new(0.0, -1.0),
                 }),
                 // no segment
                 _ => None,
@@ -342,19 +342,19 @@ impl Tile {
                 Tile8A | Tile8Q => Some(Segment::Linear {
                     start: upper_right,
                     end: lower_right,
-                    normal: Vec2::new(1.0, 0.0),
+                    normal: DVec2::new(1.0, 0.0),
                 }),
                 // upper half segment
                 Tile3A | Tile5W | Tile7S => Some(Segment::Linear {
                     start: upper_right,
                     end: (upper_right + lower_right) / 2.0,
-                    normal: Vec2::new(1.0, 0.0),
+                    normal: DVec2::new(1.0, 0.0),
                 }),
                 // lower half segment
                 Tile3Q | Tile5A | Tile7W => Some(Segment::Linear {
                     start: (upper_right + lower_right) / 2.0,
                     end: lower_right,
-                    normal: Vec2::new(1.0, 0.0),
+                    normal: DVec2::new(1.0, 0.0),
                 }),
                 // no segment
                 _ => None,
@@ -372,19 +372,19 @@ impl Tile {
                 Tile8Q | Tile8W => Some(Segment::Linear {
                     start: lower_right,
                     end: lower_left,
-                    normal: Vec2::new(0.0, 1.0),
+                    normal: DVec2::new(0.0, 1.0),
                 }),
                 // right half segment
                 Tile2Q | Tile5S | Tile6A => Some(Segment::Linear {
                     start: lower_right,
                     end: (lower_right + lower_left) / 2.0,
-                    normal: Vec2::new(0.0, 1.0),
+                    normal: DVec2::new(0.0, 1.0),
                 }),
                 // left half segment
                 Tile2W | Tile5Q | Tile6S => Some(Segment::Linear {
                     start: (lower_right + lower_left) / 2.0,
                     end: lower_left,
-                    normal: Vec2::new(0.0, 1.0),
+                    normal: DVec2::new(0.0, 1.0),
                 }),
                 // no segment
                 _ => None,
@@ -402,19 +402,19 @@ impl Tile {
                 Tile8S | Tile8W => Some(Segment::Linear {
                     start: lower_left,
                     end: upper_left,
-                    normal: Vec2::new(-1.0, 0.0),
+                    normal: DVec2::new(-1.0, 0.0),
                 }),
                 // lower half segment
                 Tile3W | Tile5A | Tile7Q => Some(Segment::Linear {
                     start: lower_left,
                     end: (lower_left + upper_left) / 2.0,
-                    normal: Vec2::new(-1.0, 0.0),
+                    normal: DVec2::new(-1.0, 0.0),
                 }),
                 // upper half segment
                 Tile3S | Tile5W | Tile7A => Some(Segment::Linear {
                     start: (lower_left + upper_left) / 2.0,
                     end: upper_left,
-                    normal: Vec2::new(-1.0, 0.0),
+                    normal: DVec2::new(-1.0, 0.0),
                 }),
                 // no segment
                 _ => None,
@@ -428,9 +428,9 @@ impl Tile {
     /// of the tile's borders with another tile.
     fn inner_segment(&self, pos: GridPos) -> Option<Segment> {
         let upper_left = pos.to_world_pos();
-        let upper_right = pos.to_world_pos() + Vec2::new(TILE_SIZE, 0.0);
-        let lower_left = pos.to_world_pos() + Vec2::new(0.0, TILE_SIZE);
-        let lower_right = pos.to_world_pos() + Vec2::new(TILE_SIZE, TILE_SIZE);
+        let upper_right = pos.to_world_pos() + DVec2::new(TILE_SIZE, 0.0);
+        let lower_left = pos.to_world_pos() + DVec2::new(0.0, TILE_SIZE);
+        let lower_right = pos.to_world_pos() + DVec2::new(TILE_SIZE, TILE_SIZE);
 
         use Tile::*;
         match self {
@@ -438,62 +438,62 @@ impl Tile {
             Tile1Q => Some(Segment::Linear {
                 start: lower_left,
                 end: upper_right,
-                normal: Vec2::new(-1.0, -1.0),
+                normal: DVec2::new(-1.0, -1.0),
             }),
             Tile1W => Some(Segment::Linear {
                 start: upper_left,
                 end: lower_right,
-                normal: Vec2::new(1.0, -1.0),
+                normal: DVec2::new(1.0, -1.0),
             }),
             Tile1S => Some(Segment::Linear {
                 start: upper_right,
                 end: lower_left,
-                normal: Vec2::new(1.0, 1.0),
+                normal: DVec2::new(1.0, 1.0),
             }),
             Tile1A => Some(Segment::Linear {
                 start: lower_right,
                 end: upper_left,
-                normal: Vec2::new(-1.0, 1.0),
+                normal: DVec2::new(-1.0, 1.0),
             }),
             Tile2Q => Some(Segment::Linear {
                 start: (lower_right + lower_left) / 2.0,
                 end: upper_right,
-                normal: Vec2::new(-2.0, -1.0),
+                normal: DVec2::new(-2.0, -1.0),
             }),
             Tile2W => Some(Segment::Linear {
                 start: upper_left,
                 end: (lower_left + lower_right) / 2.0,
-                normal: Vec2::new(2.0, -1.0),
+                normal: DVec2::new(2.0, -1.0),
             }),
             Tile2S => Some(Segment::Linear {
                 start: (upper_left + upper_right) / 2.0,
                 end: lower_left,
-                normal: Vec2::new(2.0, 1.0),
+                normal: DVec2::new(2.0, 1.0),
             }),
             Tile2A => Some(Segment::Linear {
                 start: lower_right,
                 end: (upper_left + upper_right) / 2.0,
-                normal: Vec2::new(-2.0, 1.0),
+                normal: DVec2::new(-2.0, 1.0),
             }),
             Tile3Q => Some(Segment::Linear {
                 start: lower_left,
                 end: (upper_right + lower_right) / 2.0,
-                normal: Vec2::new(-1.0, -2.0),
+                normal: DVec2::new(-1.0, -2.0),
             }),
             Tile3W => Some(Segment::Linear {
                 start: (upper_left + lower_left) / 2.0,
                 end: lower_right,
-                normal: Vec2::new(1.0, -2.0),
+                normal: DVec2::new(1.0, -2.0),
             }),
             Tile3S => Some(Segment::Linear {
                 start: upper_right,
                 end: (upper_left + lower_left) / 2.0,
-                normal: Vec2::new(1.0, 2.0),
+                normal: DVec2::new(1.0, 2.0),
             }),
             Tile3A => Some(Segment::Linear {
                 start: (upper_right + lower_right) / 2.0,
                 end: upper_left,
-                normal: Vec2::new(-1.0, 2.0),
+                normal: DVec2::new(-1.0, 2.0),
             }),
             Tile4Q => Some(Segment::Circular {
                 start: lower_left,
@@ -522,62 +522,62 @@ impl Tile {
             Tile5Q => Some(Segment::Linear {
                 start: (upper_left + upper_right) / 2.0,
                 end: (lower_left + lower_right) / 2.0,
-                normal: Vec2::new(1.0, 0.0),
+                normal: DVec2::new(1.0, 0.0),
             }),
             Tile5W => Some(Segment::Linear {
                 start: (upper_right + lower_right) / 2.0,
                 end: (upper_left + lower_left) / 2.0,
-                normal: Vec2::new(0.0, 1.0),
+                normal: DVec2::new(0.0, 1.0),
             }),
             Tile5S => Some(Segment::Linear {
                 start: (lower_left + lower_right) / 2.0,
                 end: (upper_left + upper_right) / 2.0,
-                normal: Vec2::new(-1.0, 0.0),
+                normal: DVec2::new(-1.0, 0.0),
             }),
             Tile5A => Some(Segment::Linear {
                 start: (upper_left + lower_left) / 2.0,
                 end: (upper_right + lower_right) / 2.0,
-                normal: Vec2::new(0.0, -1.0),
+                normal: DVec2::new(0.0, -1.0),
             }),
             Tile6Q => Some(Segment::Linear {
                 start: lower_left,
                 end: (upper_left + upper_right) / 2.0,
-                normal: Vec2::new(-2.0, -1.0),
+                normal: DVec2::new(-2.0, -1.0),
             }),
             Tile6W => Some(Segment::Linear {
                 start: (upper_left + upper_right) / 2.0,
                 end: lower_right,
-                normal: Vec2::new(2.0, -1.0),
+                normal: DVec2::new(2.0, -1.0),
             }),
             Tile6S => Some(Segment::Linear {
                 start: upper_right,
                 end: (lower_left + lower_right) / 2.0,
-                normal: Vec2::new(2.0, 1.0),
+                normal: DVec2::new(2.0, 1.0),
             }),
             Tile6A => Some(Segment::Linear {
                 start: (lower_left + lower_right) / 2.0,
                 end: upper_left,
-                normal: Vec2::new(-2.0, 1.0),
+                normal: DVec2::new(-2.0, 1.0),
             }),
             Tile7Q => Some(Segment::Linear {
                 start: (upper_left + lower_left) / 2.0,
                 end: upper_right,
-                normal: Vec2::new(-1.0, -2.0),
+                normal: DVec2::new(-1.0, -2.0),
             }),
             Tile7W => Some(Segment::Linear {
                 start: upper_left,
                 end: (upper_right + lower_right) / 2.0,
-                normal: Vec2::new(1.0, -2.0),
+                normal: DVec2::new(1.0, -2.0),
             }),
             Tile7S => Some(Segment::Linear {
                 start: (upper_right + lower_right) / 2.0,
                 end: lower_left,
-                normal: Vec2::new(1.0, 2.0),
+                normal: DVec2::new(1.0, 2.0),
             }),
             Tile7A => Some(Segment::Linear {
                 start: lower_right,
                 end: (upper_left + lower_left) / 2.0,
-                normal: Vec2::new(-1.0, 2.0),
+                normal: DVec2::new(-1.0, 2.0),
             }),
             Tile8Q => Some(Segment::Circular {
                 start: lower_left,

@@ -1,6 +1,6 @@
 use std::ops::{Index, IndexMut};
 
-use glam::Vec2;
+use glam::{DVec2, Vec2};
 
 use crate::tile::TILE_SIZE;
 
@@ -47,7 +47,7 @@ impl <T, const W: usize, const H: usize> Grid<T, W, H> {
         self.cells.iter().flat_map(|row| row.iter()).flat_map(|cell| cell.iter())
     }
 
-    pub fn iter_rect_region(&self, a: Vec2, b: Vec2) -> impl Iterator<Item = &T> {
+    pub fn iter_rect_region(&self, a: DVec2, b: DVec2) -> impl Iterator<Item = &T> {
         let grid_pos1 = GridPos::from_world_pos(a).clamp();
         let grid_pos2 = GridPos::from_world_pos(b).clamp();
         GridPos::iter_range_inclusive(grid_pos1, grid_pos2).flat_map(|pos| self[pos].iter())
@@ -65,7 +65,7 @@ impl GridPos {
         GridPos { x, y }
     }
 
-    pub fn from_world_pos(pos: Vec2) -> GridPos {
+    pub fn from_world_pos(pos: DVec2) -> GridPos {
         GridPos {
             x: (pos.x / TILE_SIZE).floor() as usize,
             y: (pos.y / TILE_SIZE).floor() as usize,
@@ -90,8 +90,8 @@ impl GridPos {
         self.x > 0 && self.y > 0 && self.x <= COLS && self.y <= ROWS
     }
 
-    pub fn to_world_pos(self) -> Vec2 {
-        Vec2::new(self.x as f32 * TILE_SIZE, self.y as f32 * TILE_SIZE)
+    pub fn to_world_pos(self) -> DVec2 {
+        DVec2::new(self.x as f64 * TILE_SIZE, self.y as f64 * TILE_SIZE)
     }
 
     pub fn min(self, other: GridPos) -> GridPos {

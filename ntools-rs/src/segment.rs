@@ -1,4 +1,4 @@
-use glam::Vec2;
+use glam::DVec2;
 
 use crate::{collision_util::{get_time_of_intersection_circle_vs_arc, get_time_of_intersection_circle_vs_circle, get_time_of_intersection_circle_vs_lineseg}, grid::{Grid, COLS, ROWS}, tile::TILE_SIZE};
 
@@ -6,17 +6,17 @@ use crate::{collision_util::{get_time_of_intersection_circle_vs_arc, get_time_of
 #[derive(Clone, Debug)]
 pub enum Segment {
     Linear {
-        start: Vec2,
-        end: Vec2,
+        start: DVec2,
+        end: DVec2,
         /// Normal pointing away from the wall.
         /// Used to calculate which side of the wall a point is on.
         /// Note: Does not have to have magnitude = 1.
-        normal: Vec2,
+        normal: DVec2,
     },
     Circular {
-        start: Vec2,
-        end: Vec2,
-        center: Vec2,
+        start: DVec2,
+        end: DVec2,
+        center: DVec2,
         curvature: Curvature,
     },
     Door,
@@ -29,7 +29,7 @@ pub enum Curvature {
 }
 
 pub struct ClosestPoint {
-    pub point: Vec2,
+    pub point: DVec2,
     pub is_back_facing: bool,
 }
 
@@ -46,14 +46,14 @@ impl Curvature {
 }
 
 impl Segment {
-    pub fn start(&self) -> Vec2 {
+    pub fn start(&self) -> DVec2 {
         match self {
             Self::Linear { start, .. } | Self::Circular { start, .. } => *start,
             _ => todo!(),
         }
     }
 
-    pub fn end(&self) -> Vec2 {
+    pub fn end(&self) -> DVec2 {
         match self {
             Segment::Linear { end, .. } | Self::Circular { end, .. } => *end,
             _ => todo!(),
@@ -69,7 +69,7 @@ impl Segment {
 
     /// Find the closest point on the segment from the given position.
     /// is_back_facing is false if the position is facing the segment's outter edge.
-    pub fn get_closest_point(&self, pos: Vec2) -> ClosestPoint {
+    pub fn get_closest_point(&self, pos: DVec2) -> ClosestPoint {
         match self {
             Segment::Linear { start, end, normal } => {
                 let seg = end - start;
@@ -206,7 +206,7 @@ impl Segment {
     /// Return the time of intersection (as a fraction of a frame) for the collision
     /// between the segment and a circle moving along a given direction. Return 0 if the circle 
     /// is already intersecting or 1 if it won't intersect within the frame
-    pub fn intersect_with_ray(&self, pos: Vec2, delta: Vec2, radius: f32) -> f32 {
+    pub fn intersect_with_ray(&self, pos: DVec2, delta: DVec2, radius: f64) -> f64 {
         match self {
             Segment::Linear { start, end, .. } => {
                 let time1 = get_time_of_intersection_circle_vs_circle(pos, delta, *start, radius);
@@ -226,7 +226,7 @@ impl Segment {
     }
 
     /// Represent this segment as an svg path command.
-    fn svg_path(&self, curr_pos: Vec2) -> String {
+    fn svg_path(&self, curr_pos: DVec2) -> String {
         assert_eq!(self.start(), curr_pos);
         match self {
             Self::Linear { end, .. } => format!("L {} {}", end.x, end.y),
@@ -244,8 +244,8 @@ pub fn extract_path(segments: &Grid<Segment>) -> String {
     let mut path = Vec::new();
 
     // add a path around the entire screen so that the fill covers walls instead of empty tiles
-    let x_max = (COLS + 2) as f32 * TILE_SIZE;
-    let y_max = (ROWS + 2) as f32 * TILE_SIZE;
+    let x_max = (COLS + 2) as f64 * TILE_SIZE;
+    let y_max = (ROWS + 2) as f64 * TILE_SIZE;
     path.push(format!("M 0 0 L 0 {} L {} {} L {} 0 L 0 0", y_max, x_max, y_max, x_max));
 
     while let Some(segment) = segments.pop() {
@@ -263,6 +263,6 @@ pub fn extract_path(segments: &Grid<Segment>) -> String {
     path.join(" ")
 }
 
-fn find_next_segment<'a>(curr_pos: Vec2, segments: &'a [Segment]) -> Option<(usize, &'a Segment)> {
+fn find_next_segment<'a>(curr_pos: DVec2, segments: &'a [Segment]) -> Option<(usize, &'a Segment)> {
     segments.iter().enumerate().find(|(_, segment)| segment.start() == curr_pos)
 }

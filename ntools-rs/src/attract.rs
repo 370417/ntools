@@ -1,4 +1,4 @@
-use glam::Vec2;
+use glam::DVec2;
 
 use crate::{entity::{mine::Mine, InitialEntities}, grid::{Grid, GridPos, COLS, ROWS}, segment::{extract_path, Segment}, tile::Tile};
 
@@ -109,7 +109,7 @@ impl Attract {
             let orientation = map_data[i + 3];
             let mode = map_data[i + 4];
 
-            let pos = Vec2::new(x as f32, y as f32);
+            let pos = DVec2::new(x as f64, y as f64);
 
             match object_id {
                 // Ninja

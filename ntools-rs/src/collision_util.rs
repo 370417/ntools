@@ -1,21 +1,21 @@
-use glam::Vec2;
+use glam::DVec2;
 
 use crate::{grid::Grid, segment::{ClosestPoint, Segment}};
 
 /// Fetch all segments from neighbourhood. Return shortest intersection time from interpolation.
-pub fn sweep_circle_vs_tiles(pos_old: Vec2, delta: Vec2, radius: f32, segments: &Grid<Segment>) -> f32 {
+pub fn sweep_circle_vs_tiles(pos_old: DVec2, delta: DVec2, radius: f64, segments: &Grid<Segment>) -> f64 {
     let pos_new = pos_old + delta;
     let width = radius + 1.0;
-    let min = pos_old.min(pos_new) - Vec2::new(width, width);
-    let max = pos_old.max(pos_new) + Vec2::new(width, width);
+    let min = pos_old.min(pos_new) - DVec2::new(width, width);
+    let max = pos_old.max(pos_new) + DVec2::new(width, width);
     segments.iter_rect_region(min, max)
         .map(|segment| segment.intersect_with_ray(pos_old, delta, radius))
-        .reduce(f32::min)
+        .reduce(f64::min)
         .unwrap_or(1.0)
 }
 
 /// Return time of intersection by interpolation by sweeping a circle onto a target circle, given a combined radius.
-pub fn get_time_of_intersection_circle_vs_circle(center: Vec2, vel: Vec2, target: Vec2, radius: f32) -> f32 {
+pub fn get_time_of_intersection_circle_vs_circle(center: DVec2, vel: DVec2, target: DVec2, radius: f64) -> f64 {
     let delta = center - target;
     let dist_sq = delta.length_squared();
     let vel_sq = vel.length_squared();
@@ -33,7 +33,7 @@ pub fn get_time_of_intersection_circle_vs_circle(center: Vec2, vel: Vec2, target
 }
 
 /// Return time of intersection by interpolation by sweeping a circle onto a line segment.
-pub fn get_time_of_intersection_circle_vs_lineseg(center: Vec2, delta: Vec2, start: Vec2, end: Vec2, radius: f32) -> f32 {
+pub fn get_time_of_intersection_circle_vs_lineseg(center: DVec2, delta: DVec2, start: DVec2, end: DVec2, radius: f64) -> f64 {
     let segment_vec = end - start;
     let seg_len = segment_vec.length();
     let segment_unitvec = segment_vec / seg_len;
@@ -56,7 +56,7 @@ pub fn get_time_of_intersection_circle_vs_lineseg(center: Vec2, delta: Vec2, sta
 
 /// Return time of intersection by interpolation by sweeping a circle onto a circle arc.
 /// This algorithm assumes the radius of the circle is lesser than the radius of the arc.
-pub fn get_time_of_intersection_circle_vs_arc(center_circle: Vec2, vel: Vec2, center_arc: Vec2, quadrant: Vec2, radius_arc: f32, radius_circle: f32) -> f32 {
+pub fn get_time_of_intersection_circle_vs_arc(center_circle: DVec2, vel: DVec2, center_arc: DVec2, quadrant: DVec2, radius_arc: f64, radius_circle: f64) -> f64 {
     let delta = center_circle - center_arc;
     let dist_sq = delta.length_squared();
     let vel_sq = vel.length_squared();
@@ -88,8 +88,8 @@ pub fn get_time_of_intersection_circle_vs_arc(center_circle: Vec2, vel: Vec2, ce
 }
 
 /// Find the closest point belonging to a collidable segment from the given position.
-pub fn get_single_closest_point(pos: Vec2, radius: f32, segments: &Grid<Segment>) -> Option<ClosestPoint> {
-    segments.iter_rect_region(pos - Vec2::new(radius, radius), pos + Vec2::new(radius, radius))
+pub fn get_single_closest_point(pos: DVec2, radius: f64, segments: &Grid<Segment>) -> Option<ClosestPoint> {
+    segments.iter_rect_region(pos - DVec2::new(radius, radius), pos + DVec2::new(radius, radius))
         .map(|segment| {
             let closest = segment.get_closest_point(pos);
             let mut distance_sq = (pos - closest.point).length_squared();

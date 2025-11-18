@@ -1,11 +1,11 @@
-use glam::Vec2;
+use glam::DVec2;
 
 use crate::entity::mine::Mine;
 
 pub mod mine;
 
 pub struct InitialEntities {
-    pub ninjas: Vec<Vec2>,
+    pub ninjas: Vec<DVec2>,
     pub mines: Vec<Mine>,
 }
 

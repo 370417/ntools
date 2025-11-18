@@ -46,12 +46,12 @@ impl Replay {
     }
 
     #[wasm_bindgen]
-    pub fn ninja_x(&self) -> f32 {
+    pub fn ninja_x(&self) -> f64 {
         self.current_sim.ninja.pos.x
     }
 
     #[wasm_bindgen]
-    pub fn ninja_y(&self) -> f32 {
+    pub fn ninja_y(&self) -> f64 {
         self.current_sim.ninja.pos.y
     }
 
@@ -66,12 +66,12 @@ impl Replay {
     }
 
     #[wasm_bindgen]
-    pub fn mine_x(&self, i: usize) -> f32 {
+    pub fn mine_x(&self, i: usize) -> f64 {
         self.current_sim.mines[i].pos.x
     }
 
     #[wasm_bindgen]
-    pub fn mine_y(&self, i: usize) -> f32 {
+    pub fn mine_y(&self, i: usize) -> f64 {
         self.current_sim.mines[i].pos.y
     }
 
@@ -98,22 +98,23 @@ mod tests {
             .split_terminator('\n')
             .map(|string| string
                 .split_ascii_whitespace()
-                .map(|string| string.parse::<f32>().unwrap())
-                .collect::<Vec<f32>>())
-            .collect::<Vec<Vec<f32>>>();
+                .map(|string| string.parse::<f64>().unwrap())
+                .collect::<Vec<f64>>())
+            .collect::<Vec<Vec<f64>>>();
 
         for i in 0..replay.inputs.len() {
             replay.tick(false, false, false, false);
-            if i < nsim_pos_log.len() && i < 1500 {
+            if i < nsim_pos_log.len() && i < 100 {
                 let x = replay.current_sim.ninja.pos.x;
                 let y = replay.current_sim.ninja.pos.y;
                 let nsim_x = nsim_pos_log[i][0];
                 let nsim_y = nsim_pos_log[i][1];
                 let dx = x - nsim_x;
                 let dy = y - nsim_y;
-                if dx.abs() > 0.01 || dy.abs() > 0.01 {
-                    println!("{i} {} {} {} {}", x, y, nsim_x, nsim_y);
-                }
+
+                // if dx.abs() > 0.01 || dy.abs() > 0.01 {
+                    println!("{i} {} {} {} {}", dx, dy, nsim_x, nsim_y);
+                // }
             }
         }
     }
