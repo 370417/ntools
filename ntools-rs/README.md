@@ -10,6 +10,4 @@ For animation data, copy the file `anim_data_line_new.txt.bin` from your copy of
 
 ## Build
 
-```
-wasm-bindgen target/wasm32-unknown-unknown/release/<your-project>.wasm --out-dir ../nview/public --typescript --target web
-```
+See `./build.sh`.
