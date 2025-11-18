@@ -104,7 +104,7 @@ mod tests {
 
         for i in 0..replay.inputs.len() {
             replay.tick(false, false, false, false);
-            if i < nsim_pos_log.len() && i < 100 {
+            if i < nsim_pos_log.len() {
                 let x = replay.current_sim.ninja.pos.x;
                 let y = replay.current_sim.ninja.pos.y;
                 let nsim_x = nsim_pos_log[i][0];
@@ -112,9 +112,10 @@ mod tests {
                 let dx = x - nsim_x;
                 let dy = y - nsim_y;
 
-                // if dx.abs() > 0.01 || dy.abs() > 0.01 {
+                if dx.abs() > 0.0 || dy.abs() > 0.000001 {
                     println!("{i} {} {} {} {}", dx, dy, nsim_x, nsim_y);
-                // }
+                    break;
+                }
             }
         }
     }
