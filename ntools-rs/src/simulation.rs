@@ -6,9 +6,6 @@ pub struct Simulation {
     pub mines: Vec<Mine>,
 }
 
-pub static mut FRAME: u32 = 0;
-pub static DEBUG_FRAME: u32 = 1609;
-
 #[derive(Clone, Copy)]
 pub struct Input {
     jump: bool,
@@ -35,9 +32,6 @@ impl Input {
 impl Simulation {
     pub fn tick(&mut self, input: Input, segments: &Grid<Segment>) {
         self.frame += 1;
-        
-        #[cfg(debug_assertions)]
-        unsafe { FRAME = self.frame }
 
         // set ninja input
         let hor_input = match input {
@@ -52,35 +46,13 @@ impl Simulation {
 
         if self.ninja.state != NinjaState::Disabled {
             self.ninja.integrate();
-            #[cfg(debug_assertions)]
-            if unsafe { FRAME == DEBUG_FRAME } {
-                println!("pos {} {}", self.ninja.pos.x, self.ninja.pos.y);
-                println!("speed {} {}", self.ninja.speed.x, self.ninja.speed.y);
-                println!("state1 {:?}", self.ninja.state);
-            }
-            #[cfg(debug_assertions)]
-            if unsafe { FRAME == DEBUG_FRAME - 1 } {
-                println!("state1 {:?}", self.ninja.state);
-            }
             let mut collision_state = self.ninja.pre_collision();
             for _ in 0..4 {
                 // self.ninja.collide_vs_objects();
                 self.ninja.collide_vs_tiles(&mut collision_state, segments);
             }
             self.ninja.post_collision(&collision_state, segments);
-            #[cfg(debug_assertions)]
-            if unsafe { FRAME == DEBUG_FRAME } {
-                println!("pos {} {}", self.ninja.pos.x, self.ninja.pos.y);
-                println!("speed {} {}", self.ninja.speed.x, self.ninja.speed.y);
-                println!("state2 {:?}", self.ninja.state);
-            }
             self.ninja.think(input.jump, hor_input);
-            #[cfg(debug_assertions)]
-            if unsafe { FRAME == DEBUG_FRAME } {
-                println!("pos {} {}", self.ninja.pos.x, self.ninja.pos.y);
-                println!("speed {} {}", self.ninja.speed.x, self.ninja.speed.y);
-                println!("state3 {:?}", self.ninja.state);
-            }
             self.ninja.update_graphics(hor_input);
         }
     }
