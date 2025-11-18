@@ -190,6 +190,8 @@ impl Attract {
 
         let frames = &demo_bytes[30..];
 
+        println!("frame count {}", frames.len());
+
         if frames.len() != frame_count as usize {
             return Err("Frame count does not match data".into());
         }
