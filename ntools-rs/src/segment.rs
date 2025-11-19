@@ -244,9 +244,9 @@ pub fn extract_path(segments: &Grid<Segment>) -> String {
     let mut path = Vec::new();
 
     // add a path around the entire screen so that the fill covers walls instead of empty tiles
-    let x_max = (COLS + 2) as f64 * TILE_SIZE;
-    let y_max = (ROWS + 2) as f64 * TILE_SIZE;
-    path.push(format!("M 0 0 L 0 {} L {} {} L {} 0 L 0 0", y_max, x_max, y_max, x_max));
+    let x_max = (COLS + 4) as f64 * TILE_SIZE;
+    let y_max = (ROWS + 4) as f64 * TILE_SIZE;
+    path.push(format!("M -1 -1 L -1 {} L {} {} L {} -1 L -1 -1", y_max, x_max, y_max, x_max));
 
     while let Some(segment) = segments.pop() {
         let mut curr_pos = segment.start();

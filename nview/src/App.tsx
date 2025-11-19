@@ -1,5 +1,4 @@
 import { createSignal, Index } from 'solid-js';
-import './App.css';
 import { Replay, viewbox } from './assets/ntools_rs';
 
 type Mine = {
@@ -14,6 +13,29 @@ type BounceBlock = {
 };
 
 const LIMBS = [[0, 12], [1, 12], [2, 8], [3, 9], [4, 10], [5, 11], [6, 7], [8, 0], [9, 0], [10, 1], [11, 1]];
+
+// Mine
+// In 1080p, mine spoke diameter is 15
+const spokeRadius = 15 / 2 * 24 / 44;
+const spokeDiag = spokeRadius / Math.pow(2, 0.5);
+const spokeWidth = 2.5 * 24 / 44;
+const mineInnerRadius = 3.5 * 24 / 44;
+const mineOuterRadius = 5 * 24 / 44;
+const toggleRadius = 5 * 24 / 44;
+const toggleThickness = 2 * 24 / 44;
+
+// Bounceblock
+// In 1080p:
+// <path d="M -18 -18 L 18 -18 L 18 18 L -18 18 Z" />
+const n17 = 17 * 24 / 44;
+const n17a = 4 * 24 / 44;
+const n17b = 10 * 24 / 44;
+const n18 = 18 * 24 / 44;
+const bounceBlockPath = `M -${n18} -${n18} L ${n18} -${n18} L ${n18} ${n18} L -${n18} ${n18} Z`;
+// I would use svg's stroke dasharray to make the dashed lines, but they result in artifacts
+// at corners, so instead we recreate the effect with a path.
+const bounceBlockStrokePath = `M -${n17} ${n17b} V ${n17} H -${n17b} M -${n17a} ${n17} H ${n17a} M ${n17b} ${n17} H ${n17} V ${n17b} M ${n17} ${n17a} V -${n17a} M ${n17} -${n17b} V -${n17} H ${n17b} M ${n17a} -${n17} H -${n17a} M -${n17b} -${n17} H -${n17} V -${n17b} M -${n17} -${n17a} V ${n17a}`;
+const bounceBlockStroke = 2 * 24 / 44;
 
 function App() {
     let replay: Replay | undefined = undefined;
@@ -88,16 +110,22 @@ function App() {
             <svg viewBox={viewboxVal} width="1200">
                 <defs>
                     <g id="toggled">
-                        <circle r="4" fill="none" stroke="pink" />
+                        <line stroke-linecap="round" stroke-width={spokeWidth} x1={-spokeRadius} y1={0} x2={spokeRadius} y2={0} />
+                        <line stroke-linecap="round" stroke-width={spokeWidth} x1={0} y1={-spokeRadius} x2={0} y2={spokeRadius} />
+                        <line stroke-linecap="round" stroke-width={spokeWidth} x1={-spokeDiag} y1={-spokeDiag} x2={spokeDiag} y2={spokeDiag} />
+                        <line stroke-linecap="round" stroke-width={spokeWidth} x1={-spokeDiag} y1={spokeDiag} x2={spokeDiag} y2={-spokeDiag} />
+                        <circle id="mineOuter" r={mineOuterRadius} />
+                        <circle id="mineInner" r={mineInnerRadius} />
                     </g>
                     <g id="untoggled">
-                        <circle r="3.5" fill="none" stroke="blue" />
+                        <circle r={toggleRadius} stroke-width={toggleThickness} fill="none" />
                     </g>
                     <g id="toggling">
-                        <circle r="4.5" fill="none" stroke="pink" />
+                        <circle r={toggleRadius} stroke-width={toggleThickness} fill="none" />
                     </g>
                     <g id="bounceblock">
-                        <path d="M -9 -9 L 9 -9 L 9 9 L -9 9 Z" fill="#999" stroke="black" stroke-dasharray='10' />
+                        <path id="bounceblockFill" d={bounceBlockPath} />
+                        <path id="bounceblockStroke" d={bounceBlockStrokePath} fill="none" stroke-width={bounceBlockStroke} />
                     </g>
                 </defs>
                 <Index each={mines()}>
@@ -106,8 +134,7 @@ function App() {
                 <Index each={bounceBlocks()}>
                     {(bounceBlock) => <use href="#bounceblock" x={bounceBlock().x} y={bounceBlock().y} />}
                 </Index>
-                {/* <circle cx={ninja().x} cy={ninja().y} r="10" fill="none" stroke="red" /> */}
-                <path d={(() => {
+                <path class="ninja" d={(() => {
                     let { x, y } = ninja();
                     let bones = ninjaBones();
                     if (!bones) return '';
@@ -118,8 +145,8 @@ function App() {
                         const y2 = y + 20 * bones[i2 + 13];
                         return `M ${x1} ${y1} L ${x2} ${y2}`;
                     }).join(' ');
-                })()} stroke="white" stroke-linejoin="round" stroke-linecap="round" />
-                <path d={tilePath()} stroke="red" fill-rule="evenodd" />
+                })()} stroke-linejoin="round" stroke-linecap="round" stroke-width={2 / 44 * 24} />
+                <path id="tiles" d={tilePath()} fill-rule="evenodd" />
             </svg>
             <div>
                 <div>
