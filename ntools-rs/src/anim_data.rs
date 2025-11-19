@@ -20,7 +20,7 @@ pub const DANCES: [(usize, usize); 22] = [
     (1811, 1852), // On one leg
     (1853, 1946), // Backflip
     (1947, 2004), // Kneeling
-    (2005, 2156), // Fall to the flooe
+    (2005, 2156), // Fall to the floor
     (2157, 2241), // Russian squat dance (classic version)
     (2242, 2295), // Kick
 ];

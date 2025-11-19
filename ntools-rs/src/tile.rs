@@ -5,7 +5,7 @@ use crate::{grid::{Grid, GridPos}, segment::{Curvature, Segment}};
 pub const TILE_SIZE: f64 = 24.0;
 pub const TILE_HALF_SIZE: f64 = 12.0;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy)]
 pub enum Tile {
     /// ```text
     /// +------+

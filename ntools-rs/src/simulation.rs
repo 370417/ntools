@@ -1,9 +1,10 @@
-use crate::{entity::mine::Mine, grid::Grid, ninja::{Ninja, NinjaState}, segment::Segment};
+use crate::{entity::{mine::MineState, move_entities, Entities, EntityIndex}, grid::Grid, ninja::{Ninja, NinjaState}, segment::Segment};
 
 pub struct Simulation {
     pub frame: u32,
     pub ninja: Ninja,
-    pub mines: Vec<Mine>,
+    pub entities: Entities,
+    pub entity_grid: Grid<EntityIndex>,
 }
 
 #[derive(Clone, Copy)]
@@ -12,6 +13,12 @@ pub struct Input {
     right: bool,
     left: bool,
     suicide: bool,
+}
+
+pub struct KeyFrame {
+    frame: u32,
+    ninja: Ninja,
+    mine_state_diffs: Vec<(usize, MineState)>,
 }
 
 impl Input {
@@ -30,6 +37,16 @@ impl Input {
 }
 
 impl Simulation {
+    pub fn new(entities: Entities) -> Result<Simulation, String> {
+
+        Ok(Simulation {
+            frame: 0,
+            ninja: Ninja::new(*entities.ninjas.get(0).ok_or("Map has no ninja")?),
+            entity_grid: entities.grid(),
+            entities,
+        })
+    }
+
     pub fn tick(&mut self, input: Input, segments: &Grid<Segment>) {
         self.frame += 1;
 
@@ -41,6 +58,7 @@ impl Simulation {
         };
 
         // Move all movable entities
+        move_entities(&mut self.entities.bounce_blocks, &mut self.entity_grid);
 
         // Make all thinkable entities think
 
@@ -48,10 +66,10 @@ impl Simulation {
             self.ninja.integrate();
             let mut collision_state = self.ninja.pre_collision();
             for _ in 0..4 {
-                // self.ninja.collide_vs_objects();
+                self.ninja.collide_vs_objects(&mut collision_state, &mut self.entities, &self.entity_grid);
                 self.ninja.collide_vs_tiles(&mut collision_state, segments);
             }
-            self.ninja.post_collision(&collision_state, segments);
+            self.ninja.post_collision(&collision_state, &mut self.entities, &self.entity_grid, segments);
             self.ninja.think(input.jump, hor_input);
             self.ninja.update_graphics(hor_input);
         }

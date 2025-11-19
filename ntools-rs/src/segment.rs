@@ -3,7 +3,7 @@ use glam::DVec2;
 use crate::{collision_util::{get_time_of_intersection_circle_vs_arc, get_time_of_intersection_circle_vs_circle, get_time_of_intersection_circle_vs_lineseg}, grid::{Grid, COLS, ROWS}, tile::TILE_SIZE};
 
 /// Represents a solid edge of a tile or door.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub enum Segment {
     Linear {
         start: DVec2,
@@ -22,7 +22,7 @@ pub enum Segment {
     Door,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub enum Curvature {
     Concave,
     Convex,

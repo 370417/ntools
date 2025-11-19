@@ -2,7 +2,7 @@ use glam::{DVec2, Vec2};
 use rand::{seq::IndexedRandom, RngCore, SeedableRng};
 use rand_xoshiro::{SplitMix64, Xoroshiro64StarStar};
 
-use crate::{anim_data::{get_anim_frame, Bones, DANCES}, collision_util::{get_single_closest_point, sweep_circle_vs_tiles}, grid::Grid, segment::Segment};
+use crate::{anim_data::{get_anim_frame, Bones, DANCES}, collision_util::{get_single_closest_point, sweep_circle_vs_tiles}, entity::{polymorphism::physical_collisions, Entities, EntityIndex, EntityType}, grid::Grid, segment::Segment};
 
 const GRAVITY_FALL: f64 = 0.06666666666666665;
 const GRAVITY_JUMP: f64 = 0.01111111111111111;
@@ -17,7 +17,7 @@ const MAX_HOR_SPEED: f64 = 3.333333333333333;
 const MAX_JUMP_DURATION: u32 = 45;
 const MAX_SURVIVABLE_IMPACT: f64 = 6.0;
 const MIN_SURVIVABLE_CRUSHING: f64 = 0.05;
-const RADIUS: f64 = 10.0;
+pub const RADIUS: f64 = 10.0;
 
 pub struct Ninja {
     pub pos: DVec2,
@@ -47,7 +47,7 @@ pub struct Ninja {
     run_cycle: usize,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum NinjaState {
     Standing,
     Running,
@@ -136,8 +136,36 @@ impl Ninja {
         }
     }
 
-    pub fn collide_vs_objects() {
-        todo!()
+    /// Gather all entities in neighbourhood and apply physical collisions if possible.
+    pub fn collide_vs_objects(&mut self, collision_state: &mut CollisionState, entities: &mut Entities, entity_grid: &Grid<EntityIndex>) {
+        for &entity_index in entity_grid.iter_neighborhood(self.pos) {
+            let Some(depen) = physical_collisions(entities, entity_index, self.pos) else { continue };
+            let pop = depen.depen_unit_normal * depen.depen_dist;
+            self.pos += pop;
+            let entity_type = entity_index.0;
+            if entity_type != EntityType::BounceBlock {
+                collision_state.crush += pop;
+                collision_state.crush_len += depen.depen_dist;
+            }
+            // if entity_type == EntityType::Thwump {
+            //     collision_state.is_crushable = true;
+            // }
+            if let EntityType::BounceBlock /* | EntityType::Thwump | EntityType::ShoveThwump */ = entity_type {
+                self.speed += pop;
+            }
+            // if let EntityType::OneWay = entity_type {
+            //     todo!()
+            // }
+            if depen.depen_unit_normal.y >= -0.0001 {
+                // Adjust ceiling variables if ninja collides with ceiling (or wall!)
+                collision_state.ceiling_count += 1;
+                collision_state.ceiling_normal += depen.depen_unit_normal;
+            } else {
+                // Adjust floor variables if ninja collides with floor
+                collision_state.floor_count += 1;
+                collision_state.floor_normal += depen.depen_unit_normal;
+            }
+        }
     }
 
     /// Gather all tile segments in neighbourhood and handle collisions with those.
@@ -185,11 +213,19 @@ impl Ninja {
 
     /// Perform logical collisions with entities, check for airborn state,
     /// check for walled state, calculate floor normals, check for impact or crush death.
-    pub fn post_collision(&mut self, collision_state: &CollisionState, segments: &Grid<Segment>) {
+    pub fn post_collision(&mut self, collision_state: &CollisionState, entities: &mut Entities, entity_grid: &Grid<EntityIndex>, segments: &Grid<Segment>) {
         // Perform LOGICAL collisions between the ninja and nearby entities.
         // Also check if the ninja can interact with the walls of entities when applicable.
         // todo
         let mut wall_normal = None;
+        for &(entity_type, i) in entity_grid.iter_neighborhood(self.pos) {
+            match entity_type {
+                EntityType::BounceBlock => {
+                    entities.bounce_blocks[i].logical_collision(self.pos, &mut wall_normal);
+                }
+                _ => {}
+            }
+        }
 
         // Check if the ninja can interact with walls from nearby tile segments.
         let rad = RADIUS + 0.1;

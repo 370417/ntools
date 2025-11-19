@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{entity::{mine::Mine, InitialEntities}, grid::{Grid, GridPos, COLS, ROWS}, segment::{extract_path, Segment}, tile::Tile};
+use crate::{entity::{bounce_block::BounceBlock, mine::Mine, Entities}, grid::{Grid, GridPos, COLS, ROWS}, segment::Segment, tile::Tile};
 
 /// Represents a parsed attract file.
 /// An attract file is what gets shown in the game's main menu: a replay of a failed attempt at a level.
@@ -9,7 +9,7 @@ pub struct Attract {
     pub level_name: String,
     pub author_name: String,
     pub segments: Grid<Segment>,
-    pub entities: InitialEntities,
+    pub entities: Entities,
     pub inputs: Vec<u8>,
 }
 
@@ -98,7 +98,7 @@ impl Attract {
             }
         }
 
-        let mut entities = InitialEntities::new();
+        let mut entities = Entities::new();
 
         let num_objects = object_data_bytes / 5;
         for i in 0..num_objects {
@@ -106,8 +106,8 @@ impl Attract {
             let object_id = map_data[i];
             let x = map_data[i + 1];
             let y = map_data[i + 2];
-            let orientation = map_data[i + 3];
-            let mode = map_data[i + 4];
+            let _orientation = map_data[i + 3];
+            let _mode = map_data[i + 4];
 
             let pos = DVec2::new(x as f64, y as f64);
 
@@ -147,7 +147,7 @@ impl Attract {
                 // Floor chaser
                 16 => {}
                 // Bounce block
-                17 => {}
+                17 => entities.bounce_blocks.push(BounceBlock::new(6.0 * pos)),
                 // Rocket
                 18 => {}
                 // Gauss
@@ -190,8 +190,6 @@ impl Attract {
 
         let frames = &demo_bytes[30..];
 
-        println!("frame count {}", frames.len());
-
         if frames.len() != frame_count as usize {
             return Err("Frame count does not match data".into());
         }
@@ -212,6 +210,7 @@ impl Attract {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::segment::extract_path;
 
     #[test]
     fn regression_test() {

@@ -102,3 +102,72 @@ pub fn get_single_closest_point(pos: DVec2, radius: f64, segments: &Grid<Segment
             dist_a.partial_cmp(dist_b).unwrap_or(std::cmp::Ordering::Equal)
         }).map(|(_, closest)| closest)
 }
+
+pub fn get_raycast_distance() {
+    todo!()
+}
+
+pub fn intersect_ray_vs_cell_contents() {
+    todo!()
+}
+
+pub fn raycast_vs_player() {
+    todo!()
+}
+
+pub fn check_lineseg_vs_ninja() {
+    todo!()
+}
+
+pub fn overlap_circle_vs_circle() {
+    todo!()
+}
+
+pub fn overlap_circle_vs_segment() {
+    todo!()
+}
+
+pub struct Depenetration {
+    /// Direction of depenetration
+    pub depen_unit_normal: DVec2,
+    /// Distance needed to depenetrate along depen_unit_normal
+    pub depen_dist: f64,
+    /// Distance needed to depenetrate perpendicular to depen_unit_normal?
+    pub depen_perp_dist: f64,
+}
+
+/// If a point is inside an orthogonal square, return the orientation of the shortest vector
+/// to depenetate the point out of the square, and return the penetrations on both axis.
+/// The square is defined by its center and semi side length. In the case of depenetrating the
+/// ninja out of square entity (bounce block, thwump, shwump), we consider a square of with a
+/// semi side equal to the semi side of the entity plus the radius of the ninja.
+pub fn penetration_square_vs_point(square_pos: DVec2, point_pos: DVec2, semi_side: f64) -> Option<Depenetration> {
+    let delta = point_pos - square_pos;
+    let pen_x = semi_side - delta.x.abs();
+    let pen_y = semi_side - delta.y.abs();
+    if pen_x > 0.0 && pen_y > 0.0 {
+        if pen_y <= pen_x {
+            Some(Depenetration {
+                depen_unit_normal: if delta.y < 0.0 {
+                    DVec2::new(0.0, -1.0)
+                } else {
+                    DVec2::new(0.0, 1.0)
+                },
+                depen_dist: pen_y,
+                depen_perp_dist: pen_x,
+            })
+        } else {
+            Some(Depenetration {
+                depen_unit_normal: if delta.x < 0.0 {
+                    DVec2::new(-1.0, 0.0)
+                } else {
+                    DVec2::new(1.0, 0.0)
+                },
+                depen_dist: pen_x,
+                depen_perp_dist: pen_y,
+            })
+        }
+    } else {
+        None
+    }
+}

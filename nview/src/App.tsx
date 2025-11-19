@@ -8,6 +8,11 @@ type Mine = {
     type: 0 | 1 | 2;
 };
 
+type BounceBlock = {
+    x: number;
+    y: number;
+};
+
 const LIMBS = [[0, 12], [1, 12], [2, 8], [3, 9], [4, 10], [5, 11], [6, 7], [8, 0], [9, 0], [10, 1], [11, 1]];
 
 function App() {
@@ -21,7 +26,9 @@ function App() {
 
     const [ninjaBones, setNinjaBones] = createSignal<Float32Array<ArrayBufferLike> | undefined>(undefined);
 
-    const [mines, setMines] = createSignal([] as Mine[]);
+    const [mines, setMines] = createSignal<Mine[]>([]);
+
+    const [bounceBlocks, setBounceBlocks] = createSignal<BounceBlock[]>([]);
 
     const viewboxVal = viewbox();
 
@@ -53,6 +60,16 @@ function App() {
             });
         }
         setMines(minesArr);
+
+        const bounceBlocksArr: BounceBlock[] = [];
+        const bounceBlocksLen = replay.bounce_blocks_len();
+        for (let i = 0; i < bounceBlocksLen; i++) {
+            bounceBlocksArr.push({
+                x: replay.bounce_block_x(i),
+                y: replay.bounce_block_y(i),
+            });
+        }
+        setBounceBlocks(bounceBlocksArr);
     }
 
     socket.addEventListener('message', event => {
@@ -79,9 +96,15 @@ function App() {
                     <g id="toggling">
                         <circle r="4.5" fill="none" stroke="pink" />
                     </g>
+                    <g id="bounceblock">
+                        <path d="M -9 -9 L 9 -9 L 9 9 L -9 9 Z" fill="#999" stroke="black" stroke-dasharray='10' />
+                    </g>
                 </defs>
                 <Index each={mines()}>
                     {(mine) => <use href={["#toggled", "#untoggled", "#toggling"][mine().type]} x={mine().x} y={mine().y} />}
+                </Index>
+                <Index each={bounceBlocks()}>
+                    {(bounceBlock) => <use href="#bounceblock" x={bounceBlock().x} y={bounceBlock().y} />}
                 </Index>
                 {/* <circle cx={ninja().x} cy={ninja().y} r="10" fill="none" stroke="red" /> */}
                 <path d={(() => {
