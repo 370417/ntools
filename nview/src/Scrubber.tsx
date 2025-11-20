@@ -1,18 +1,16 @@
-import { createSignal, onCleanup, type Accessor, type Signal } from "solid-js";
+import { onCleanup, type Accessor, type Signal } from "solid-js";
 import "./Scrubber.css";
 
 type ScrubberProps = {
     state: Signal<'play' | 'pause' | 'drag-playing' | 'drag-paused'>,
     length: Accessor<number>,
-    progress: Accessor<number>,
-    previewProgress: Accessor<number | undefined>,
-    onSeek(frame: number): void,
-    onSeekPreview(frame: number | undefined): void,
+    progress: Signal<number>,
+    previewProgress: Signal<number | undefined>,
 };
 
 export function Scrubber(props: ScrubberProps) {
     const progressWidth = () => {
-        const progress = props.progress();
+        const progress = props.progress[0]();
         const length = props.length();
         if (length === 0 || progress >= length) {
             return "100%";
@@ -20,8 +18,6 @@ export function Scrubber(props: ScrubberProps) {
             return `${progress / length * 100}%`;
         }
     };
-
-    const [isDragging, setIsDragging] = createSignal(false);
 
     let scrubber: HTMLDivElement | undefined = undefined;
 
@@ -33,28 +29,27 @@ export function Scrubber(props: ScrubberProps) {
 
     function onMouseMove(event: MouseEvent) {
         if (scrubber) {
-            const overlapX = event.clientX > scrubber.clientLeft && event.clientX < scrubber.clientLeft + scrubber.clientWidth;
-            const overlapY = event.clientY > scrubber.clientTop && event.clientY < scrubber.clientTop + scrubber.clientHeight;
-            const isHovering = overlapX && overlapY;
+            const isHovering = scrubber.matches(':hover');
 
             let progress = (event.clientX - scrubber.clientLeft) / scrubber.clientWidth;
             progress = Math.min(1, progress); // make sure progress is at most 1
             progress = Math.max(0, progress); // make sure progress is at least 0
             let targetFrame = Math.round(progress * (props.length()));
 
-            if (isDragging()) {
-                props.onSeek(targetFrame);
-                props.onSeekPreview(undefined);
+            const state = props.state[0]();
+            if (state === 'drag-paused' || state === 'drag-playing') {
+                props.progress[1](targetFrame);
+                props.previewProgress[1](undefined);
             } else if (isHovering) {
-                props.onSeekPreview(targetFrame);
+                props.previewProgress[1](targetFrame);
             } else {
-                props.onSeekPreview(undefined);
+                props.previewProgress[1](undefined);
             }
         }
     }
 
     function onMouseUp() {
-        setIsDragging(false);
+        // setIsDragging(false);
         if (props.state[0]() === 'drag-paused') {
             props.state[1]('pause');
         } else if (props.state[0]() === 'drag-playing') {
@@ -63,7 +58,12 @@ export function Scrubber(props: ScrubberProps) {
     }
 
     return <div ref={scrubber} class="scrubber" onmousedown={event => {
-        setIsDragging(true);
+        const state = props.state[0]();
+        if (state === 'play') {
+            props.state[1]('drag-playing');
+        } else {
+            props.state[1]('drag-paused');
+        }
         onMouseMove(event);
         event.preventDefault();
     }}>

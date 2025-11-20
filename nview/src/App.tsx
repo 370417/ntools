@@ -1,4 +1,4 @@
-import { createSignal, Index } from 'solid-js';
+import { createEffect, createSignal, Index } from 'solid-js';
 import { Replay, viewbox } from './assets/ntools_rs';
 import { Scrubber } from './Scrubber';
 
@@ -46,14 +46,22 @@ function App() {
     const [scrubberState, setScrubberState] = createSignal<'play' | 'pause' | 'drag-playing' | 'drag-paused'>('pause');
     const [replayLength, setReplayLength] = createSignal(0);
     const [progress, setProgress] = createSignal(0);
-    const [previewProgress, setPreviewProgress] = createSignal(0);
+    const [previewProgress, setPreviewProgress] = createSignal<number | undefined>(undefined);
 
-    function onSeek(frame: number) {
+    createEffect(() => {
+        const state = scrubberState();
+        const previewProgressVal = previewProgress();
+        const progressVal = progress();
         if (replay) {
-            replay.seek(frame);
-            renderFrame(replay);
+            if (typeof previewProgressVal === 'number' && state !== 'drag-paused' && state !== 'drag-playing') {
+                replay.seek(previewProgressVal);
+                renderFrame(replay);
+            } else {
+                replay.seek(progressVal);
+                renderFrame(replay);
+            }
         }
-    }
+    });
 
     const [tilePath, setTilePath] = createSignal('');
 
@@ -72,7 +80,7 @@ function App() {
     function tick() {
         if (!paused() && replay) {
             replay.tick();
-            renderFrame(replay);
+            setProgress(replay.progress());
         }
         requestAnimationFrame(tick);
     }
@@ -106,7 +114,6 @@ function App() {
         }
         setBounceBlocks(bounceBlocksArr);
 
-        setProgress(replay.progress());
         setReplayLength(replay.replay_length());
     }
 
@@ -168,10 +175,8 @@ function App() {
                 <Scrubber
                     state={[scrubberState, setScrubberState]}
                     length={replayLength}
-                    progress={progress}
-                    previewProgress={previewProgress}
-                    onSeek={onSeek}
-                    onSeekPreview={() => {}}
+                    progress={[progress, setProgress]}
+                    previewProgress={[previewProgress, setPreviewProgress]}
                 />
                 <div>
                     <input type="button" value="⏺" />
