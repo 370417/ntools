@@ -221,6 +221,9 @@ impl Ninja {
         let mut wall_normal = None;
         for &(entity_type, i) in entity_grid.iter_neighborhood(self.pos) {
             match entity_type {
+                EntityType::Mine => {
+                    entities.mines[i].logical_collision(self);
+                }
                 EntityType::BounceBlock => {
                     entities.bounce_blocks[i].logical_collision(self.pos, &mut wall_normal);
                 }
@@ -285,7 +288,7 @@ impl Ninja {
         }
     }
 
-    fn kill(&mut self, _death_type: u32, _pos: DVec2, _speed: DVec2) {
+    pub fn kill(&mut self, _death_type: u32, _pos: DVec2, _speed: DVec2) {
         match self.state {
             NinjaState::AwaitingDeath | NinjaState::Celebrating | NinjaState::Disabled => {
                 // do nothing
@@ -665,6 +668,14 @@ impl Ninja {
             bones[i] = Vec2::from_angle(self.tilt as f32).rotate(bones[i]);
         }
         bones
+    }
+
+    /// Return whether the ninja is a valid target for various interactions.
+    pub fn is_valid_target(&self) -> bool {
+        match self.state {
+            NinjaState::Dead | NinjaState::Celebrating | NinjaState::Disabled => false,
+            _ => true,
+        }
     }
 
     /// Prng based on ninja's state.

@@ -64,6 +64,7 @@ impl Simulation {
         move_entities(&mut self.entities.bounce_blocks, &mut self.entity_grid);
 
         // Make all thinkable entities think
+        self.entities.mines.iter_mut().for_each(|mine| mine.think(&self.ninja));
 
         if self.ninja.state != NinjaState::Disabled {
             self.ninja.integrate();

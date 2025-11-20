@@ -119,8 +119,9 @@ pub fn check_lineseg_vs_ninja() {
     todo!()
 }
 
-pub fn overlap_circle_vs_circle() {
-    todo!()
+/// Given two cirles definied by their center and radius, return true if they overlap.
+pub fn overlap_circle_vs_circle(center1: DVec2, radius1: f64, center2: DVec2, radius2: f64) -> bool {
+    (center1 - center2).length() < radius1 + radius2
 }
 
 pub fn overlap_circle_vs_segment() {
