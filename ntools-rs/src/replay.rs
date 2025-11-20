@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use wasm_bindgen::prelude::*;
 
-use crate::{anim_data::flatten_bones, attract::Attract, grid::Grid, segment::{extract_path, Segment}, simulation::{Input, KeyFrame, Simulation}};
+use crate::{anim_data::flatten_bones, attract::Attract, entity::mine::Mine, grid::Grid, segment::{extract_path, Segment}, simulation::{Input, KeyFrame, Simulation}};
 
 #[wasm_bindgen]
 pub struct Replay {
@@ -10,6 +10,7 @@ pub struct Replay {
     author_name: Option<String>,
     segments: Grid<Segment>,
     inputs: Vec<u8>,
+    initial_mines: Vec<Mine>,
     current_sim: Simulation,
     keyframes: BTreeMap<u32, KeyFrame>,
 }
@@ -21,12 +22,13 @@ impl Replay {
         let Attract { level_name, author_name, segments, entities, inputs } = Attract::from_bytes(attract_bytes)?;
         let current_sim = Simulation::new(entities)?;
         let mut keyframes = BTreeMap::new();
-        keyframes.insert(0, KeyFrame::from_sim(&current_sim));
+        keyframes.insert(0, KeyFrame::from_sim(&current_sim, &current_sim.entities.mines));
         Ok(Replay {
             level_name,
             author_name: Some(author_name),
             segments,
             inputs,
+            initial_mines: current_sim.entities.mines.clone(),
             current_sim,
             keyframes,
         })
@@ -37,7 +39,7 @@ impl Replay {
         if (self.current_sim.frame as usize) < self.inputs.len() {
             // Save keyframe every 120 frames
             if self.current_sim.frame % 120 == 0 && !self.keyframes.contains_key(&self.current_sim.frame) {
-                self.keyframes.insert(self.current_sim.frame, KeyFrame::from_sim(&self.current_sim));
+                self.keyframes.insert(self.current_sim.frame, KeyFrame::from_sim(&self.current_sim, &self.initial_mines));
             }
 
             let input = Input::from_byte(self.inputs[self.current_sim.frame as usize]);
@@ -54,7 +56,7 @@ impl Replay {
             if target_frame < self.current_sim.frame || *closest_keyframe > self.current_sim.frame {
                 // closest keyframe is better to seek from than current sim, so replace current sim with closest keyframe
                 let keyframe = self.keyframes.get(closest_keyframe).expect("failed to get closest keyframe");
-                keyframe.hydrate_into(&mut self.current_sim);
+                keyframe.hydrate_into(&mut self.current_sim, &self.initial_mines);
             }
             // While loop should always terminate because we have already checked
             // that target_frame <= self.inputs.len()

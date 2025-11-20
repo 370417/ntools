@@ -1,4 +1,4 @@
-use crate::{entity::{bounce_block::BounceBlock, mine::MineState, move_entities, Entities, EntityIndex, EntityType}, grid::{Grid, GridPos}, ninja::{Ninja, NinjaState}, segment::Segment};
+use crate::{entity::{bounce_block::BounceBlock, mine::{mine_diffs, mines_from_diff, Mine, MineState}, move_entities, Entities, EntityIndex, EntityType}, grid::{Grid, GridPos}, ninja::{Ninja, NinjaState}, segment::Segment};
 
 pub struct Simulation {
     pub frame: u32,
@@ -80,26 +80,25 @@ impl Simulation {
 }
 
 impl KeyFrame {
-    pub fn from_sim(sim: &Simulation) -> KeyFrame {
+    pub fn from_sim(sim: &Simulation, initial_mines: &[Mine]) -> KeyFrame {
         KeyFrame {
             frame: sim.frame,
             ninja: sim.ninja.clone(),
-            mine_state_diffs: Vec::new(), // TODO
+            mine_state_diffs: mine_diffs(initial_mines, &sim.entities.mines),
             bounce_blocks: sim.entities.bounce_blocks.clone(),
         }
     }
 
     /// Hydrate a keyframe (turn it into a simulation) while reusing the allocations
     /// of a previous simulation.
-    pub fn hydrate_into(&self, sim: &mut Simulation) {
+    pub fn hydrate_into(&self, sim: &mut Simulation, initial_mines: &[Mine]) {
         sim.frame = self.frame;
         sim.ninja = self.ninja.clone();
 
-        // TODO: handle mine states
+        sim.entities.mines = mines_from_diff(initial_mines, &self.mine_state_diffs);
 
-        // For entities, reuse the vec allocations from prev_sim.
-        // This probably does not affect performance at all, but it makes me happy.
         self.bounce_blocks.clone_into(&mut sim.entities.bounce_blocks);
+
         sim.entity_grid.drain_mobs();
         // add all mobs back into entity_grid
         for (i, bounce_block) in sim.entities.bounce_blocks.iter().enumerate() {

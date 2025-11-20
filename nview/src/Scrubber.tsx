@@ -65,6 +65,7 @@ export function Scrubber(props: ScrubberProps) {
     return <div ref={scrubber} class="scrubber" onmousedown={event => {
         setIsDragging(true);
         onMouseMove(event);
+        event.preventDefault();
     }}>
         <div class="track"></div>
         <div class="progress" style={{ width: progressWidth() }}></div>
