@@ -19,6 +19,7 @@ const MAX_SURVIVABLE_IMPACT: f64 = 6.0;
 const MIN_SURVIVABLE_CRUSHING: f64 = 0.05;
 pub const RADIUS: f64 = 10.0;
 
+#[derive(Clone)]
 pub struct Ninja {
     pub pos: DVec2,
     pos_old: DVec2,

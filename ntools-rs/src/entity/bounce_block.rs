@@ -7,6 +7,7 @@ const STIFFNESS: f64 = 0.02222222222222222; // 1/45
 const DAMPENING: f64 = 0.98;
 const STRENGTH: f64 = 0.2;
 
+#[derive(Clone)]
 pub struct BounceBlock {
     pub pos: DVec2,
     pub origin: DVec2,
@@ -16,6 +17,7 @@ pub struct BounceBlock {
     corners: Corners,
 }
 
+#[derive(Clone, Copy)]
 enum Corners {
     Round,
     Square,

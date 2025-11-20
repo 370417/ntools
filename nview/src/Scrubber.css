@@ -1,0 +1,45 @@
+.scrubber {
+    position: relative;
+    padding: 5px 0;
+}
+
+.scrubber::after {
+    content: '.';
+}
+
+.track, .progress {
+    height: 4px;
+    transition: height 0.2s;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.scrubber:hover .track, .scrubber:hover .progress {
+    height: 6px;
+}
+
+.scrubber:hover .thumb {
+    width: 15px;
+    height: 15px;
+}
+
+.track {
+    background: var(--empty-timebar);
+    width: 100%;
+}
+
+.progress {
+    background: var(--time-remaining);
+}
+
+.thumb {
+    background: var(--time-remaining);
+    width: 10px;
+    height: 10px;
+    transition: width 0.2s, height 0.2s;
+    border-radius: 10px;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%) translateX(-50%);
+}

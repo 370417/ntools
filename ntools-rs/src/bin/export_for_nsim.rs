@@ -1,7 +1,7 @@
 //! Convert attract files into a format that nsim can understand
 
 fn main() {
-    let attract_bytes = include_bytes!("../testfiles/762_desync");
+    let attract_bytes = include_bytes!("../testfiles/762_regression");
 
     let map_data_len = u32::from_le_bytes(attract_bytes[0..4].try_into().unwrap());
 

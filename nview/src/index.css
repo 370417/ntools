@@ -12,6 +12,10 @@ body {
     --bounceblock-interior: #798076;
     --bounceblock-border: #000000;
 
+    --time-remaining: #FECC04;
+    --hardcore-time: #DF9B43;
+    --empty-timebar: #707A6B;
+
     background: var(--tiles);
 }
 

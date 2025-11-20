@@ -1,4 +1,4 @@
-use crate::{entity::{mine::MineState, move_entities, Entities, EntityIndex}, grid::Grid, ninja::{Ninja, NinjaState}, segment::Segment};
+use crate::{entity::{bounce_block::BounceBlock, mine::MineState, move_entities, Entities, EntityIndex, EntityType}, grid::{Grid, GridPos}, ninja::{Ninja, NinjaState}, segment::Segment};
 
 pub struct Simulation {
     pub frame: u32,
@@ -19,6 +19,9 @@ pub struct KeyFrame {
     frame: u32,
     ninja: Ninja,
     mine_state_diffs: Vec<(usize, MineState)>,
+    // We could save some memory by not storing bounce block origin because
+    // it is constant across frames. For now we just store the entire bounce block.
+    bounce_blocks: Vec<BounceBlock>,
 }
 
 impl Input {
@@ -72,6 +75,35 @@ impl Simulation {
             self.ninja.post_collision(&collision_state, &mut self.entities, &self.entity_grid, segments);
             self.ninja.think(input.jump, hor_input);
             self.ninja.update_graphics(hor_input);
+        }
+    }
+}
+
+impl KeyFrame {
+    pub fn from_sim(sim: &Simulation) -> KeyFrame {
+        KeyFrame {
+            frame: sim.frame,
+            ninja: sim.ninja.clone(),
+            mine_state_diffs: Vec::new(), // TODO
+            bounce_blocks: sim.entities.bounce_blocks.clone(),
+        }
+    }
+
+    /// Hydrate a keyframe (turn it into a simulation) while reusing the allocations
+    /// of a previous simulation.
+    pub fn hydrate_into(&self, sim: &mut Simulation) {
+        sim.frame = self.frame;
+        sim.ninja = self.ninja.clone();
+
+        // TODO: handle mine states
+
+        // For entities, reuse the vec allocations from prev_sim.
+        // This probably does not affect performance at all, but it makes me happy.
+        self.bounce_blocks.clone_into(&mut sim.entities.bounce_blocks);
+        sim.entity_grid.drain_mobs();
+        // add all mobs back into entity_grid
+        for (i, bounce_block) in sim.entities.bounce_blocks.iter().enumerate() {
+            sim.entity_grid[GridPos::from_world_pos(bounce_block.pos).clamp()].push((EntityType::BounceBlock, i));
         }
     }
 }

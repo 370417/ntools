@@ -1,5 +1,6 @@
 import { createSignal, Index } from 'solid-js';
 import { Replay, viewbox } from './assets/ntools_rs';
+import { Scrubber } from './Scrubber';
 
 type Mine = {
     x: number;
@@ -42,6 +43,18 @@ function App() {
 
     const [paused, setPaused] = createSignal(true);
 
+    const [scrubberState, setScrubberState] = createSignal<'play' | 'pause' | 'drag-playing' | 'drag-paused'>('pause');
+    const [replayLength, setReplayLength] = createSignal(0);
+    const [progress, setProgress] = createSignal(0);
+    const [previewProgress, setPreviewProgress] = createSignal(0);
+
+    function onSeek(frame: number) {
+        if (replay) {
+            replay.seek(frame);
+            renderFrame(replay);
+        }
+    }
+
     const [tilePath, setTilePath] = createSignal('');
 
     const [ninja, setNinja] = createSignal({ x: -50, y: -50 });
@@ -58,7 +71,7 @@ function App() {
 
     function tick() {
         if (!paused() && replay) {
-            replay.tick(false, false, false, false);
+            replay.tick();
             renderFrame(replay);
         }
         requestAnimationFrame(tick);
@@ -92,6 +105,9 @@ function App() {
             });
         }
         setBounceBlocks(bounceBlocksArr);
+
+        setProgress(replay.progress());
+        setReplayLength(replay.replay_length());
     }
 
     socket.addEventListener('message', event => {
@@ -149,6 +165,14 @@ function App() {
                 <path id="tiles" d={tilePath()} fill-rule="evenodd" />
             </svg>
             <div>
+                <Scrubber
+                    state={[scrubberState, setScrubberState]}
+                    length={replayLength}
+                    progress={progress}
+                    previewProgress={previewProgress}
+                    onSeek={onSeek}
+                    onSeekPreview={() => {}}
+                />
                 <div>
                     <input type="button" value="⏺" />
                 </div>

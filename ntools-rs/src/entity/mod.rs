@@ -45,9 +45,15 @@ impl Entities {
         }
         grid
     }
+}
 
-    pub fn move_all_entities(&mut self, entity_grid: &mut Grid<Entities>) {
-        // self.bounce_blocks
+impl EntityType {
+    pub fn is_mob(&self) -> bool {
+        match self {
+            EntityType::Ninja => true,
+            EntityType::Mine => false,
+            EntityType::BounceBlock => true,
+        }
     }
 }
 

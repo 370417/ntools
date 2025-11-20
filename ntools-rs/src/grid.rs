@@ -2,7 +2,7 @@ use std::ops::{Index, IndexMut};
 
 use glam::DVec2;
 
-use crate::tile::TILE_SIZE;
+use crate::{entity::EntityIndex, tile::TILE_SIZE};
 
 pub const COLS: usize = 42;
 pub const ROWS: usize = 23;
@@ -51,6 +51,15 @@ impl <T> Grid<T> {
         let grid_pos1 = grid_pos_center.plus((-1, -1)).clamp();
         let grid_pos2 = grid_pos_center.plus((1, 1)).clamp();
         GridPos::iter_range_inclusive(grid_pos1, grid_pos2).flat_map(|pos| self[pos].iter())
+    }
+}
+
+impl Grid<EntityIndex> {
+    /// Remove all movable entities from the grid
+    pub fn drain_mobs(&mut self) {
+        for cell in &mut self.cells {
+            cell.retain(|entity_index| !entity_index.0.is_mob());
+        }
     }
 }
 
