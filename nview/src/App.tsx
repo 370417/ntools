@@ -41,8 +41,6 @@ const bounceBlockStroke = 2 * 24 / 44;
 function App() {
     let replay: Replay | undefined = undefined;
 
-    const [paused, setPaused] = createSignal(true);
-
     const [scrubberState, setScrubberState] = createSignal<'play' | 'pause' | 'drag-playing' | 'drag-paused'>('pause');
     const [replayLength, setReplayLength] = createSignal(0);
     const [progress, setProgress] = createSignal(0);
@@ -78,9 +76,12 @@ function App() {
     const socket = new WebSocket('ws://localhost:8080');
 
     function tick() {
-        if (!paused() && replay) {
-            replay.tick();
-            setProgress(replay.progress());
+        if (scrubberState() === 'play' && replay) {
+            if (progress() < replayLength()) {
+                setProgress(progress() + 1);
+            }
+            // replay.tick();
+            // setProgress(replay.progress());
         }
         requestAnimationFrame(tick);
     }
@@ -183,7 +184,12 @@ function App() {
                 </div>
                 <div>
                     <input type="button" value={"▶⏸"} onclick={() => {
-                        setPaused(!paused());
+                        const state = scrubberState();
+                        if (state === 'pause') {
+                            setScrubberState('play');
+                        } else if (state === 'play') {
+                            setScrubberState('pause');
+                        }
                     }} />
                 </div>
                 <div>

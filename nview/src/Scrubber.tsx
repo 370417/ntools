@@ -49,7 +49,6 @@ export function Scrubber(props: ScrubberProps) {
     }
 
     function onMouseUp() {
-        // setIsDragging(false);
         if (props.state[0]() === 'drag-paused') {
             props.state[1]('pause');
         } else if (props.state[0]() === 'drag-playing') {
