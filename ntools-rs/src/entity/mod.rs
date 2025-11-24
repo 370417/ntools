@@ -135,26 +135,26 @@ impl Orientation {
     }
 
     /// Orientation represented by degrees of rotation.
-    /// Positive rotation is clockwise.
+    /// Positive rotation is counterclockwise.
     pub fn rotation_deg(&self) -> f64 {
         let shallow_rotation = 0.5_f64.atan().to_degrees();
         match self {
-            Orientation::W => 270.0,
-            Orientation::SW => 225.0,
+            Orientation::W => 90.0,
+            Orientation::SW => 135.0,
             Orientation::S => 180.0,
-            Orientation::SE => 135.0,
-            Orientation::E => 90.0,
-            Orientation::NE => 45.0,
+            Orientation::SE => 225.0,
+            Orientation::E => 270.0,
+            Orientation::NE => 315.0,
             Orientation::N => 0.0,
-            Orientation::NW => 315.0,
-            Orientation::WSW => 270.0 - shallow_rotation,
-            Orientation::SSW => 180.0 + shallow_rotation,
-            Orientation::SSE => 180.0 - shallow_rotation,
-            Orientation::ESE => 90.0 + shallow_rotation,
-            Orientation::ENE => 90.0 - shallow_rotation,
-            Orientation::NNE => shallow_rotation,
-            Orientation::NNW => 360.0 - shallow_rotation,
-            Orientation::WNW => 270.0 + shallow_rotation,
+            Orientation::NW => 45.0,
+            Orientation::WSW => 90.0 + shallow_rotation,
+            Orientation::SSW => 180.0 - shallow_rotation,
+            Orientation::SSE => 180.0 + shallow_rotation,
+            Orientation::ESE => 270.0 - shallow_rotation,
+            Orientation::ENE => 270.0 + shallow_rotation,
+            Orientation::NNE => 360.0 - shallow_rotation,
+            Orientation::NNW => shallow_rotation,
+            Orientation::WNW => 90.0 - shallow_rotation,
         }
     }
 }
