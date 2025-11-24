@@ -1,5 +1,6 @@
 body {
     --tiles: #4F564D;
+    --tile-outline: #4F564D;
     --background: #8C9487;
 
     --ninja: #000000;
@@ -11,6 +12,9 @@ body {
 
     --bounceblock-interior: #798076;
     --bounceblock-border: #000000;
+
+    --oneway-long: #3C413B;
+    --oneway-short: #6D7668;
 
     --time-remaining: #FECC04;
     --hardcore-time: #DF9B43;
@@ -25,6 +29,7 @@ svg {
 
 #tiles {
     fill: var(--tiles);
+    stroke: var(--tile-outline);
 }
 
 .ninja {
@@ -61,5 +66,13 @@ svg {
 
 #bounceblockStroke {
     stroke: var(--bounceblock-border);
+}
+
+#oneway line.long {
+    stroke: var(--oneway-long);
+}
+
+#oneway line.short {
+    stroke: var(--oneway-short);
 }
 

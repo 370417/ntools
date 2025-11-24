@@ -13,6 +13,11 @@ type BounceBlock = {
     y: number;
 };
 
+type OneWay = {
+    x: number;
+    y: number;
+};
+
 const LIMBS = [[0, 12], [1, 12], [2, 8], [3, 9], [4, 10], [5, 11], [6, 7], [8, 0], [9, 0], [10, 1], [11, 1]];
 
 // Mine
@@ -37,6 +42,11 @@ const bounceBlockPath = `M -${n18} -${n18} L ${n18} -${n18} L ${n18} ${n18} L -$
 // at corners, so instead we recreate the effect with a path.
 const bounceBlockStrokePath = `M -${n17} ${n17b} V ${n17} H -${n17b} M -${n17a} ${n17} H ${n17a} M ${n17b} ${n17} H ${n17} V ${n17b} M ${n17} ${n17a} V -${n17a} M ${n17} -${n17b} V -${n17} H ${n17b} M ${n17a} -${n17} H -${n17a} M -${n17b} -${n17} H -${n17} V -${n17b} M -${n17} -${n17a} V ${n17a}`;
 const bounceBlockStroke = 2 * 24 / 44;
+
+// OneWay
+const oneWayHalfWidth = 12;
+const oneWayHalfWidthSmall = 8;
+const oneWayLineSpacing = 3;
 
 function App() {
     let replay: Replay | undefined = undefined;
@@ -68,8 +78,8 @@ function App() {
     const [ninjaPreviewBones, setNinjaPreviewBones] = createSignal<Float32Array<ArrayBufferLike> | undefined>(undefined);
 
     const [mines, setMines] = createSignal<Mine[]>([]);
-
     const [bounceBlocks, setBounceBlocks] = createSignal<BounceBlock[]>([]);
+    const [oneWays, setOneWays] = createSignal<OneWay[]>([]);
 
     const viewboxVal = viewbox();
 
@@ -124,6 +134,16 @@ function App() {
         }
         setBounceBlocks(bounceBlocksArr);
 
+        const oneWaysArr: OneWay[] = [];
+        const oneWaysLen = replay.one_ways_len();
+        for (let i = 0; i < oneWaysLen; i++) {
+            oneWaysArr.push({
+                x: replay.one_way_x(i),
+                y: replay.one_way_y(i),
+            });
+        }
+        setOneWays(oneWaysArr);
+
         setReplayLength(replay.replay_length());
     }
 
@@ -160,7 +180,14 @@ function App() {
                         <path id="bounceblockFill" d={bounceBlockPath} />
                         <path id="bounceblockStroke" d={bounceBlockStrokePath} fill="none" stroke-width={bounceBlockStroke} />
                     </g>
+                    <g id="oneway">
+                        <line class="long" x1={-oneWayHalfWidth} y1="0" x2={oneWayHalfWidth} y2="0" stroke-linecap="butt" />
+                        <line class="short" x1={-oneWayHalfWidthSmall} y1={oneWayLineSpacing} x2={oneWayHalfWidthSmall} y2={oneWayLineSpacing} stroke-linecap="butt" />
+                    </g>
                 </defs>
+                <Index each={oneWays()}>
+                    {(oneWay) => <use href="#oneway" x={oneWay().x} y={oneWay().y} />}
+                </Index>
                 <Index each={mines()}>
                     {(mine) => <use href={["#toggled", "#untoggled", "#toggling"][mine().type]} x={mine().x} y={mine().y} />}
                 </Index>

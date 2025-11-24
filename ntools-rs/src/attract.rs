@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{entity::{bounce_block::BounceBlock, mine::Mine, Entities}, grid::{Grid, GridPos, COLS, ROWS}, segment::Segment, tile::Tile};
+use crate::{entity::{bounce_block::BounceBlock, mine::Mine, one_way::OneWay, Entities, Orientation}, grid::{Grid, GridPos, COLS, ROWS}, segment::Segment, tile::Tile};
 
 /// Represents a parsed attract file.
 /// An attract file is what gets shown in the game's main menu: a replay of a failed attempt at a level.
@@ -106,7 +106,10 @@ impl Attract {
             let object_id = map_data[i];
             let x = map_data[i + 1];
             let y = map_data[i + 2];
-            let _orientation = map_data[i + 3];
+            // Don't handle error parsing orientation right away because
+            // we want to ignore invalid orientations for objects that do
+            // not need orientation.
+            let orientation = Orientation::try_from(map_data[i + 3]);
             let _mode = map_data[i + 4];
 
             let pos = DVec2::new(x as f64, y as f64);
@@ -135,7 +138,7 @@ impl Attract {
                 // Launch pad
                 10 => {}
                 // One way
-                11 => {}
+                11 => entities.one_ways.push(OneWay::new(6.0 * pos, orientation?)),
                 // Chainsaw drone
                 12 => {}
                 // Laser drone

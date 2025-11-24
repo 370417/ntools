@@ -183,6 +183,21 @@ impl Replay {
     pub fn bounce_block_y(&self, i: usize) -> f64 {
         self.current_sim.entities.bounce_blocks[i].pos.y
     }
+
+    #[wasm_bindgen]
+    pub fn one_ways_len(&self) -> usize {
+        self.current_sim.entities.one_ways.len()
+    }
+
+    #[wasm_bindgen]
+    pub fn one_way_x(&self, i: usize) -> f64 {
+        self.current_sim.entities.one_ways[i].pos.x
+    }
+
+    #[wasm_bindgen]
+    pub fn one_way_y(&self, i: usize) -> f64 {
+        self.current_sim.entities.one_ways[i].pos.y
+    }
 }
 
 // Separate impl block for functions without #[wasm_bindgen]
