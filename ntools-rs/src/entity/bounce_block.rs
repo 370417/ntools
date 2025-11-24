@@ -47,16 +47,15 @@ impl BounceBlock {
         })
     }
 
-    pub fn logical_collision(&self, ninja_pos: DVec2, wall_normal: &mut Option<f64>) {
-        if wall_normal.is_none() {
-            if let Some(depen) = penetration_square_vs_point(self.pos, ninja_pos, SEMI_SIDE + ninja::RADIUS + 0.1) {
-                if depen.depen_unit_normal.x != 0.0 {
-                    // is it possible to desync based on the order of checks here?
-                    // e.g. if you are between bounce blocks on the left and right
-                    *wall_normal = Some(depen.depen_unit_normal.x);
-                }
+    pub fn logical_collision(&self, ninja_pos: DVec2) -> Option<f64> {
+        if let Some(depen) = penetration_square_vs_point(self.pos, ninja_pos, SEMI_SIDE + ninja::RADIUS + 0.1) {
+            if depen.depen_unit_normal.x != 0.0 {
+                // is it possible to desync based on the order of checks here?
+                // e.g. if you are between bounce blocks on the left and right
+                return Some(depen.depen_unit_normal.x);
             }
         }
+        None
     }
 }
 

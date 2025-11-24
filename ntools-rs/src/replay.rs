@@ -198,6 +198,11 @@ impl Replay {
     pub fn one_way_y(&self, i: usize) -> f64 {
         self.current_sim.entities.one_ways[i].pos.y
     }
+
+    #[wasm_bindgen]
+    pub fn one_way_deg(&self, i: usize) -> f64 {
+        self.current_sim.entities.one_ways[i].orientation.rotation_deg()
+    }
 }
 
 // Separate impl block for functions without #[wasm_bindgen]

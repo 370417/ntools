@@ -22,7 +22,7 @@ pub const RADIUS: f64 = 10.0;
 #[derive(Clone)]
 pub struct Ninja {
     pub pos: DVec2,
-    pos_old: DVec2,
+    pub pos_old: DVec2,
     pub speed: DVec2,
     applied_gravity: f64,
     applied_drag: f64,
@@ -140,7 +140,7 @@ impl Ninja {
     /// Gather all entities in neighbourhood and apply physical collisions if possible.
     pub fn collide_vs_objects(&mut self, collision_state: &mut CollisionState, entities: &mut Entities, entity_grid: &Grid<EntityIndex>) {
         for &entity_index in entity_grid.iter_neighborhood(self.pos) {
-            let Some(depen) = physical_collisions(entities, entity_index, self.pos) else { continue };
+            let Some(depen) = physical_collisions(entities, entity_index, &self) else { continue };
             let pop = depen.depen_unit_normal * depen.depen_dist;
             self.pos += pop;
             let entity_type = entity_index.0;
@@ -154,9 +154,9 @@ impl Ninja {
             if let EntityType::BounceBlock /* | EntityType::Thwump | EntityType::ShoveThwump */ = entity_type {
                 self.speed += pop;
             }
-            // if let EntityType::OneWay = entity_type {
-            //     todo!()
-            // }
+            if let EntityType::OneWay = entity_type {
+                self.speed = depen.depen_unit_normal.perp_dot(self.speed) * depen.depen_unit_normal.perp();
+            }
             if depen.depen_unit_normal.y >= -0.0001 {
                 // Adjust ceiling variables if ninja collides with ceiling (or wall!)
                 collision_state.ceiling_count += 1;
@@ -224,8 +224,11 @@ impl Ninja {
                 EntityType::Mine => {
                     entities.mines[i].logical_collision(self);
                 }
-                EntityType::BounceBlock => {
-                    entities.bounce_blocks[i].logical_collision(self.pos, &mut wall_normal);
+                EntityType::BounceBlock => if wall_normal.is_none() {
+                    wall_normal = entities.bounce_blocks[i].logical_collision(self.pos);
+                }
+                EntityType::OneWay => if wall_normal.is_none() {
+                    wall_normal = entities.one_ways[i].logical_collision(&self);
                 }
                 _ => {}
             }

@@ -110,6 +110,55 @@ pub enum Orientation {
     WNW,
 }
 
+impl Orientation {
+    /// Orientation represented by unit vector.
+    pub fn vec2(&self) -> DVec2 {
+        let sqrt = std::f64::consts::FRAC_1_SQRT_2;
+        match self {
+            Orientation::W => DVec2::new(1.0, 0.0),
+            Orientation::SW => DVec2::new(sqrt, sqrt),
+            Orientation::S => DVec2::new(0.0, 1.0),
+            Orientation::SE => DVec2::new(-sqrt, sqrt),
+            Orientation::E => DVec2::new(-1.0, 0.0),
+            Orientation::NE => DVec2::new(-sqrt, -sqrt),
+            Orientation::N => DVec2::new(0.0, -1.0),
+            Orientation::NW => DVec2::new(sqrt, -sqrt),
+            Orientation::WSW => todo!(),
+            Orientation::SSW => todo!(),
+            Orientation::SSE => todo!(),
+            Orientation::ESE => todo!(),
+            Orientation::ENE => todo!(),
+            Orientation::NNE => todo!(),
+            Orientation::NNW => todo!(),
+            Orientation::WNW => todo!(),
+        }
+    }
+
+    /// Orientation represented by degrees of rotation.
+    /// Positive rotation is clockwise.
+    pub fn rotation_deg(&self) -> f64 {
+        let shallow_rotation = 0.5_f64.atan().to_degrees();
+        match self {
+            Orientation::W => 270.0,
+            Orientation::SW => 225.0,
+            Orientation::S => 180.0,
+            Orientation::SE => 135.0,
+            Orientation::E => 90.0,
+            Orientation::NE => 45.0,
+            Orientation::N => 0.0,
+            Orientation::NW => 315.0,
+            Orientation::WSW => 270.0 - shallow_rotation,
+            Orientation::SSW => 180.0 + shallow_rotation,
+            Orientation::SSE => 180.0 - shallow_rotation,
+            Orientation::ESE => 90.0 + shallow_rotation,
+            Orientation::ENE => 90.0 - shallow_rotation,
+            Orientation::NNE => shallow_rotation,
+            Orientation::NNW => 360.0 - shallow_rotation,
+            Orientation::WNW => 270.0 + shallow_rotation,
+        }
+    }
+}
+
 impl TryFrom<u8> for Orientation {
     type Error = String;
 

@@ -16,6 +16,7 @@ type BounceBlock = {
 type OneWay = {
     x: number;
     y: number;
+    deg: number;
 };
 
 const LIMBS = [[0, 12], [1, 12], [2, 8], [3, 9], [4, 10], [5, 11], [6, 7], [8, 0], [9, 0], [10, 1], [11, 1]];
@@ -45,7 +46,7 @@ const bounceBlockStroke = 2 * 24 / 44;
 
 // OneWay
 const oneWayHalfWidth = 12;
-const oneWayHalfWidthSmall = 8;
+const oneWayHalfWidthSmall = 9;
 const oneWayLineSpacing = 3;
 
 function App() {
@@ -140,6 +141,7 @@ function App() {
             oneWaysArr.push({
                 x: replay.one_way_x(i),
                 y: replay.one_way_y(i),
+                deg: replay.one_way_deg(i),
             });
         }
         setOneWays(oneWaysArr);
@@ -186,7 +188,7 @@ function App() {
                     </g>
                 </defs>
                 <Index each={oneWays()}>
-                    {(oneWay) => <use href="#oneway" x={oneWay().x} y={oneWay().y} />}
+                    {(oneWay) => <use href="#oneway" x={oneWay().x} y={oneWay().y} transform={`rotate(${oneWay().deg},${oneWay().x},${oneWay().y})`} />}
                 </Index>
                 <Index each={mines()}>
                     {(mine) => <use href={["#toggled", "#untoggled", "#toggling"][mine().type]} x={mine().x} y={mine().y} />}

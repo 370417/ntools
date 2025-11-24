@@ -3,13 +3,12 @@
 //! The alternative would be dynamic dispatch via boxed trait objects
 //! and storing everything in one place.
 
-use glam::DVec2;
+use crate::{collision_util::Depenetration, entity::{Entities, EntityIndex, EntityType}, ninja::Ninja};
 
-use crate::{collision_util::Depenetration, entity::{Entities, EntityIndex, EntityType}};
-
-pub fn physical_collisions(entities: &mut Entities, (entity_type, i): EntityIndex, ninja_pos: DVec2) -> Option<Depenetration> {
+pub fn physical_collisions(entities: &mut Entities, (entity_type, i): EntityIndex, ninja: &Ninja) -> Option<Depenetration> {
     match entity_type {
-        EntityType::BounceBlock => entities.bounce_blocks.get_mut(i)?.physical_collision(ninja_pos),
+        EntityType::BounceBlock => entities.bounce_blocks.get_mut(i)?.physical_collision(ninja.pos),
+        EntityType::OneWay => entities.one_ways.get(i)?.physical_collision(ninja),
         _ => None,
     }
 }
