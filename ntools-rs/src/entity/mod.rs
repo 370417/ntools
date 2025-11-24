@@ -6,6 +6,7 @@ pub mod bounce_block;
 pub mod mine;
 pub mod polymorphism;
 
+#[derive(Clone)]
 pub struct Entities {
     pub ninjas: Vec<DVec2>,
     pub mines: Vec<Mine>,

@@ -1,5 +1,6 @@
 use crate::{entity::{bounce_block::BounceBlock, mine::{mine_diffs, mines_from_diff, Mine, MineState}, move_entities, Entities, EntityIndex, EntityType}, grid::{Grid, GridPos}, ninja::{Ninja, NinjaState}, segment::Segment};
 
+#[derive(Clone)]
 pub struct Simulation {
     pub frame: u32,
     pub ninja: Ninja,

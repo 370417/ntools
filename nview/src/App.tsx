@@ -52,20 +52,20 @@ function App() {
         const progressVal = progress();
         if (replay) {
             if (typeof previewProgressVal === 'number' && state !== 'drag-paused' && state !== 'drag-playing') {
-                replay.seek(previewProgressVal);
-                renderFrame(replay);
-            } else {
-                replay.seek(progressVal);
-                renderFrame(replay);
+                replay.seek_preview(previewProgressVal);
             }
+            replay.seek(progressVal);
+            renderFrame(replay);
         }
     });
 
     const [tilePath, setTilePath] = createSignal('');
 
     const [ninja, setNinja] = createSignal({ x: -50, y: -50 });
+    const [ninjaPreview, setNinjaPreview] = createSignal({ x: -50, y: -50 });
 
     const [ninjaBones, setNinjaBones] = createSignal<Float32Array<ArrayBufferLike> | undefined>(undefined);
+    const [ninjaPreviewBones, setNinjaPreviewBones] = createSignal<Float32Array<ArrayBufferLike> | undefined>(undefined);
 
     const [mines, setMines] = createSignal<Mine[]>([]);
 
@@ -92,7 +92,16 @@ function App() {
             x: replay.ninja_x(),
             y: replay.ninja_y(),
         });
+        setNinjaPreview({
+            x: replay.ninja_preview_x(),
+            y: replay.ninja_preview_y(),
+        });
         setNinjaBones(replay.ninja_bones());
+        if (previewProgress() === undefined) {
+            setNinjaPreviewBones(undefined);
+        } else {
+            setNinjaPreviewBones(replay.ninja_preview_bones());
+        }
 
         const minesArr: Mine[] = [];
         const minesLen = replay.mines_len();
@@ -158,6 +167,18 @@ function App() {
                 <Index each={bounceBlocks()}>
                     {(bounceBlock) => <use href="#bounceblock" x={bounceBlock().x} y={bounceBlock().y} />}
                 </Index>
+                <path class="ninja" d={(() => {
+                    let { x, y } = ninjaPreview();
+                    let bones = ninjaPreviewBones();
+                    if (!bones) return '';
+                    return LIMBS.map(([i1, i2]) => {
+                        const x1 = x + 20 * bones[i1];
+                        const y1 = y + 20 * bones[i1 + 13];
+                        const x2 = x + 20 * bones[i2];
+                        const y2 = y + 20 * bones[i2 + 13];
+                        return `M ${x1} ${y1} L ${x2} ${y2}`;
+                    }).join(' ');
+                })()} stroke-linejoin="round" stroke-linecap="round" stroke-width={2 / 44 * 24} />
                 <path class="ninja" d={(() => {
                     let { x, y } = ninja();
                     let bones = ninjaBones();

@@ -63,6 +63,12 @@ impl Grid<EntityIndex> {
     }
 }
 
+impl <T: Clone> Clone for Grid<T> {
+    fn clone(&self) -> Self {
+        Self { cells: self.cells.clone() }
+    }
+}
+
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct GridPos {
     x: usize,

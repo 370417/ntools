@@ -12,6 +12,7 @@ pub struct Replay {
     inputs: Vec<u8>,
     initial_mines: Vec<Mine>,
     current_sim: Simulation,
+    preview_sim: Simulation,
     keyframes: BTreeMap<u32, KeyFrame>,
 }
 
@@ -29,6 +30,7 @@ impl Replay {
             segments,
             inputs,
             initial_mines: current_sim.entities.mines.clone(),
+            preview_sim: current_sim.clone(),
             current_sim,
             keyframes,
         })
@@ -47,6 +49,7 @@ impl Replay {
         }
     }
 
+    /// Seek until self.current_sim reaches target_frame
     #[wasm_bindgen]
     pub fn seek(&mut self, target_frame: u32) {
         if (target_frame as usize) <= self.inputs.len() {
@@ -66,6 +69,32 @@ impl Replay {
         }
     }
 
+    /// Seek until self.preview_sim reaches target_frame
+    #[wasm_bindgen]
+    pub fn seek_preview(&mut self, target_frame: u32) {
+        if (target_frame as usize) <= self.inputs.len() {
+            // TODO: can use upper_bound method to get closest_keyframe once btree_curors feature is stabilized.
+            // This current filter then max alternative isn't very efficient, but oh well.
+            let closest_keyframe = self.keyframes.keys().filter(|&&f| f <= target_frame).max().expect("keys should always have a key 0, so they should never be empty.");
+            if target_frame < self.preview_sim.frame || *closest_keyframe > self.preview_sim.frame {
+                // closest keyframe is better to seek from than preview sim, so replace preview sim with closest keyframe
+                let keyframe = self.keyframes.get(closest_keyframe).expect("failed to get closest keyframe");
+                keyframe.hydrate_into(&mut self.preview_sim, &self.initial_mines);
+            }
+            // While loop should always terminate because we have already checked
+            // that target_frame <= self.inputs.len()
+            while self.preview_sim.frame < target_frame {
+                self.tick_preview();
+            }
+        }
+    }
+
+    /// Set current_sim to preview_sim
+    #[wasm_bindgen]
+    pub fn set_current_to_preview(&mut self) {
+        self.current_sim.clone_from(&self.preview_sim);
+    }
+
     #[wasm_bindgen]
     pub fn replay_length(&self) -> u32 {
         self.inputs.len() as u32
@@ -74,6 +103,10 @@ impl Replay {
     #[wasm_bindgen]
     pub fn progress(&self) -> u32 {
         self.current_sim.frame
+    }
+
+    pub fn progress_preview(&self) -> u32 {
+        self.preview_sim.frame
     }
 
     #[wasm_bindgen]
@@ -92,8 +125,23 @@ impl Replay {
     }
 
     #[wasm_bindgen]
+    pub fn ninja_preview_x(&self) -> f64 {
+        self.preview_sim.ninja.pos.x
+    }
+
+    #[wasm_bindgen]
+    pub fn ninja_preview_y(&self) -> f64 {
+        self.preview_sim.ninja.pos.y
+    }
+
+    #[wasm_bindgen]
     pub fn ninja_bones(&self) -> Box<[f32]> {
         flatten_bones(&self.current_sim.ninja.calc_ninja_position())
+    }
+
+    #[wasm_bindgen]
+    pub fn ninja_preview_bones(&self) -> Box<[f32]> {
+        flatten_bones(&self.preview_sim.ninja.calc_ninja_position())
     }
 
     #[wasm_bindgen]
@@ -134,6 +182,21 @@ impl Replay {
     #[wasm_bindgen]
     pub fn bounce_block_y(&self, i: usize) -> f64 {
         self.current_sim.entities.bounce_blocks[i].pos.y
+    }
+}
+
+// Separate impl block for functions without #[wasm_bindgen]
+impl Replay {
+    fn tick_preview(&mut self) {
+        if (self.preview_sim.frame as usize) < self.inputs.len() {
+            // Save keyframe every 120 frames
+            if self.preview_sim.frame % 120 == 0 && !self.keyframes.contains_key(&self.preview_sim.frame) {
+                self.keyframes.insert(self.preview_sim.frame, KeyFrame::from_sim(&self.preview_sim, &self.initial_mines));
+            }
+
+            let input = Input::from_byte(self.inputs[self.preview_sim.frame as usize]);
+            self.preview_sim.tick(input, &self.segments);
+        }
     }
 }
 
