@@ -19,6 +19,24 @@ export function Scrubber(props: ScrubberProps) {
         }
     };
 
+    const previewProgressSize = () => {
+        const progress = props.progress[0]();
+        const previewProgress = props.previewProgress[0]();
+        const length = props.length();
+        if (previewProgress === undefined || length === 0) {
+            return {
+                left: "0%",
+                width: "0%",
+            };
+        }
+        const min = Math.min(progress, previewProgress);
+        const max = Math.min(Math.max(progress, previewProgress), length);
+        return {
+            left: `${min / length * 100}%`,
+            width: `${(max - min) / length * 100}%`,
+        };
+    };
+
     let scrubber: HTMLDivElement | undefined = undefined;
 
     document.addEventListener('mousemove', onMouseMove);
@@ -68,7 +86,7 @@ export function Scrubber(props: ScrubberProps) {
     }}>
         <div class="track"></div>
         <div class="progress" style={{ width: progressWidth() }}></div>
-        <div class="previewProgress"></div>
+        <div class="previewProgress" style={{ left: previewProgressSize().left, width: previewProgressSize().width }}></div>
         <div class="thumb" style={{ left: progressWidth() }}></div>
     </div>;
 }

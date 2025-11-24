@@ -31,6 +31,10 @@ svg {
     stroke: var(--ninja);
 }
 
+.ninja.preview {
+    opacity: 0.5;
+}
+
 #toggled line {
     stroke: var(--mine-exterior);
 }

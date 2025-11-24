@@ -167,7 +167,7 @@ function App() {
                 <Index each={bounceBlocks()}>
                     {(bounceBlock) => <use href="#bounceblock" x={bounceBlock().x} y={bounceBlock().y} />}
                 </Index>
-                <path class="ninja" d={(() => {
+                <path class="ninja preview" d={(() => {
                     let { x, y } = ninjaPreview();
                     let bones = ninjaPreviewBones();
                     if (!bones) return '';

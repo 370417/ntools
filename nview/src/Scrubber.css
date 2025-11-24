@@ -7,7 +7,7 @@
     content: '.';
 }
 
-.track, .progress {
+.track, .progress, .previewProgress {
     height: 4px;
     transition: height 0.2s;
     position: absolute;
@@ -15,13 +15,14 @@
     transform: translateY(-50%);
 }
 
-.scrubber:hover .track, .scrubber:hover .progress {
+.scrubber:hover .track, .scrubber:hover .progress, .scrubber:hover .previewProgress {
     height: 6px;
 }
 
 .scrubber:hover .thumb {
     width: 15px;
     height: 15px;
+    background: var(--hardcore-time);
 }
 
 .track {
@@ -31,6 +32,10 @@
 
 .progress {
     background: var(--time-remaining);
+}
+
+.previewProgress {
+    background: var(--hardcore-time);
 }
 
 .thumb {
