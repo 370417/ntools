@@ -1,6 +1,8 @@
 body {
     --main-menu-text: #ECFFDF;
 
+    --scrubber-height: 2.2em;
+
     --tiles: #4F564D;
     --tile-outline: #4F564D;
     --background: #8C9487;
@@ -23,6 +25,25 @@ body {
     --empty-timebar: #707A6B;
 
     background: var(--tiles);
+}
+
+body {
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#root {
+    max-width: 100vw;
+    height: calc(100vh - var(--scrubber-height) - 10px);
+    aspect-ratio: 1.76 / 1;
+}
+
+#wrapper {
+    max-width: 100vw;
+    height: calc(100vh - var(--scrubber-height) - 10px);
+    aspect-ratio: 1.76 / 1;
 }
 
 svg {

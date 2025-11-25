@@ -6,8 +6,8 @@
 #media-controls .text-button {
     color: var(--main-menu-text);
     cursor: pointer;
-    width: 2.2em;
-    height: 2.2em;
+    width: var(--scrubber-height);
+    height: var(--scrubber-height);
     text-align: center;
     display: flex;
     align-items: center;
@@ -20,7 +20,7 @@
 
 .scrubber {
     position: relative;
-    height: 2.2em;
+    height: var(--scrubber-height);
     flex-grow: 1;
     margin-left: 0.5em;
     cursor: pointer;

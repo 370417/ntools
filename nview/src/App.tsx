@@ -165,7 +165,7 @@ function App() {
 
     return (
         <>
-            <svg viewBox={viewboxVal} width="1200">
+            <svg viewBox={viewboxVal}>
                 <defs>
                     <g id="toggled">
                         <line stroke-linecap="round" stroke-width={spokeWidth} x1={-spokeRadius} y1={0} x2={spokeRadius} y2={0} />
