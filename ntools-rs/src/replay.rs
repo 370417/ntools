@@ -218,6 +218,16 @@ impl Replay {
     pub fn boost_pad_y(&self, i: usize) -> f64 {
         self.current_sim.entities.boost_pads[i].pos.y
     }
+
+    #[wasm_bindgen]
+    pub fn boost_pad_rotation(&self, i: usize) -> f64 {
+        self.current_sim.entities.boost_pads[i].rotation().to_degrees()
+    }
+
+    #[wasm_bindgen]
+    pub fn boost_pad_anim_progress(&self, i: usize) -> f64 {
+        self.current_sim.entities.boost_pads[i].eased_animation_progress()
+    }
 }
 
 // Separate impl block for functions without #[wasm_bindgen]

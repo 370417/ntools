@@ -22,6 +22,8 @@ type OneWay = {
 type BoostPad = {
     x: number;
     y: number;
+    deg: number;
+    anim: number;
 };
 
 const LIMBS = [[0, 12], [1, 12], [2, 8], [3, 9], [4, 10], [5, 11], [6, 7], [8, 0], [9, 0], [10, 1], [11, 1]];
@@ -166,6 +168,8 @@ function App() {
             boostPadsArr.push({
                 x: replay.boost_pad_x(i),
                 y: replay.boost_pad_y(i),
+                deg: replay.boost_pad_rotation(i),
+                anim: replay.boost_pad_anim_progress(i),
             });
         }
         setBoostPads(boostPadsArr);
@@ -228,7 +232,7 @@ function App() {
                     {(bounceBlock) => <use href="#bounceblock" x={bounceBlock().x} y={bounceBlock().y} />}
                 </Index>
                 <Index each={boostPads()}>
-                    {(boostPad) => <use href="#boostpad" x={boostPad().x} y={boostPad().y} stroke="black" />}
+                    {(boostPad) => <use href="#boostpad" x={boostPad().x} y={boostPad().y} stroke={`color-mix(in srgb-linear, var(--boost-pad) ${boostPad().anim * 100}%, var(--boost-pad-wooshing))`} transform={`rotate(${boostPad().deg},${boostPad().x},${boostPad().y})`} />}
                 </Index>
                 <path class="ninja preview" d={(() => {
                     let { x, y } = ninjaPreview();

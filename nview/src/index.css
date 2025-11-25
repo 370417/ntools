@@ -20,6 +20,9 @@ body {
     --oneway-long: #3C413B;
     --oneway-short: #6D7668;
 
+    --boost-pad: #000000;
+    --boost-pad-wooshing: #C2CEB1;
+
     --time-remaining: #FECC04;
     --hardcore-time: #DF9B43;
     --empty-timebar: #707A6B;

@@ -78,7 +78,7 @@ export function Scrubber(props: ScrubberProps) {
 
     return <div id="media-controls">
         <div class="text-button"><div>⏺</div></div>
-        <div class="text-button"><div onclick={() => {
+        <div class="text-button" onclick={() => {
             const state = props.state[0]();
             if (state === 'play') {
                 props.state[1]('pause');
@@ -88,7 +88,7 @@ export function Scrubber(props: ScrubberProps) {
                 }
                 props.state[1]('play');
             }
-        }} >
+        }}><div>
             <Switch>
                 <Match when={['pause', 'drag-paused'].includes(props.state[0]())}>
                     {'▶'}
