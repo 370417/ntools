@@ -52,6 +52,7 @@ const oneWayLineSpacing = 3;
 function App() {
     let replay: Replay | undefined = undefined;
 
+    const [recording, setRecording] = createSignal(false);
     const [scrubberState, setScrubberState] = createSignal<'play' | 'pause' | 'drag-playing' | 'drag-paused'>('pause');
     const [replayLength, setReplayLength] = createSignal(0);
     const [progress, setProgress] = createSignal(0);
@@ -90,6 +91,8 @@ function App() {
         if (scrubberState() === 'play' && replay) {
             if (progress() < replayLength()) {
                 setProgress(progress() + 1);
+            } else if (!recording()) {
+                setScrubberState('pause');
             }
             // replay.tick();
             // setProgress(replay.progress());
@@ -224,27 +227,12 @@ function App() {
             </svg>
             <div>
                 <Scrubber
+                    recording={[recording, setRecording]}
                     state={[scrubberState, setScrubberState]}
                     length={replayLength}
                     progress={[progress, setProgress]}
                     previewProgress={[previewProgress, setPreviewProgress]}
                 />
-                <div>
-                    <input type="button" value="⏺" />
-                </div>
-                <div>
-                    <input type="button" value={"▶⏸"} onclick={() => {
-                        const state = scrubberState();
-                        if (state === 'pause') {
-                            setScrubberState('play');
-                        } else if (state === 'play') {
-                            setScrubberState('pause');
-                        }
-                    }} />
-                </div>
-                <div>
-                    <input type="range" />
-                </div>
             </div>
         </>
     )

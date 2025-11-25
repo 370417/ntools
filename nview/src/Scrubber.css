@@ -1,10 +1,29 @@
-.scrubber {
-    position: relative;
-    padding: 5px 0;
+#media-controls {
+    display: flex;
+    align-items: center;
 }
 
-.scrubber::after {
-    content: '.';
+#media-controls .text-button {
+    color: var(--main-menu-text);
+    cursor: pointer;
+    width: 2.2em;
+    height: 2.2em;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#media-controls .text-button div {
+    font-size: 1.5em;
+}
+
+.scrubber {
+    position: relative;
+    height: 2.2em;
+    flex-grow: 1;
+    margin-left: 0.5em;
+    cursor: pointer;
 }
 
 .track, .progress, .previewProgress {
