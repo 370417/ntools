@@ -19,6 +19,11 @@ type OneWay = {
     deg: number;
 };
 
+type BoostPad = {
+    x: number;
+    y: number;
+};
+
 const LIMBS = [[0, 12], [1, 12], [2, 8], [3, 9], [4, 10], [5, 11], [6, 7], [8, 0], [9, 0], [10, 1], [11, 1]];
 
 // Mine
@@ -48,6 +53,11 @@ const bounceBlockStroke = 2 * 24 / 44;
 const oneWayHalfWidth = 12;
 const oneWayHalfWidthSmall = 9;
 const oneWayLineSpacing = 3;
+
+// BoostPad
+const boostPadLong = 6;
+const boostPadMid = 1;
+const boostPadShort = -4;
 
 function App() {
     let replay: Replay | undefined = undefined;
@@ -82,6 +92,7 @@ function App() {
     const [mines, setMines] = createSignal<Mine[]>([]);
     const [bounceBlocks, setBounceBlocks] = createSignal<BounceBlock[]>([]);
     const [oneWays, setOneWays] = createSignal<OneWay[]>([]);
+    const [boostPads, setBoostPads] = createSignal<BoostPad[]>([]);
 
     const viewboxVal = viewbox();
 
@@ -149,6 +160,16 @@ function App() {
         }
         setOneWays(oneWaysArr);
 
+        const boostPadsArr: BoostPad[] = [];
+        const boostPadsLen = replay.boost_pads_len();
+        for (let i = 0; i < boostPadsLen; i++) {
+            boostPadsArr.push({
+                x: replay.boost_pad_x(i),
+                y: replay.boost_pad_y(i),
+            });
+        }
+        setBoostPads(boostPadsArr);
+
         setReplayLength(replay.replay_length());
     }
 
@@ -189,6 +210,13 @@ function App() {
                         <line class="long" x1={-oneWayHalfWidth} y1="0" x2={oneWayHalfWidth} y2="0" stroke-linecap="butt" />
                         <line class="short" x1={-oneWayHalfWidthSmall} y1={oneWayLineSpacing} x2={oneWayHalfWidthSmall} y2={oneWayLineSpacing} stroke-linecap="butt" />
                     </g>
+                    <g id="boostpad" stroke-width="1.25">
+                        <line x1={boostPadLong} y1={boostPadShort} x2={-boostPadShort} y2={-boostPadLong} />
+                        <line x1={boostPadLong} y1={boostPadMid} x2={-boostPadMid} y2={-boostPadLong} />
+                        <line x1={boostPadLong} y1={boostPadLong} x2={-boostPadLong} y2={-boostPadLong} />
+                        <line x1={boostPadMid} y1={boostPadLong} x2={-boostPadLong} y2={-boostPadMid} />
+                        <line x1={boostPadShort} y1={boostPadLong} x2={-boostPadLong} y2={-boostPadShort} />
+                    </g>
                 </defs>
                 <Index each={oneWays()}>
                     {(oneWay) => <use href="#oneway" x={oneWay().x} y={oneWay().y} transform={`rotate(${oneWay().deg},${oneWay().x},${oneWay().y})`} />}
@@ -198,6 +226,9 @@ function App() {
                 </Index>
                 <Index each={bounceBlocks()}>
                     {(bounceBlock) => <use href="#bounceblock" x={bounceBlock().x} y={bounceBlock().y} />}
+                </Index>
+                <Index each={boostPads()}>
+                    {(boostPad) => <use href="#boostpad" x={boostPad().x} y={boostPad().y} stroke="black" />}
                 </Index>
                 <path class="ninja preview" d={(() => {
                     let { x, y } = ninjaPreview();

@@ -203,6 +203,21 @@ impl Replay {
     pub fn one_way_deg(&self, i: usize) -> f64 {
         self.current_sim.entities.one_ways[i].orientation.rotation_deg()
     }
+
+    #[wasm_bindgen]
+    pub fn boost_pads_len(&self) -> usize {
+        self.current_sim.entities.boost_pads.len()
+    }
+
+    #[wasm_bindgen]
+    pub fn boost_pad_x(&self, i: usize) -> f64 {
+        self.current_sim.entities.boost_pads[i].pos.x
+    }
+
+    #[wasm_bindgen]
+    pub fn boost_pad_y(&self, i: usize) -> f64 {
+        self.current_sim.entities.boost_pads[i].pos.y
+    }
 }
 
 // Separate impl block for functions without #[wasm_bindgen]

@@ -63,6 +63,12 @@ impl Simulation {
 
         // Move all movable entities
         move_entities(&mut self.entities.bounce_blocks, &mut self.entity_grid);
+        // Apparently boost pad logic is called as a move method.
+        // I'd expect it to go in logical_collision, but in case the order matters,
+        // I'll leave it here.
+        for boost_pad in &mut self.entities.boost_pads {
+            boost_pad.move_entity(&mut self.ninja);
+        }
 
         // Make all thinkable entities think
         self.entities.mines.iter_mut().for_each(|mine| mine.think(&self.ninja));

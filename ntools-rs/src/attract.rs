@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{entity::{bounce_block::BounceBlock, mine::Mine, one_way::OneWay, Entities, Orientation}, grid::{Grid, GridPos, COLS, ROWS}, segment::Segment, tile::Tile};
+use crate::{entity::{boost_pad::BoostPad, bounce_block::BounceBlock, mine::Mine, one_way::OneWay, Entities, Orientation}, grid::{Grid, GridPos, COLS, ROWS}, segment::Segment, tile::Tile};
 
 /// Represents a parsed attract file.
 /// An attract file is what gets shown in the game's main menu: a replay of a failed attempt at a level.
@@ -164,7 +164,7 @@ impl Attract {
                 // Laser turret
                 23 => {}
                 // Boost pad
-                24 => {}
+                24 => entities.boost_pads.push(BoostPad::new(6.0 * pos)),
                 // Death ball
                 25 => {}
                 // Mini drone

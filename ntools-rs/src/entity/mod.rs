@@ -1,7 +1,8 @@
 use glam::DVec2;
 
-use crate::{entity::{bounce_block::BounceBlock, mine::Mine, one_way::OneWay}, grid::{Grid, GridPos}};
+use crate::{entity::{boost_pad::BoostPad, bounce_block::BounceBlock, mine::Mine, one_way::OneWay}, grid::{Grid, GridPos}};
 
+pub mod boost_pad;
 pub mod bounce_block;
 pub mod mine;
 pub mod one_way;
@@ -13,6 +14,7 @@ pub struct Entities {
     pub mines: Vec<Mine>,
     pub bounce_blocks: Vec<BounceBlock>,
     pub one_ways: Vec<OneWay>,
+    pub boost_pads: Vec<BoostPad>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -21,6 +23,7 @@ pub enum EntityType {
     Mine,
     BounceBlock,
     OneWay,
+    BoostPad,
 }
 
 pub trait Entity {
@@ -37,6 +40,7 @@ impl Entities {
             mines: Vec::new(),
             bounce_blocks: Vec::new(),
             one_ways: Vec::new(),
+            boost_pads: Vec::new(),
         }
     }
 
@@ -52,6 +56,11 @@ impl Entities {
         for (i, one_way) in self.one_ways.iter().enumerate() {
             grid[GridPos::from_world_pos(one_way.pos).clamp()].push((EntityType::OneWay, i));
         }
+        // Intentionally don't add boost pads to grid because boost pad logic never
+        // makes use of the grid.
+        // for (i, boost_pad) in self.boost_pads.iter().enumerate() {
+        //     grid[GridPos::from_world_pos(boost_pad.pos).clamp()].push((EntityType::BoostPad, i));
+        // }
         grid
     }
 }
@@ -63,6 +72,7 @@ impl EntityType {
             EntityType::Mine => false,
             EntityType::BounceBlock => true,
             EntityType::OneWay => false,
+            EntityType::BoostPad => false,
         }
     }
 }
