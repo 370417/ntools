@@ -65,17 +65,20 @@ function App() {
     let replay: Replay | undefined = undefined;
 
     const [recording, setRecording] = createSignal(false);
-    const [scrubberState, setScrubberState] = createSignal<'play' | 'pause' | 'drag-playing' | 'drag-paused'>('pause');
+    const [isPlaying, setIsPlaying] = createSignal(false);
+    // If dragging dragStart is the progress value (frame) that the drag started at.
+    // If not dragging, dragStart is undefined.
+    const [dragStart, setDragStart] = createSignal<number | undefined>(undefined);
     const [replayLength, setReplayLength] = createSignal(0);
     const [progress, setProgress] = createSignal(0);
     const [previewProgress, setPreviewProgress] = createSignal<number | undefined>(undefined);
 
     createEffect(() => {
-        const state = scrubberState();
+        const dragStartVal = dragStart();
         const previewProgressVal = previewProgress();
         const progressVal = progress();
         if (replay) {
-            if (typeof previewProgressVal === 'number' && state !== 'drag-paused' && state !== 'drag-playing') {
+            if (typeof previewProgressVal === 'number' && dragStartVal === undefined) {
                 replay.seek_preview(previewProgressVal);
             }
             replay.seek(progressVal);
@@ -101,11 +104,11 @@ function App() {
     const socket = new WebSocket('ws://localhost:8080');
 
     function tick() {
-        if (scrubberState() === 'play' && replay) {
+        if (isPlaying() && dragStart() === undefined && replay) {
             if (progress() < replayLength()) {
                 setProgress(progress() + 1);
             } else if (!recording()) {
-                setScrubberState('pause');
+                setIsPlaying(false);
             }
             // replay.tick();
             // setProgress(replay.progress());
@@ -263,7 +266,8 @@ function App() {
             <div>
                 <Scrubber
                     recording={[recording, setRecording]}
-                    state={[scrubberState, setScrubberState]}
+                    isPlaying={[isPlaying, setIsPlaying]}
+                    dragStart={[dragStart, setDragStart]}
                     length={replayLength}
                     progress={[progress, setProgress]}
                     previewProgress={[previewProgress, setPreviewProgress]}
