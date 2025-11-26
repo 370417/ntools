@@ -47,25 +47,45 @@ export function Scrubber(props: ScrubberProps) {
     document.addEventListener('mouseup', onMouseUp);
     onCleanup(() => document.removeEventListener('mouseup', onMouseUp));
 
-    function targetFrameFromMouse(event: MouseEvent): number {
+    /**
+     * targetFrame is the frame that progress should be set to based on the
+     * horizontal position of the mouse on the scrubber.
+     * strength is a number from 0 to 1. Strength is 1 when the mouse is vertically
+     * on the scrubber and drops when the mouse gets vertically farther away
+     * from the scrubber.
+     */
+    function targetFrameFromMouse(event: MouseEvent): {
+        targetFrame: number,
+        strength: number,
+    } {
         if (scrubber) {
-            let { left, width } = scrubber.getBoundingClientRect();
-            let progress = (event.clientX - left) / width;
-            progress = Math.min(1, progress); // make sure progress is at most 1
-            progress = Math.max(0, progress); // make sure progress is at least 0
-            return Math.round(progress * (props.length()));
+            const { left, top, width } = scrubber.getBoundingClientRect();
+            let progressZeroToOne = (event.clientX - left) / width;
+            progressZeroToOne = Math.min(1, progressZeroToOne); // make sure progress is at most 1
+            progressZeroToOne = Math.max(0, progressZeroToOne); // make sure progress is at least 0
+            let verticalDist = Math.abs(event.clientY - top);
+            return {
+                targetFrame: Math.round(progressZeroToOne * (props.length())),
+                strength: Math.pow(Math.E, -5 * verticalDist / width),
+            };
         } else {
-            return 0;
+            return {
+                targetFrame: 0,
+                strength: 0,
+            };
         }
     }
 
     function onMouseMove(event: MouseEvent) {
         if (scrubber) {
-            if (props.dragStart[0]() !== undefined) {
-                props.progress[1](targetFrameFromMouse(event));
+            const dragStart = props.dragStart[0]();
+            if (dragStart !== undefined) {
+                const { targetFrame, strength } = targetFrameFromMouse(event);
+                // reduce effect of dragging if mouse is farther away from scrubber
+                props.progress[1](Math.round(dragStart + (targetFrame - dragStart) * strength));
                 props.previewProgress[1](undefined);
             } else if (scrubber.matches(':hover')) {
-                props.previewProgress[1](targetFrameFromMouse(event));
+                props.previewProgress[1](targetFrameFromMouse(event).targetFrame);
             } else {
                 props.previewProgress[1](undefined);
             }
@@ -100,7 +120,7 @@ export function Scrubber(props: ScrubberProps) {
             </Switch>
         </div></div>
         <div ref={scrubber} class="scrubber" onmousedown={event => {
-            props.dragStart[1](targetFrameFromMouse(event));
+            props.dragStart[1](targetFrameFromMouse(event).targetFrame);
             onMouseMove(event);
             event.preventDefault();
         }}>
