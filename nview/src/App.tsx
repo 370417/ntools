@@ -12,6 +12,7 @@ type Mine = {
 type BounceBlock = {
     x: number;
     y: number;
+    deg: number;
 };
 
 type OneWay = {
@@ -181,6 +182,7 @@ function App() {
             bounceBlocksArr.push({
                 x: replay.bounce_block_x(i),
                 y: replay.bounce_block_y(i),
+                deg: replay.bounce_block_deg(i),
             });
         }
         setBounceBlocks(bounceBlocksArr);
@@ -263,7 +265,7 @@ function App() {
                     {(mine) => <use href={["#toggled", "#untoggled", "#toggling"][mine().type]} x={mine().x} y={mine().y} />}
                 </Index>
                 <Index each={bounceBlocks()}>
-                    {(bounceBlock) => <use href="#bounceblock" x={bounceBlock().x} y={bounceBlock().y} />}
+                    {(bounceBlock) => <use href="#bounceblock" x={bounceBlock().x} y={bounceBlock().y} transform={`rotate(${bounceBlock().deg},${bounceBlock().x},${bounceBlock().y})`} />}
                 </Index>
                 <Index each={boostPads()}>
                     {(boostPad) => <use href="#boostpad" x={boostPad().x} y={boostPad().y} stroke={`color-mix(in srgb-linear, var(--boost-pad) ${boostPad().anim * 100}%, var(--boost-pad-wooshing))`} transform={`rotate(${boostPad().deg},${boostPad().x},${boostPad().y})`} />}

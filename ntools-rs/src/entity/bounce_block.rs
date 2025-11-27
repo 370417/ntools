@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{collision_util::{penetration_square_vs_circle, penetration_square_vs_point, Depenetration}, entity::{Entity, Mob}, grid::GridPos, ninja};
+use crate::{collision_util::{penetration_square_vs_circle_with_orientation, penetration_square_vs_point, Depenetration}, entity::{Entity, Mob, Orientation}, grid::GridPos, ninja};
 
 pub const SEMI_SIDE: f64 = 9.0;
 const STIFFNESS: f64 = 0.02222222222222222; // 1/45
@@ -19,7 +19,7 @@ pub struct BounceBlock {
     /// to this entity.
     grid_pos: GridPos,
     // non-standard attributes
-    rotation: (),
+    pub orientation: Orientation,
     corners: Corners,
 }
 
@@ -36,7 +36,7 @@ impl BounceBlock {
             origin,
             speed: DVec2::ZERO,
             grid_pos: GridPos::from_world_pos(origin),
-            rotation: (),
+            orientation: Orientation::NE,
             corners: Corners::Round,
         }
     }
@@ -44,7 +44,7 @@ impl BounceBlock {
     /// Apply 80% of the depenetration to the bounce block and 20% to the ninja.
     pub fn physical_collision(&mut self, ninja_pos: DVec2) -> Option<Depenetration> {
         let depen = match self.corners {
-            Corners::Round => penetration_square_vs_circle(self.pos, SEMI_SIDE, ninja_pos, ninja::RADIUS),
+            Corners::Round => penetration_square_vs_circle_with_orientation(self.pos, SEMI_SIDE, ninja_pos, ninja::RADIUS, self.orientation),
             Corners::Square => penetration_square_vs_point(self.pos, ninja_pos, SEMI_SIDE + ninja::RADIUS),
         };
         depen.map(|depen| {
@@ -60,7 +60,7 @@ impl BounceBlock {
 
     pub fn logical_collision(&self, ninja_pos: DVec2) -> Option<f64> {
         let depen = match self.corners {
-            Corners::Round => penetration_square_vs_circle(self.pos, SEMI_SIDE, ninja_pos, ninja::RADIUS + 0.1),
+            Corners::Round => penetration_square_vs_circle_with_orientation(self.pos, SEMI_SIDE, ninja_pos, ninja::RADIUS + 0.1, self.orientation),
             Corners::Square => penetration_square_vs_point(self.pos, ninja_pos, SEMI_SIDE + ninja::RADIUS + 0.1),
         };
         if let Some(depen) = depen {

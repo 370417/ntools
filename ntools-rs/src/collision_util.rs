@@ -1,6 +1,6 @@
-use glam::DVec2;
+use glam::{DMat2, DVec2};
 
-use crate::{grid::Grid, segment::{ClosestPoint, Segment}};
+use crate::{entity::Orientation, grid::Grid, segment::{ClosestPoint, Segment}};
 
 /// Fetch all segments from neighbourhood. Return shortest intersection time from interpolation.
 pub fn sweep_circle_vs_tiles(pos_old: DVec2, delta: DVec2, radius: f64, segments: &Grid<Segment>) -> f64 {
@@ -182,6 +182,7 @@ pub fn penetration_square_vs_point(square_pos: DVec2, point_pos: DVec2, semi_sid
 pub fn penetration_square_vs_circle(square_pos: DVec2, semi_side: f64, circle_pos: DVec2, radius: f64) -> Option<Depenetration> {
     // treat square_pos as the origin
     let circle_pos = circle_pos - square_pos;
+
     if circle_pos.y < -semi_side {
         if circle_pos.x < -semi_side {
             // circle is NW of square
@@ -207,6 +208,26 @@ pub fn penetration_square_vs_circle(square_pos: DVec2, semi_side: f64, circle_po
     } else {
         penetration_square_vs_point(DVec2::ZERO, circle_pos, semi_side + radius)
     }
+}
+
+pub fn penetration_square_vs_circle_with_orientation(square_pos: DVec2, semi_side: f64, circle_pos: DVec2, radius: f64, orientation: Orientation) -> Option<Depenetration> {
+    let basis_i = orientation.vec2();
+    let basis_j = orientation.vec2().perp();
+    let basis_matrix = DMat2::from_cols(basis_i, basis_j);
+
+    // treat square_pos as the origin
+    let circle_pos = circle_pos - square_pos;
+    let square_pos = DVec2::ZERO;
+
+    // convert circle_pos to the pov of the square
+    let circle_pos = basis_matrix.inverse() * circle_pos;
+
+    let depen = penetration_square_vs_circle(square_pos, semi_side, circle_pos, radius);
+
+    depen.map(|mut depen| {
+        depen.depen_unit_normal = basis_matrix * depen.depen_unit_normal;
+        depen
+    })
 }
 
 /// If a point is inside a circle, return the orientation of the shortest vector

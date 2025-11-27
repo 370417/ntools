@@ -155,6 +155,7 @@ impl Orientation {
         }
     }
 
+    // TODO: replace this with self.vec2().to_angle()
     /// Orientation represented by degrees of rotation.
     /// Positive rotation is counterclockwise.
     pub fn rotation_deg(&self) -> f64 {

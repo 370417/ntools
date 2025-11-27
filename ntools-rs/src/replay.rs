@@ -195,6 +195,11 @@ impl Replay {
     }
 
     #[wasm_bindgen]
+    pub fn bounce_block_deg(&self, i: usize) -> f64 {
+        self.current_sim.entities.bounce_blocks[i].orientation.rotation_deg()
+    }
+
+    #[wasm_bindgen]
     pub fn one_ways_len(&self) -> usize {
         self.current_sim.entities.one_ways.len()
     }
