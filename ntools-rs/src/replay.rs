@@ -37,6 +37,15 @@ impl Replay {
     }
 
     #[wasm_bindgen]
+    pub fn set_input(&mut self, jump: bool, right: bool, left: bool, suicide: bool) {
+        if self.current_sim.frame == self.inputs.len() as u32 {
+            self.inputs.push(Input::new(jump, right, left, suicide).into_byte());
+        } else if self.current_sim.frame < self.inputs.len() as u32 {
+            self.inputs[self.current_sim.frame as usize] = Input::new(jump, right, left, suicide).into_byte();
+        }
+    }
+
+    #[wasm_bindgen]
     pub fn tick(&mut self) {
         if (self.current_sim.frame as usize) < self.inputs.len() {
             // Save keyframe every 120 frames
@@ -53,7 +62,7 @@ impl Replay {
     #[wasm_bindgen]
     pub fn seek(&mut self, target_frame: u32) {
         if (target_frame as usize) <= self.inputs.len() {
-            // TODO: can use upper_bound method to get closest_keyframe once btree_curors feature is stabilized.
+            // TODO: can use upper_bound method to get closest_keyframe once btree_cursors feature is stabilized.
             // This current filter then max alternative isn't very efficient, but oh well.
             let closest_keyframe = self.keyframes.keys().filter(|&&f| f <= target_frame).max().expect("keys should always have a key 0, so they should never be empty.");
             if target_frame < self.current_sim.frame || *closest_keyframe > self.current_sim.frame {
@@ -73,7 +82,7 @@ impl Replay {
     #[wasm_bindgen]
     pub fn seek_preview(&mut self, target_frame: u32) {
         if (target_frame as usize) <= self.inputs.len() {
-            // TODO: can use upper_bound method to get closest_keyframe once btree_curors feature is stabilized.
+            // TODO: can use upper_bound method to get closest_keyframe once btree_cursors feature is stabilized.
             // This current filter then max alternative isn't very efficient, but oh well.
             let closest_keyframe = self.keyframes.keys().filter(|&&f| f <= target_frame).max().expect("keys should always have a key 0, so they should never be empty.");
             if target_frame < self.preview_sim.frame || *closest_keyframe > self.preview_sim.frame {

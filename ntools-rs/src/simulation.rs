@@ -38,6 +38,15 @@ impl Input {
             suicide: byte & 0b1000 > 0,
         }
     }
+
+    pub fn into_byte(self) -> u8 {
+        let mut byte = 0;
+        if self.jump { byte |= 0b0001 }
+        if self.right { byte |= 0b0010 }
+        if self.left { byte |= 0b0100 }
+        if self.suicide { byte |= 0b1000 }
+        byte
+    }
 }
 
 impl Simulation {

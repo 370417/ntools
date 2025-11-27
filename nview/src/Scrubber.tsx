@@ -98,7 +98,9 @@ export function Scrubber(props: ScrubberProps) {
     }
 
     return <div id="media-controls">
-        <div class="text-button"><div>⏺</div></div>
+        <div class="text-button" classList={{ recording: props.recording[0]() }} onclick={() => {
+            props.recording[1](!props.recording[0]());
+        }}><div>⏺</div></div>
         <div class="text-button" onclick={() => {
             if (props.isPlaying[0]()) {
                 props.isPlaying[1](false);

@@ -14,6 +14,10 @@
     justify-content: center;
 }
 
+#media-controls .text-button.recording {
+    color: var(--main-menu-selected);
+}
+
 #media-controls .text-button div {
     font-size: 1.5em;
 }

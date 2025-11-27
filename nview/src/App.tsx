@@ -1,6 +1,7 @@
 import { createEffect, createSignal, Index } from 'solid-js';
 import { Replay, viewbox } from './assets/ntools_rs';
 import { Scrubber } from './Scrubber';
+import Stats from 'stats-js';
 
 type Mine = {
     x: number;
@@ -73,6 +74,33 @@ function App() {
     const [progress, setProgress] = createSignal(0);
     const [previewProgress, setPreviewProgress] = createSignal<number | undefined>(undefined);
 
+    const [isJump1Pressed, setIsJump1Pressed] = createSignal(false);
+    const [isJump2Pressed, setIsJump2Pressed] = createSignal(false);
+    const [isRightPressed, setIsRightPressed] = createSignal(false);
+    const [isLeftPressed, setIsLeftPressed] = createSignal(false);
+    const [isSuicidePressed, setIsSuicidePressed] = createSignal(false);
+
+    document.addEventListener('keydown', event => {
+        if (event.code === 'KeyZ') setIsJump1Pressed(true);
+        else if (event.code === 'ArrowUp') setIsJump2Pressed(true);
+        else if (event.code === 'ArrowRight') setIsRightPressed(true);
+        else if (event.code === 'ArrowLeft') setIsLeftPressed(true);
+        else if (event.code === 'KeyV') setIsSuicidePressed(true);
+    });
+
+    document.addEventListener('keyup', event => {
+        if (event.code === 'KeyZ') setIsJump1Pressed(false);
+        else if (event.code === 'ArrowUp') setIsJump2Pressed(false);
+        else if (event.code === 'ArrowRight') setIsRightPressed(false);
+        else if (event.code === 'ArrowLeft') setIsLeftPressed(false);
+        else if (event.code === 'KeyV') setIsSuicidePressed(false);
+    });
+
+    let stats: any = undefined;
+    // stats = new Stats();
+    stats?.showPanel(0);
+    if (stats) document.body.appendChild(stats.dom);
+
     createEffect(() => {
         const dragStartVal = dragStart();
         const previewProgressVal = previewProgress();
@@ -104,15 +132,18 @@ function App() {
     const socket = new WebSocket('ws://localhost:8080');
 
     function tick() {
+        stats?.begin();
         if (isPlaying() && dragStart() === undefined && replay) {
-            if (progress() < replayLength()) {
+            if (recording()) {
+                replay.set_input(isJump1Pressed() || isJump2Pressed(), isRightPressed(), isLeftPressed(), isSuicidePressed());
+                setProgress(replay.progress() + 1);
+            } else if (progress() < replayLength()) {
                 setProgress(progress() + 1);
-            } else if (!recording()) {
+            } else {
                 setIsPlaying(false);
             }
-            // replay.tick();
-            // setProgress(replay.progress());
         }
+        stats?.end();
         requestAnimationFrame(tick);
     }
     tick();
