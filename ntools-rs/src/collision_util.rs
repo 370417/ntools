@@ -172,3 +172,54 @@ pub fn penetration_square_vs_point(square_pos: DVec2, point_pos: DVec2, semi_sid
         None
     }
 }
+
+/// Depenetrate a circle out of a square. This is equivalent to depenetrating
+/// a point out of a square with rounded corners, where the side length is 2*(semi_side+radius)
+/// and the corner radius is radius.
+/// We could replace penetration_square_vs_point with calls to this function with radius 0,
+/// but for now we keep penetration_square_vs_point as is to try and maintain
+/// compatibility with nclone/n++.
+pub fn penetration_square_vs_circle(square_pos: DVec2, semi_side: f64, circle_pos: DVec2, radius: f64) -> Option<Depenetration> {
+    // treat square_pos as the origin
+    let circle_pos = circle_pos - square_pos;
+    if circle_pos.y < -semi_side {
+        if circle_pos.x < -semi_side {
+            // circle is NW of square
+            penetration_circle_vs_point(DVec2::new(-semi_side, -semi_side), circle_pos, radius)
+        } else if circle_pos.x > semi_side {
+            // circle is NE of square
+            penetration_circle_vs_point(DVec2::new(semi_side, -semi_side), circle_pos, radius)
+        } else {
+            // circle is N of square
+            penetration_square_vs_point(DVec2::ZERO, circle_pos, semi_side + radius)
+        }
+    } else if circle_pos.y > semi_side {
+        if circle_pos.x < -semi_side {
+            // circle is SW of square
+            penetration_circle_vs_point(DVec2::new(-semi_side, semi_side), circle_pos, radius)
+        } else if circle_pos.x > semi_side {
+            // circle is SE of square
+            penetration_circle_vs_point(DVec2::new(semi_side, semi_side), circle_pos, radius)
+        } else {
+            // circle is S of square
+            penetration_square_vs_point(DVec2::ZERO, circle_pos, semi_side + radius)
+        }
+    } else {
+        penetration_square_vs_point(DVec2::ZERO, circle_pos, semi_side + radius)
+    }
+}
+
+/// If a point is inside a circle, return the orientation of the shortest vector
+/// to depenetrate the point outside the circle.
+pub fn penetration_circle_vs_point(circle_pos: DVec2, point_pos: DVec2, radius: f64) -> Option<Depenetration> {
+    let (normal, len) = (point_pos - circle_pos).normalize_and_length();
+    if len >= radius {
+        None
+    } else {
+        Some(Depenetration {
+            depen_unit_normal: normal,
+            depen_dist: radius - len,
+            depen_perp_dist: 0.0,
+        })
+    }
+}

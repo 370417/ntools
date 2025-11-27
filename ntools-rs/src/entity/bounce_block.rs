@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{collision_util::{penetration_square_vs_point, Depenetration}, entity::{Entity, Mob}, ninja};
+use crate::{collision_util::{penetration_square_vs_circle, penetration_square_vs_point, Depenetration}, entity::{Entity, Mob}, grid::GridPos, ninja};
 
 pub const SEMI_SIDE: f64 = 9.0;
 const STIFFNESS: f64 = 0.02222222222222222; // 1/45
@@ -12,6 +12,12 @@ pub struct BounceBlock {
     pub pos: DVec2,
     pub origin: DVec2,
     pub speed: DVec2,
+    // At first I tried to get away with calculating grid_pos on the fly from self.pos,
+    // but self.pos can change when calling self.physical_collision, so it's simplest
+    // to just store grid_pos here.
+    /// grid_pos marks the grid cell in the entity grid that contains an index pointing
+    /// to this entity.
+    grid_pos: GridPos,
     // non-standard attributes
     rotation: (),
     corners: Corners,
@@ -29,14 +35,19 @@ impl BounceBlock {
             pos: origin,
             origin,
             speed: DVec2::ZERO,
+            grid_pos: GridPos::from_world_pos(origin),
             rotation: (),
-            corners: Corners::Square,
+            corners: Corners::Round,
         }
     }
 
     /// Apply 80% of the depenetration to the bounce block and 20% to the ninja.
     pub fn physical_collision(&mut self, ninja_pos: DVec2) -> Option<Depenetration> {
-        penetration_square_vs_point(self.pos, ninja_pos, SEMI_SIDE + ninja::RADIUS).map(|depen| {
+        let depen = match self.corners {
+            Corners::Round => penetration_square_vs_circle(self.pos, SEMI_SIDE, ninja_pos, ninja::RADIUS),
+            Corners::Square => penetration_square_vs_point(self.pos, ninja_pos, SEMI_SIDE + ninja::RADIUS),
+        };
+        depen.map(|depen| {
             self.pos -= depen.depen_unit_normal * depen.depen_dist * (1.0 - STRENGTH);
             self.speed -= depen.depen_unit_normal * depen.depen_dist * (1.0 - STRENGTH);
             Depenetration {
@@ -48,8 +59,12 @@ impl BounceBlock {
     }
 
     pub fn logical_collision(&self, ninja_pos: DVec2) -> Option<f64> {
-        if let Some(depen) = penetration_square_vs_point(self.pos, ninja_pos, SEMI_SIDE + ninja::RADIUS + 0.1) {
-            if depen.depen_unit_normal.x != 0.0 {
+        let depen = match self.corners {
+            Corners::Round => penetration_square_vs_circle(self.pos, SEMI_SIDE, ninja_pos, ninja::RADIUS + 0.1),
+            Corners::Square => penetration_square_vs_point(self.pos, ninja_pos, SEMI_SIDE + ninja::RADIUS + 0.1),
+        };
+        if let Some(depen) = depen {
+            if depen.depen_unit_normal.x.abs() == 1.0 {
                 // is it possible to desync based on the order of checks here?
                 // e.g. if you are between bounce blocks on the left and right
                 return Some(depen.depen_unit_normal.x);
@@ -70,6 +85,14 @@ impl Entity for BounceBlock {
 }
 
 impl Mob for BounceBlock {
+    fn grid_pos(&self) -> GridPos {
+        self.grid_pos
+    }
+
+    fn set_grid_pos(&mut self, grid_pos: GridPos) {
+        self.grid_pos = grid_pos
+    }
+
     /// Update the position and speed of the bounce block by applying the spring force and dampening.
     fn move_entity(&mut self) {
         self.speed *= DAMPENING;

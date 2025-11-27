@@ -79,6 +79,10 @@ impl EntityType {
 
 /// Mob: moveable object
 pub trait Mob {
+    /// Gets called before self.move_entity to determine which grid cell self belongs to.
+    fn grid_pos(&self) -> GridPos;
+    /// Gets called after self.move_entity if it resulted in self moving to a new grid cell.
+    fn set_grid_pos(&mut self, grid_pos: GridPos);
     fn move_entity(&mut self);
 }
 
@@ -86,15 +90,22 @@ pub trait Mob {
 /// if it has changed.
 pub fn move_entities<T: Mob + Entity>(entities: &mut [T], entity_grid: &mut Grid<EntityIndex>) {
     for (i, entity) in entities.iter_mut().enumerate() {
-        let old_grid_pos = GridPos::from_world_pos(entity.pos());
+        let old_grid_pos = entity.grid_pos();
         entity.move_entity();
         let new_grid_pos = GridPos::from_world_pos(entity.pos());
         if old_grid_pos != new_grid_pos {
-            let Some((index_in_cell, _)) = entity_grid[old_grid_pos].iter().enumerate().find(|(_, entity_index)| {
-                **entity_index == (entity.entity_type(), i)
-            }) else { continue };
-            let entity_index = entity_grid[old_grid_pos].swap_remove(index_in_cell);
+            let entity_index = (entity.entity_type(), i);
+            let existing_entry = entity_grid[old_grid_pos].iter().enumerate().find(|(_, x)| {
+                **x == entity_index
+            });
+            if let Some((i, _)) = existing_entry {
+                entity_grid[old_grid_pos].swap_remove(i);
+            } else {
+                #[cfg(debug_assertions)]
+                panic!("could not find entity at old pos");
+            }
             entity_grid[new_grid_pos].push(entity_index);
+            entity.set_grid_pos(new_grid_pos);
         }
     }
 }

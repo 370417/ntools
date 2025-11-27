@@ -41,6 +41,7 @@ impl Replay {
         if self.current_sim.frame == self.inputs.len() as u32 {
             self.inputs.push(Input::new(jump, right, left, suicide).into_byte());
         } else if self.current_sim.frame < self.inputs.len() as u32 {
+            // TODO: invalidate future keyframes if this input is different from stored input
             self.inputs[self.current_sim.frame as usize] = Input::new(jump, right, left, suicide).into_byte();
         }
     }
