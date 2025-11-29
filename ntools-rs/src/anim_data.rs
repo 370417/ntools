@@ -42,6 +42,7 @@ pub fn get_anim_frame(i: usize) -> Bones {
 
     for bone in 0..13 {
         let anim_tuple = &anim_frame[bone * 8..(bone + 1) * 8];
+        // TODO: use as_array once stabilized
         bones[bone].x = f32::from_le_bytes(anim_tuple[0..4].try_into().unwrap());
         bones[bone].y = f32::from_le_bytes(anim_tuple[4..8].try_into().unwrap());
     }

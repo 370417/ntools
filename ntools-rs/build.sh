@@ -2,7 +2,7 @@
 
 set -eo pipefail
 
-# cargo test
+cargo test
 
 # build the wasm module
 cargo build --release --lib --target wasm32-unknown-unknown
