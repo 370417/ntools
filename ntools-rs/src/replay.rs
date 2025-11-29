@@ -40,9 +40,13 @@ impl Replay {
     pub fn set_input(&mut self, jump: bool, right: bool, left: bool, suicide: bool) {
         if self.current_sim.frame == self.inputs.len() as u32 {
             self.inputs.push(Input::new(jump, right, left, suicide).into_byte());
-        } else if self.current_sim.frame < self.inputs.len() as u32 {
-            // TODO: invalidate future keyframes if this input is different from stored input
-            self.inputs[self.current_sim.frame as usize] = Input::new(jump, right, left, suicide).into_byte();
+        } else if let Some(&old_input) = self.inputs.get(self.current_sim.frame as usize) {
+            let new_input = Input::new(jump, right, left, suicide).into_byte();
+            if new_input != old_input {
+                // Invalidate future keyframes
+                self.keyframes.retain(|&frame, _| frame == 0 || frame < self.current_sim.frame);
+                self.inputs[self.current_sim.frame as usize] = new_input;
+            }
         }
     }
 
