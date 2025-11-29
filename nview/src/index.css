@@ -120,3 +120,8 @@ svg {
     stroke: var(--exit-border);
 }
 
+.exit-switch {
+    stroke: var(--exit-switch-border);
+    fill: var(--exit-switch-background);
+}
+

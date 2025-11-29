@@ -76,8 +76,8 @@ const boostPadShort = -4;
 // Exit
 const exitDoorRadius = 10;
 const exitDoorCorner = 2.5;
-const exitSwitchHalfWidth = 15;
-const exitSwitchHalfHeight = 8;
+const exitSwitchHalfWidth = 7;
+const exitSwitchHalfHeight = 4.5;
 const exitSwitchCorner = 2;
 
 function App() {
@@ -313,7 +313,7 @@ function App() {
                 </Index>
                 <Index each={exitSwitches()}>
                     {exitSwitch => <>
-                        <path class="exit-switch" d={`M ${exitSwitch().x} ${exitSwitch().y} m ${-exitSwitchHalfWidth + exitSwitchCorner} ${-exitSwitchHalfHeight} h ${2 * exitSwitchHalfWidth - exitSwitchCorner} l ${exitSwitchCorner} ${exitSwitchCorner} v ${2 * (exitSwitchHalfHeight - exitSwitchCorner)} l ${-exitSwitchCorner} ${exitSwitchCorner} h ${2 * (-exitSwitchHalfWidth + exitSwitchCorner)} l ${-exitSwitchCorner} ${-exitSwitchCorner} v ${2 * (-exitSwitchHalfHeight + exitSwitchCorner)} l ${exitSwitchCorner} ${-exitSwitchCorner}`} />
+                        <path class="exit-switch" d={`M ${exitSwitch().x} ${exitSwitch().y} m ${-exitSwitchHalfWidth + exitSwitchCorner} ${-exitSwitchHalfHeight} h ${2 * (exitSwitchHalfWidth - exitSwitchCorner)} l ${exitSwitchCorner} ${exitSwitchCorner} v ${2 * (exitSwitchHalfHeight - exitSwitchCorner)} l ${-exitSwitchCorner} ${exitSwitchCorner} h ${2 * (-exitSwitchHalfWidth + exitSwitchCorner)} l ${-exitSwitchCorner} ${-exitSwitchCorner} v ${2 * (-exitSwitchHalfHeight + exitSwitchCorner)} l ${exitSwitchCorner} ${-exitSwitchCorner}`} />
                     </>}
                 </Index>
                 <Index each={bounceBlocks()}>
