@@ -703,11 +703,15 @@ impl Ninja {
     /// Prng based on ninja's state.
     /// For simplicity, this creates a whole new prng for every random number needed.
     fn prng(&self) -> Xoroshiro64StarStar {
-        use std::io::Write;
-
         let mut seed = [0_u8; 8];
-        let _ = (&mut seed[0..4]).write(&self.speed.x.to_le_bytes());
-        let _ = (&mut seed[4..8]).write(&self.speed.y.to_le_bytes());
+        let speedx = self.speed.x.to_le_bytes();
+        let speedy = self.speed.y.to_le_bytes();
+        let posx = self.pos.x.to_le_bytes();
+        let posy = self.pos.y.to_le_bytes();
+
+        for i in 0..8 {
+            seed[i] = speedx[i] ^ speedy[i] ^ posx[i] ^ posy[i];
+        }
 
         Xoroshiro64StarStar::seed_from_u64(SplitMix64::from_seed(seed).next_u64())
     }
