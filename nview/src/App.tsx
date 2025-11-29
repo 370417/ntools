@@ -1,5 +1,5 @@
 import { createEffect, createSignal, Index } from 'solid-js';
-import { Replay, viewbox } from './assets/ntools_rs';
+import { Replay } from './assets/ntools_rs';
 import { Scrubber } from './Scrubber';
 import Stats from 'stats-js';
 
@@ -98,12 +98,23 @@ function App() {
     const [isLeftPressed, setIsLeftPressed] = createSignal(false);
     const [isSuicidePressed, setIsSuicidePressed] = createSignal(false);
 
+    // units are in game units, not pixels
+    // same as svg units
+    const [mouseGamePos, setMouseGamePos] = createSignal({ x: 0, y: 0 });
+
     document.addEventListener('keydown', event => {
         if (event.code === 'KeyZ') setIsJump1Pressed(true);
         else if (event.code === 'ArrowUp') setIsJump2Pressed(true);
         else if (event.code === 'ArrowRight') setIsRightPressed(true);
         else if (event.code === 'ArrowLeft') setIsLeftPressed(true);
         else if (event.code === 'KeyV') setIsSuicidePressed(true);
+
+        else if (event.code === 'Enter') {
+            replay?.place_ninja(mouseGamePos().x, mouseGamePos().y);
+            if (replay && !isPlaying()) {
+                renderFrame(replay);
+            }
+        }
     });
 
     document.addEventListener('keyup', event => {
@@ -146,8 +157,6 @@ function App() {
     const [boostPads, setBoostPads] = createSignal<BoostPad[]>([]);
     const [exitDoors, setExitDoors] = createSignal<ExitDoor[]>([]);
     const [exitSwitches, setExitSwitches] = createSignal<ExitSwitch[]>([]);
-
-    const viewboxVal = viewbox();
 
     const socket = new WebSocket('ws://localhost:8080');
 
@@ -265,7 +274,13 @@ function App() {
 
     return (
         <>
-            <svg viewBox={viewboxVal}>
+            <svg viewBox="0 0 1056 600" onmousemove={function(this: SVGElement, event) {
+                const { left, top, width, height } = this.getBoundingClientRect();
+                setMouseGamePos({
+                    x: (event.clientX - left) / width * 1056,
+                    y: (event.clientY - top) / height * 600,
+                });
+            }}>
                 <defs>
                     <g id="toggled">
                         <line stroke-linecap="round" stroke-width={spokeWidth} x1={-spokeRadius} y1={0} x2={spokeRadius} y2={0} />

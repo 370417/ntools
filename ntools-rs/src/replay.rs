@@ -1,8 +1,9 @@
 use std::collections::BTreeMap;
 
+use glam::DVec2;
 use wasm_bindgen::prelude::*;
 
-use crate::{anim_data::flatten_bones, attract::Attract, entity::mine::Mine, grid::Grid, segment::{extract_path, Segment}, simulation::{Input, KeyFrame, Simulation}};
+use crate::{anim_data::flatten_bones, attract::Attract, entity::mine::Mine, grid::{Grid, COLS, ROWS}, ninja::Ninja, segment::{extract_path, Segment}, simulation::{Input, KeyFrame, Simulation}, tile::TILE_SIZE};
 
 #[wasm_bindgen]
 pub struct Replay {
@@ -103,10 +104,21 @@ impl Replay {
         }
     }
 
-    /// Set current_sim to preview_sim
+    /// Clear all input history and move ninja to a specific position.
+    /// Entity state does not reset.
     #[wasm_bindgen]
-    pub fn set_current_to_preview(&mut self) {
-        self.current_sim.clone_from(&self.preview_sim);
+    pub fn place_ninja(&mut self, x: f64, y: f64) {
+        // Clamp x and y to playable area.
+        // 0th row and col are always filled with walls.
+        let x = x.clamp(TILE_SIZE, TILE_SIZE * (1 + COLS) as f64);
+        let y = y.clamp(TILE_SIZE, TILE_SIZE * (1 + ROWS) as f64);
+        self.inputs.clear();
+        self.keyframes.clear();
+        self.current_sim.frame = 0;
+        self.current_sim.ninja = Ninja::new(DVec2::new(x, y));
+        self.keyframes.insert(0, KeyFrame::from_sim(&self.current_sim, &self.current_sim.entities.mines));
+        self.initial_mines = self.current_sim.entities.mines.clone();
+        self.preview_sim = self.current_sim.clone();
     }
 
     #[wasm_bindgen]

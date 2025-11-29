@@ -119,7 +119,7 @@ impl Attract {
 
             match object_id {
                 // Ninja
-                0 => entities.ninjas.push(pos),
+                0 => entities.ninjas.push(6.0 * pos),
                 // Mine
                 1 => entities.mines.push(Mine::new_toggled(6.0 * pos)),
                 // Gold

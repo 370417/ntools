@@ -83,10 +83,10 @@ impl NinjaState {
 }
 
 impl Ninja {
-    pub fn new(map_pos: DVec2) -> Ninja {
+    pub fn new(pos: DVec2) -> Ninja {
         let mut ninja = Ninja {
-            pos: 6.0 * map_pos,
-            pos_old: 6.0 * map_pos,
+            pos: pos,
+            pos_old: pos,
             speed: DVec2::ZERO,
             applied_gravity: GRAVITY_FALL,
             applied_drag: DRAG_REGULAR,
