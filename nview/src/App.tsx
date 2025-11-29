@@ -28,6 +28,16 @@ type BoostPad = {
     anim: number;
 };
 
+type ExitDoor = {
+    x: number;
+    y: number;
+};
+
+type ExitSwitch = {
+    x: number;
+    y: number;
+}
+
 const LIMBS = [[0, 12], [1, 12], [2, 8], [3, 9], [4, 10], [5, 11], [6, 7], [8, 0], [9, 0], [10, 1], [11, 1]];
 
 // Mine
@@ -62,6 +72,13 @@ const oneWayLineSpacing = 3;
 const boostPadLong = 6;
 const boostPadMid = 1;
 const boostPadShort = -4;
+
+// Exit
+const exitDoorRadius = 10;
+const exitDoorCorner = 2.5;
+const exitSwitchHalfWidth = 15;
+const exitSwitchHalfHeight = 8;
+const exitSwitchCorner = 2;
 
 function App() {
     let replay: Replay | undefined = undefined;
@@ -127,6 +144,8 @@ function App() {
     const [bounceBlocks, setBounceBlocks] = createSignal<BounceBlock[]>([]);
     const [oneWays, setOneWays] = createSignal<OneWay[]>([]);
     const [boostPads, setBoostPads] = createSignal<BoostPad[]>([]);
+    const [exitDoors, setExitDoors] = createSignal<ExitDoor[]>([]);
+    const [exitSwitches, setExitSwitches] = createSignal<ExitSwitch[]>([]);
 
     const viewboxVal = viewbox();
 
@@ -210,6 +229,26 @@ function App() {
         }
         setBoostPads(boostPadsArr);
 
+        const exitDoorsArr: ExitDoor[] = [];
+        const exitDoorsLen = replay.exit_doors_len();
+        for (let i = 0; i < exitDoorsLen; i++) {
+            exitDoorsArr.push({
+                x: replay.exit_door_x(i),
+                y: replay.exit_door_y(i),
+            });
+        }
+        setExitDoors(exitDoorsArr);
+
+        const exitSwitchesArr: ExitSwitch[] = [];
+        const exitSwitchesLen = replay.exit_switches_len();
+        for (let i = 0; i < exitSwitchesLen; i++) {
+            exitSwitchesArr.push({
+                x: replay.exit_switch_x(i),
+                y: replay.exit_switch_y(i),
+            });
+        }
+        setExitSwitches(exitSwitchesArr);
+
         setReplayLength(replay.replay_length());
     }
 
@@ -258,17 +297,30 @@ function App() {
                         <line x1={boostPadShort} y1={boostPadLong} x2={-boostPadLong} y2={-boostPadShort} />
                     </g>
                 </defs>
+                <Index each={exitDoors()}>
+                    {exitDoor => <>
+                        <path class="exit-door" d={`M ${exitDoor().x} ${exitDoor().y} v ${-exitDoorRadius} h ${-exitDoorRadius + exitDoorCorner} l ${-exitDoorCorner} ${exitDoorCorner} v ${2 * (exitDoorRadius - exitDoorCorner)} l ${exitDoorCorner} ${exitDoorCorner} h ${exitDoorRadius - exitDoorCorner} z`} />
+                        <path class="exit-door" d={`M ${exitDoor().x} ${exitDoor().y} v ${-exitDoorRadius} h ${exitDoorRadius - exitDoorCorner} l ${exitDoorCorner} ${exitDoorCorner} v ${2 * (exitDoorRadius - exitDoorCorner)} l ${-exitDoorCorner} ${exitDoorCorner} h ${-exitDoorRadius + exitDoorCorner} z`} />
+                        <path class="exit-door-stroke" stroke-width="3" fill="none" stroke-linecap="round" d={`M ${exitDoor().x} ${exitDoor().y} m 0 ${(1 - 0) * exitDoorRadius} v ${(0) * exitDoorRadius} h ${-exitDoorRadius + exitDoorCorner} l ${-exitDoorCorner} ${-exitDoorCorner} v ${(1 - 0) * (-exitDoorRadius + exitDoorCorner)}`} />
+                        <path class="exit-door-stroke" stroke-width="3" fill="none" stroke-linecap="round" d={`M ${exitDoor().x} ${exitDoor().y} m 0 ${(1 - 0) * exitDoorRadius} v ${(0) * exitDoorRadius} h ${exitDoorRadius - exitDoorCorner} l ${exitDoorCorner} ${-exitDoorCorner} v ${(1 - 0) * (-exitDoorRadius + exitDoorCorner)}`} />
+                    </>}
+                </Index>
                 <Index each={oneWays()}>
-                    {(oneWay) => <use href="#oneway" x={oneWay().x} y={oneWay().y} transform={`rotate(${oneWay().deg},${oneWay().x},${oneWay().y})`} />}
+                    {oneWay => <use href="#oneway" x={oneWay().x} y={oneWay().y} transform={`rotate(${oneWay().deg},${oneWay().x},${oneWay().y})`} />}
                 </Index>
                 <Index each={mines()}>
-                    {(mine) => <use href={["#toggled", "#untoggled", "#toggling"][mine().type]} x={mine().x} y={mine().y} />}
+                    {mine => <use href={["#toggled", "#untoggled", "#toggling"][mine().type]} x={mine().x} y={mine().y} />}
+                </Index>
+                <Index each={exitSwitches()}>
+                    {exitSwitch => <>
+                        <path class="exit-switch" d={`M ${exitSwitch().x} ${exitSwitch().y} m ${-exitSwitchHalfWidth + exitSwitchCorner} ${-exitSwitchHalfHeight} h ${2 * exitSwitchHalfWidth - exitSwitchCorner} l ${exitSwitchCorner} ${exitSwitchCorner} v ${2 * (exitSwitchHalfHeight - exitSwitchCorner)} l ${-exitSwitchCorner} ${exitSwitchCorner} h ${2 * (-exitSwitchHalfWidth + exitSwitchCorner)} l ${-exitSwitchCorner} ${-exitSwitchCorner} v ${2 * (-exitSwitchHalfHeight + exitSwitchCorner)} l ${exitSwitchCorner} ${-exitSwitchCorner}`} />
+                    </>}
                 </Index>
                 <Index each={bounceBlocks()}>
-                    {(bounceBlock) => <use href="#bounceblock" x={bounceBlock().x} y={bounceBlock().y} transform={`rotate(${bounceBlock().deg},${bounceBlock().x},${bounceBlock().y})`} />}
+                    {bounceBlock => <use href="#bounceblock" x={bounceBlock().x} y={bounceBlock().y} transform={`rotate(${bounceBlock().deg},${bounceBlock().x},${bounceBlock().y})`} />}
                 </Index>
                 <Index each={boostPads()}>
-                    {(boostPad) => <use href="#boostpad" x={boostPad().x} y={boostPad().y} stroke={`color-mix(in srgb-linear, var(--boost-pad) ${boostPad().anim * 100}%, var(--boost-pad-wooshing))`} transform={`rotate(${boostPad().deg},${boostPad().x},${boostPad().y})`} />}
+                    {boostPad => <use href="#boostpad" x={boostPad().x} y={boostPad().y} stroke={`color-mix(in srgb-linear, var(--boost-pad) ${boostPad().anim * 100}%, var(--boost-pad-wooshing))`} transform={`rotate(${boostPad().deg},${boostPad().x},${boostPad().y})`} />}
                 </Index>
                 <path class="ninja preview" d={(() => {
                     let { x, y } = ninjaPreview();

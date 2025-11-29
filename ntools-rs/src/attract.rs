@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{entity::{boost_pad::BoostPad, bounce_block::BounceBlock, mine::Mine, one_way::OneWay, Entities, Orientation}, grid::{Grid, GridPos, COLS, ROWS}, segment::Segment, tile::Tile};
+use crate::{entity::{boost_pad::BoostPad, bounce_block::BounceBlock, exit::Exit, mine::Mine, one_way::OneWay, Entities, Orientation}, grid::{Grid, GridPos, COLS, ROWS}, segment::Segment, tile::Tile};
 
 /// Represents a parsed attract file.
 /// An attract file is what gets shown in the game's main menu: a replay of a failed attempt at a level.
@@ -100,6 +100,9 @@ impl Attract {
 
         let mut entities = Entities::new();
 
+        let mut exit_doors = Vec::new();
+        let mut exit_switches = Vec::new();
+
         let num_objects = object_data_bytes / 5;
         for i in 0..num_objects {
             let i = object_data_start + i * 5;
@@ -122,9 +125,9 @@ impl Attract {
                 // Gold
                 2 => {}
                 // Exit door
-                3 => {}
+                3 => exit_doors.push(6.0 * pos),
                 // Exit switch
-                4 => {}
+                4 => exit_switches.push(6.0 * pos),
                 // Regular door
                 5 => {}
                 // O door
@@ -175,6 +178,10 @@ impl Attract {
                 28 => {}
                 _ => return Err("Invalid object id".into()),
             }
+        }
+
+        for (exit_door, exit_switch) in exit_doors.into_iter().zip(exit_switches) {
+            entities.exits.push(Exit::new(exit_door, exit_switch));
         }
 
         let demo_bytes = &attract_bytes[8 + map_data_len as usize..];

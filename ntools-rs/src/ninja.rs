@@ -214,7 +214,7 @@ impl Ninja {
 
     /// Perform logical collisions with entities, check for airborn state,
     /// check for walled state, calculate floor normals, check for impact or crush death.
-    pub fn post_collision(&mut self, collision_state: &CollisionState, entities: &mut Entities, entity_grid: &Grid<EntityIndex>, segments: &Grid<Segment>) {
+    pub fn post_collision(&mut self, collision_state: &CollisionState, entities: &mut Entities, entity_grid: &Grid<EntityIndex>, segments: &Grid<Segment>, frame: u32) {
         // Perform LOGICAL collisions between the ninja and nearby entities.
         // Also check if the ninja can interact with the walls of entities when applicable.
         // todo
@@ -228,7 +228,13 @@ impl Ninja {
                     wall_normal = entities.bounce_blocks[i].logical_collision(self.pos);
                 }
                 EntityType::OneWay => if wall_normal.is_none() {
-                    wall_normal = entities.one_ways[i].logical_collision(&self);
+                    wall_normal = entities.one_ways[i].logical_collision(self);
+                }
+                EntityType::ExitDoor => {
+                    entities.exits[i].door_logical_collision(self);
+                }
+                EntityType::ExitSwitch => {
+                    entities.exits[i].switch_logical_collision(self.pos, frame);
                 }
                 _ => {}
             }
@@ -671,6 +677,19 @@ impl Ninja {
             bones[i] = Vec2::from_angle(self.tilt as f32).rotate(bones[i]);
         }
         bones
+    }
+
+    /// Set ninja's state to celebrating.
+    pub fn win(&mut self) {
+        match self.state {
+            NinjaState::Dead | NinjaState::AwaitingDeath | NinjaState::Celebrating | NinjaState::Disabled => {}
+            _ => {
+                if self.state == NinjaState::Jumping {
+                    self.applied_gravity = GRAVITY_FALL;
+                }
+                self.state = NinjaState::Celebrating;
+            }
+        }
     }
 
     /// Return whether the ninja is a valid target for various interactions.

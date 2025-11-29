@@ -36,8 +36,8 @@ impl BounceBlock {
             origin,
             speed: DVec2::ZERO,
             grid_pos: GridPos::from_world_pos(origin),
-            orientation: Orientation::NE,
-            corners: Corners::Round,
+            orientation: Orientation::E,
+            corners: Corners::Square,
         }
     }
 

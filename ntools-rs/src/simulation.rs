@@ -23,6 +23,7 @@ pub struct KeyFrame {
     // We could save some memory by not storing bounce block origin because
     // it is constant across frames. For now we just store the entire bounce block.
     bounce_blocks: Vec<BounceBlock>,
+    exit_open_frames: Vec<Option<u32>>,
 }
 
 impl Input {
@@ -89,7 +90,7 @@ impl Simulation {
                 self.ninja.collide_vs_objects(&mut collision_state, &mut self.entities, &self.entity_grid);
                 self.ninja.collide_vs_tiles(&mut collision_state, segments);
             }
-            self.ninja.post_collision(&collision_state, &mut self.entities, &self.entity_grid, segments);
+            self.ninja.post_collision(&collision_state, &mut self.entities, &self.entity_grid, segments, self.frame);
             self.ninja.think(input.jump, hor_input);
             self.ninja.update_graphics(hor_input);
         }
@@ -103,6 +104,7 @@ impl KeyFrame {
             ninja: sim.ninja.clone(),
             mine_state_diffs: mine_diffs(initial_mines, &sim.entities.mines),
             bounce_blocks: sim.entities.bounce_blocks.clone(),
+            exit_open_frames: sim.entities.exits.iter().map(|exit| exit.door_open_frame).collect(),
         }
     }
 
@@ -115,6 +117,10 @@ impl KeyFrame {
         sim.entities.mines = mines_from_diff(initial_mines, &self.mine_state_diffs);
 
         self.bounce_blocks.clone_into(&mut sim.entities.bounce_blocks);
+
+        for (i, exit_open_frame) in self.exit_open_frames.iter().enumerate() {
+            sim.entities.exits[i].door_open_frame = *exit_open_frame;
+        }
 
         sim.entity_grid.drain_mobs();
         // add all mobs back into entity_grid

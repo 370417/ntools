@@ -24,6 +24,14 @@ body {
     --boost-pad: #000000;
     --boost-pad-wooshing: #C2CEB1;
 
+    --exit-panel: #B9C3B2;
+    --exit-border: #323323;
+    --exit-switch-border: #323323;
+    --exit-switch-background: #8C9487;
+    --exit-switch-border-collected: #C2CEB1;
+    --exit-switch-background-collected: #8C9487;
+    --exit-switch-center: #FFFFFF;
+
     --time-remaining: #FECC04;
     --hardcore-time: #DF9B43;
     --empty-timebar: #707A6B;
@@ -101,5 +109,14 @@ svg {
 
 #oneway line.short {
     stroke: var(--oneway-short);
+}
+
+.exit-door {
+    fill: var(--exit-panel);
+    stroke: var(--exit-border);
+}
+
+.exit-door-stroke {
+    stroke: var(--exit-border);
 }
 

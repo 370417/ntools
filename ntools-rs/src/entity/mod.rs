@@ -1,9 +1,10 @@
 use glam::DVec2;
 
-use crate::{entity::{boost_pad::BoostPad, bounce_block::BounceBlock, mine::Mine, one_way::OneWay}, grid::{Grid, GridPos}};
+use crate::{entity::{boost_pad::BoostPad, bounce_block::BounceBlock, exit::Exit, mine::Mine, one_way::OneWay}, grid::{Grid, GridPos}};
 
 pub mod boost_pad;
 pub mod bounce_block;
+pub mod exit;
 pub mod mine;
 pub mod one_way;
 pub mod polymorphism;
@@ -15,6 +16,7 @@ pub struct Entities {
     pub bounce_blocks: Vec<BounceBlock>,
     pub one_ways: Vec<OneWay>,
     pub boost_pads: Vec<BoostPad>,
+    pub exits: Vec<Exit>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -24,6 +26,8 @@ pub enum EntityType {
     BounceBlock,
     OneWay,
     BoostPad,
+    ExitDoor,
+    ExitSwitch,
 }
 
 pub trait Entity {
@@ -41,6 +45,7 @@ impl Entities {
             bounce_blocks: Vec::new(),
             one_ways: Vec::new(),
             boost_pads: Vec::new(),
+            exits: Vec::new(),
         }
     }
 
@@ -61,6 +66,10 @@ impl Entities {
         // for (i, boost_pad) in self.boost_pads.iter().enumerate() {
         //     grid[GridPos::from_world_pos(boost_pad.pos).clamp()].push((EntityType::BoostPad, i));
         // }
+        for (i, exit) in self.exits.iter().enumerate() {
+            grid[GridPos::from_world_pos(exit.door_pos).clamp()].push((EntityType::ExitDoor, i));
+            grid[GridPos::from_world_pos(exit.switch_pos).clamp()].push((EntityType::ExitSwitch, i));
+        }
         grid
     }
 }
@@ -68,11 +77,9 @@ impl Entities {
 impl EntityType {
     pub fn is_mob(&self) -> bool {
         match self {
-            EntityType::Ninja => true,
-            EntityType::Mine => false,
+            EntityType::Ninja |
             EntityType::BounceBlock => true,
-            EntityType::OneWay => false,
-            EntityType::BoostPad => false,
+            _ => false,
         }
     }
 }

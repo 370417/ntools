@@ -243,6 +243,36 @@ impl Replay {
     pub fn boost_pad_anim_progress(&self, i: usize) -> f64 {
         self.current_sim.entities.boost_pads[i].eased_animation_progress()
     }
+
+    #[wasm_bindgen]
+    pub fn exit_doors_len(&self) -> usize {
+        self.current_sim.entities.exits.len()
+    }
+
+    #[wasm_bindgen]
+    pub fn exit_door_x(&self, i: usize) -> f64 {
+        self.current_sim.entities.exits[i].door_pos.x
+    }
+
+    #[wasm_bindgen]
+    pub fn exit_door_y(&self, i: usize) -> f64 {
+        self.current_sim.entities.exits[i].door_pos.y
+    }
+
+    #[wasm_bindgen]
+    pub fn exit_switches_len(&self) -> usize {
+        self.current_sim.entities.exits.len()
+    }
+
+    #[wasm_bindgen]
+    pub fn exit_switch_x(&self, i: usize) -> f64 {
+        self.current_sim.entities.exits[i].switch_pos.x
+    }
+
+    #[wasm_bindgen]
+    pub fn exit_switch_y(&self, i: usize) -> f64 {
+        self.current_sim.entities.exits[i].switch_pos.y
+    }
 }
 
 // Separate impl block for functions without #[wasm_bindgen]
