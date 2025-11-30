@@ -1,3 +1,5 @@
+use std::ops::{Index, IndexMut};
+
 use glam::DVec2;
 
 use crate::{grid::{Grid, GridPos, COLS, ROWS}, segment::{Curvature, Segment}};
@@ -247,6 +249,28 @@ pub enum Tile {
     Tile8A,
 }
 
+#[derive(Clone, Copy)]
+pub enum TileCategory {
+    Tile1,
+    Tile2,
+    Tile3,
+    Tile4,
+    Tile5,
+    Tile6,
+    Tile7,
+    Tile8,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum TileVariant {
+    Q,
+    W,
+    A,
+    S,
+    E,
+    D,
+}
+
 impl Tile {
     pub fn from_u8(value: u8) -> Option<Self> {
         match value {
@@ -285,6 +309,45 @@ impl Tile {
             32 => Some(Self::Tile6Q),
             33 => Some(Self::Tile6W),
             _ => None,
+        }
+    }
+
+    pub fn from_keys(category: TileCategory, variant: TileVariant) -> Tile {
+        match (category, variant) {
+            (TileCategory::Tile1, TileVariant::Q) => Tile::Tile1Q,
+            (TileCategory::Tile1, TileVariant::W) => Tile::Tile1W,
+            (TileCategory::Tile1, TileVariant::A) => Tile::Tile1A,
+            (TileCategory::Tile1, TileVariant::S) => Tile::Tile1S,
+            (TileCategory::Tile2, TileVariant::Q) => Tile::Tile2Q,
+            (TileCategory::Tile2, TileVariant::W) => Tile::Tile2W,
+            (TileCategory::Tile2, TileVariant::A) => Tile::Tile2A,
+            (TileCategory::Tile2, TileVariant::S) => Tile::Tile2S,
+            (TileCategory::Tile3, TileVariant::Q) => Tile::Tile3Q,
+            (TileCategory::Tile3, TileVariant::W) => Tile::Tile3W,
+            (TileCategory::Tile3, TileVariant::A) => Tile::Tile3A,
+            (TileCategory::Tile3, TileVariant::S) => Tile::Tile3S,
+            (TileCategory::Tile4, TileVariant::Q) => Tile::Tile4Q,
+            (TileCategory::Tile4, TileVariant::W) => Tile::Tile4W,
+            (TileCategory::Tile4, TileVariant::A) => Tile::Tile4A,
+            (TileCategory::Tile4, TileVariant::S) => Tile::Tile4S,
+            (TileCategory::Tile5, TileVariant::Q) => Tile::Tile5Q,
+            (TileCategory::Tile5, TileVariant::W) => Tile::Tile5W,
+            (TileCategory::Tile5, TileVariant::A) => Tile::Tile5A,
+            (TileCategory::Tile5, TileVariant::S) => Tile::Tile5S,
+            (TileCategory::Tile6, TileVariant::Q) => Tile::Tile6Q,
+            (TileCategory::Tile6, TileVariant::W) => Tile::Tile6W,
+            (TileCategory::Tile6, TileVariant::A) => Tile::Tile6A,
+            (TileCategory::Tile6, TileVariant::S) => Tile::Tile6S,
+            (TileCategory::Tile7, TileVariant::Q) => Tile::Tile7Q,
+            (TileCategory::Tile7, TileVariant::W) => Tile::Tile7W,
+            (TileCategory::Tile7, TileVariant::A) => Tile::Tile7A,
+            (TileCategory::Tile7, TileVariant::S) => Tile::Tile7S,
+            (TileCategory::Tile8, TileVariant::Q) => Tile::Tile8Q,
+            (TileCategory::Tile8, TileVariant::W) => Tile::Tile8W,
+            (TileCategory::Tile8, TileVariant::A) => Tile::Tile8A,
+            (TileCategory::Tile8, TileVariant::S) => Tile::Tile8S,
+            (_, TileVariant::E) => Tile::TileE,
+            (_, TileVariant::D) => Tile::TileD,
         }
     }
 
@@ -669,6 +732,8 @@ impl Tile {
 
 pub struct Tiles {
     tiles: Vec<Tile>,
+    left: usize,
+    top: usize,
     width: usize,
     height: usize,
 }
@@ -705,9 +770,27 @@ impl Default for Tiles {
     fn default() -> Tiles {
         Tiles {
             tiles: vec![Tile::TileD; COLS * ROWS],
+            left: 1,
+            top: 1,
             width: COLS,
             height: ROWS,
         }
+    }
+}
+
+impl Index<GridPos> for Tiles {
+    type Output = Tile;
+
+    fn index(&self, index: GridPos) -> &Self::Output {
+        let i = (index.y - self.top) * self.width + (index.x - self.left);
+        &self.tiles[i]
+    }
+}
+
+impl IndexMut<GridPos> for Tiles {
+    fn index_mut(&mut self, index: GridPos) -> &mut Self::Output {
+        let i = (index.y - self.top) * self.width + (index.x - self.left);
+        &mut self.tiles[i]
     }
 }
 

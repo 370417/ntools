@@ -7,6 +7,7 @@ mod anim_data;
 mod attract;
 mod collision_util;
 mod editor;
+mod editor_state;
 mod entity;
 mod grid;
 mod ninja;

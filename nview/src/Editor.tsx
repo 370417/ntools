@@ -14,6 +14,30 @@ export function EditorApp() {
     const [tilePath, setTilePath] = createSignal('');
     const [tilemodeCrosshairPos, setTilemodeCrosshairPos] = createSignal({ row: 1, col: 1 });
 
+    document.addEventListener('keydown', event => {
+        let change = false;
+        if (event.code === 'KeyQ') change = true, editor.press_q();
+        else if (event.code === 'KeyW') change = true, editor.press_w();
+        else if (event.code === 'KeyA') change = true, editor.press_a();
+        else if (event.code === 'KeyS') change = true, editor.press_s();
+        else if (event.code === 'KeyE') change = true, editor.press_e();
+        else if (event.code === 'KeyD') change = true, editor.press_d();
+
+        if (change) render();
+    });
+
+    document.addEventListener('keyup', event => {
+        let change = false;
+        if (event.code === 'KeyQ') change = true, editor.release_q();
+        else if (event.code === 'KeyW') change = true, editor.release_w();
+        else if (event.code === 'KeyA') change = true, editor.release_a();
+        else if (event.code === 'KeyS') change = true, editor.release_s();
+        else if (event.code === 'KeyE') change = true, editor.release_e();
+        else if (event.code === 'KeyD') change = true, editor.release_d();
+
+        if (change) render();
+    });
+
     function render() {
         setTilePath(editor.tiles_path());
         setTilemodeCrosshairPos({
