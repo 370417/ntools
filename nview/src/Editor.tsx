@@ -12,9 +12,14 @@ export function EditorApp() {
     const editor = Editor.new();
 
     const [tilePath, setTilePath] = createSignal('');
+    const [tilemodeCrosshairPos, setTilemodeCrosshairPos] = createSignal({ row: 1, col: 1 });
 
     function render() {
         setTilePath(editor.tiles_path());
+        setTilemodeCrosshairPos({
+            row: editor.tile_crosshair_row(),
+            col: editor.tile_crosshair_col(),
+        });
     }
 
     const regularGridXs = [];
@@ -29,7 +34,14 @@ export function EditorApp() {
     render();
 
     return <>
-        <svg viewBox="0 0 1056 600">
+        <svg viewBox="0 0 1056 600" onmousemove={function(this: SVGElement, event) {
+            const { left, top, width, height } = this.getBoundingClientRect();
+            const cursorMoved = editor.set_cursor_pos(
+                (event.clientX - left) / width * 1056,
+                (event.clientY - top) / height * 600,
+            );
+            if (cursorMoved) render();
+        }}>
             <defs>
                 <g id="tilemode-crosshair">
                     <path stroke-width="1.5" fill="none" d={tilemodeCrosshairPath} />
@@ -38,7 +50,7 @@ export function EditorApp() {
             {regularGridXs.map(x => <line class="regular-grid" y1="24" y2={24 * 24} x1={x} x2={x} />)}
             {regularGridYs.map(y => <line class="regular-grid" x1="24" x2={24 * 43} y1={y} y2={y} />)}
             <path id="tiles" d={tilePath()} fill-rule="evenodd" />
-            <use href="#tilemode-crosshair" x="36" y="36" />
+            <use href="#tilemode-crosshair" x={tilemodeCrosshairPos().col * 24 + 12} y={tilemodeCrosshairPos().row * 24 + 12} />
         </svg>
     </>;
 }
