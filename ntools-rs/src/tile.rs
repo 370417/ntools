@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{grid::{Grid, GridPos}, segment::{Curvature, Segment}};
+use crate::{grid::{Grid, GridPos, COLS, ROWS}, segment::{Curvature, Segment}};
 
 pub const TILE_SIZE: f64 = 24.0;
 pub const TILE_HALF_SIZE: f64 = 12.0;
@@ -663,6 +663,50 @@ impl Tile {
     pub fn add_inner_segments_to_grid(&self, pos: GridPos, segments: &mut Grid<Segment>) {
         if let Some(inner_segment) = self.inner_segment(pos) {
             segments[pos].push(inner_segment);
+        }
+    }
+}
+
+pub struct Tiles {
+    tiles: Vec<Tile>,
+    width: usize,
+    height: usize,
+}
+
+impl Tiles {
+    pub fn segments(&self) -> Grid<Segment> {
+        let mut grid = Grid::new();
+
+        // First add all outer segments then add all inner segments.
+        // This way we don't have to worry about handling inner segments
+        // when we are culling overlappping outer segments.
+        for row in 0..ROWS {
+            for col in 0..COLS {
+                let i = row * COLS + col;
+                let pos = GridPos::new(col + 1, row + 1);
+                let tile = self.tiles[i];
+                tile.add_outer_segments_to_grid(pos, &mut grid);
+            }
+        }
+        for row in 0..ROWS {
+            for col in 0..COLS {
+                let i = row * COLS + col;
+                let pos = GridPos::new(col + 1, row + 1);
+                let tile = self.tiles[i];
+                tile.add_inner_segments_to_grid(pos, &mut grid);
+            }
+        }
+
+        grid
+    }
+}
+
+impl Default for Tiles {
+    fn default() -> Tiles {
+        Tiles {
+            tiles: vec![Tile::TileD; COLS * ROWS],
+            width: COLS,
+            height: ROWS,
         }
     }
 }

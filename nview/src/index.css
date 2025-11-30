@@ -36,6 +36,12 @@ body {
     --hardcore-time: #DF9B43;
     --empty-timebar: #707A6B;
 
+    --regular-grid: #A6AAA3;
+    --fine-grid: #949B8F;
+    --door-switch-line: #FFFFFF;
+
+    --editor-crosshair: #FFFFFF;
+
     background: var(--tiles);
 }
 
@@ -123,5 +129,13 @@ svg {
 .exit-switch {
     stroke: var(--exit-switch-border);
     fill: var(--exit-switch-background);
+}
+
+.regular-grid {
+    stroke: var(--regular-grid);
+}
+
+#tilemode-crosshair path {
+    stroke: var(--editor-crosshair);
 }
 
