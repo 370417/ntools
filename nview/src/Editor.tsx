@@ -80,10 +80,13 @@ export function EditorApp() {
                 <g id="tilemode-crosshair">
                     <path stroke-width="1.5" fill="none" d={tilemodeCrosshairPath} />
                 </g>
+                <clipPath id="tiles-clip">
+                    <use href="#tiles" />
+                </clipPath>
             </defs>
             {regularGridXs.map(x => <line class="regular-grid" y1="24" y2={24 * 24} x1={x} x2={x} />)}
             {regularGridYs.map(y => <line class="regular-grid" x1="24" x2={24 * 43} y1={y} y2={y} />)}
-            <path id="tiles" d={tilePath()} fill-rule="evenodd" />
+            <path id="tiles" stroke-width="2" clip-path="url(#tiles-clip)" clip-rule="evenodd" d={tilePath()} fill-rule="evenodd" />
             <use href="#tilemode-crosshair" x={tilemodeCrosshairPos().col * 24 + 12} y={tilemodeCrosshairPos().row * 24 + 12} />
         </svg>
     </>;

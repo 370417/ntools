@@ -282,6 +282,9 @@ function App() {
                 });
             }}>
                 <defs>
+                    <clipPath id="tiles-clip">
+                        <use href="#tiles" />
+                    </clipPath>
                     <g id="toggled">
                         <line stroke-linecap="round" stroke-width={spokeWidth} x1={-spokeRadius} y1={0} x2={spokeRadius} y2={0} />
                         <line stroke-linecap="round" stroke-width={spokeWidth} x1={0} y1={-spokeRadius} x2={0} y2={spokeRadius} />
@@ -361,7 +364,7 @@ function App() {
                         return `M ${x1} ${y1} L ${x2} ${y2}`;
                     }).join(' ');
                 })()} stroke-linejoin="round" stroke-linecap="round" stroke-width={2 / 44 * 24} />
-                <path id="tiles" d={tilePath()} fill-rule="evenodd" />
+                <path id="tiles" stroke-width="2" clip-path="url(#tiles-clip)" clip-rule="evenodd" d={tilePath()} fill-rule="evenodd" />
             </svg>
             <div>
                 <Scrubber
