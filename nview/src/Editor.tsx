@@ -23,7 +23,14 @@ export function EditorApp() {
         else if (event.code === 'KeyE') change = true, editor.press_e();
         else if (event.code === 'KeyD') change = true, editor.press_d();
 
-        if (change) render();
+        else if (event.code === 'KeyZ' && (event.ctrlKey || event.metaKey) && event.shiftKey) change = true, editor.redo();
+        else if (event.code === 'KeyZ' && (event.ctrlKey || event.metaKey)) change = true, editor.undo();
+        else if (event.code === 'KeyY' && (event.ctrlKey || event.metaKey)) change = true, editor.redo();
+
+        if (change) {
+            render();
+            event.preventDefault();
+        }
     });
 
     document.addEventListener('keyup', event => {
@@ -35,7 +42,10 @@ export function EditorApp() {
         else if (event.code === 'KeyE') change = true, editor.release_e();
         else if (event.code === 'KeyD') change = true, editor.release_d();
 
-        if (change) render();
+        if (change) {
+            render();
+            event.preventDefault();
+        }
     });
 
     function render() {

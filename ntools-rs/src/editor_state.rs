@@ -10,6 +10,7 @@ pub struct EditorState {
 }
 
 #[derive(Clone)]
+#[allow(private_interfaces)]
 pub enum Command {
     PaintTile(PaintTile),
     PaintTiles(Vec<PaintTile>),
@@ -37,6 +38,9 @@ impl EditorState {
 
     /// Execute a command and add it to the history
     pub fn apply(&mut self, command: Command) {
+        if command.is_noop() {
+            return;
+        }
         self.execute_command(&command);
         self.history.push(command);
         self.future.clear();
@@ -45,10 +49,15 @@ impl EditorState {
     /// Execute a command and combine it with the latest history entry
     /// if possible
     pub fn amend(&mut self, command: Command) {
+        if command.is_noop() {
+            return;
+        }
         self.execute_command(&command);
-        self.history.last_mut()
-            .and_then(|cmd| cmd.amend(command.clone()))
-            .or_else(|| Some(self.history.push(command)));
+        if let Some(prev_command) = self.history.pop() {
+            self.history.append(&mut prev_command.amend(command));
+        } else {
+            self.history.push(command);
+        }
     }
 
     pub fn undo(&mut self) {
@@ -78,11 +87,11 @@ impl EditorState {
 
     fn execute_reverse_command(&mut self, command: &Command) {
         match command {
-            Command::PaintTile(cmd) => {
-                self.tiles[cmd.grid_pos] = cmd.old;
+            Command::PaintTile(paint_tile) => {
+                self.tiles[paint_tile.grid_pos] = paint_tile.old;
             }
-            Command::PaintTiles(cmds) => for cmd in cmds {
-                self.tiles[cmd.grid_pos] = cmd.old;
+            Command::PaintTiles(paint_tiles) => for paint_tile in paint_tiles {
+                self.tiles[paint_tile.grid_pos] = paint_tile.old;
             }
         }
     }
@@ -93,7 +102,25 @@ impl Command {
         Command::PaintTile(PaintTile { grid_pos, old, new })
     }
 
-    fn amend(&mut self, other: Command) -> Option<()> {
-        None
+    /// If self can be amended, return a vec with a single amended element.
+    /// If self cannot be amended, return self and other as a two-element vec.
+    fn amend(self, other: Command) -> Vec<Command> {
+        match (self, other) {
+            (Command::PaintTile(a), Command::PaintTile(b)) => {
+                vec![Command::PaintTiles(vec![a, b])]
+            }
+            (Command::PaintTiles(mut a), Command::PaintTile(b)) => {
+                a.push(b);
+                vec![Command::PaintTiles(a)]
+            }
+            (a, b) => vec![a, b]
+        }
+    }
+
+    fn is_noop(&self) -> bool {
+        match self {
+            Command::PaintTile(paint_tile) => paint_tile.new == paint_tile.old,
+            Command::PaintTiles(paint_tiles) => paint_tiles.iter().all(|p| p.old == p.new),
+        }
     }
 }

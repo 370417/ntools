@@ -82,6 +82,16 @@ impl Editor {
     }
 
     #[wasm_bindgen]
+    pub fn undo(&mut self) {
+        self.state.undo();
+    }
+
+    #[wasm_bindgen]
+    pub fn redo(&mut self) {
+        self.state.redo();
+    }
+
+    #[wasm_bindgen]
     pub fn press_q(&mut self) {
         match self.mode {
             EditorMode::PaintTiles => {
