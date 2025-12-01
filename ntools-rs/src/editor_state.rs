@@ -36,6 +36,10 @@ impl EditorState {
         &self.tiles
     }
 
+    pub fn latest(&self) -> Option<&Command> {
+        self.history.last()
+    }
+
     /// Execute a command and add it to the history
     pub fn apply(&mut self, command: Command) {
         if command.is_noop() {

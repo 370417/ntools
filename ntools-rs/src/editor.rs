@@ -17,12 +17,13 @@ pub struct Editor {
 
 pub enum EditorMode {
     PaintTiles,
-    PlaceEntities,
-    ModifyEntities,
-    MoveEntity,
+    TilePalette,
     SelectTiles,
     MoveSelection,
-    PenTool,
+    PlaceEntity,
+    SelectEntities,
+    EntityPalette,
+    PenTool(PenTool),
 }
 
 #[wasm_bindgen]
@@ -31,10 +32,24 @@ impl Editor {
     pub fn new() -> Editor {
         Editor {
             state: EditorState::new(),
-            mode: EditorMode::PaintTiles,
+            mode: EditorMode::PenTool(PenTool::new()),
             cursor_pos: DVec2::new(TILE_SIZE, TILE_SIZE),
             selected_tile_category: TileCategory::Tile1,
             pressed_tile_variants: Vec::new(),
+        }
+    }
+
+    #[wasm_bindgen]
+    pub fn mode(&self) -> u32 {
+        match self.mode {
+            EditorMode::PaintTiles => 0,
+            EditorMode::TilePalette => 1,
+            EditorMode::SelectTiles => 2,
+            EditorMode::MoveSelection => 3,
+            EditorMode::PlaceEntity => 4,
+            EditorMode::SelectEntities => 5,
+            EditorMode::EntityPalette => 6,
+            EditorMode::PenTool(_) => 7,
         }
     }
 
@@ -62,12 +77,12 @@ impl Editor {
                     false
                 }
             }
-            EditorMode::PlaceEntities => todo!(),
-            EditorMode::ModifyEntities => todo!(),
-            EditorMode::MoveEntity => todo!(),
-            EditorMode::SelectTiles => todo!(),
-            EditorMode::MoveSelection => todo!(),
-            EditorMode::PenTool => todo!(),
+            EditorMode::PenTool(_) => {
+                let old_crosshair = self.pen_tool_crosshair();
+                self.cursor_pos = new_cursor_pos;
+                self.pen_tool_crosshair() != old_crosshair
+            }
+            _ => false
         }
     }
 
@@ -79,6 +94,16 @@ impl Editor {
     #[wasm_bindgen]
     pub fn tile_crosshair_row(&self) -> usize {
         self.tile_crosshair().y
+    }
+
+    #[wasm_bindgen]
+    pub fn pen_tool_crosshair_x(&self) -> f64 {
+        self.pen_tool_crosshair().x
+    }
+
+    #[wasm_bindgen]
+    pub fn pen_tool_crosshair_y(&self) -> f64 {
+        self.pen_tool_crosshair().y
     }
 
     #[wasm_bindgen]
@@ -218,6 +243,56 @@ impl Editor {
             } else {
                 self.state.apply(command);
             }
+        }
+    }
+
+    fn pen_tool_crosshair(&self) -> DVec2 {
+        match &self.mode {
+            EditorMode::PenTool(pen_tool) => pen_tool.crosshair(self.cursor_pos, self.state.latest()),
+            _ => DVec2::new(TILE_SIZE, TILE_SIZE),
+        }
+    }
+}
+
+struct PenTool {
+    start: PenToolStart,
+}
+
+enum PenToolStart {
+    None,
+    /// Latest from history
+    Latest,
+    Some(DVec2),
+}
+
+impl PenTool {
+    fn new() -> PenTool {
+        PenTool {
+            start: PenToolStart::None,
+        }
+    }
+
+    fn crosshair(&self, cursor_pos: DVec2, latest_command: Option<&Command>) -> DVec2 {
+        match self.start {
+            PenToolStart::None => {
+                // First try rounding cursor pos to half tile grid
+                let x = 12.0 * (cursor_pos.x / 12.0).round().clamp(2.0, 2.0 + 2.0 * COLS as f64);
+                let y = 12.0 * (cursor_pos.y / 12.0).round().clamp(2.0, 2.0 + 2.0 * ROWS as f64);
+                if x % 24.0 == 0.0 && y % 24.0 == 0.0 {
+                    DVec2::new(x, y)
+                } else if x % 24.0 == 0.0 {
+                    DVec2::new(x, y)
+                } else if y % 24.0 == 0.0 {
+                    DVec2::new(x, y)
+                } else {
+                    // If cursor is not on a valid spot on half tile grid, round to full tile grid
+                    let x = 24.0 * (cursor_pos.x / 24.0).round().clamp(1.0, 1.0 + COLS as f64);
+                    let y = 24.0 * (cursor_pos.y / 24.0).round().clamp(1.0, 1.0 + ROWS as f64);
+                    DVec2::new(x, y)
+                }
+            }
+            PenToolStart::Latest => todo!(),
+            PenToolStart::Some(dvec2) => todo!(),
         }
     }
 }

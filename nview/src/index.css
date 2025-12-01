@@ -135,7 +135,7 @@ svg {
     stroke: var(--regular-grid);
 }
 
-#tilemode-crosshair path {
+#tilemode-crosshair, #crosshair {
     stroke: var(--editor-crosshair);
 }
 
