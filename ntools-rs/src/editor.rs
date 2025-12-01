@@ -1,7 +1,8 @@
+use float_ord::FloatOrd;
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{editor_state::{Command, EditorState}, grid::{GridPos, COLS, ROWS}, segment::extract_path, tile::{Tile, TileCategory, TileVariant, Tiles, TILE_SIZE}};
+use crate::{editor_state::{Command, EditorState}, grid::{is_pos_in_bounds, GridPos, COLS, ROWS}, segment::extract_path, tile::{Tile, TileCategory, TileVariant, Tiles, TILE_HALF_SIZE, TILE_SIZE}};
 
 #[wasm_bindgen]
 pub struct Editor {
@@ -83,6 +84,24 @@ impl Editor {
                 self.pen_tool_crosshair() != old_crosshair
             }
             _ => false
+        }
+    }
+
+    #[wasm_bindgen]
+    pub fn cursor_click(&mut self) {
+        let cursor_pos = self.cursor_pos;
+        let latest = self.state.latest();
+        match &mut self.mode {
+            EditorMode::PenTool(pen_tool) => {
+                let crosshair = pen_tool.crosshair(cursor_pos, latest);
+                match &mut pen_tool.start {
+                    start @ PenToolStart::None => {
+                        *start = PenToolStart::Some(crosshair);
+                    }
+                    _ => {}
+                };
+            }
+            _ => {}
         }
     }
 
@@ -276,23 +295,71 @@ impl PenTool {
         match self.start {
             PenToolStart::None => {
                 // First try rounding cursor pos to half tile grid
-                let x = 12.0 * (cursor_pos.x / 12.0).round().clamp(2.0, 2.0 + 2.0 * COLS as f64);
-                let y = 12.0 * (cursor_pos.y / 12.0).round().clamp(2.0, 2.0 + 2.0 * ROWS as f64);
-                if x % 24.0 == 0.0 && y % 24.0 == 0.0 {
+                let x = TILE_HALF_SIZE * (cursor_pos.x / TILE_HALF_SIZE).round().clamp(2.0, 2.0 + 2.0 * COLS as f64);
+                let y = TILE_HALF_SIZE * (cursor_pos.y / TILE_HALF_SIZE).round().clamp(2.0, 2.0 + 2.0 * ROWS as f64);
+                if x % TILE_SIZE == 0.0 && y % TILE_SIZE == 0.0 {
                     DVec2::new(x, y)
-                } else if x % 24.0 == 0.0 {
+                } else if x % TILE_SIZE == 0.0 {
                     DVec2::new(x, y)
-                } else if y % 24.0 == 0.0 {
+                } else if y % TILE_SIZE == 0.0 {
                     DVec2::new(x, y)
                 } else {
                     // If cursor is not on a valid spot on half tile grid, round to full tile grid
-                    let x = 24.0 * (cursor_pos.x / 24.0).round().clamp(1.0, 1.0 + COLS as f64);
-                    let y = 24.0 * (cursor_pos.y / 24.0).round().clamp(1.0, 1.0 + ROWS as f64);
+                    let x = TILE_SIZE * (cursor_pos.x / TILE_SIZE).round().clamp(1.0, 1.0 + COLS as f64);
+                    let y = TILE_SIZE * (cursor_pos.y / TILE_SIZE).round().clamp(1.0, 1.0 + ROWS as f64);
                     DVec2::new(x, y)
                 }
             }
             PenToolStart::Latest => todo!(),
-            PenToolStart::Some(dvec2) => todo!(),
+            PenToolStart::Some(start) => {
+                Self::stroke_end(start, cursor_pos)
+            }
         }
+    }
+
+    /// Given a start pen position and the cursor position,
+    /// find the end of the pen stroke that is closest to the cursor_pos.
+    fn stroke_end(start: DVec2, cursor_pos: DVec2) -> DVec2 {
+        // Each possible stroke is a vector relative to start
+        let possible_strokes = if start.x % 24.0 != 0.0 {
+            // start is on a horizontal grid segment
+            vec![
+                DVec2::new(TILE_HALF_SIZE, 0.0),
+                DVec2::new(0.0, TILE_SIZE),
+                DVec2::new(TILE_HALF_SIZE, TILE_SIZE),
+                DVec2::new(TILE_HALF_SIZE, -TILE_SIZE),
+            ]
+        } else if start.y % 24.0 != 0.0 {
+            // start is on a vertical grid segment
+            vec![
+                DVec2::new(TILE_SIZE, 0.0),
+                DVec2::new(0.0, TILE_HALF_SIZE),
+                DVec2::new(TILE_SIZE, TILE_HALF_SIZE),
+                DVec2::new(TILE_SIZE, -TILE_HALF_SIZE),
+            ]
+        } else {
+            // start is on a grid corner
+            vec![
+                DVec2::new(TILE_HALF_SIZE, 0.0),
+                DVec2::new(0.0, TILE_HALF_SIZE),
+                DVec2::new(TILE_HALF_SIZE, TILE_SIZE),
+                DVec2::new(TILE_HALF_SIZE, -TILE_SIZE),
+                DVec2::new(TILE_SIZE, TILE_HALF_SIZE),
+                DVec2::new(TILE_SIZE, -TILE_HALF_SIZE),
+                DVec2::new(TILE_SIZE, TILE_SIZE),
+                DVec2::new(TILE_SIZE, -TILE_SIZE),
+            ]
+        };
+
+        possible_strokes.into_iter()
+            .map(|stroke| {
+                // project to_cursor onto stroke except we round so that
+                // the result is always an integer multiple of stroke.
+                stroke * (stroke.dot(cursor_pos - start) / stroke.dot(stroke)).round()
+            })
+            .map(|projected| start + projected)
+            .filter(|&pos| is_pos_in_bounds(pos))
+            .min_by_key(|pos| FloatOrd((pos - cursor_pos).length_squared()))
+            .unwrap_or(start)
     }
 }

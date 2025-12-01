@@ -95,7 +95,7 @@ export function EditorApp() {
                 (event.clientY - top) / height * 600,
             );
             if (cursorMoved) render();
-        }}>
+        }} onclick={() => { editor.cursor_click(); render() }}>
             <defs>
                 <clipPath id="tiles-clip">
                     <use href="#tiles" />

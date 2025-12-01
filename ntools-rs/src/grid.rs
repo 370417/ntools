@@ -150,3 +150,8 @@ impl <T> IndexMut<GridPos> for Grid<T> {
         &mut self.cells[i]
     }
 }
+
+pub fn is_pos_in_bounds(pos: DVec2) -> bool {
+    pos.x >= TILE_SIZE && pos.x <= TILE_SIZE * (1.0 + COLS as f64) &&
+    pos.y >= TILE_SIZE && pos.y <= TILE_SIZE * (1.0 + ROWS as f64)
+}
