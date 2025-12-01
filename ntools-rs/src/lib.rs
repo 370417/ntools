@@ -11,6 +11,7 @@ mod editor_state;
 mod entity;
 mod grid;
 mod ninja;
+mod pen_tool;
 mod replay;
 mod segment;
 mod simulation;
