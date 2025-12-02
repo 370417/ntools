@@ -286,7 +286,174 @@ pub fn create_command(start: DVec2, end: DVec2, tiles: &Tiles) -> Command {
         Command::PenTool { tiles: paint_tiles, end_cursor_pos: end }
     } else if delta.y == 0.0 && start.y % TILE_SIZE == 0.0 {
         // horizontal between two rows
-        Command::PenTool { tiles: Vec::new(), end_cursor_pos: end }
+
+        // If true, the lower side of the stroke will be closed (impassable)
+        // and the upper side of the stroke will be open (passable).
+        // Upper and lower are absolute, NOT relative to the direction of the stroke.
+        let lower_side_closed = end.x > start.x;
+
+        let mut paint_tiles = Vec::new();
+
+        let min_x = start.x.min(end.x);
+        let max_x = start.x.max(end.x);
+
+        let upper_row = (start.y / TILE_SIZE - 1.0) as usize;
+        let lower_row = (start.y / TILE_SIZE) as usize;
+
+        // Handle half tiles
+        if min_x % TILE_SIZE != 0.0 {
+            let upper_grid_pos = GridPos::new((min_x / TILE_SIZE).floor() as usize, upper_row);
+            let lower_grid_pos = GridPos::new((min_x / TILE_SIZE).floor() as usize, lower_row);
+
+            let (edge_to_make_closed, edge_to_make_open, cell_to_make_closed, cell_to_make_open) = if lower_side_closed {
+                (
+                    tile_top_edge(tiles[lower_grid_pos]),
+                    tile_bottom_edge(tiles[upper_grid_pos]),
+                    lower_grid_pos,
+                    upper_grid_pos,
+                )
+            } else {
+                (
+                    tile_bottom_edge(tiles[upper_grid_pos]),
+                    tile_top_edge(tiles[lower_grid_pos]),
+                    upper_grid_pos,
+                    lower_grid_pos,
+                )
+            };
+
+            if cell_to_make_closed.in_bounds() {
+                match edge_to_make_closed {
+                    HorizontalEdge::Open => paint_tiles.push(PaintTile {
+                        grid_pos: cell_to_make_closed,
+                        old: tiles[cell_to_make_closed],
+                        new: Tile::Tile5S,
+                    }),
+                    HorizontalEdge::RightHalfOpen => paint_tiles.push(PaintTile {
+                        grid_pos: cell_to_make_closed,
+                        old: tiles[cell_to_make_closed],
+                        new: Tile::TileE,
+                    }),
+                    _ => {}
+                }
+            }
+
+            if cell_to_make_open.in_bounds() {
+                match edge_to_make_open {
+                    HorizontalEdge::Closed => paint_tiles.push(PaintTile {
+                        grid_pos: cell_to_make_open,
+                        old: tiles[cell_to_make_open],
+                        new: Tile::Tile5Q,
+                    }),
+                    HorizontalEdge::LeftHalfOpen => paint_tiles.push(PaintTile {
+                        grid_pos: cell_to_make_open,
+                        old: tiles[cell_to_make_open],
+                        new: Tile::TileD,
+                    }),
+                    _ => {}
+                }
+            }
+        }
+
+        if max_x % TILE_SIZE != 0.0 {
+            let upper_grid_pos = GridPos::new((max_x / TILE_SIZE).floor() as usize, upper_row);
+            let lower_grid_pos = GridPos::new((max_x / TILE_SIZE).floor() as usize, lower_row);
+
+            let (edge_to_make_closed, edge_to_make_open, cell_to_make_closed, cell_to_make_open) = if lower_side_closed {
+                (
+                    tile_top_edge(tiles[lower_grid_pos]),
+                    tile_bottom_edge(tiles[upper_grid_pos]),
+                    lower_grid_pos,
+                    upper_grid_pos,
+                )
+            } else {
+                (
+                    tile_bottom_edge(tiles[upper_grid_pos]),
+                    tile_top_edge(tiles[lower_grid_pos]),
+                    upper_grid_pos,
+                    lower_grid_pos,
+                )
+            };
+
+            if cell_to_make_closed.in_bounds() {
+                match edge_to_make_closed {
+                    HorizontalEdge::Open => paint_tiles.push(PaintTile {
+                        grid_pos: cell_to_make_closed,
+                        old: tiles[cell_to_make_closed],
+                        new: Tile::Tile5Q,
+                    }),
+                    HorizontalEdge::LeftHalfOpen => paint_tiles.push(PaintTile {
+                        grid_pos: cell_to_make_closed,
+                        old: tiles[cell_to_make_closed],
+                        new: Tile::TileE,
+                    }),
+                    _ => {}
+                }
+            }
+
+            if cell_to_make_open.in_bounds() {
+                match edge_to_make_open {
+                    HorizontalEdge::Closed => paint_tiles.push(PaintTile {
+                        grid_pos: cell_to_make_open,
+                        old: tiles[cell_to_make_open],
+                        new: Tile::Tile5S,
+                    }),
+                    HorizontalEdge::RightHalfOpen => paint_tiles.push(PaintTile {
+                        grid_pos: cell_to_make_open,
+                        old: tiles[cell_to_make_open],
+                        new: Tile::TileD,
+                    }),
+                    _ => {}
+                }
+            }
+        }
+
+        // Handle full tiles
+        let full_tile_min_col = (min_x / TILE_SIZE).ceil() as usize;
+        let full_tile_max_col = (max_x / TILE_SIZE).floor() as usize;
+        let full_tile_len = full_tile_max_col - full_tile_min_col;
+
+        for i in 0..full_tile_len {
+            let upper_grid_pos = GridPos::new(full_tile_min_col + i, upper_row);
+            let lower_grid_pos = GridPos::new(full_tile_min_col + i, lower_row);
+
+            let (edge_to_make_closed, edge_to_make_open, cell_to_make_closed, cell_to_make_open) = if lower_side_closed {
+                (
+                    tile_top_edge(tiles[lower_grid_pos]),
+                    tile_bottom_edge(tiles[upper_grid_pos]),
+                    lower_grid_pos,
+                    upper_grid_pos,
+                )
+            } else {
+                (
+                    tile_bottom_edge(tiles[upper_grid_pos]),
+                    tile_top_edge(tiles[lower_grid_pos]),
+                    upper_grid_pos,
+                    lower_grid_pos,
+                )
+            };
+
+            if cell_to_make_closed.in_bounds() {
+                if edge_to_make_closed != HorizontalEdge::Closed {
+                    paint_tiles.push(PaintTile {
+                        grid_pos: cell_to_make_closed,
+                        old: tiles[cell_to_make_closed],
+                        new: Tile::TileE,
+                    });
+                }
+            }
+
+            if cell_to_make_open.in_bounds() {
+                if edge_to_make_open != HorizontalEdge::Open {
+                    paint_tiles.push(PaintTile {
+                        grid_pos: cell_to_make_open,
+                        old: tiles[cell_to_make_open],
+                        new: Tile::TileD,
+                    });
+                }
+            }
+        }
+
+        Command::PenTool { tiles: paint_tiles, end_cursor_pos: end }
     } else {
         let len = (delta.x.abs().max(delta.y.abs()) / TILE_SIZE) as usize;
         let paint_tiles = (0..len).map(|i| {
@@ -346,12 +513,20 @@ fn tile_from_intercept(local_start: DVec2, local_end: DVec2) -> Tile {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(PartialEq, Eq)]
 enum VerticalEdge {
     Open,
     Closed,
     LowerHalfOpen,
     UpperHalfOpen,
+}
+
+#[derive(PartialEq, Eq)]
+enum HorizontalEdge {
+    Open,
+    Closed,
+    LeftHalfOpen,
+    RightHalfOpen,
 }
 
 fn tile_left_edge(tile: Tile) -> VerticalEdge {
@@ -429,5 +604,83 @@ fn tile_right_edge(tile: Tile) -> VerticalEdge {
         Tile::Tile8W => VerticalEdge::Open,
         Tile::Tile8S => VerticalEdge::Open,
         Tile::Tile8A => VerticalEdge::Closed,
+    }
+}
+
+fn tile_top_edge(tile: Tile) -> HorizontalEdge {
+    match tile {
+        Tile::TileE => HorizontalEdge::Closed,
+        Tile::TileD => HorizontalEdge::Open,
+        Tile::Tile1Q => HorizontalEdge::Open,
+        Tile::Tile1W => HorizontalEdge::Open,
+        Tile::Tile1S => HorizontalEdge::Closed,
+        Tile::Tile1A => HorizontalEdge::Closed,
+        Tile::Tile2Q => HorizontalEdge::Open,
+        Tile::Tile2W => HorizontalEdge::Open,
+        Tile::Tile2S => HorizontalEdge::RightHalfOpen,
+        Tile::Tile2A => HorizontalEdge::LeftHalfOpen,
+        Tile::Tile3Q => HorizontalEdge::Open,
+        Tile::Tile3W => HorizontalEdge::Open,
+        Tile::Tile3S => HorizontalEdge::Closed,
+        Tile::Tile3A => HorizontalEdge::Closed,
+        Tile::Tile4Q => HorizontalEdge::Open,
+        Tile::Tile4W => HorizontalEdge::Open,
+        Tile::Tile4S => HorizontalEdge::Closed,
+        Tile::Tile4A => HorizontalEdge::Closed,
+        Tile::Tile5Q => HorizontalEdge::RightHalfOpen,
+        Tile::Tile5W => HorizontalEdge::Closed,
+        Tile::Tile5S => HorizontalEdge::LeftHalfOpen,
+        Tile::Tile5A => HorizontalEdge::Open,
+        Tile::Tile6Q => HorizontalEdge::LeftHalfOpen,
+        Tile::Tile6W => HorizontalEdge::RightHalfOpen,
+        Tile::Tile6S => HorizontalEdge::Closed,
+        Tile::Tile6A => HorizontalEdge::Closed,
+        Tile::Tile7Q => HorizontalEdge::Open,
+        Tile::Tile7W => HorizontalEdge::Open,
+        Tile::Tile7S => HorizontalEdge::Closed,
+        Tile::Tile7A => HorizontalEdge::Closed,
+        Tile::Tile8Q => HorizontalEdge::Open,
+        Tile::Tile8W => HorizontalEdge::Open,
+        Tile::Tile8S => HorizontalEdge::Closed,
+        Tile::Tile8A => HorizontalEdge::Closed,
+    }
+}
+
+fn tile_bottom_edge(tile: Tile) -> HorizontalEdge {
+    match tile {
+        Tile::TileE => HorizontalEdge::Closed,
+        Tile::TileD => HorizontalEdge::Open,
+        Tile::Tile1Q => HorizontalEdge::Closed,
+        Tile::Tile1W => HorizontalEdge::Closed,
+        Tile::Tile1S => HorizontalEdge::Open,
+        Tile::Tile1A => HorizontalEdge::Open,
+        Tile::Tile2Q => HorizontalEdge::LeftHalfOpen,
+        Tile::Tile2W => HorizontalEdge::RightHalfOpen,
+        Tile::Tile2S => HorizontalEdge::Open,
+        Tile::Tile2A => HorizontalEdge::Open,
+        Tile::Tile3Q => HorizontalEdge::Closed,
+        Tile::Tile3W => HorizontalEdge::Closed,
+        Tile::Tile3S => HorizontalEdge::Open,
+        Tile::Tile3A => HorizontalEdge::Open,
+        Tile::Tile4Q => HorizontalEdge::Closed,
+        Tile::Tile4W => HorizontalEdge::Closed,
+        Tile::Tile4S => HorizontalEdge::Open,
+        Tile::Tile4A => HorizontalEdge::Open,
+        Tile::Tile5Q => HorizontalEdge::RightHalfOpen,
+        Tile::Tile5W => HorizontalEdge::Open,
+        Tile::Tile5S => HorizontalEdge::LeftHalfOpen,
+        Tile::Tile5A => HorizontalEdge::Closed,
+        Tile::Tile6Q => HorizontalEdge::Closed,
+        Tile::Tile6W => HorizontalEdge::Closed,
+        Tile::Tile6S => HorizontalEdge::RightHalfOpen,
+        Tile::Tile6A => HorizontalEdge::LeftHalfOpen,
+        Tile::Tile7Q => HorizontalEdge::Closed,
+        Tile::Tile7W => HorizontalEdge::Closed,
+        Tile::Tile7S => HorizontalEdge::Open,
+        Tile::Tile7A => HorizontalEdge::Open,
+        Tile::Tile8Q => HorizontalEdge::Closed,
+        Tile::Tile8W => HorizontalEdge::Closed,
+        Tile::Tile8S => HorizontalEdge::Open,
+        Tile::Tile8A => HorizontalEdge::Open,
     }
 }
