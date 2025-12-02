@@ -116,7 +116,107 @@ pub fn create_command(start: DVec2, end: DVec2, tiles: &Tiles) -> Command {
     let delta = end - start;
     if delta.x == 0.0 && start.x % TILE_SIZE == 0.0 {
         // vertical between two columns
-        Command::PenTool { tiles: Vec::new(), end_cursor_pos: end }
+        let mut paint_tiles = Vec::new();
+
+        let min_y = start.y.min(end.y);
+        let max_y = start.y.max(end.y);
+
+        let left_col = (start.x / TILE_SIZE - 1.0) as usize;
+        let right_col = (start.x / TILE_SIZE) as usize;
+
+        // Handle half tiles
+        if min_y % TILE_SIZE != 0.0 {
+            let left_grid_pos = GridPos::new(left_col, (min_y / TILE_SIZE).floor() as usize);
+            let right_grid_pos = GridPos::new(right_col, (min_y / TILE_SIZE).floor() as usize);
+
+            match tile_right_edge(tiles[left_grid_pos]) {
+                VerticalEdge::Open => paint_tiles.push(PaintTile {
+                    grid_pos: left_grid_pos,
+                    old: tiles[left_grid_pos],
+                    new: Tile::Tile5A,
+                }),
+                VerticalEdge::LowerHalfOpen => paint_tiles.push(PaintTile {
+                    grid_pos: left_grid_pos,
+                    old: tiles[left_grid_pos],
+                    new: Tile::TileE,
+                }),
+                _ => {}
+            }
+
+            match tile_left_edge(tiles[right_grid_pos]) {
+                VerticalEdge::Closed => paint_tiles.push(PaintTile {
+                    grid_pos: right_grid_pos,
+                    old: tiles[right_grid_pos],
+                    new: Tile::Tile5W,
+                }),
+                VerticalEdge::UpperHalfOpen => paint_tiles.push(PaintTile {
+                    grid_pos: right_grid_pos,
+                    old: tiles[right_grid_pos],
+                    new: Tile::TileD,
+                }),
+                _ => {}
+            }
+        }
+
+        if max_y % TILE_SIZE != 0.0 {
+            let left_grid_pos = GridPos::new(left_col, (max_y / TILE_SIZE).floor() as usize);
+            let right_grid_pos = GridPos::new(right_col, (max_y / TILE_SIZE).floor() as usize);
+
+            match tile_right_edge(tiles[left_grid_pos]) {
+                VerticalEdge::Open => paint_tiles.push(PaintTile {
+                    grid_pos: left_grid_pos,
+                    old: tiles[left_grid_pos],
+                    new: Tile::Tile5W,
+                }),
+                VerticalEdge::UpperHalfOpen => paint_tiles.push(PaintTile {
+                    grid_pos: left_grid_pos,
+                    old: tiles[left_grid_pos],
+                    new: Tile::TileE,
+                }),
+                _ => {}
+            }
+
+            match tile_left_edge(tiles[right_grid_pos]) {
+                VerticalEdge::Closed => paint_tiles.push(PaintTile {
+                    grid_pos: right_grid_pos,
+                    old: tiles[right_grid_pos],
+                    new: Tile::Tile5A,
+                }),
+                VerticalEdge::LowerHalfOpen => paint_tiles.push(PaintTile {
+                    grid_pos: right_grid_pos,
+                    old: tiles[right_grid_pos],
+                    new: Tile::TileD,
+                }),
+                _ => {}
+            }
+        }
+
+        // Handle full tiles
+        let full_tile_min_row = (min_y / TILE_SIZE).ceil() as usize;
+        let full_tile_max_row = (max_y / TILE_SIZE).floor() as usize;
+        let full_tile_len = full_tile_max_row - full_tile_min_row;
+
+        for i in 0..full_tile_len {
+            let left_grid_pos = GridPos::new(left_col, full_tile_min_row + i);
+            let right_grid_pos = GridPos::new(right_col, full_tile_min_row + i);
+
+            if tile_right_edge(tiles[left_grid_pos]) != VerticalEdge::Closed {
+                paint_tiles.push(PaintTile {
+                    grid_pos: left_grid_pos,
+                    old: tiles[left_grid_pos],
+                    new: Tile::TileE,
+                });
+            }
+            if tile_left_edge(tiles[right_grid_pos]) != VerticalEdge::Open {
+                paint_tiles.push(PaintTile {
+                    grid_pos: right_grid_pos,
+                    old: tiles[right_grid_pos],
+                    new: Tile::TileD,
+                });
+            }
+        }
+
+        Command::PenTool { tiles: paint_tiles, end_cursor_pos: end }
     } else if delta.y == 0.0 && start.y % TILE_SIZE == 0.0 {
         // horizontal between two rows
         Command::PenTool { tiles: Vec::new(), end_cursor_pos: end }
@@ -176,5 +276,91 @@ fn tile_from_intercept(local_start: DVec2, local_end: DVec2) -> Tile {
         ((12.0, 0.0), (-12.0, 12.0)) => Tile::Tile7S,
         ((-12.0, -12.0), (12.0, 0.0)) => Tile::Tile7W,
         _ => Tile::TileD,
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum VerticalEdge {
+    Open,
+    Closed,
+    LowerHalfOpen,
+    UpperHalfOpen,
+}
+
+fn tile_left_edge(tile: Tile) -> VerticalEdge {
+    match tile {
+        Tile::TileE => VerticalEdge::Closed,
+        Tile::TileD => VerticalEdge::Open,
+        Tile::Tile1Q => VerticalEdge::Open,
+        Tile::Tile1W => VerticalEdge::Closed,
+        Tile::Tile1S => VerticalEdge::Closed,
+        Tile::Tile1A => VerticalEdge::Open,
+        Tile::Tile2Q => VerticalEdge::Open,
+        Tile::Tile2W => VerticalEdge::Closed,
+        Tile::Tile2S => VerticalEdge::Closed,
+        Tile::Tile2A => VerticalEdge::Open,
+        Tile::Tile3Q => VerticalEdge::Open,
+        Tile::Tile3W => VerticalEdge::UpperHalfOpen,
+        Tile::Tile3S => VerticalEdge::LowerHalfOpen,
+        Tile::Tile3A => VerticalEdge::Open,
+        Tile::Tile4Q => VerticalEdge::Open,
+        Tile::Tile4W => VerticalEdge::Closed,
+        Tile::Tile4S => VerticalEdge::Closed,
+        Tile::Tile4A => VerticalEdge::Open,
+        Tile::Tile5Q => VerticalEdge::Closed,
+        Tile::Tile5W => VerticalEdge::LowerHalfOpen,
+        Tile::Tile5S => VerticalEdge::Open,
+        Tile::Tile5A => VerticalEdge::UpperHalfOpen,
+        Tile::Tile6Q => VerticalEdge::Open,
+        Tile::Tile6W => VerticalEdge::Closed,
+        Tile::Tile6S => VerticalEdge::Closed,
+        Tile::Tile6A => VerticalEdge::Open,
+        Tile::Tile7Q => VerticalEdge::UpperHalfOpen,
+        Tile::Tile7W => VerticalEdge::Closed,
+        Tile::Tile7S => VerticalEdge::Closed,
+        Tile::Tile7A => VerticalEdge::LowerHalfOpen,
+        Tile::Tile8Q => VerticalEdge::Open,
+        Tile::Tile8W => VerticalEdge::Closed,
+        Tile::Tile8S => VerticalEdge::Closed,
+        Tile::Tile8A => VerticalEdge::Open,
+    }
+}
+
+fn tile_right_edge(tile: Tile) -> VerticalEdge {
+    match tile {
+        Tile::TileE => VerticalEdge::Closed,
+        Tile::TileD => VerticalEdge::Open,
+        Tile::Tile1Q => VerticalEdge::Closed,
+        Tile::Tile1W => VerticalEdge::Open,
+        Tile::Tile1S => VerticalEdge::Open,
+        Tile::Tile1A => VerticalEdge::Closed,
+        Tile::Tile2Q => VerticalEdge::Closed,
+        Tile::Tile2W => VerticalEdge::Open,
+        Tile::Tile2S => VerticalEdge::Open,
+        Tile::Tile2A => VerticalEdge::Closed,
+        Tile::Tile3Q => VerticalEdge::UpperHalfOpen,
+        Tile::Tile3W => VerticalEdge::Open,
+        Tile::Tile3S => VerticalEdge::Open,
+        Tile::Tile3A => VerticalEdge::LowerHalfOpen,
+        Tile::Tile4Q => VerticalEdge::Closed,
+        Tile::Tile4W => VerticalEdge::Open,
+        Tile::Tile4S => VerticalEdge::Open,
+        Tile::Tile4A => VerticalEdge::Closed,
+        Tile::Tile5Q => VerticalEdge::Open,
+        Tile::Tile5W => VerticalEdge::LowerHalfOpen,
+        Tile::Tile5S => VerticalEdge::Closed,
+        Tile::Tile5A => VerticalEdge::UpperHalfOpen,
+        Tile::Tile6Q => VerticalEdge::Closed,
+        Tile::Tile6W => VerticalEdge::Open,
+        Tile::Tile6S => VerticalEdge::Open,
+        Tile::Tile6A => VerticalEdge::Closed,
+        Tile::Tile7Q => VerticalEdge::Closed,
+        Tile::Tile7W => VerticalEdge::UpperHalfOpen,
+        Tile::Tile7S => VerticalEdge::LowerHalfOpen,
+        Tile::Tile7A => VerticalEdge::Closed,
+        Tile::Tile8Q => VerticalEdge::Closed,
+        Tile::Tile8W => VerticalEdge::Open,
+        Tile::Tile8S => VerticalEdge::Open,
+        Tile::Tile8A => VerticalEdge::Closed,
     }
 }
