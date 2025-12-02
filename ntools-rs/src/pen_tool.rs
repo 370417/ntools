@@ -138,50 +138,46 @@ pub fn create_command(start: DVec2, end: DVec2, tiles: &Tiles) -> Command {
 
             let (edge_to_make_closed, edge_to_make_open, cell_to_make_closed, cell_to_make_open) = if left_side_closed {
                 (
-                    tile_right_edge(tiles[left_grid_pos]),
-                    tile_left_edge(tiles[right_grid_pos]),
+                    tiles.get(left_grid_pos).map(tile_right_edge),
+                    tiles.get(right_grid_pos).map(tile_left_edge),
                     left_grid_pos,
                     right_grid_pos,
                 )
             } else {
                 (
-                    tile_left_edge(tiles[right_grid_pos]),
-                    tile_right_edge(tiles[left_grid_pos]),
+                    tiles.get(right_grid_pos).map(tile_left_edge),
+                    tiles.get(left_grid_pos).map(tile_right_edge),
                     right_grid_pos,
                     left_grid_pos,
                 )
             };
 
-            if cell_to_make_closed.in_bounds() {
-                match edge_to_make_closed {
-                    VerticalEdge::Open => paint_tiles.push(PaintTile {
-                        grid_pos: cell_to_make_closed,
-                        old: tiles[cell_to_make_closed],
-                        new: Tile::Tile5A,
-                    }),
-                    VerticalEdge::LowerHalfOpen => paint_tiles.push(PaintTile {
-                        grid_pos: cell_to_make_closed,
-                        old: tiles[cell_to_make_closed],
-                        new: Tile::TileE,
-                    }),
-                    _ => {}
-                }
+            match edge_to_make_closed {
+                Some(VerticalEdge::Open) => paint_tiles.push(PaintTile {
+                    grid_pos: cell_to_make_closed,
+                    old: tiles[cell_to_make_closed],
+                    new: Tile::Tile5A,
+                }),
+                Some(VerticalEdge::LowerHalfOpen) => paint_tiles.push(PaintTile {
+                    grid_pos: cell_to_make_closed,
+                    old: tiles[cell_to_make_closed],
+                    new: Tile::TileE,
+                }),
+                _ => {}
             }
 
-            if cell_to_make_open.in_bounds() {
-                match edge_to_make_open {
-                    VerticalEdge::Closed => paint_tiles.push(PaintTile {
-                        grid_pos: cell_to_make_open,
-                        old: tiles[cell_to_make_open],
-                        new: Tile::Tile5W,
-                    }),
-                    VerticalEdge::UpperHalfOpen => paint_tiles.push(PaintTile {
-                        grid_pos: cell_to_make_open,
-                        old: tiles[cell_to_make_open],
-                        new: Tile::TileD,
-                    }),
-                    _ => {}
-                }
+            match edge_to_make_open {
+                Some(VerticalEdge::Closed) => paint_tiles.push(PaintTile {
+                    grid_pos: cell_to_make_open,
+                    old: tiles[cell_to_make_open],
+                    new: Tile::Tile5W,
+                }),
+                Some(VerticalEdge::UpperHalfOpen) => paint_tiles.push(PaintTile {
+                    grid_pos: cell_to_make_open,
+                    old: tiles[cell_to_make_open],
+                    new: Tile::TileD,
+                }),
+                _ => {}
             }
         }
 
@@ -191,50 +187,46 @@ pub fn create_command(start: DVec2, end: DVec2, tiles: &Tiles) -> Command {
 
             let (edge_to_make_closed, edge_to_make_open, cell_to_make_closed, cell_to_make_open) = if left_side_closed {
                 (
-                    tile_right_edge(tiles[left_grid_pos]),
-                    tile_left_edge(tiles[right_grid_pos]),
+                    tiles.get(left_grid_pos).map(tile_right_edge),
+                    tiles.get(right_grid_pos).map(tile_left_edge),
                     left_grid_pos,
                     right_grid_pos,
                 )
             } else {
                 (
-                    tile_left_edge(tiles[right_grid_pos]),
-                    tile_right_edge(tiles[left_grid_pos]),
+                    tiles.get(right_grid_pos).map(tile_left_edge),
+                    tiles.get(left_grid_pos).map(tile_right_edge),
                     right_grid_pos,
                     left_grid_pos,
                 )
             };
 
-            if cell_to_make_closed.in_bounds() {
-                match edge_to_make_closed {
-                    VerticalEdge::Open => paint_tiles.push(PaintTile {
-                        grid_pos: cell_to_make_closed,
-                        old: tiles[cell_to_make_closed],
-                        new: Tile::Tile5W,
-                    }),
-                    VerticalEdge::UpperHalfOpen => paint_tiles.push(PaintTile {
-                        grid_pos: cell_to_make_closed,
-                        old: tiles[cell_to_make_closed],
-                        new: Tile::TileE,
-                    }),
-                    _ => {}
-                }
+            match edge_to_make_closed {
+                Some(VerticalEdge::Open) => paint_tiles.push(PaintTile {
+                    grid_pos: cell_to_make_closed,
+                    old: tiles[cell_to_make_closed],
+                    new: Tile::Tile5W,
+                }),
+                Some(VerticalEdge::UpperHalfOpen) => paint_tiles.push(PaintTile {
+                    grid_pos: cell_to_make_closed,
+                    old: tiles[cell_to_make_closed],
+                    new: Tile::TileE,
+                }),
+                _ => {}
             }
 
-            if cell_to_make_open.in_bounds() {
-                match edge_to_make_open {
-                    VerticalEdge::Closed => paint_tiles.push(PaintTile {
-                        grid_pos: cell_to_make_open,
-                        old: tiles[cell_to_make_open],
-                        new: Tile::Tile5A,
-                    }),
-                    VerticalEdge::LowerHalfOpen => paint_tiles.push(PaintTile {
-                        grid_pos: cell_to_make_open,
-                        old: tiles[cell_to_make_open],
-                        new: Tile::TileD,
-                    }),
-                    _ => {}
-                }
+            match edge_to_make_open {
+                Some(VerticalEdge::Closed) => paint_tiles.push(PaintTile {
+                    grid_pos: cell_to_make_open,
+                    old: tiles[cell_to_make_open],
+                    new: Tile::Tile5A,
+                }),
+                Some(VerticalEdge::LowerHalfOpen) => paint_tiles.push(PaintTile {
+                    grid_pos: cell_to_make_open,
+                    old: tiles[cell_to_make_open],
+                    new: Tile::TileD,
+                }),
+                _ => {}
             }
         }
 
@@ -249,38 +241,34 @@ pub fn create_command(start: DVec2, end: DVec2, tiles: &Tiles) -> Command {
 
             let (edge_to_make_closed, edge_to_make_open, cell_to_make_closed, cell_to_make_open) = if left_side_closed {
                 (
-                    tile_right_edge(tiles[left_grid_pos]),
-                    tile_left_edge(tiles[right_grid_pos]),
+                    tiles.get(left_grid_pos).map(tile_right_edge),
+                    tiles.get(right_grid_pos).map(tile_left_edge),
                     left_grid_pos,
                     right_grid_pos,
                 )
             } else {
                 (
-                    tile_left_edge(tiles[right_grid_pos]),
-                    tile_right_edge(tiles[left_grid_pos]),
+                    tiles.get(right_grid_pos).map(tile_left_edge),
+                    tiles.get(left_grid_pos).map(tile_right_edge),
                     right_grid_pos,
                     left_grid_pos,
                 )
             };
 
-            if cell_to_make_closed.in_bounds() {
-                if edge_to_make_closed != VerticalEdge::Closed {
-                    paint_tiles.push(PaintTile {
-                        grid_pos: cell_to_make_closed,
-                        old: tiles[cell_to_make_closed],
-                        new: Tile::TileE,
-                    });
-                }
+            if edge_to_make_closed.is_some() && edge_to_make_closed != Some(VerticalEdge::Closed) {
+                paint_tiles.push(PaintTile {
+                    grid_pos: cell_to_make_closed,
+                    old: tiles[cell_to_make_closed],
+                    new: Tile::TileE,
+                });
             }
 
-            if cell_to_make_open.in_bounds() {
-                if edge_to_make_open != VerticalEdge::Open {
-                    paint_tiles.push(PaintTile {
-                        grid_pos: cell_to_make_open,
-                        old: tiles[cell_to_make_open],
-                        new: Tile::TileD,
-                    });
-                }
+            if edge_to_make_open.is_some() && edge_to_make_open != Some(VerticalEdge::Open) {
+                paint_tiles.push(PaintTile {
+                    grid_pos: cell_to_make_open,
+                    old: tiles[cell_to_make_open],
+                    new: Tile::TileD,
+                });
             }
         }
 
@@ -308,50 +296,46 @@ pub fn create_command(start: DVec2, end: DVec2, tiles: &Tiles) -> Command {
 
             let (edge_to_make_closed, edge_to_make_open, cell_to_make_closed, cell_to_make_open) = if lower_side_closed {
                 (
-                    tile_top_edge(tiles[lower_grid_pos]),
-                    tile_bottom_edge(tiles[upper_grid_pos]),
+                    tiles.get(lower_grid_pos).map(tile_top_edge),
+                    tiles.get(upper_grid_pos).map(tile_bottom_edge),
                     lower_grid_pos,
                     upper_grid_pos,
                 )
             } else {
                 (
-                    tile_bottom_edge(tiles[upper_grid_pos]),
-                    tile_top_edge(tiles[lower_grid_pos]),
+                    tiles.get(upper_grid_pos).map(tile_bottom_edge),
+                    tiles.get(lower_grid_pos).map(tile_top_edge),
                     upper_grid_pos,
                     lower_grid_pos,
                 )
             };
 
-            if cell_to_make_closed.in_bounds() {
-                match edge_to_make_closed {
-                    HorizontalEdge::Open => paint_tiles.push(PaintTile {
-                        grid_pos: cell_to_make_closed,
-                        old: tiles[cell_to_make_closed],
-                        new: Tile::Tile5S,
-                    }),
-                    HorizontalEdge::RightHalfOpen => paint_tiles.push(PaintTile {
-                        grid_pos: cell_to_make_closed,
-                        old: tiles[cell_to_make_closed],
-                        new: Tile::TileE,
-                    }),
-                    _ => {}
-                }
+            match edge_to_make_closed {
+                Some(HorizontalEdge::Open) => paint_tiles.push(PaintTile {
+                    grid_pos: cell_to_make_closed,
+                    old: tiles[cell_to_make_closed],
+                    new: Tile::Tile5S,
+                }),
+                Some(HorizontalEdge::RightHalfOpen) => paint_tiles.push(PaintTile {
+                    grid_pos: cell_to_make_closed,
+                    old: tiles[cell_to_make_closed],
+                    new: Tile::TileE,
+                }),
+                _ => {}
             }
 
-            if cell_to_make_open.in_bounds() {
-                match edge_to_make_open {
-                    HorizontalEdge::Closed => paint_tiles.push(PaintTile {
-                        grid_pos: cell_to_make_open,
-                        old: tiles[cell_to_make_open],
-                        new: Tile::Tile5Q,
-                    }),
-                    HorizontalEdge::LeftHalfOpen => paint_tiles.push(PaintTile {
-                        grid_pos: cell_to_make_open,
-                        old: tiles[cell_to_make_open],
-                        new: Tile::TileD,
-                    }),
-                    _ => {}
-                }
+            match edge_to_make_open {
+                Some(HorizontalEdge::Closed) => paint_tiles.push(PaintTile {
+                    grid_pos: cell_to_make_open,
+                    old: tiles[cell_to_make_open],
+                    new: Tile::Tile5Q,
+                }),
+                Some(HorizontalEdge::LeftHalfOpen) => paint_tiles.push(PaintTile {
+                    grid_pos: cell_to_make_open,
+                    old: tiles[cell_to_make_open],
+                    new: Tile::TileD,
+                }),
+                _ => {}
             }
         }
 
@@ -361,50 +345,46 @@ pub fn create_command(start: DVec2, end: DVec2, tiles: &Tiles) -> Command {
 
             let (edge_to_make_closed, edge_to_make_open, cell_to_make_closed, cell_to_make_open) = if lower_side_closed {
                 (
-                    tile_top_edge(tiles[lower_grid_pos]),
-                    tile_bottom_edge(tiles[upper_grid_pos]),
+                    tiles.get(lower_grid_pos).map(tile_top_edge),
+                    tiles.get(upper_grid_pos).map(tile_bottom_edge),
                     lower_grid_pos,
                     upper_grid_pos,
                 )
             } else {
                 (
-                    tile_bottom_edge(tiles[upper_grid_pos]),
-                    tile_top_edge(tiles[lower_grid_pos]),
+                    tiles.get(upper_grid_pos).map(tile_bottom_edge),
+                    tiles.get(lower_grid_pos).map(tile_top_edge),
                     upper_grid_pos,
                     lower_grid_pos,
                 )
             };
 
-            if cell_to_make_closed.in_bounds() {
-                match edge_to_make_closed {
-                    HorizontalEdge::Open => paint_tiles.push(PaintTile {
-                        grid_pos: cell_to_make_closed,
-                        old: tiles[cell_to_make_closed],
-                        new: Tile::Tile5Q,
-                    }),
-                    HorizontalEdge::LeftHalfOpen => paint_tiles.push(PaintTile {
-                        grid_pos: cell_to_make_closed,
-                        old: tiles[cell_to_make_closed],
-                        new: Tile::TileE,
-                    }),
-                    _ => {}
-                }
+            match edge_to_make_closed {
+                Some(HorizontalEdge::Open) => paint_tiles.push(PaintTile {
+                    grid_pos: cell_to_make_closed,
+                    old: tiles[cell_to_make_closed],
+                    new: Tile::Tile5Q,
+                }),
+                Some(HorizontalEdge::LeftHalfOpen) => paint_tiles.push(PaintTile {
+                    grid_pos: cell_to_make_closed,
+                    old: tiles[cell_to_make_closed],
+                    new: Tile::TileE,
+                }),
+                _ => {}
             }
 
-            if cell_to_make_open.in_bounds() {
-                match edge_to_make_open {
-                    HorizontalEdge::Closed => paint_tiles.push(PaintTile {
-                        grid_pos: cell_to_make_open,
-                        old: tiles[cell_to_make_open],
-                        new: Tile::Tile5S,
-                    }),
-                    HorizontalEdge::RightHalfOpen => paint_tiles.push(PaintTile {
-                        grid_pos: cell_to_make_open,
-                        old: tiles[cell_to_make_open],
-                        new: Tile::TileD,
-                    }),
-                    _ => {}
-                }
+            match edge_to_make_open {
+                Some(HorizontalEdge::Closed) => paint_tiles.push(PaintTile {
+                    grid_pos: cell_to_make_open,
+                    old: tiles[cell_to_make_open],
+                    new: Tile::Tile5S,
+                }),
+                Some(HorizontalEdge::RightHalfOpen) => paint_tiles.push(PaintTile {
+                    grid_pos: cell_to_make_open,
+                    old: tiles[cell_to_make_open],
+                    new: Tile::TileD,
+                }),
+                _ => {}
             }
         }
 
@@ -419,43 +399,41 @@ pub fn create_command(start: DVec2, end: DVec2, tiles: &Tiles) -> Command {
 
             let (edge_to_make_closed, edge_to_make_open, cell_to_make_closed, cell_to_make_open) = if lower_side_closed {
                 (
-                    tile_top_edge(tiles[lower_grid_pos]),
-                    tile_bottom_edge(tiles[upper_grid_pos]),
+                    tiles.get(lower_grid_pos).map(tile_top_edge),
+                    tiles.get(upper_grid_pos).map(tile_bottom_edge),
                     lower_grid_pos,
                     upper_grid_pos,
                 )
             } else {
                 (
-                    tile_bottom_edge(tiles[upper_grid_pos]),
-                    tile_top_edge(tiles[lower_grid_pos]),
+                    tiles.get(upper_grid_pos).map(tile_bottom_edge),
+                    tiles.get(lower_grid_pos).map(tile_top_edge),
                     upper_grid_pos,
                     lower_grid_pos,
                 )
             };
 
-            if cell_to_make_closed.in_bounds() {
-                if edge_to_make_closed != HorizontalEdge::Closed {
-                    paint_tiles.push(PaintTile {
-                        grid_pos: cell_to_make_closed,
-                        old: tiles[cell_to_make_closed],
-                        new: Tile::TileE,
-                    });
-                }
+            if edge_to_make_closed.is_some() && edge_to_make_closed != Some(HorizontalEdge::Closed) {
+                paint_tiles.push(PaintTile {
+                    grid_pos: cell_to_make_closed,
+                    old: tiles[cell_to_make_closed],
+                    new: Tile::TileE,
+                });
             }
 
-            if cell_to_make_open.in_bounds() {
-                if edge_to_make_open != HorizontalEdge::Open {
-                    paint_tiles.push(PaintTile {
-                        grid_pos: cell_to_make_open,
-                        old: tiles[cell_to_make_open],
-                        new: Tile::TileD,
-                    });
-                }
+            if edge_to_make_open.is_some() && edge_to_make_open != Some(HorizontalEdge::Open) {
+                paint_tiles.push(PaintTile {
+                    grid_pos: cell_to_make_open,
+                    old: tiles[cell_to_make_open],
+                    new: Tile::TileD,
+                });
             }
         }
 
         Command::PenTool { tiles: paint_tiles, end_cursor_pos: end }
     } else {
+        // diagonal stroke
+
         let len = (delta.x.abs().max(delta.y.abs()) / TILE_SIZE) as usize;
         let paint_tiles = (0..len).map(|i| {
             let grid_cell_pos = start + (i as f64 + 0.5) / len as f64 * (end - start);

@@ -764,6 +764,19 @@ impl Tiles {
 
         grid
     }
+
+    pub fn in_bounds(&self, grid_pos: GridPos) -> bool {
+        grid_pos.x >= self.left && grid_pos.x < self.left + self.width && grid_pos.y >= self.top && grid_pos.y < self.top + self.height
+    }
+
+    pub fn get(&self, grid_pos: GridPos) -> Option<Tile> {
+        if self.in_bounds(grid_pos) {
+            let i = (grid_pos.y - self.top) * self.width + (grid_pos.x - self.left);
+            Some(self.tiles[i])
+        } else {
+            None
+        }
+    }
 }
 
 impl Default for Tiles {
