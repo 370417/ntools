@@ -1,3 +1,5 @@
+use glam::DVec2;
+
 use crate::{grid::GridPos, tile::{Tile, Tiles}};
 
 /// State that is affected by undo and redo
@@ -10,17 +12,20 @@ pub struct EditorState {
 }
 
 #[derive(Clone)]
-#[allow(private_interfaces)]
 pub enum Command {
     PaintTile(PaintTile),
     PaintTiles(Vec<PaintTile>),
+    PenTool {
+        tiles: Vec<PaintTile>,
+        end_cursor_pos: DVec2,
+    },
 }
 
 #[derive(Clone)]
-struct PaintTile {
-    grid_pos: GridPos,
-    old: Tile,
-    new: Tile,
+pub struct PaintTile {
+    pub grid_pos: GridPos,
+    pub old: Tile,
+    pub new: Tile,
 }
 
 impl EditorState {
@@ -80,11 +85,14 @@ impl EditorState {
 
     fn execute_command(&mut self, command: &Command) {
         match command {
-            Command::PaintTile(cmd) => {
-                self.tiles[cmd.grid_pos] = cmd.new;
+            Command::PaintTile(paint_tile) => {
+                self.tiles[paint_tile.grid_pos] = paint_tile.new;
             }
-            Command::PaintTiles(cmds) => for cmd in cmds {
-                self.tiles[cmd.grid_pos] = cmd.new;
+            Command::PaintTiles(paint_tiles) => for paint_tile in paint_tiles {
+                self.tiles[paint_tile.grid_pos] = paint_tile.new;
+            }
+            Command::PenTool { tiles, .. } => for paint_tile in tiles {
+                self.tiles[paint_tile.grid_pos] = paint_tile.new;
             }
         }
     }
@@ -95,6 +103,9 @@ impl EditorState {
                 self.tiles[paint_tile.grid_pos] = paint_tile.old;
             }
             Command::PaintTiles(paint_tiles) => for paint_tile in paint_tiles {
+                self.tiles[paint_tile.grid_pos] = paint_tile.old;
+            }
+            Command::PenTool { tiles, .. } => for paint_tile in tiles {
                 self.tiles[paint_tile.grid_pos] = paint_tile.old;
             }
         }
@@ -125,6 +136,9 @@ impl Command {
         match self {
             Command::PaintTile(paint_tile) => paint_tile.new == paint_tile.old,
             Command::PaintTiles(paint_tiles) => paint_tiles.iter().all(|p| p.old == p.new),
+            // Even if no tiles get changed, we don't want to treat pen tool commands
+            // as no-ops because we want to preserve the history of cursor movement.
+            Command::PenTool { .. } => false,
         }
     }
 }

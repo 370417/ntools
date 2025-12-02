@@ -26,6 +26,7 @@ export function EditorApp() {
     const [mode, setMode] = createSignal(MODE_PAINT_TILES);
     const [tilemodeCrosshairPos, setTilemodeCrosshairPos] = createSignal({ row: 1, col: 1 });
     const [penToolCrosshairPos, setPenToolCrosshairPos] = createSignal({ x: 24, y: 24 });
+    const [penToolStart, setPenToolStart] = createSignal({ x: -1, y: -1 });
 
     document.addEventListener('keydown', event => {
         let change = false;
@@ -74,6 +75,10 @@ export function EditorApp() {
             x: editor.pen_tool_crosshair_x(),
             y: editor.pen_tool_crosshair_y(),
         });
+        setPenToolStart({
+            x: editor.pen_tool_start_x(),
+            y: editor.pen_tool_start_y(),
+        });
     }
 
     const regularGridXs = [];
@@ -110,6 +115,9 @@ export function EditorApp() {
                 <use href="#tilemode-crosshair" x={tilemodeCrosshairPos().col * 24 + 12} y={tilemodeCrosshairPos().row * 24 + 12} />
             </Show>
             <Show when={mode() === MODE_PEN_TOOL}>
+                <Show when={penToolStart().x >= 0}>
+                    <line stroke="black" x1={penToolStart().x} y1={penToolStart().y} x2={penToolCrosshairPos().x} y2={penToolCrosshairPos().y} />
+                </Show>
                 <use href="#crosshair" x={penToolCrosshairPos().x} y={penToolCrosshairPos().y} />
             </Show>
         </svg>

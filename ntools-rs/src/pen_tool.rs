@@ -1,7 +1,7 @@
 use float_ord::FloatOrd;
 use glam::DVec2;
 
-use crate::{editor_state::Command, grid::{is_pos_in_bounds, COLS, ROWS}, tile::{TILE_HALF_SIZE, TILE_SIZE}};
+use crate::{editor_state::{Command, PaintTile}, grid::{is_pos_in_bounds, GridPos, COLS, ROWS}, tile::{Tile, Tiles, TILE_HALF_SIZE, TILE_SIZE}};
 
 pub struct PenTool {
     pub start: PenToolStart,
@@ -44,6 +44,14 @@ impl PenTool {
             PenToolStart::Some(start) => {
                 stroke_end(start, cursor_pos)
             }
+        }
+    }
+
+    pub fn start(&self, latest_command: Option<&Command>) -> DVec2 {
+        match self.start {
+            PenToolStart::None => DVec2::new(-1.0, -1.0),
+            PenToolStart::Latest => todo!(),
+            PenToolStart::Some(start) => start
         }
     }
 }
@@ -92,4 +100,72 @@ fn stroke_end(start: DVec2, cursor_pos: DVec2) -> DVec2 {
         .filter(|&pos| is_pos_in_bounds(pos))
         .min_by_key(|pos| FloatOrd((pos - cursor_pos).length_squared()))
         .unwrap_or(start)
+}
+
+pub fn create_command(start: DVec2, end: DVec2, tiles: &Tiles) -> Command {
+    assert_ne!(start, end);
+    let delta = end - start;
+    if delta.x == 0.0 && start.x % TILE_SIZE == 0.0 {
+        // vertical between two columns
+        Command::PenTool { tiles: Vec::new(), end_cursor_pos: end }
+    } else if delta.y == 0.0 && start.y % TILE_SIZE == 0.0 {
+        // horizontal between two rows
+        Command::PenTool { tiles: Vec::new(), end_cursor_pos: end }
+    } else {
+        let len = (delta.x.abs().max(delta.y.abs()) / TILE_SIZE) as usize;
+        let paint_tiles = (0..len).map(|i| {
+            let grid_cell_pos = start + (i as f64 + 0.5) / len as f64 * (end - start);
+            let grid_pos = GridPos::from_world_pos(grid_cell_pos);
+
+            // start and end intercepts of the start_to_end vector through the current grid cell
+            let start_intercept = start + (i as f64) / len as f64 * (end - start);
+            let end_intercept = start + (i as f64 + 1.0) / len as f64 * (end - start);
+
+            let cell_center = grid_pos.to_world_pos() + DVec2::new(TILE_HALF_SIZE, TILE_HALF_SIZE);
+
+            let local_start = start_intercept - cell_center;
+            let local_end = end_intercept - cell_center;
+
+            // round to make sure everything is still an integer
+            let local_start = (local_start / TILE_HALF_SIZE).round() * TILE_HALF_SIZE;
+            let local_end = (local_end / TILE_HALF_SIZE).round() * TILE_HALF_SIZE;
+
+            PaintTile {
+                grid_pos,
+                old: tiles[grid_pos],
+                new: tile_from_intercept(local_start, local_end),
+            }
+        }).collect();
+        Command::PenTool { tiles: paint_tiles, end_cursor_pos: end }
+    }
+}
+
+fn tile_from_intercept(local_start: DVec2, local_end: DVec2) -> Tile {
+    match ((local_start.x, local_start.y), (local_end.x, local_end.y)) {
+        ((12.0, 12.0), (-12.0, -12.0)) => Tile::Tile1A,
+        ((-12.0, 12.0), (12.0, -12.0)) => Tile::Tile1Q,
+        ((12.0, -12.0), (-12.0, 12.0)) => Tile::Tile1S,
+        ((-12.0, -12.0), (12.0, 12.0)) => Tile::Tile1W,
+        ((12.0, 12.0), (0.0, -12.0)) => Tile::Tile2A,
+        ((0.0, 12.0), (12.0, -12.0)) => Tile::Tile2Q,
+        ((0.0, -12.0), (-12.0, 12.0)) => Tile::Tile2S,
+        ((-12.0, -12.0), (0.0, 12.0)) => Tile::Tile2W,
+        ((12.0, 0.0), (-12.0, -12.0)) => Tile::Tile3A,
+        ((-12.0, 12.0), (12.0, 0.0)) => Tile::Tile3Q,
+        ((12.0, -12.0), (-12.0, 0.0)) => Tile::Tile3S,
+        ((-12.0, 0.0), (12.0, 12.0)) => Tile::Tile3W,
+        ((-12.0, 0.0), (12.0, 0.0)) => Tile::Tile5A,
+        ((0.0, -12.0), (0.0, 12.0)) => Tile::Tile5Q,
+        ((0.0, 12.0), (0.0, -12.0)) => Tile::Tile5S,
+        ((12.0, 0.0), (-12.0, 0.0)) => Tile::Tile5W,
+        ((0.0, 12.0), (-12.0, -12.0)) => Tile::Tile6A,
+        ((-12.0, 12.0), (0.0, -12.0)) => Tile::Tile6Q,
+        ((12.0, -12.0), (0.0, 12.0)) => Tile::Tile6S,
+        ((0.0, -12.0), (12.0, 12.0)) => Tile::Tile6W,
+        ((12.0, 12.0), (-12.0, 0.0)) => Tile::Tile7A,
+        ((-12.0, 0.0), (12.0, -12.0)) => Tile::Tile7Q,
+        ((12.0, 0.0), (-12.0, 12.0)) => Tile::Tile7S,
+        ((-12.0, -12.0), (12.0, 0.0)) => Tile::Tile7W,
+        _ => Tile::TileD,
+    }
 }

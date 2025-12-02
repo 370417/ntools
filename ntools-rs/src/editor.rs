@@ -1,7 +1,7 @@
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{editor_state::{Command, EditorState}, grid::{GridPos, COLS, ROWS}, pen_tool::{PenTool, PenToolStart}, segment::extract_path, tile::{Tile, TileCategory, TileVariant, Tiles, TILE_HALF_SIZE, TILE_SIZE}};
+use crate::{editor_state::{Command, EditorState}, grid::{GridPos, COLS, ROWS}, pen_tool::{create_command, PenTool, PenToolStart}, segment::extract_path, tile::{Tile, TileCategory, TileVariant, TILE_SIZE}};
 
 #[wasm_bindgen]
 pub struct Editor {
@@ -97,6 +97,9 @@ impl Editor {
                     start @ PenToolStart::None => {
                         *start = PenToolStart::Some(crosshair);
                     }
+                    PenToolStart::Some(start) => {
+                        self.state.apply(create_command(*start, crosshair, self.state.tiles()));
+                    }
                     _ => {}
                 };
             }
@@ -122,6 +125,16 @@ impl Editor {
     #[wasm_bindgen]
     pub fn pen_tool_crosshair_y(&self) -> f64 {
         self.pen_tool_crosshair().y
+    }
+
+    #[wasm_bindgen]
+    pub fn pen_tool_start_x(&self) -> f64 {
+        self.pen_tool_start().x
+    }
+
+    #[wasm_bindgen]
+    pub fn pen_tool_start_y(&self) -> f64 {
+        self.pen_tool_start().y
     }
 
     #[wasm_bindgen]
@@ -268,6 +281,13 @@ impl Editor {
         match &self.mode {
             EditorMode::PenTool(pen_tool) => pen_tool.crosshair(self.cursor_pos, self.state.latest()),
             _ => DVec2::new(TILE_SIZE, TILE_SIZE),
+        }
+    }
+
+    fn pen_tool_start(&self) -> DVec2 {
+        match &self.mode {
+            EditorMode::PenTool(pen_tool) => pen_tool.start(self.state.latest()),
+            _ => DVec2::new(-1.0, -1.0),
         }
     }
 }
