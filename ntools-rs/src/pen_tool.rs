@@ -4,6 +4,7 @@ use glam::DVec2;
 use crate::{editor_state::{Command, PaintTile}, grid::{is_pos_in_bounds, GridPos, COLS, ROWS}, tile::{Tile, Tiles, TILE_HALF_SIZE, TILE_SIZE}};
 
 pub struct PenTool {
+    // TODO: if this ends up being the only field, remove this unnecessary nesting
     pub start: PenToolStart,
 }
 

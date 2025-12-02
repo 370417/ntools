@@ -41,6 +41,8 @@ export function EditorApp() {
         else if (event.code === 'KeyZ' && (event.ctrlKey || event.metaKey)) change = true, editor.undo();
         else if (event.code === 'KeyY' && (event.ctrlKey || event.metaKey)) change = true, editor.redo();
 
+        else if (event.code === 'Escape') change = true, editor.escape();
+
         if (change) {
             render();
             event.preventDefault();

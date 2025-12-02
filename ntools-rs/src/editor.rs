@@ -119,6 +119,14 @@ impl Editor {
     }
 
     #[wasm_bindgen]
+    pub fn escape(&mut self) {
+        match &mut self.mode {
+            EditorMode::PenTool(pen_tool) => pen_tool.start = PenToolStart::None,
+            _ => {}
+        }
+    }
+
+    #[wasm_bindgen]
     pub fn tile_crosshair_col(&self) -> usize {
         self.tile_crosshair().x
     }
