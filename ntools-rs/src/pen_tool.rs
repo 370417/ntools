@@ -151,32 +151,36 @@ pub fn create_command(start: DVec2, end: DVec2, tiles: &Tiles) -> Command {
                 )
             };
 
-            match edge_to_make_closed {
-                VerticalEdge::Open => paint_tiles.push(PaintTile {
-                    grid_pos: cell_to_make_closed,
-                    old: tiles[cell_to_make_closed],
-                    new: Tile::Tile5A,
-                }),
-                VerticalEdge::LowerHalfOpen => paint_tiles.push(PaintTile {
-                    grid_pos: cell_to_make_closed,
-                    old: tiles[cell_to_make_closed],
-                    new: Tile::TileE,
-                }),
-                _ => {}
+            if cell_to_make_closed.in_bounds() {
+                match edge_to_make_closed {
+                    VerticalEdge::Open => paint_tiles.push(PaintTile {
+                        grid_pos: cell_to_make_closed,
+                        old: tiles[cell_to_make_closed],
+                        new: Tile::Tile5A,
+                    }),
+                    VerticalEdge::LowerHalfOpen => paint_tiles.push(PaintTile {
+                        grid_pos: cell_to_make_closed,
+                        old: tiles[cell_to_make_closed],
+                        new: Tile::TileE,
+                    }),
+                    _ => {}
+                }
             }
 
-            match edge_to_make_open {
-                VerticalEdge::Closed => paint_tiles.push(PaintTile {
-                    grid_pos: cell_to_make_open,
-                    old: tiles[cell_to_make_open],
-                    new: Tile::Tile5W,
-                }),
-                VerticalEdge::UpperHalfOpen => paint_tiles.push(PaintTile {
-                    grid_pos: cell_to_make_open,
-                    old: tiles[cell_to_make_open],
-                    new: Tile::TileD,
-                }),
-                _ => {}
+            if cell_to_make_open.in_bounds() {
+                match edge_to_make_open {
+                    VerticalEdge::Closed => paint_tiles.push(PaintTile {
+                        grid_pos: cell_to_make_open,
+                        old: tiles[cell_to_make_open],
+                        new: Tile::Tile5W,
+                    }),
+                    VerticalEdge::UpperHalfOpen => paint_tiles.push(PaintTile {
+                        grid_pos: cell_to_make_open,
+                        old: tiles[cell_to_make_open],
+                        new: Tile::TileD,
+                    }),
+                    _ => {}
+                }
             }
         }
 
@@ -200,32 +204,36 @@ pub fn create_command(start: DVec2, end: DVec2, tiles: &Tiles) -> Command {
                 )
             };
 
-            match edge_to_make_closed {
-                VerticalEdge::Open => paint_tiles.push(PaintTile {
-                    grid_pos: cell_to_make_closed,
-                    old: tiles[cell_to_make_closed],
-                    new: Tile::Tile5W,
-                }),
-                VerticalEdge::UpperHalfOpen => paint_tiles.push(PaintTile {
-                    grid_pos: cell_to_make_closed,
-                    old: tiles[cell_to_make_closed],
-                    new: Tile::TileE,
-                }),
-                _ => {}
+            if cell_to_make_closed.in_bounds() {
+                match edge_to_make_closed {
+                    VerticalEdge::Open => paint_tiles.push(PaintTile {
+                        grid_pos: cell_to_make_closed,
+                        old: tiles[cell_to_make_closed],
+                        new: Tile::Tile5W,
+                    }),
+                    VerticalEdge::UpperHalfOpen => paint_tiles.push(PaintTile {
+                        grid_pos: cell_to_make_closed,
+                        old: tiles[cell_to_make_closed],
+                        new: Tile::TileE,
+                    }),
+                    _ => {}
+                }
             }
 
-            match edge_to_make_open {
-                VerticalEdge::Closed => paint_tiles.push(PaintTile {
-                    grid_pos: cell_to_make_open,
-                    old: tiles[cell_to_make_open],
-                    new: Tile::Tile5A,
-                }),
-                VerticalEdge::LowerHalfOpen => paint_tiles.push(PaintTile {
-                    grid_pos: cell_to_make_open,
-                    old: tiles[cell_to_make_open],
-                    new: Tile::TileD,
-                }),
-                _ => {}
+            if cell_to_make_open.in_bounds() {
+                match edge_to_make_open {
+                    VerticalEdge::Closed => paint_tiles.push(PaintTile {
+                        grid_pos: cell_to_make_open,
+                        old: tiles[cell_to_make_open],
+                        new: Tile::Tile5A,
+                    }),
+                    VerticalEdge::LowerHalfOpen => paint_tiles.push(PaintTile {
+                        grid_pos: cell_to_make_open,
+                        old: tiles[cell_to_make_open],
+                        new: Tile::TileD,
+                    }),
+                    _ => {}
+                }
             }
         }
 
@@ -254,19 +262,24 @@ pub fn create_command(start: DVec2, end: DVec2, tiles: &Tiles) -> Command {
                 )
             };
 
-            if edge_to_make_closed != VerticalEdge::Closed {
-                paint_tiles.push(PaintTile {
-                    grid_pos: cell_to_make_closed,
-                    old: tiles[cell_to_make_closed],
-                    new: Tile::TileE,
-                });
+            if cell_to_make_closed.in_bounds() {
+                if edge_to_make_closed != VerticalEdge::Closed {
+                    paint_tiles.push(PaintTile {
+                        grid_pos: cell_to_make_closed,
+                        old: tiles[cell_to_make_closed],
+                        new: Tile::TileE,
+                    });
+                }
             }
-            if edge_to_make_open != VerticalEdge::Open {
-                paint_tiles.push(PaintTile {
-                    grid_pos: cell_to_make_open,
-                    old: tiles[cell_to_make_open],
-                    new: Tile::TileD,
-                });
+
+            if cell_to_make_open.in_bounds() {
+                if edge_to_make_open != VerticalEdge::Open {
+                    paint_tiles.push(PaintTile {
+                        grid_pos: cell_to_make_open,
+                        old: tiles[cell_to_make_open],
+                        new: Tile::TileD,
+                    });
+                }
             }
         }
 
