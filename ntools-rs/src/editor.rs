@@ -93,14 +93,25 @@ impl Editor {
         match &mut self.mode {
             EditorMode::PenTool(pen_tool) => {
                 let crosshair = pen_tool.crosshair(cursor_pos, latest);
-                match &mut pen_tool.start {
-                    start @ PenToolStart::None => {
-                        *start = PenToolStart::Some(crosshair);
+                pen_tool.start = match &pen_tool.start {
+                    PenToolStart::None => {
+                        PenToolStart::Some(crosshair)
                     }
-                    PenToolStart::Some(start) => {
-                        self.state.apply(create_command(*start, crosshair, self.state.tiles()));
+                    &PenToolStart::Some(start) => if start == crosshair {
+                        PenToolStart::None
+                    } else {
+                        self.state.apply(create_command(start, crosshair, self.state.tiles()));
+                        PenToolStart::Latest
                     }
-                    _ => {}
+                    PenToolStart::Latest => match self.state.latest() {
+                        Some(Command::PenTool { end_cursor_pos, .. }) => if *end_cursor_pos == crosshair {
+                            PenToolStart::None
+                        } else {
+                            self.state.apply(create_command(*end_cursor_pos, crosshair, self.state.tiles()));
+                            PenToolStart::Latest
+                        }
+                        _ => PenToolStart::Some(crosshair)
+                    }
                 };
             }
             _ => {}

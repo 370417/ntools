@@ -23,36 +23,45 @@ impl PenTool {
 
     pub fn crosshair(&self, cursor_pos: DVec2, latest_command: Option<&Command>) -> DVec2 {
         match self.start {
-            PenToolStart::None => {
-                // First try rounding cursor pos to half tile grid
-                let x = TILE_HALF_SIZE * (cursor_pos.x / TILE_HALF_SIZE).round().clamp(2.0, 2.0 + 2.0 * COLS as f64);
-                let y = TILE_HALF_SIZE * (cursor_pos.y / TILE_HALF_SIZE).round().clamp(2.0, 2.0 + 2.0 * ROWS as f64);
-                if x % TILE_SIZE == 0.0 && y % TILE_SIZE == 0.0 {
-                    DVec2::new(x, y)
-                } else if x % TILE_SIZE == 0.0 {
-                    DVec2::new(x, y)
-                } else if y % TILE_SIZE == 0.0 {
-                    DVec2::new(x, y)
-                } else {
-                    // If cursor is not on a valid spot on half tile grid, round to full tile grid
-                    let x = TILE_SIZE * (cursor_pos.x / TILE_SIZE).round().clamp(1.0, 1.0 + COLS as f64);
-                    let y = TILE_SIZE * (cursor_pos.y / TILE_SIZE).round().clamp(1.0, 1.0 + ROWS as f64);
-                    DVec2::new(x, y)
-                }
+            PenToolStart::None => round_to_grid(cursor_pos),
+            PenToolStart::Latest => match latest_command {
+                Some(Command::PenTool { end_cursor_pos, .. }) => stroke_end(*end_cursor_pos, cursor_pos),
+                _ => round_to_grid(cursor_pos),
             }
-            PenToolStart::Latest => todo!(),
-            PenToolStart::Some(start) => {
-                stroke_end(start, cursor_pos)
-            }
+            PenToolStart::Some(start) => stroke_end(start, cursor_pos),
         }
     }
 
     pub fn start(&self, latest_command: Option<&Command>) -> DVec2 {
         match self.start {
             PenToolStart::None => DVec2::new(-1.0, -1.0),
-            PenToolStart::Latest => todo!(),
+            PenToolStart::Latest => match latest_command {
+                Some(Command::PenTool { end_cursor_pos, .. }) => *end_cursor_pos,
+                _ => DVec2::new(-1.0, -1.0),
+            }
             PenToolStart::Some(start) => start
         }
+    }
+}
+
+/// Round cursor_pos to either
+/// 1. a vertex of the grid
+/// 2. the midpoint of an edge of the grid
+fn round_to_grid(cursor_pos: DVec2) -> DVec2 {
+    // First try rounding cursor pos to half tile grid
+    let x = TILE_HALF_SIZE * (cursor_pos.x / TILE_HALF_SIZE).round().clamp(2.0, 2.0 + 2.0 * COLS as f64);
+    let y = TILE_HALF_SIZE * (cursor_pos.y / TILE_HALF_SIZE).round().clamp(2.0, 2.0 + 2.0 * ROWS as f64);
+    if x % TILE_SIZE == 0.0 && y % TILE_SIZE == 0.0 {
+        DVec2::new(x, y)
+    } else if x % TILE_SIZE == 0.0 {
+        DVec2::new(x, y)
+    } else if y % TILE_SIZE == 0.0 {
+        DVec2::new(x, y)
+    } else {
+        // If cursor is not on a valid spot on half tile grid, round to full tile grid
+        let x = TILE_SIZE * (cursor_pos.x / TILE_SIZE).round().clamp(1.0, 1.0 + COLS as f64);
+        let y = TILE_SIZE * (cursor_pos.y / TILE_SIZE).round().clamp(1.0, 1.0 + ROWS as f64);
+        DVec2::new(x, y)
     }
 }
 
