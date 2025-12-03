@@ -137,11 +137,11 @@ impl Editor {
         };
         self.state.undo();
         // If we just undid the first stroke from the pen tool,
-        // set pen tool start so that we don't reference history that doesn't exist.
-        if let Some(start) = pen_tool_origin {
+        // set pen tool start to none so that we don't reference history that doesn't exist.
+        if pen_tool_origin.is_some() {
             match self.mode {
                 EditorMode::PenTool(_) => {
-                    self.mode = EditorMode::PenTool(PenTool { start: PenToolStart::Some(start) });
+                    self.mode = EditorMode::PenTool(PenTool { start: PenToolStart::None });
                 }
                 _ => {}
             }
