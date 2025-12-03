@@ -119,14 +119,6 @@ impl Editor {
     }
 
     #[wasm_bindgen]
-    pub fn escape(&mut self) {
-        match &mut self.mode {
-            EditorMode::PenTool(pen_tool) => pen_tool.start = PenToolStart::None,
-            _ => {}
-        }
-    }
-
-    #[wasm_bindgen]
     pub fn tile_crosshair_col(&self) -> usize {
         self.tile_crosshair().x
     }
@@ -164,6 +156,21 @@ impl Editor {
     #[wasm_bindgen]
     pub fn redo(&mut self) {
         self.state.redo();
+    }
+
+    #[wasm_bindgen]
+    pub fn press_escape(&mut self) -> bool {
+        match &mut self.mode {
+            EditorMode::PenTool(pen_tool) => match pen_tool.start {
+                PenToolStart::None => {}
+                _ => {
+                    pen_tool.start = PenToolStart::None;
+                    return true;
+                }
+            }
+            _ => {}
+        }
+        false
     }
 
     #[wasm_bindgen]

@@ -41,7 +41,7 @@ export function EditorApp() {
         else if (event.code === 'KeyZ' && (event.ctrlKey || event.metaKey)) change = true, editor.undo();
         else if (event.code === 'KeyY' && (event.ctrlKey || event.metaKey)) change = true, editor.redo();
 
-        else if (event.code === 'Escape') change = true, editor.escape();
+        else if (event.code === 'Escape') change = editor.press_escape();
 
         if (change) {
             render();
@@ -102,7 +102,9 @@ export function EditorApp() {
                 (event.clientY - top) / height * 600,
             );
             if (cursorMoved) render();
-        }} onclick={() => { editor.cursor_click(); render() }}>
+        }}
+        onclick={() => { editor.cursor_click(); render() }}
+        oncontextmenu={event => { if (editor.press_escape()) { render(); event.preventDefault(); } }} >
             <defs>
                 <clipPath id="tiles-clip">
                     <use href="#tiles" />
