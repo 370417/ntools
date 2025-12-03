@@ -118,11 +118,16 @@ impl Editor {
                         PenToolStart::Latest
                     }
                     PenToolStart::Latest => match self.state.latest() {
-                        Some(Command::PenTool { end, .. }) => if *end == crosshair {
+                        Some(&Command::PenTool { end, .. }) => if end == crosshair {
                             PenToolStart::None
                         } else {
-                            self.state.apply(create_command(*end, crosshair, self.pen_tool_is_clockwise, None, self.state.tiles()));
-                            PenToolStart::Latest
+                            self.state.apply(create_command(end, crosshair, self.pen_tool_is_clockwise, None, self.state.tiles()));
+                            if self.state.pen_tool_origin().is_some_and(|origin| origin == crosshair) {
+                                // Set start back to none if we completed a closed loop using the pen tool.
+                                PenToolStart::None
+                            } else {
+                                PenToolStart::Latest
+                            }
                         }
                         _ => PenToolStart::Some(crosshair)
                     }
