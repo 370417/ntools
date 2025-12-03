@@ -103,36 +103,8 @@ impl Editor {
     #[wasm_bindgen]
     pub fn cursor_click(&mut self) {
         let cursor_pos = self.cursor_pos;
-        let latest = self.state.latest();
         match &mut self.mode {
-            EditorMode::PenTool(pen_tool) => {
-                let crosshair = pen_tool.crosshair(cursor_pos, latest);
-                pen_tool.start = match &pen_tool.start {
-                    PenToolStart::None => {
-                        PenToolStart::Some(crosshair)
-                    }
-                    &PenToolStart::Some(start) => if start == crosshair {
-                        PenToolStart::None
-                    } else {
-                        self.state.apply(create_command(start, crosshair, self.pen_tool_is_clockwise, Some(start), self.state.tiles()));
-                        PenToolStart::Latest
-                    }
-                    PenToolStart::Latest => match self.state.latest() {
-                        Some(&Command::PenTool { end, .. }) => if end == crosshair {
-                            PenToolStart::None
-                        } else {
-                            self.state.apply(create_command(end, crosshair, self.pen_tool_is_clockwise, None, self.state.tiles()));
-                            if self.state.pen_tool_origin().is_some_and(|origin| origin == crosshair) {
-                                // Set start back to none if we completed a closed loop using the pen tool.
-                                PenToolStart::None
-                            } else {
-                                PenToolStart::Latest
-                            }
-                        }
-                        _ => PenToolStart::Some(crosshair)
-                    }
-                };
-            }
+            EditorMode::PenTool(pen_tool) => pen_tool.cursor_click(cursor_pos, self.pen_tool_is_clockwise, &mut self.state),
             _ => {}
         }
     }

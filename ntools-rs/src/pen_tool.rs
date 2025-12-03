@@ -1,7 +1,7 @@
 use float_ord::FloatOrd;
 use glam::DVec2;
 
-use crate::{editor_state::{Command, PaintTile}, grid::{is_pos_in_bounds, GridPos, COLS, ROWS}, tile::{Tile, Tiles, TILE_HALF_SIZE, TILE_SIZE}};
+use crate::{editor_state::{Command, EditorState, PaintTile}, grid::{is_pos_in_bounds, GridPos, COLS, ROWS}, tile::{Tile, Tiles, TILE_HALF_SIZE, TILE_SIZE}};
 
 pub struct PenTool {
     pub start: PenToolStart,
@@ -48,6 +48,36 @@ impl PenTool {
             }
             PenToolStart::Some(start) => start
         }
+    }
+
+    pub fn cursor_click(&mut self, cursor_pos: DVec2, is_clockwise: bool, state: &mut EditorState) {
+        let latest = state.latest();
+        let crosshair = self.crosshair(cursor_pos, latest);
+        self.start = match &self.start {
+            PenToolStart::None => {
+                PenToolStart::Some(crosshair)
+            }
+            &PenToolStart::Some(start) => if start == crosshair {
+                PenToolStart::None
+            } else {
+                state.apply(create_command(start, crosshair, is_clockwise, Some(start), state.tiles()));
+                PenToolStart::Latest
+            }
+            PenToolStart::Latest => match state.latest() {
+                Some(&Command::PenTool { end, .. }) => if end == crosshair {
+                    PenToolStart::None
+                } else {
+                    state.apply(create_command(end, crosshair, is_clockwise, None, state.tiles()));
+                    if state.pen_tool_origin().is_some_and(|origin| origin == crosshair) {
+                        // Set start back to none if we completed a closed loop using the pen tool.
+                        PenToolStart::None
+                    } else {
+                        PenToolStart::Latest
+                    }
+                }
+                _ => PenToolStart::Some(crosshair)
+            }
+        };
     }
 }
 
