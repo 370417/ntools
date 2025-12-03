@@ -209,6 +209,12 @@ pub fn create_command(start: DVec2, end: DVec2, is_clockwise: bool, first_start:
                     old: tiles[cell_to_make_closed],
                     new: Tile::TileE,
                 }),
+                // Add to paint tiles even if old == new so that the tile visually appears selected when rendered
+                Some(_) => paint_tiles.push(PaintTile {
+                    grid_pos: cell_to_make_closed,
+                    old: tiles[cell_to_make_closed],
+                    new: tiles[cell_to_make_closed],
+                }),
                 _ => {}
             }
 
@@ -258,6 +264,12 @@ pub fn create_command(start: DVec2, end: DVec2, is_clockwise: bool, first_start:
                     old: tiles[cell_to_make_closed],
                     new: Tile::TileE,
                 }),
+                // Add to paint tiles even if old == new so that the tile visually appears selected when rendered
+                Some(_) => paint_tiles.push(PaintTile {
+                    grid_pos: cell_to_make_closed,
+                    old: tiles[cell_to_make_closed],
+                    new: tiles[cell_to_make_closed],
+                }),
                 _ => {}
             }
 
@@ -301,20 +313,29 @@ pub fn create_command(start: DVec2, end: DVec2, is_clockwise: bool, first_start:
                 )
             };
 
-            if edge_to_make_closed.is_some() && edge_to_make_closed != Some(VerticalEdge::Closed) {
-                paint_tiles.push(PaintTile {
+            match edge_to_make_closed {
+                // Add to paint tiles even if old == new so that the tile visually appears selected when rendered
+                Some(VerticalEdge::Closed) => paint_tiles.push(PaintTile {
+                    grid_pos: cell_to_make_closed,
+                    old: tiles[cell_to_make_closed],
+                    new: tiles[cell_to_make_closed],
+                }),
+                Some(_) => paint_tiles.push(PaintTile {
                     grid_pos: cell_to_make_closed,
                     old: tiles[cell_to_make_closed],
                     new: Tile::TileE,
-                });
+                }),
+                _ => {}
             }
 
-            if edge_to_make_open.is_some() && edge_to_make_open != Some(VerticalEdge::Open) {
-                paint_tiles.push(PaintTile {
+            match edge_to_make_open {
+                Some(VerticalEdge::Open) => {}
+                Some(_) => paint_tiles.push(PaintTile {
                     grid_pos: cell_to_make_open,
                     old: tiles[cell_to_make_open],
                     new: Tile::TileD,
-                });
+                }),
+                _ => {}
             }
         }
 
@@ -367,6 +388,12 @@ pub fn create_command(start: DVec2, end: DVec2, is_clockwise: bool, first_start:
                     old: tiles[cell_to_make_closed],
                     new: Tile::TileE,
                 }),
+                // Add to paint tiles even if old == new so that the tile visually appears selected when rendered
+                Some(_) => paint_tiles.push(PaintTile {
+                    grid_pos: cell_to_make_closed,
+                    old: tiles[cell_to_make_closed],
+                    new: tiles[cell_to_make_closed],
+                }),
                 _ => {}
             }
 
@@ -416,6 +443,12 @@ pub fn create_command(start: DVec2, end: DVec2, is_clockwise: bool, first_start:
                     old: tiles[cell_to_make_closed],
                     new: Tile::TileE,
                 }),
+                // Add to paint tiles even if old == new so that the tile visually appears selected when rendered
+                Some(_) => paint_tiles.push(PaintTile {
+                    grid_pos: cell_to_make_closed,
+                    old: tiles[cell_to_make_closed],
+                    new: tiles[cell_to_make_closed],
+                }),
                 _ => {}
             }
 
@@ -459,20 +492,29 @@ pub fn create_command(start: DVec2, end: DVec2, is_clockwise: bool, first_start:
                 )
             };
 
-            if edge_to_make_closed.is_some() && edge_to_make_closed != Some(HorizontalEdge::Closed) {
-                paint_tiles.push(PaintTile {
+            match edge_to_make_closed {
+                // Add to paint tiles even if old == new so that the tile visually appears selected when rendered
+                Some(HorizontalEdge::Closed) => paint_tiles.push(PaintTile {
+                    grid_pos: cell_to_make_closed,
+                    old: tiles[cell_to_make_closed],
+                    new: tiles[cell_to_make_closed],
+                }),
+                Some(_) => paint_tiles.push(PaintTile {
                     grid_pos: cell_to_make_closed,
                     old: tiles[cell_to_make_closed],
                     new: Tile::TileE,
-                });
+                }),
+                _ => {}
             }
 
-            if edge_to_make_open.is_some() && edge_to_make_open != Some(HorizontalEdge::Open) {
-                paint_tiles.push(PaintTile {
+            match edge_to_make_open {
+                Some(HorizontalEdge::Open) => {}
+                Some(_) => paint_tiles.push(PaintTile {
                     grid_pos: cell_to_make_open,
                     old: tiles[cell_to_make_open],
                     new: Tile::TileD,
-                });
+                }),
+                _ => {}
             }
         }
 
