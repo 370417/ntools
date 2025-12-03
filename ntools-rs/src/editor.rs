@@ -64,7 +64,7 @@ impl Editor {
                 let start = pen_tool.start(self.state.latest());
                 let end = pen_tool.crosshair(self.cursor_pos, self.state.latest());
                 if start != end {
-                    let command = create_command(start, end, self.pen_tool_is_clockwise, false, self.state.tiles());
+                    let command = create_command(start, end, self.pen_tool_is_clockwise, None, self.state.tiles());
                     return extract_path(&self.state.preview(command).segments());
                 }
             }
@@ -114,14 +114,14 @@ impl Editor {
                     &PenToolStart::Some(start) => if start == crosshair {
                         PenToolStart::None
                     } else {
-                        self.state.apply(create_command(start, crosshair, self.pen_tool_is_clockwise, true, self.state.tiles()));
+                        self.state.apply(create_command(start, crosshair, self.pen_tool_is_clockwise, Some(start), self.state.tiles()));
                         PenToolStart::Latest
                     }
                     PenToolStart::Latest => match self.state.latest() {
-                        Some(Command::PenTool { end_cursor_pos, .. }) => if *end_cursor_pos == crosshair {
+                        Some(Command::PenTool { end, .. }) => if *end == crosshair {
                             PenToolStart::None
                         } else {
-                            self.state.apply(create_command(*end_cursor_pos, crosshair, self.pen_tool_is_clockwise, false, self.state.tiles()));
+                            self.state.apply(create_command(*end, crosshair, self.pen_tool_is_clockwise, None, self.state.tiles()));
                             PenToolStart::Latest
                         }
                         _ => PenToolStart::Some(crosshair)
@@ -154,17 +154,17 @@ impl Editor {
 
     #[wasm_bindgen]
     pub fn undo(&mut self) {
-        let was_first_pen_tool_stroke = match self.state.latest() {
-            Some(Command::PenTool { is_first: true, .. }) => true,
-            _ => false,
+        let pen_tool_origin = match self.state.latest() {
+            Some(Command::PenTool { first_start, .. }) => *first_start,
+            _ => None,
         };
         self.state.undo();
         // If we just undid the first stroke from the pen tool,
-        // set pen tool start to none so that we don't mix state from two disjoint strokes.
-        if was_first_pen_tool_stroke {
+        // set pen tool start so that we don't reference history that doesn't exist.
+        if let Some(start) = pen_tool_origin {
             match self.mode {
                 EditorMode::PenTool(_) => {
-                    self.mode = EditorMode::PenTool(PenTool { start: PenToolStart::None });
+                    self.mode = EditorMode::PenTool(PenTool { start: PenToolStart::Some(start) });
                 }
                 _ => {}
             }

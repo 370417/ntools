@@ -16,9 +16,10 @@ pub enum Command {
     PaintTile(PaintTile),
     PaintTiles(Vec<PaintTile>),
     PenTool {
-        is_first: bool,
+        /// If this is the first stroke of a chain of strokes, store the start of the stroke
+        first_start: Option<DVec2>,
         tiles: Vec<PaintTile>,
-        end_cursor_pos: DVec2,
+        end: DVec2,
     },
 }
 
@@ -44,6 +45,18 @@ impl EditorState {
 
     pub fn latest(&self) -> Option<&Command> {
         self.history.last()
+    }
+
+    /// Get the initial starting point of the current chain of pen tool commands.
+    pub fn pen_tool_origin(&self) -> Option<DVec2> {
+        for command in self.history.iter().rev() {
+            match command {
+                Command::PenTool { first_start: Some(start), .. } => return Some(*start),
+                Command::PenTool { .. } => continue,
+                _ => return None,
+            }
+        }
+        None
     }
 
     /// Execute a command and add it to the history
