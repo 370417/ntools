@@ -128,7 +128,7 @@ fn stroke_end(start: DVec2, cursor_pos: DVec2) -> DVec2 {
         .unwrap_or(start)
 }
 
-pub fn create_command(start: DVec2, end: DVec2, is_clockwise: bool, tiles: &Tiles) -> Command {
+pub fn create_command(start: DVec2, end: DVec2, is_clockwise: bool, is_first: bool, tiles: &Tiles) -> Command {
     assert_ne!(start, end);
     let delta = end - start;
     if delta.x == 0.0 && start.x % TILE_SIZE == 0.0 {
@@ -288,7 +288,7 @@ pub fn create_command(start: DVec2, end: DVec2, is_clockwise: bool, tiles: &Tile
             }
         }
 
-        Command::PenTool { tiles: paint_tiles, end_cursor_pos: end }
+        Command::PenTool { is_first, tiles: paint_tiles, end_cursor_pos: end }
     } else if delta.y == 0.0 && start.y % TILE_SIZE == 0.0 {
         // horizontal between two rows
 
@@ -446,7 +446,7 @@ pub fn create_command(start: DVec2, end: DVec2, is_clockwise: bool, tiles: &Tile
             }
         }
 
-        Command::PenTool { tiles: paint_tiles, end_cursor_pos: end }
+        Command::PenTool { is_first, tiles: paint_tiles, end_cursor_pos: end }
     } else {
         // diagonal stroke
 
@@ -476,7 +476,7 @@ pub fn create_command(start: DVec2, end: DVec2, is_clockwise: bool, tiles: &Tile
                 new: if is_clockwise { new_tile } else { new_tile.opposite() },
             }
         }).collect();
-        Command::PenTool { tiles: paint_tiles, end_cursor_pos: end }
+        Command::PenTool { is_first, tiles: paint_tiles, end_cursor_pos: end }
     }
 }
 

@@ -16,6 +16,7 @@ pub enum Command {
     PaintTile(PaintTile),
     PaintTiles(Vec<PaintTile>),
     PenTool {
+        is_first: bool,
         tiles: Vec<PaintTile>,
         end_cursor_pos: DVec2,
     },
