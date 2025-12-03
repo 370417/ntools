@@ -238,15 +238,17 @@ impl Segment {
     }
 }
 
-pub fn extract_path(segments: &Grid<Segment>) -> String {
+pub fn extract_path(segments: &Grid<Segment>, outer_border: bool) -> String {
     let mut segments: Vec<Segment> = segments.flat_iter().filter(|s| s.is_from_tile()).map(|s| s.clone()).collect();
 
     let mut path = Vec::new();
 
-    // add a path around the entire screen so that the fill covers walls instead of empty tiles
-    let x_max = (COLS + 4) as f64 * TILE_SIZE;
-    let y_max = (ROWS + 4) as f64 * TILE_SIZE;
-    path.push(format!("M -1 -1 L -1 {} L {} {} L {} -1 L -1 -1", y_max, x_max, y_max, x_max));
+    if outer_border {
+        // add a path around the entire screen so that the fill covers walls instead of empty tiles
+        let x_max = (COLS + 4) as f64 * TILE_SIZE;
+        let y_max = (ROWS + 4) as f64 * TILE_SIZE;
+        path.push(format!("M -1 -1 L -1 {} L {} {} L {} -1 L -1 -1", y_max, x_max, y_max, x_max));
+    }
 
     while let Some(segment) = segments.pop() {
         let mut curr_pos = segment.start();

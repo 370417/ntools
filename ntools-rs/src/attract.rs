@@ -225,10 +225,10 @@ mod tests {
     #[test]
     fn regression_test() {
         // Level "Chamoska Demon"
-        extract_path(&Attract::from_bytes(include_bytes!("testfiles/6876")).unwrap().segments);
+        extract_path(&Attract::from_bytes(include_bytes!("testfiles/6876")).unwrap().segments, true);
 
-        extract_path(&Attract::from_bytes(include_bytes!("testfiles/22906")).unwrap().segments);
-        extract_path(&Attract::from_bytes(include_bytes!("testfiles/6861")).unwrap().segments);
-        extract_path(&Attract::from_bytes(include_bytes!("testfiles/6883")).unwrap().segments);
+        extract_path(&Attract::from_bytes(include_bytes!("testfiles/22906")).unwrap().segments, true);
+        extract_path(&Attract::from_bytes(include_bytes!("testfiles/6861")).unwrap().segments, true);
+        extract_path(&Attract::from_bytes(include_bytes!("testfiles/6883")).unwrap().segments, true);
     }
 }

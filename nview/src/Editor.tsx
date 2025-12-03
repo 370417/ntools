@@ -23,6 +23,7 @@ export function EditorApp() {
     const editor = Editor.new();
 
     const [tilePath, setTilePath] = createSignal('');
+    const [selectedTilePath, setSelectedTilePath] = createSignal('');
     const [mode, setMode] = createSignal(MODE_PAINT_TILES);
     const [tilemodeCrosshairPos, setTilemodeCrosshairPos] = createSignal({ row: 1, col: 1 });
     const [penToolCrosshairPos, setPenToolCrosshairPos] = createSignal({ x: 24, y: 24 });
@@ -68,6 +69,7 @@ export function EditorApp() {
         setMode(editor.mode());
 
         setTilePath(editor.tiles_path());
+        setSelectedTilePath(editor.selected_tiles_path());
         setTilemodeCrosshairPos({
             row: editor.tile_crosshair_row(),
             col: editor.tile_crosshair_col(),
@@ -111,6 +113,7 @@ export function EditorApp() {
             {regularGridXs.map(x => <line class="regular-grid" y1="24" y2={24 * 24} x1={x} x2={x} />)}
             {regularGridYs.map(y => <line class="regular-grid" x1="24" x2={24 * 43} y1={y} y2={y} />)}
             <path id="tiles" stroke-width="2" clip-path="url(#tiles-clip)" clip-rule="evenodd" d={tilePath()} fill-rule="evenodd" />
+            <path id="selected-tiles" d={selectedTilePath()} fill-rule="evenodd" />
             <Show when={mode() === MODE_PAINT_TILES}>
                 <use href="#tilemode-crosshair" x={tilemodeCrosshairPos().col * 24 + 12} y={tilemodeCrosshairPos().row * 24 + 12} />
             </Show>

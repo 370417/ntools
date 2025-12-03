@@ -1,7 +1,7 @@
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{editor_state::{Command, EditorState}, grid::{GridPos, COLS, ROWS}, pen_tool::{create_command, PenTool, PenToolStart}, segment::extract_path, tile::{Tile, TileCategory, TileVariant, TILE_SIZE}};
+use crate::{editor_state::{Command, EditorState}, grid::{GridPos, COLS, ROWS}, pen_tool::{create_command, PenTool, PenToolStart}, segment::extract_path, tile::{Tile, TileCategory, TileVariant, Tiles, TILE_SIZE}};
 
 #[wasm_bindgen]
 pub struct Editor {
@@ -65,11 +65,28 @@ impl Editor {
                 let end = pen_tool.crosshair(self.cursor_pos, self.state.latest());
                 if start != end {
                     let command = create_command(start, end, self.pen_tool_is_clockwise, None, self.state.tiles());
-                    return extract_path(&self.state.preview(command).segments());
+                    return extract_path(&self.state.preview(command).segments(), true);
                 }
             }
         }
-        extract_path(&self.state.tiles().segments())
+        extract_path(&self.state.tiles().segments(), true)
+    }
+
+    #[wasm_bindgen]
+    pub fn selected_tiles_path(&self) -> String {
+        if let EditorMode::PenTool(pen_tool) = &self.mode {
+            if !pen_tool.is_none() {
+                let start = pen_tool.start(self.state.latest());
+                let end = pen_tool.crosshair(self.cursor_pos, self.state.latest());
+                if start != end {
+                    let command = create_command(start, end, self.pen_tool_is_clockwise, None, self.state.tiles());
+                    let mut tiles = Tiles::default();
+                    EditorState::execute_command(&mut tiles, &command);
+                    return extract_path(&tiles.segments_borderless(), false);
+                }
+            }
+        }
+        "".into()
     }
 
     /// Return true if the cursor has moved enough to move to a different grid location

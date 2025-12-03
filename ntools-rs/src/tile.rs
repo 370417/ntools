@@ -762,6 +762,46 @@ impl Tile {
         }
     }
 
+    /// Like add_outer_segments_to_grid but we assume the outer edge is filled
+    /// with D tiles (empty) instead of E tiles.
+    pub fn add_outer_segments_to_grid_borderless(&self, pos: GridPos, segments: &mut Grid<Segment>) {
+        for direction in [(0, 1), (1, 0), (0, -1), (-1, 0)] {
+            let neighbor_pos = pos.plus(direction);
+            if neighbor_pos.in_bounds() {
+                if let Some(outer_segment) = self.outer_segment(pos, direction) {
+                    // If neighbor is in bounds and we have an outer segment to add,
+                    // there is the possibility that this tile and the neighbor
+                    // tile share a segment that needs to be culled.
+                    // Two walls next to each other should not have a segment
+                    // between them.
+                    let mut found_overlap = false;
+                    segments[neighbor_pos].retain_mut(|neighbor_segment| {
+                        if neighbor_segment.has_full_overlap(&outer_segment) {
+                            found_overlap = true;
+                            false
+                        } else if neighbor_segment.has_partial_overlap(&outer_segment) {
+                            *neighbor_segment = neighbor_segment.without_overlap(&outer_segment);
+                            found_overlap = true;
+                            true
+                        } else {
+                            true
+                        }
+                    });
+                    if !found_overlap {
+                        // If there was no overlap with a neighboring segment,
+                        // we can simply add this tile's outer segment to the grid
+                        segments[pos].push(outer_segment);
+                    }
+                }
+            } else {
+                // If neighbor is out of bounds, that means there is nothing to cull.
+                if let Some(outer_segment) = self.outer_segment(pos, direction) {
+                    segments[pos].push(outer_segment);
+                }
+            }
+        }
+    }
+
     pub fn add_inner_segments_to_grid(&self, pos: GridPos, segments: &mut Grid<Segment>) {
         if let Some(inner_segment) = self.inner_segment(pos) {
             segments[pos].push(inner_segment);
@@ -791,6 +831,34 @@ impl Tiles {
                 let pos = GridPos::new(col + 1, row + 1);
                 let tile = self.tiles[i];
                 tile.add_outer_segments_to_grid(pos, &mut grid);
+            }
+        }
+        for row in 0..ROWS {
+            for col in 0..COLS {
+                let i = row * COLS + col;
+                let pos = GridPos::new(col + 1, row + 1);
+                let tile = self.tiles[i];
+                tile.add_inner_segments_to_grid(pos, &mut grid);
+            }
+        }
+
+        grid
+    }
+
+    /// Like segments but we assume the outer edge is filled
+    /// with D tiles (empty) instead of E tiles.
+    pub fn segments_borderless(&self) -> Grid<Segment> {
+        let mut grid = Grid::new();
+
+        // First add all outer segments then add all inner segments.
+        // This way we don't have to worry about handling inner segments
+        // when we are culling overlappping outer segments.
+        for row in 0..ROWS {
+            for col in 0..COLS {
+                let i = row * COLS + col;
+                let pos = GridPos::new(col + 1, row + 1);
+                let tile = self.tiles[i];
+                tile.add_outer_segments_to_grid_borderless(pos, &mut grid);
             }
         }
         for row in 0..ROWS {

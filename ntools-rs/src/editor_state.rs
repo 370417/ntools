@@ -104,7 +104,7 @@ impl EditorState {
         }
     }
 
-    fn execute_command(tiles: &mut Tiles, command: &Command) {
+    pub fn execute_command(tiles: &mut Tiles, command: &Command) {
         match command {
             Command::PaintTile(paint_tile) => {
                 tiles[paint_tile.grid_pos] = paint_tile.new;

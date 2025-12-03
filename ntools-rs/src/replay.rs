@@ -137,7 +137,7 @@ impl Replay {
 
     #[wasm_bindgen]
     pub fn tiles_path(&self) -> String {
-        extract_path(&self.segments)
+        extract_path(&self.segments, true)
     }
 
     #[wasm_bindgen]
