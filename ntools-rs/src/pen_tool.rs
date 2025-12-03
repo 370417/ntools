@@ -104,10 +104,20 @@ fn stroke_end(start: DVec2, cursor_pos: DVec2) -> DVec2 {
         .map(|stroke| {
             // project to_cursor onto stroke except we round so that
             // the result is always an integer multiple of stroke.
-            stroke * (stroke.dot(cursor_pos - start) / stroke.dot(stroke)).round()
+            // projection is scale * stroke.
+            // we loop in case projection is out of bounds to find the longest
+            // projection that is in bounds.
+            let scale = (stroke.dot(cursor_pos - start) / stroke.dot(stroke)).round() as i32;
+            let mut scale_abs = scale.abs();
+            while scale_abs > 0 {
+                let projection = (scale_abs * scale.signum()) as f64 * stroke;
+                if is_pos_in_bounds(start + projection) {
+                    return start + projection;
+                }
+                scale_abs -= 1;
+            }
+            start
         })
-        .map(|projected| start + projected)
-        .filter(|&pos| is_pos_in_bounds(pos))
         .min_by_key(|pos| FloatOrd((pos - cursor_pos).length_squared()))
         .unwrap_or(start)
 }
