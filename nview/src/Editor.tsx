@@ -30,7 +30,18 @@ export function EditorApp() {
 
     document.addEventListener('keydown', event => {
         let change = false;
-        if (event.code === 'KeyQ') change = true, editor.press_q();
+
+        if (event.code ==='Backquote') change = true, editor.press_tilde();
+        else if (event.code === 'Digit1') change = true, editor.press_1();
+        else if (event.code === 'Digit2') change = true, editor.press_2();
+        else if (event.code === 'Digit3') change = true, editor.press_3();
+        else if (event.code === 'Digit4') change = true, editor.press_4();
+        else if (event.code === 'Digit5') change = true, editor.press_5();
+        else if (event.code === 'Digit6') change = true, editor.press_6();
+        else if (event.code === 'Digit7') change = true, editor.press_7();
+        else if (event.code === 'Digit8') change = true, editor.press_8();
+
+        else if (event.code === 'KeyQ') change = true, editor.press_q();
         else if (event.code === 'KeyW') change = true, editor.press_w();
         else if (event.code === 'KeyA') change = true, editor.press_a();
         else if (event.code === 'KeyS') change = true, editor.press_s();

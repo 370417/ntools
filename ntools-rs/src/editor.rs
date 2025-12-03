@@ -186,6 +186,62 @@ impl Editor {
     }
 
     #[wasm_bindgen]
+    pub fn press_tilde(&mut self) {
+        match self.mode {
+            EditorMode::PenTool(_) => {}
+            _ => self.mode = EditorMode::PenTool(PenTool::new()),
+        }
+    }
+
+    #[wasm_bindgen]
+    pub fn press_1(&mut self) {
+        self.mode = EditorMode::PaintTiles;
+        self.selected_tile_category = TileCategory::Tile1;
+    }
+
+    #[wasm_bindgen]
+    pub fn press_2(&mut self) {
+        self.mode = EditorMode::PaintTiles;
+        self.selected_tile_category = TileCategory::Tile2;
+    }
+
+    #[wasm_bindgen]
+    pub fn press_3(&mut self) {
+        self.mode = EditorMode::PaintTiles;
+        self.selected_tile_category = TileCategory::Tile3;
+    }
+
+    #[wasm_bindgen]
+    pub fn press_4(&mut self) {
+        self.mode = EditorMode::PaintTiles;
+        self.selected_tile_category = TileCategory::Tile4;
+    }
+
+    #[wasm_bindgen]
+    pub fn press_5(&mut self) {
+        self.mode = EditorMode::PaintTiles;
+        self.selected_tile_category = TileCategory::Tile5;
+    }
+
+    #[wasm_bindgen]
+    pub fn press_6(&mut self) {
+        self.mode = EditorMode::PaintTiles;
+        self.selected_tile_category = TileCategory::Tile6;
+    }
+
+    #[wasm_bindgen]
+    pub fn press_7(&mut self) {
+        self.mode = EditorMode::PaintTiles;
+        self.selected_tile_category = TileCategory::Tile7;
+    }
+
+    #[wasm_bindgen]
+    pub fn press_8(&mut self) {
+        self.mode = EditorMode::PaintTiles;
+        self.selected_tile_category = TileCategory::Tile8;
+    }
+
+    #[wasm_bindgen]
     pub fn press_q(&mut self) {
         match self.mode {
             EditorMode::PaintTiles => {
