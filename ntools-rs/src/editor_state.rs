@@ -50,9 +50,16 @@ impl EditorState {
         if command.is_noop() {
             return;
         }
-        self.execute_command(&command);
+        Self::execute_command(&mut self.tiles, &command);
         self.history.push(command);
         self.future.clear();
+    }
+
+    /// Preview the effects of a command without adding it to the history
+    pub fn preview(&self, command: Command) -> Tiles {
+        let mut tiles = self.tiles.clone();
+        Self::execute_command(&mut tiles, &command);
+        tiles
     }
 
     /// Execute a command and combine it with the latest history entry
@@ -61,7 +68,7 @@ impl EditorState {
         if command.is_noop() {
             return;
         }
-        self.execute_command(&command);
+        Self::execute_command(&mut self.tiles, &command);
         if let Some(prev_command) = self.history.pop() {
             self.history.append(&mut prev_command.amend(command));
         } else {
@@ -78,21 +85,21 @@ impl EditorState {
 
     pub fn redo(&mut self) {
         if let Some(command) = self.future.pop() {
-            self.execute_command(&command);
+            Self::execute_command(&mut self.tiles, &command);
             self.history.push(command);
         }
     }
 
-    fn execute_command(&mut self, command: &Command) {
+    fn execute_command(tiles: &mut Tiles, command: &Command) {
         match command {
             Command::PaintTile(paint_tile) => {
-                self.tiles[paint_tile.grid_pos] = paint_tile.new;
+                tiles[paint_tile.grid_pos] = paint_tile.new;
             }
             Command::PaintTiles(paint_tiles) => for paint_tile in paint_tiles {
-                self.tiles[paint_tile.grid_pos] = paint_tile.new;
+                tiles[paint_tile.grid_pos] = paint_tile.new;
             }
-            Command::PenTool { tiles, .. } => for paint_tile in tiles {
-                self.tiles[paint_tile.grid_pos] = paint_tile.new;
+            Command::PenTool { tiles: paint_tiles, .. } => for paint_tile in paint_tiles {
+                tiles[paint_tile.grid_pos] = paint_tile.new;
             }
         }
     }

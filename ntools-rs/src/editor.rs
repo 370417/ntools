@@ -59,6 +59,16 @@ impl Editor {
 
     #[wasm_bindgen]
     pub fn tiles_path(&self) -> String {
+        if let EditorMode::PenTool(pen_tool) = &self.mode {
+            if !pen_tool.is_none() {
+                let start = pen_tool.start(self.state.latest());
+                let end = pen_tool.crosshair(self.cursor_pos, self.state.latest());
+                if start != end {
+                    let command = create_command(start, end, self.pen_tool_is_clockwise, self.state.tiles());
+                    return extract_path(&self.state.preview(command).segments());
+                }
+            }
+        }
         extract_path(&self.state.tiles().segments())
     }
 
@@ -140,16 +150,6 @@ impl Editor {
     #[wasm_bindgen]
     pub fn pen_tool_crosshair_y(&self) -> f64 {
         self.pen_tool_crosshair().y
-    }
-
-    #[wasm_bindgen]
-    pub fn pen_tool_start_x(&self) -> f64 {
-        self.pen_tool_start().x
-    }
-
-    #[wasm_bindgen]
-    pub fn pen_tool_start_y(&self) -> f64 {
-        self.pen_tool_start().y
     }
 
     #[wasm_bindgen]
@@ -321,13 +321,6 @@ impl Editor {
         match &self.mode {
             EditorMode::PenTool(pen_tool) => pen_tool.crosshair(self.cursor_pos, self.state.latest()),
             _ => DVec2::new(TILE_SIZE, TILE_SIZE),
-        }
-    }
-
-    fn pen_tool_start(&self) -> DVec2 {
-        match &self.mode {
-            EditorMode::PenTool(pen_tool) => pen_tool.start(self.state.latest()),
-            _ => DVec2::new(-1.0, -1.0),
         }
     }
 }

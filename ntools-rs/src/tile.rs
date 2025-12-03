@@ -769,6 +769,7 @@ impl Tile {
     }
 }
 
+#[derive(Clone)]
 pub struct Tiles {
     tiles: Vec<Tile>,
     left: usize,
