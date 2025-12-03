@@ -351,6 +351,45 @@ impl Tile {
         }
     }
 
+    pub fn opposite(self) -> Tile {
+        match self {
+            Tile::TileE => Tile::TileD,
+            Tile::TileD => Tile::TileE,
+            Tile::Tile1Q => Tile::Tile1S,
+            Tile::Tile1W => Tile::Tile1A,
+            Tile::Tile1S => Tile::Tile1Q,
+            Tile::Tile1A => Tile::Tile1W,
+            Tile::Tile2Q => Tile::Tile6S,
+            Tile::Tile2W => Tile::Tile6A,
+            Tile::Tile2S => Tile::Tile6Q,
+            Tile::Tile2A => Tile::Tile6W,
+            Tile::Tile3Q => Tile::Tile7S,
+            Tile::Tile3W => Tile::Tile7A,
+            Tile::Tile3S => Tile::Tile7Q,
+            Tile::Tile3A => Tile::Tile7W,
+            Tile::Tile4Q => Tile::Tile8S,
+            Tile::Tile4W => Tile::Tile8A,
+            Tile::Tile4S => Tile::Tile8Q,
+            Tile::Tile4A => Tile::Tile8W,
+            Tile::Tile5Q => Tile::Tile5S,
+            Tile::Tile5W => Tile::Tile5A,
+            Tile::Tile5S => Tile::Tile5Q,
+            Tile::Tile5A => Tile::Tile5W,
+            Tile::Tile6Q => Tile::Tile2S,
+            Tile::Tile6W => Tile::Tile2A,
+            Tile::Tile6S => Tile::Tile2Q,
+            Tile::Tile6A => Tile::Tile2W,
+            Tile::Tile7Q => Tile::Tile3S,
+            Tile::Tile7W => Tile::Tile3A,
+            Tile::Tile7S => Tile::Tile3Q,
+            Tile::Tile7A => Tile::Tile3W,
+            Tile::Tile8Q => Tile::Tile4S,
+            Tile::Tile8W => Tile::Tile4A,
+            Tile::Tile8S => Tile::Tile4Q,
+            Tile::Tile8A => Tile::Tile4W,
+        }
+    }
+
     /// Returns the outer segment of a tile in a certain direction.
     /// An outer segment is a horizontal or vertical segment that can be
     /// flush with an adjacent tile.

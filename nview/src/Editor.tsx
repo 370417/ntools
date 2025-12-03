@@ -36,6 +36,7 @@ export function EditorApp() {
         else if (event.code === 'KeyS') change = true, editor.press_s();
         else if (event.code === 'KeyE') change = true, editor.press_e();
         else if (event.code === 'KeyD') change = true, editor.press_d();
+        else if (event.code === 'KeyX') change = true, editor.press_x();
 
         else if (event.code === 'KeyZ' && (event.ctrlKey || event.metaKey) && event.shiftKey) change = true, editor.redo();
         else if (event.code === 'KeyZ' && (event.ctrlKey || event.metaKey)) change = true, editor.undo();

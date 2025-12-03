@@ -122,7 +122,7 @@ fn stroke_end(start: DVec2, cursor_pos: DVec2) -> DVec2 {
         .unwrap_or(start)
 }
 
-pub fn create_command(start: DVec2, end: DVec2, tiles: &Tiles) -> Command {
+pub fn create_command(start: DVec2, end: DVec2, is_clockwise: bool, tiles: &Tiles) -> Command {
     assert_ne!(start, end);
     let delta = end - start;
     if delta.x == 0.0 && start.x % TILE_SIZE == 0.0 {
@@ -146,7 +146,7 @@ pub fn create_command(start: DVec2, end: DVec2, tiles: &Tiles) -> Command {
             let left_grid_pos = GridPos::new(left_col, (min_y / TILE_SIZE).floor() as usize);
             let right_grid_pos = GridPos::new(right_col, (min_y / TILE_SIZE).floor() as usize);
 
-            let (edge_to_make_closed, edge_to_make_open, cell_to_make_closed, cell_to_make_open) = if left_side_closed {
+            let (edge_to_make_closed, edge_to_make_open, cell_to_make_closed, cell_to_make_open) = if left_side_closed ^ !is_clockwise {
                 (
                     tiles.get(left_grid_pos).map(tile_right_edge),
                     tiles.get(right_grid_pos).map(tile_left_edge),
@@ -195,7 +195,7 @@ pub fn create_command(start: DVec2, end: DVec2, tiles: &Tiles) -> Command {
             let left_grid_pos = GridPos::new(left_col, (max_y / TILE_SIZE).floor() as usize);
             let right_grid_pos = GridPos::new(right_col, (max_y / TILE_SIZE).floor() as usize);
 
-            let (edge_to_make_closed, edge_to_make_open, cell_to_make_closed, cell_to_make_open) = if left_side_closed {
+            let (edge_to_make_closed, edge_to_make_open, cell_to_make_closed, cell_to_make_open) = if left_side_closed ^ !is_clockwise {
                 (
                     tiles.get(left_grid_pos).map(tile_right_edge),
                     tiles.get(right_grid_pos).map(tile_left_edge),
@@ -249,7 +249,7 @@ pub fn create_command(start: DVec2, end: DVec2, tiles: &Tiles) -> Command {
             let left_grid_pos = GridPos::new(left_col, full_tile_min_row + i);
             let right_grid_pos = GridPos::new(right_col, full_tile_min_row + i);
 
-            let (edge_to_make_closed, edge_to_make_open, cell_to_make_closed, cell_to_make_open) = if left_side_closed {
+            let (edge_to_make_closed, edge_to_make_open, cell_to_make_closed, cell_to_make_open) = if left_side_closed ^ !is_clockwise {
                 (
                     tiles.get(left_grid_pos).map(tile_right_edge),
                     tiles.get(right_grid_pos).map(tile_left_edge),
@@ -304,7 +304,7 @@ pub fn create_command(start: DVec2, end: DVec2, tiles: &Tiles) -> Command {
             let upper_grid_pos = GridPos::new((min_x / TILE_SIZE).floor() as usize, upper_row);
             let lower_grid_pos = GridPos::new((min_x / TILE_SIZE).floor() as usize, lower_row);
 
-            let (edge_to_make_closed, edge_to_make_open, cell_to_make_closed, cell_to_make_open) = if lower_side_closed {
+            let (edge_to_make_closed, edge_to_make_open, cell_to_make_closed, cell_to_make_open) = if lower_side_closed ^ !is_clockwise {
                 (
                     tiles.get(lower_grid_pos).map(tile_top_edge),
                     tiles.get(upper_grid_pos).map(tile_bottom_edge),
@@ -353,7 +353,7 @@ pub fn create_command(start: DVec2, end: DVec2, tiles: &Tiles) -> Command {
             let upper_grid_pos = GridPos::new((max_x / TILE_SIZE).floor() as usize, upper_row);
             let lower_grid_pos = GridPos::new((max_x / TILE_SIZE).floor() as usize, lower_row);
 
-            let (edge_to_make_closed, edge_to_make_open, cell_to_make_closed, cell_to_make_open) = if lower_side_closed {
+            let (edge_to_make_closed, edge_to_make_open, cell_to_make_closed, cell_to_make_open) = if lower_side_closed ^ !is_clockwise {
                 (
                     tiles.get(lower_grid_pos).map(tile_top_edge),
                     tiles.get(upper_grid_pos).map(tile_bottom_edge),
@@ -407,7 +407,7 @@ pub fn create_command(start: DVec2, end: DVec2, tiles: &Tiles) -> Command {
             let upper_grid_pos = GridPos::new(full_tile_min_col + i, upper_row);
             let lower_grid_pos = GridPos::new(full_tile_min_col + i, lower_row);
 
-            let (edge_to_make_closed, edge_to_make_open, cell_to_make_closed, cell_to_make_open) = if lower_side_closed {
+            let (edge_to_make_closed, edge_to_make_open, cell_to_make_closed, cell_to_make_open) = if lower_side_closed ^ !is_clockwise {
                 (
                     tiles.get(lower_grid_pos).map(tile_top_edge),
                     tiles.get(upper_grid_pos).map(tile_bottom_edge),
@@ -462,10 +462,12 @@ pub fn create_command(start: DVec2, end: DVec2, tiles: &Tiles) -> Command {
             let local_start = (local_start / TILE_HALF_SIZE).round() * TILE_HALF_SIZE;
             let local_end = (local_end / TILE_HALF_SIZE).round() * TILE_HALF_SIZE;
 
+            let new_tile = tile_from_intercept(local_start, local_end);
+
             PaintTile {
                 grid_pos,
                 old: tiles[grid_pos],
-                new: tile_from_intercept(local_start, local_end),
+                new: if is_clockwise { new_tile } else { new_tile.opposite() },
             }
         }).collect();
         Command::PenTool { tiles: paint_tiles, end_cursor_pos: end }

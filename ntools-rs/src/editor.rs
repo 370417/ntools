@@ -13,6 +13,9 @@ pub struct Editor {
     /// is currently being painted.
     /// This is a stack because multiple keys can be pressed at once.
     pressed_tile_variants: Vec<TileVariant>,
+    /// If true, pen tool closes tiles to the right of the stroke relative to stroke direction.
+    /// If false, it closes tiles to the left.
+    pen_tool_is_clockwise: bool,
 }
 
 pub enum EditorMode {
@@ -36,6 +39,7 @@ impl Editor {
             cursor_pos: DVec2::new(TILE_SIZE, TILE_SIZE),
             selected_tile_category: TileCategory::Tile1,
             pressed_tile_variants: Vec::new(),
+            pen_tool_is_clockwise: true,
         }
     }
 
@@ -100,14 +104,14 @@ impl Editor {
                     &PenToolStart::Some(start) => if start == crosshair {
                         PenToolStart::None
                     } else {
-                        self.state.apply(create_command(start, crosshair, self.state.tiles()));
+                        self.state.apply(create_command(start, crosshair, self.pen_tool_is_clockwise, self.state.tiles()));
                         PenToolStart::Latest
                     }
                     PenToolStart::Latest => match self.state.latest() {
                         Some(Command::PenTool { end_cursor_pos, .. }) => if *end_cursor_pos == crosshair {
                             PenToolStart::None
                         } else {
-                            self.state.apply(create_command(*end_cursor_pos, crosshair, self.state.tiles()));
+                            self.state.apply(create_command(*end_cursor_pos, crosshair, self.pen_tool_is_clockwise, self.state.tiles()));
                             PenToolStart::Latest
                         }
                         _ => PenToolStart::Some(crosshair)
@@ -234,6 +238,16 @@ impl Editor {
             EditorMode::PaintTiles => {
                 self.pressed_tile_variants.push(TileVariant::D);
                 self.paint_tile(false);
+            }
+            _ => {}
+        }
+    }
+
+    #[wasm_bindgen]
+    pub fn press_x(&mut self) {
+        match self.mode {
+            EditorMode::PenTool(_) => {
+                self.pen_tool_is_clockwise = !self.pen_tool_is_clockwise;
             }
             _ => {}
         }
