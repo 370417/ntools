@@ -64,7 +64,7 @@ impl Editor {
         if let EditorMode::PenTool(pen_tool) = &self.mode {
             if !pen_tool.is_none() {
                 let start = pen_tool.start(self.state.latest());
-                let end = pen_tool.crosshair(self.cursor_pos, self.state.latest());
+                let end = pen_tool.crosshair(self.cursor_pos, self.state.latest(), self.pen_tool_fine_grid);
                 if start != end {
                     let command = create_command(start, end, self.pen_tool_is_clockwise, None, self.state.tiles());
                     return extract_path(&self.state.preview(command).segments(), true);
@@ -79,7 +79,7 @@ impl Editor {
         if let EditorMode::PenTool(pen_tool) = &self.mode {
             if !pen_tool.is_none() {
                 let start = pen_tool.start(self.state.latest());
-                let end = pen_tool.crosshair(self.cursor_pos, self.state.latest());
+                let end = pen_tool.crosshair(self.cursor_pos, self.state.latest(), self.pen_tool_fine_grid);
                 if start != end {
                     let command = create_command(start, end, self.pen_tool_is_clockwise, None, self.state.tiles());
                     let mut tiles = Tiles::default();
@@ -123,7 +123,7 @@ impl Editor {
     pub fn cursor_click(&mut self) {
         let cursor_pos = self.cursor_pos;
         match &mut self.mode {
-            EditorMode::PenTool(pen_tool) => pen_tool.cursor_click(cursor_pos, self.pen_tool_is_clockwise, &mut self.state),
+            EditorMode::PenTool(pen_tool) => pen_tool.cursor_click(cursor_pos, self.pen_tool_is_clockwise, &mut self.state, self.pen_tool_fine_grid),
             _ => {}
         }
     }
@@ -406,7 +406,7 @@ impl Editor {
 
     fn pen_tool_crosshair(&self) -> DVec2 {
         match &self.mode {
-            EditorMode::PenTool(pen_tool) => pen_tool.crosshair(self.cursor_pos, self.state.latest()),
+            EditorMode::PenTool(pen_tool) => pen_tool.crosshair(self.cursor_pos, self.state.latest(), self.pen_tool_fine_grid),
             _ => DVec2::new(TILE_SIZE, TILE_SIZE),
         }
     }

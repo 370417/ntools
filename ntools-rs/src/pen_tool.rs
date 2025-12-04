@@ -28,14 +28,14 @@ impl PenTool {
         }
     }
 
-    pub fn crosshair(&self, cursor_pos: DVec2, latest_command: Option<&Command>) -> DVec2 {
+    pub fn crosshair(&self, cursor_pos: DVec2, latest_command: Option<&Command>, fine_grid: bool) -> DVec2 {
         match self.start {
-            PenToolStart::None => round_to_grid(cursor_pos),
+            PenToolStart::None => round_to_grid(cursor_pos, fine_grid),
             PenToolStart::Latest => match latest_command {
-                Some(Command::PenTool { end, .. }) => stroke_end(*end, cursor_pos),
-                _ => round_to_grid(cursor_pos),
+                Some(Command::PenTool { end, .. }) => stroke_end(*end, cursor_pos, fine_grid),
+                _ => round_to_grid(cursor_pos, fine_grid),
             }
-            PenToolStart::Some(start) => stroke_end(start, cursor_pos),
+            PenToolStart::Some(start) => stroke_end(start, cursor_pos, fine_grid),
         }
     }
 
@@ -50,9 +50,9 @@ impl PenTool {
         }
     }
 
-    pub fn cursor_click(&mut self, cursor_pos: DVec2, is_clockwise: bool, state: &mut EditorState) {
+    pub fn cursor_click(&mut self, cursor_pos: DVec2, is_clockwise: bool, state: &mut EditorState, fine_grid: bool) {
         let latest = state.latest();
-        let crosshair = self.crosshair(cursor_pos, latest);
+        let crosshair = self.crosshair(cursor_pos, latest, fine_grid);
         self.start = match &self.start {
             PenToolStart::None => {
                 PenToolStart::Some(crosshair)
@@ -83,28 +83,29 @@ impl PenTool {
 
 /// Round cursor_pos to either
 /// 1. a vertex of the grid
-/// 2. the midpoint of an edge of the grid
-fn round_to_grid(cursor_pos: DVec2) -> DVec2 {
-    // First try rounding cursor pos to half tile grid
-    let x = TILE_HALF_SIZE * (cursor_pos.x / TILE_HALF_SIZE).round().clamp(2.0, 2.0 + 2.0 * COLS as f64);
-    let y = TILE_HALF_SIZE * (cursor_pos.y / TILE_HALF_SIZE).round().clamp(2.0, 2.0 + 2.0 * ROWS as f64);
-    if x % TILE_SIZE == 0.0 && y % TILE_SIZE == 0.0 {
-        DVec2::new(x, y)
-    } else if x % TILE_SIZE == 0.0 {
-        DVec2::new(x, y)
-    } else if y % TILE_SIZE == 0.0 {
-        DVec2::new(x, y)
-    } else {
-        // If cursor is not on a valid spot on half tile grid, round to full tile grid
-        let x = TILE_SIZE * (cursor_pos.x / TILE_SIZE).round().clamp(1.0, 1.0 + COLS as f64);
-        let y = TILE_SIZE * (cursor_pos.y / TILE_SIZE).round().clamp(1.0, 1.0 + ROWS as f64);
-        DVec2::new(x, y)
+/// 2. the midpoint of an edge of the grid (if fine_grid is true)
+fn round_to_grid(cursor_pos: DVec2, fine_grid: bool) -> DVec2 {
+    if fine_grid {
+        // First try rounding cursor pos to half tile grid
+        let x = TILE_HALF_SIZE * (cursor_pos.x / TILE_HALF_SIZE).round().clamp(2.0, 2.0 + 2.0 * COLS as f64);
+        let y = TILE_HALF_SIZE * (cursor_pos.y / TILE_HALF_SIZE).round().clamp(2.0, 2.0 + 2.0 * ROWS as f64);
+        if x % TILE_SIZE == 0.0 && y % TILE_SIZE == 0.0 {
+            return DVec2::new(x, y);
+        } else if x % TILE_SIZE == 0.0 {
+            return DVec2::new(x, y);
+        } else if y % TILE_SIZE == 0.0 {
+            return DVec2::new(x, y);
+        }
     }
+    // If cursor is not on a valid spot on half tile grid, round to full tile grid
+    let x = TILE_SIZE * (cursor_pos.x / TILE_SIZE).round().clamp(1.0, 1.0 + COLS as f64);
+    let y = TILE_SIZE * (cursor_pos.y / TILE_SIZE).round().clamp(1.0, 1.0 + ROWS as f64);
+    DVec2::new(x, y)
 }
 
 /// Given a start pen position and the cursor position,
 /// find the end of the pen stroke that is closest to the cursor_pos.
-fn stroke_end(start: DVec2, cursor_pos: DVec2) -> DVec2 {
+fn stroke_end(start: DVec2, cursor_pos: DVec2, fine_grid: bool) -> DVec2 {
     // Each possible stroke is a vector relative to start
     let possible_strokes = if start.x % 24.0 != 0.0 {
         // start is on a horizontal grid segment
@@ -122,8 +123,8 @@ fn stroke_end(start: DVec2, cursor_pos: DVec2) -> DVec2 {
             DVec2::new(TILE_SIZE, TILE_HALF_SIZE),
             DVec2::new(TILE_SIZE, -TILE_HALF_SIZE),
         ]
-    } else {
-        // start is on a grid corner
+    } else if fine_grid {
+        // start is on a grid corner (fine grid)
         vec![
             DVec2::new(TILE_HALF_SIZE, 0.0),
             DVec2::new(0.0, TILE_HALF_SIZE),
@@ -131,6 +132,14 @@ fn stroke_end(start: DVec2, cursor_pos: DVec2) -> DVec2 {
             DVec2::new(TILE_HALF_SIZE, -TILE_SIZE),
             DVec2::new(TILE_SIZE, TILE_HALF_SIZE),
             DVec2::new(TILE_SIZE, -TILE_HALF_SIZE),
+            DVec2::new(TILE_SIZE, TILE_SIZE),
+            DVec2::new(TILE_SIZE, -TILE_SIZE),
+        ]
+    } else {
+        // no fine grid
+        vec![
+            DVec2::new(TILE_SIZE, 0.0),
+            DVec2::new(0.0, TILE_SIZE),
             DVec2::new(TILE_SIZE, TILE_SIZE),
             DVec2::new(TILE_SIZE, -TILE_SIZE),
         ]
