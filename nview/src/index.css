@@ -140,6 +140,10 @@ svg {
     stroke: var(--regular-grid);
 }
 
+.fine-grid {
+    stroke: var(--fine-grid);
+}
+
 #tilemode-crosshair, #crosshair {
     stroke: var(--editor-crosshair);
 }

@@ -1,6 +1,9 @@
 import { createSignal, Show } from "solid-js";
 import { Editor } from "./assets/ntools_rs";
 
+const COLS = 42;
+const ROWS = 23;
+
 // Crosshairs
 // distance from center of tile to outer edge of crosshair
 const tcOuter = 13.5;
@@ -24,6 +27,8 @@ export function EditorApp() {
 
     const [tilePath, setTilePath] = createSignal('');
     const [selectedTilePath, setSelectedTilePath] = createSignal('');
+    const [showHalfGrid, setShowHalfGrid] = createSignal(true);
+    const [showQuarterGrid, setShowQuarterGrid] = createSignal(false);
     const [mode, setMode] = createSignal(MODE_PAINT_TILES);
     const [tilemodeCrosshairPos, setTilemodeCrosshairPos] = createSignal({ row: 1, col: 1 });
     const [penToolCrosshairPos, setPenToolCrosshairPos] = createSignal({ x: 24, y: 24 });
@@ -54,6 +59,8 @@ export function EditorApp() {
         else if (event.code === 'KeyY' && (event.ctrlKey || event.metaKey)) change = true, editor.redo();
 
         else if (event.code === 'Escape') change = editor.press_escape();
+
+        else if (event.code === 'Slash') change = true, editor.press_slash();
 
         if (change) {
             render();
@@ -86,6 +93,9 @@ export function EditorApp() {
             col: editor.tile_crosshair_col(),
         });
 
+        setShowHalfGrid(editor.show_half_grid());
+        setShowQuarterGrid(editor.show_quarter_grid());
+
         setPenToolCrosshairPos({
             x: editor.pen_tool_crosshair_x(),
             y: editor.pen_tool_crosshair_y(),
@@ -93,12 +103,32 @@ export function EditorApp() {
     }
 
     const regularGridXs = [];
-    for (let i = 0; i < 41; i++) {
+    for (let i = 0; i < COLS - 1; i++) {
         regularGridXs.push(48 + 24 * i);
     }
     const regularGridYs = [];
-    for (let i = 0; i < 22; i++) {
+    for (let i = 0; i < ROWS - 1; i++) {
         regularGridYs.push(48 + 24 * i);
+    }
+
+    const halfTileGridXs = [];
+    for (let i = 0; i < COLS; i++) {
+        halfTileGridXs.push(36 + 24 * i);
+    }
+
+    const halfTileGridYs = [];
+    for (let i = 0; i < ROWS; i++) {
+        halfTileGridYs.push(36 + 24 * i);
+    }
+
+    const quarterTileGridXs = [];
+    for (let i = 0; i < COLS * 2; i++) {
+        quarterTileGridXs.push(30 + 12 * i);
+    }
+
+    const quarterTileGridYs = [];
+    for (let i = 0; i < ROWS * 2; i++) {
+        quarterTileGridYs.push(30 + 12 * i);
     }
 
     render();
@@ -122,6 +152,14 @@ export function EditorApp() {
                 <path id="tilemode-crosshair" stroke-width="1.5" fill="none" d={tilemodeCrosshairPath} />
                 <path id="crosshair" stroke-width="1.5" fill="none" d={crosshairPath} />
             </defs>
+            <Show when={showQuarterGrid()}>
+                {quarterTileGridXs.map(x => <line class="fine-grid" y1="24" y2={24 * 24} x1={x} x2={x} />)}
+                {quarterTileGridYs.map(y => <line class="fine-grid" x1="24" x2={24 * 43} y1={y} y2={y} />)}
+            </Show>
+            <Show when={showHalfGrid()}>
+                {halfTileGridXs.map(x => <line class="fine-grid" y1="24" y2={24 * 24} x1={x} x2={x} />)}
+                {halfTileGridYs.map(y => <line class="fine-grid" x1="24" x2={24 * 43} y1={y} y2={y} />)}
+            </Show>
             {regularGridXs.map(x => <line class="regular-grid" y1="24" y2={24 * 24} x1={x} x2={x} />)}
             {regularGridYs.map(y => <line class="regular-grid" x1="24" x2={24 * 43} y1={y} y2={y} />)}
             <path id="tiles" stroke-width="2" clip-path="url(#tiles-clip)" clip-rule="evenodd" d={tilePath()} fill-rule="evenodd" />

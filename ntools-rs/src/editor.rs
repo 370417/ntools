@@ -16,6 +16,7 @@ pub struct Editor {
     /// If true, pen tool closes tiles to the right of the stroke relative to stroke direction.
     /// If false, it closes tiles to the left.
     pen_tool_is_clockwise: bool,
+    pen_tool_fine_grid: bool,
 }
 
 pub enum EditorMode {
@@ -40,6 +41,7 @@ impl Editor {
             selected_tile_category: TileCategory::Tile1,
             pressed_tile_variants: Vec::new(),
             pen_tool_is_clockwise: true,
+            pen_tool_fine_grid: true,
         }
     }
 
@@ -144,6 +146,19 @@ impl Editor {
     #[wasm_bindgen]
     pub fn pen_tool_crosshair_y(&self) -> f64 {
         self.pen_tool_crosshair().y
+    }
+
+    #[wasm_bindgen]
+    pub fn show_half_grid(&self) -> bool {
+        match self.mode {
+            EditorMode::PenTool(_) => self.pen_tool_fine_grid,
+            _ => false,
+        }
+    }
+
+    #[wasm_bindgen]
+    pub fn show_quarter_grid(&self) -> bool {
+        false
     }
 
     #[wasm_bindgen]
@@ -313,6 +328,14 @@ impl Editor {
             EditorMode::PenTool(_) => {
                 self.pen_tool_is_clockwise = !self.pen_tool_is_clockwise;
             }
+            _ => {}
+        }
+    }
+
+    #[wasm_bindgen]
+    pub fn press_slash(&mut self) {
+        match self.mode {
+            EditorMode::PenTool(_) => self.pen_tool_fine_grid = !self.pen_tool_fine_grid,
             _ => {}
         }
     }
