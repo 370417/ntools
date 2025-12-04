@@ -32,19 +32,19 @@ export function EditorApp() {
         let change = false;
 
         if (event.code ==='Backquote') change = true, editor.press_tilde();
-        else if (event.code === 'Digit1') change = true, editor.press_1();
-        else if (event.code === 'Digit2') change = true, editor.press_2();
-        else if (event.code === 'Digit3') change = true, editor.press_3();
-        else if (event.code === 'Digit4') change = true, editor.press_4();
-        else if (event.code === 'Digit5') change = true, editor.press_5();
-        else if (event.code === 'Digit6') change = true, editor.press_6();
-        else if (event.code === 'Digit7') change = true, editor.press_7();
-        else if (event.code === 'Digit8') change = true, editor.press_8();
+        else if (event.code === 'Digit1') change = true, editor.press_1(event.shiftKey);
+        else if (event.code === 'Digit2') change = true, editor.press_2(event.shiftKey);
+        else if (event.code === 'Digit3') change = true, editor.press_3(event.shiftKey);
+        else if (event.code === 'Digit4') change = true, editor.press_4(event.shiftKey);
+        else if (event.code === 'Digit5') change = true, editor.press_5(event.shiftKey);
+        else if (event.code === 'Digit6') change = true, editor.press_6(event.shiftKey);
+        else if (event.code === 'Digit7') change = true, editor.press_7(event.shiftKey);
+        else if (event.code === 'Digit8') change = true, editor.press_8(event.shiftKey);
 
-        else if (event.code === 'KeyQ') change = true, editor.press_q();
-        else if (event.code === 'KeyW') change = true, editor.press_w();
-        else if (event.code === 'KeyA') change = true, editor.press_a();
-        else if (event.code === 'KeyS') change = true, editor.press_s();
+        else if (event.code === 'KeyQ') change = true, editor.press_q(event.shiftKey);
+        else if (event.code === 'KeyW') change = true, editor.press_w(event.shiftKey);
+        else if (event.code === 'KeyA') change = true, editor.press_a(event.shiftKey);
+        else if (event.code === 'KeyS') change = true, editor.press_s(event.shiftKey);
         else if (event.code === 'KeyE') change = true, editor.press_e();
         else if (event.code === 'KeyD') change = true, editor.press_d();
         else if (event.code === 'KeyX') change = true, editor.press_x();
@@ -109,6 +109,7 @@ export function EditorApp() {
             const cursorMoved = editor.set_cursor_pos(
                 (event.clientX - left) / width * 1056,
                 (event.clientY - top) / height * 600,
+                event.shiftKey,
             );
             if (cursorMoved) render();
         }}

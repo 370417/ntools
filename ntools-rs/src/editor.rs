@@ -91,7 +91,7 @@ impl Editor {
 
     /// Return true if the cursor has moved enough to move to a different grid location
     #[wasm_bindgen]
-    pub fn set_cursor_pos(&mut self, x: f64, y: f64) -> bool {
+    pub fn set_cursor_pos(&mut self, x: f64, y: f64, shift: bool) -> bool {
         let new_cursor_pos = DVec2::new(
             x.clamp(TILE_SIZE, TILE_SIZE * (1 + COLS) as f64),
             y.clamp(TILE_SIZE, TILE_SIZE * (1 + ROWS) as f64),
@@ -102,7 +102,7 @@ impl Editor {
                 let old_crosshair = self.tile_crosshair();
                 self.cursor_pos = new_cursor_pos;
                 if self.tile_crosshair() != old_crosshair {
-                    self.paint_tile(true);
+                    self.paint_tile(PaintTileArgs { amend: true, shift });
                     true
                 } else {
                     false
@@ -194,92 +194,92 @@ impl Editor {
     }
 
     #[wasm_bindgen]
-    pub fn press_1(&mut self) {
+    pub fn press_1(&mut self, shift: bool) {
         self.mode = EditorMode::PaintTiles;
-        self.selected_tile_category = TileCategory::Tile1;
+        self.selected_tile_category = TileCategory::Tile1.shift(shift);
     }
 
     #[wasm_bindgen]
-    pub fn press_2(&mut self) {
+    pub fn press_2(&mut self, shift: bool) {
         self.mode = EditorMode::PaintTiles;
-        self.selected_tile_category = TileCategory::Tile2;
+        self.selected_tile_category = TileCategory::Tile2.shift(shift);
     }
 
     #[wasm_bindgen]
-    pub fn press_3(&mut self) {
+    pub fn press_3(&mut self, shift: bool) {
         self.mode = EditorMode::PaintTiles;
-        self.selected_tile_category = TileCategory::Tile3;
+        self.selected_tile_category = TileCategory::Tile3.shift(shift);
     }
 
     #[wasm_bindgen]
-    pub fn press_4(&mut self) {
+    pub fn press_4(&mut self, shift: bool) {
         self.mode = EditorMode::PaintTiles;
-        self.selected_tile_category = TileCategory::Tile4;
+        self.selected_tile_category = TileCategory::Tile4.shift(shift);
     }
 
     #[wasm_bindgen]
-    pub fn press_5(&mut self) {
+    pub fn press_5(&mut self, shift: bool) {
         self.mode = EditorMode::PaintTiles;
-        self.selected_tile_category = TileCategory::Tile5;
+        self.selected_tile_category = TileCategory::Tile5.shift(shift);
     }
 
     #[wasm_bindgen]
-    pub fn press_6(&mut self) {
+    pub fn press_6(&mut self, shift: bool) {
         self.mode = EditorMode::PaintTiles;
-        self.selected_tile_category = TileCategory::Tile6;
+        self.selected_tile_category = TileCategory::Tile6.shift(shift);
     }
 
     #[wasm_bindgen]
-    pub fn press_7(&mut self) {
+    pub fn press_7(&mut self, shift: bool) {
         self.mode = EditorMode::PaintTiles;
-        self.selected_tile_category = TileCategory::Tile7;
+        self.selected_tile_category = TileCategory::Tile7.shift(shift);
     }
 
     #[wasm_bindgen]
-    pub fn press_8(&mut self) {
+    pub fn press_8(&mut self, shift: bool) {
         self.mode = EditorMode::PaintTiles;
-        self.selected_tile_category = TileCategory::Tile8;
+        self.selected_tile_category = TileCategory::Tile8.shift(shift);
     }
 
     #[wasm_bindgen]
-    pub fn press_q(&mut self) {
+    pub fn press_q(&mut self, shift: bool) {
         match self.mode {
             EditorMode::PaintTiles => {
                 self.pressed_tile_variants.push(TileVariant::Q);
-                self.paint_tile(false);
+                self.paint_tile(PaintTileArgs { amend: false, shift });
             }
             _ => {}
         }
     }
 
     #[wasm_bindgen]
-    pub fn press_w(&mut self) {
+    pub fn press_w(&mut self, shift: bool) {
         match self.mode {
             EditorMode::PaintTiles => {
                 self.pressed_tile_variants.push(TileVariant::W);
-                self.paint_tile(false);
+                self.paint_tile(PaintTileArgs { amend: false, shift });
             }
             _ => {}
         }
     }
 
     #[wasm_bindgen]
-    pub fn press_a(&mut self) {
+    pub fn press_a(&mut self, shift: bool) {
         match self.mode {
             EditorMode::PaintTiles => {
                 self.pressed_tile_variants.push(TileVariant::A);
-                self.paint_tile(false);
+                self.paint_tile(PaintTileArgs { amend: false, shift });
             }
             _ => {}
         }
     }
 
     #[wasm_bindgen]
-    pub fn press_s(&mut self) {
+    pub fn press_s(&mut self, shift: bool) {
         match self.mode {
             EditorMode::PaintTiles => {
                 self.pressed_tile_variants.push(TileVariant::S);
-                self.paint_tile(false);
+                self.paint_tile(PaintTileArgs { amend: false, shift });
             }
             _ => {}
         }
@@ -290,7 +290,7 @@ impl Editor {
         match self.mode {
             EditorMode::PaintTiles => {
                 self.pressed_tile_variants.push(TileVariant::E);
-                self.paint_tile(false);
+                self.paint_tile(PaintTileArgs { amend: false, shift: false });
             }
             _ => {}
         }
@@ -301,7 +301,7 @@ impl Editor {
         match self.mode {
             EditorMode::PaintTiles => {
                 self.pressed_tile_variants.push(TileVariant::D);
-                self.paint_tile(false);
+                self.paint_tile(PaintTileArgs { amend: false, shift: false });
             }
             _ => {}
         }
@@ -365,15 +365,15 @@ impl Editor {
         GridPos::from_world_pos(self.cursor_pos).clamp()
     }
 
-    fn paint_tile(&mut self, amend: bool) {
+    fn paint_tile(&mut self, args: PaintTileArgs) {
         if let Some(&tile_variant) = self.pressed_tile_variants.last() {
             let crosshair = self.tile_crosshair();
             let command = Command::paint_tile(
                 crosshair,
                 self.state.tiles()[crosshair],
-                Tile::from_keys(self.selected_tile_category, tile_variant),
+                Tile::from_keys(self.selected_tile_category.shift(args.shift), tile_variant),
             );
-            if amend {
+            if args.amend {
                 self.state.amend(command);
             } else {
                 self.state.apply(command);
@@ -387,4 +387,9 @@ impl Editor {
             _ => DVec2::new(TILE_SIZE, TILE_SIZE),
         }
     }
+}
+
+struct PaintTileArgs {
+    amend: bool,
+    shift: bool,
 }

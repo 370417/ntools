@@ -271,6 +271,50 @@ pub enum TileVariant {
     D,
 }
 
+impl TileCategory {
+    pub fn opposite(self) -> TileCategory {
+        match self {
+            TileCategory::Tile1 => TileCategory::Tile5,
+            TileCategory::Tile2 => TileCategory::Tile6,
+            TileCategory::Tile3 => TileCategory::Tile7,
+            TileCategory::Tile4 => TileCategory::Tile8,
+            TileCategory::Tile5 => TileCategory::Tile1,
+            TileCategory::Tile6 => TileCategory::Tile2,
+            TileCategory::Tile7 => TileCategory::Tile3,
+            TileCategory::Tile8 => TileCategory::Tile4,
+        }
+    }
+
+    pub fn shift(self, shift: bool) -> TileCategory {
+        if shift {
+            self.opposite()
+        } else {
+            self
+        }
+    }
+}
+
+impl TileVariant {
+    pub fn opposite(self) -> TileVariant {
+        match self {
+            TileVariant::Q => TileVariant::S,
+            TileVariant::W => TileVariant::A,
+            TileVariant::A => TileVariant::W,
+            TileVariant::S => TileVariant::Q,
+            TileVariant::E => TileVariant::D,
+            TileVariant::D => TileVariant::E,
+        }
+    }
+
+    pub fn shift(self, shift: bool) -> TileVariant {
+        if shift {
+            self.opposite()
+        } else {
+            self
+        }
+    }
+}
+
 impl Tile {
     pub fn from_u8(value: u8) -> Option<Self> {
         match value {
