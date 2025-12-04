@@ -1,4 +1,4 @@
-use glam::{DMat2, DVec2, Vec2};
+use glam::{DMat2, DVec2};
 use rand::{seq::IndexedRandom, RngCore, SeedableRng};
 use rand_xoshiro::{SplitMix64, Xoroshiro64StarStar};
 
@@ -89,8 +89,8 @@ impl Ninja {
             pos: pos,
             pos_old: pos,
             speed: DVec2::ZERO,
-            // gravity_dir: DVec2::new(0.0, 1.0),
-            gravity_dir: DVec2::new((4.0 / 5.0_f64).sqrt(), (1.0 / 5.0_f64).sqrt()),
+            gravity_dir: DVec2::new(0.0, 1.0),
+            // gravity_dir: DVec2::new((4.0 / 5.0_f64).sqrt(), (1.0 / 5.0_f64).sqrt()),
             applied_gravity: GRAVITY_FALL,
             applied_drag: DRAG_REGULAR,
             state: NinjaState::Standing,
@@ -229,7 +229,7 @@ impl Ninja {
                     entities.mines[i].logical_collision(self);
                 }
                 EntityType::BounceBlock => if wall_normal.is_none() {
-                    wall_normal = entities.bounce_blocks[i].logical_collision(self.pos);
+                    wall_normal = entities.bounce_blocks[i].logical_collision(self);
                 }
                 EntityType::OneWay => if wall_normal.is_none() {
                     wall_normal = entities.one_ways[i].logical_collision(self);
@@ -463,9 +463,9 @@ impl Ninja {
                         let projection = self.speed.perp_dot(self.floor_unit_normal).abs();
                         if hor_input * projection * self.grav_get_horiz(self.speed) > 0.0 {
                             NinjaState::Running
-                        } else if projection < 0.1 && self.grav_eq_horiz(self.floor_unit_normal, 0.0) {
+                        } else if projection < 0.1 && self.grav_eq_abs_horiz(self.floor_unit_normal, 0.0) {
                             NinjaState::Standing
-                        } else if self.speed.y < 0.0 && !self.grav_eq_horiz(self.floor_unit_normal, 0.0) {
+                        } else if self.speed.y < 0.0 && !self.grav_eq_abs_horiz(self.floor_unit_normal, 0.0) {
                             // Up slope friction formula
                             let speed_scalar = self.speed.length();
                             let fric_force = (self.grav_get_horiz(self.speed) * (1.0 - FRICTION_GROUND) * self.grav_get_vert(self.floor_unit_normal)).abs();
@@ -720,6 +720,7 @@ impl Ninja {
         Xoroshiro64StarStar::seed_from_u64(SplitMix64::from_seed(seed).next_u64())
     }
 
+    /// Get the horizontal component relative to gravity of a vec
     pub fn grav_get_horiz(&self, vec: DVec2) -> f64 {
         let basis_matrix = DMat2::from_cols(-self.gravity_dir.perp(), self.gravity_dir);
         // convert vec to the pov of gravity
@@ -727,6 +728,7 @@ impl Ninja {
         grav_vec.x
     }
 
+    /// Get the vertical component relative to gravity of a vec
     pub fn grav_get_vert(&self, vec: DVec2) -> f64 {
         let basis_matrix = DMat2::from_cols(-self.gravity_dir.perp(), self.gravity_dir);
         // convert vec to the pov of gravity
@@ -734,6 +736,7 @@ impl Ninja {
         grav_vec.y
     }
 
+    /// Set the horizontal component relative to gravity of a vec to a value
     pub fn grav_set_horiz(&self, vec: DVec2, new_horiz: f64) -> DVec2 {
         let basis_matrix = DMat2::from_cols(-self.gravity_dir.perp(), self.gravity_dir);
         // convert vec to the pov of gravity
@@ -743,6 +746,7 @@ impl Ninja {
         basis_matrix * grav_vec
     }
 
+    /// Set the vertical component relative to gravity of a vec to value
     pub fn grav_set_vert(&self, vec: DVec2, new_vert: f64) -> DVec2 {
         let basis_matrix = DMat2::from_cols(-self.gravity_dir.perp(), self.gravity_dir);
         // convert vec to the pov of gravity
@@ -752,12 +756,15 @@ impl Ninja {
         basis_matrix * grav_vec
     }
 
+    /// Convert a vec from coordinates that are relative to gravity
+    /// into a vec with coordinates relative to cartesian axes of the screen
     pub fn grav_vec(&self, grav_vec: DVec2) -> DVec2 {
         let basis_matrix = DMat2::from_cols(-self.gravity_dir.perp(), self.gravity_dir);
         // convert vec back to original frame of reference
         basis_matrix * grav_vec
     }
 
+    /// Add a value to the vertical component relative to gravity of a vec
     pub fn grav_add_vert(&self, vec: DVec2, vert_delta: f64) -> DVec2 {
         let basis_matrix = DMat2::from_cols(-self.gravity_dir.perp(), self.gravity_dir);
         // convert vec to the pov of gravity
@@ -767,6 +774,7 @@ impl Ninja {
         basis_matrix * grav_vec
     }
 
+    /// Multiply the horizontal component relative to gravity of a vec by a value
     pub fn grav_mul_horiz(&self, vec: DVec2, horiz_scale: f64) -> DVec2 {
         let basis_matrix = DMat2::from_cols(-self.gravity_dir.perp(), self.gravity_dir);
         // convert vec to the pov of gravity
@@ -776,6 +784,7 @@ impl Ninja {
         basis_matrix * grav_vec
     }
 
+    /// Multiply the vertical component relative to gravity of a vec by a value
     pub fn grav_mul_vert(&self, vec: DVec2, vert_scale: f64) -> DVec2 {
         let basis_matrix = DMat2::from_cols(-self.gravity_dir.perp(), self.gravity_dir);
         // convert vec to the pov of gravity
@@ -785,17 +794,18 @@ impl Ninja {
         basis_matrix * grav_vec
     }
 
-    pub fn grav_eq_horiz(&self, vec: DVec2, horiz: f64) -> bool {
+    /// Check if the absolute value of the vec's horizontal component relative to gravity is equal to a value
+    pub fn grav_eq_abs_horiz(&self, vec: DVec2, horiz: f64) -> bool {
         let basis_matrix = DMat2::from_cols(-self.gravity_dir.perp(), self.gravity_dir);
         // convert vec to the pov of gravity
         let grav_vec = basis_matrix.inverse() * vec;
         if self.gravity_dir.x == 0.0 {
             // If gravity is vertical, use exact equality to preserve compatibility with n++.
-            grav_vec.x == horiz
+            grav_vec.x.abs() == horiz
         } else {
             // If gravity is not vertical, use approximate equality since we might no longer
             // be dealing with integers
-            (grav_vec.x - horiz).abs() < 0.0001
+            (grav_vec.x.abs() - horiz).abs() < 0.0001
         }
     }
 }

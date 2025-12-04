@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{collision_util::{penetration_square_vs_circle_with_orientation, penetration_square_vs_point, Depenetration}, entity::{Entity, Mob, Orientation}, grid::GridPos, ninja};
+use crate::{collision_util::{penetration_square_vs_circle_with_orientation, penetration_square_vs_point, Depenetration}, entity::{Entity, Mob, Orientation}, grid::GridPos, ninja::{self, Ninja}};
 
 pub const SEMI_SIDE: f64 = 9.0;
 const STIFFNESS: f64 = 0.02222222222222222; // 1/45
@@ -58,16 +58,16 @@ impl BounceBlock {
         })
     }
 
-    pub fn logical_collision(&self, ninja_pos: DVec2) -> Option<f64> {
+    pub fn logical_collision(&self, ninja: &Ninja) -> Option<f64> {
         let depen = match self.corners {
-            Corners::Round => penetration_square_vs_circle_with_orientation(self.pos, SEMI_SIDE, ninja_pos, ninja::RADIUS + 0.1, self.orientation),
-            Corners::Square => penetration_square_vs_point(self.pos, ninja_pos, SEMI_SIDE + ninja::RADIUS + 0.1),
+            Corners::Round => penetration_square_vs_circle_with_orientation(self.pos, SEMI_SIDE, ninja.pos, ninja::RADIUS + 0.1, self.orientation),
+            Corners::Square => penetration_square_vs_point(self.pos, ninja.pos, SEMI_SIDE + ninja::RADIUS + 0.1),
         };
         if let Some(depen) = depen {
-            if depen.depen_unit_normal.x.abs() == 1.0 {
+            if ninja.grav_eq_abs_horiz(depen.depen_unit_normal, 1.0) {
                 // is it possible to desync based on the order of checks here?
                 // e.g. if you are between bounce blocks on the left and right
-                return Some(depen.depen_unit_normal.x);
+                return Some(ninja.grav_get_horiz(depen.depen_unit_normal));
             }
         }
         None

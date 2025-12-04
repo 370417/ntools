@@ -45,8 +45,8 @@ impl OneWay {
 
     /// Return wall normal if the ninja enters walled state from entity
     pub fn logical_collision(&self, ninja: &Ninja) -> Option<f64> {
-        if self.physical_collision(ninja).is_some() && self.orientation.vec2().x.abs() == 1.0 {
-            Some(self.orientation.vec2().x)
+        if self.physical_collision(ninja).is_some() && ninja.grav_eq_abs_horiz(self.orientation.vec2(), 1.0) {
+            Some(ninja.grav_get_horiz(self.orientation.vec2()))
         } else {
             None
         }
