@@ -168,6 +168,10 @@ fn stroke_end(start: DVec2, cursor_pos: DVec2, fine_grid: bool) -> DVec2 {
 }
 
 pub fn create_command(start: DVec2, end: DVec2, is_clockwise: bool, first_start: Option<DVec2>, tiles: &Tiles) -> Command {
+    Command::PenTool { first_start, tiles: create_command_tiles(start, end, is_clockwise, tiles), end }
+}
+
+pub fn create_command_tiles(start: DVec2, end: DVec2, is_clockwise: bool, tiles: &Tiles) -> Vec<PaintTile> {
     assert_ne!(start, end);
     let delta = end - start;
     if delta.x == 0.0 && start.x % TILE_SIZE == 0.0 {
@@ -348,7 +352,7 @@ pub fn create_command(start: DVec2, end: DVec2, is_clockwise: bool, first_start:
             }
         }
 
-        Command::PenTool { first_start, tiles: paint_tiles, end }
+        paint_tiles
     } else if delta.y == 0.0 && start.y % TILE_SIZE == 0.0 {
         // horizontal between two rows
 
@@ -527,12 +531,12 @@ pub fn create_command(start: DVec2, end: DVec2, is_clockwise: bool, first_start:
             }
         }
 
-        Command::PenTool { first_start, tiles: paint_tiles, end }
+        paint_tiles
     } else {
         // diagonal stroke
 
         let len = (delta.x.abs().max(delta.y.abs()) / TILE_SIZE) as usize;
-        let paint_tiles = (0..len).map(|i| {
+        (0..len).map(|i| {
             let grid_cell_pos = start + (i as f64 + 0.5) / len as f64 * (end - start);
             let grid_pos = GridPos::from_world_pos(grid_cell_pos);
 
@@ -556,8 +560,7 @@ pub fn create_command(start: DVec2, end: DVec2, is_clockwise: bool, first_start:
                 old: tiles[grid_pos],
                 new: if is_clockwise { new_tile } else { new_tile.opposite() },
             }
-        }).collect();
-        Command::PenTool { first_start, tiles: paint_tiles, end }
+        }).collect()
     }
 }
 
