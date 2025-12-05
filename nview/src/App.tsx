@@ -130,19 +130,6 @@ function App() {
     stats?.showPanel(0);
     if (stats) document.body.appendChild(stats.dom);
 
-    createEffect(() => {
-        const dragStartVal = dragStart();
-        const previewProgressVal = previewProgress();
-        const progressVal = progress();
-        if (replay) {
-            if (typeof previewProgressVal === 'number' && dragStartVal === undefined) {
-                replay.seek_preview(previewProgressVal);
-            }
-            replay.seek(progressVal);
-            renderFrame(replay);
-        }
-    });
-
     const [tilePath, setTilePath] = createSignal('');
 
     const [ninja, setNinja] = createSignal({ x: -50, y: -50 });
@@ -165,12 +152,15 @@ function App() {
         if (isPlaying() && dragStart() === undefined && replay) {
             if (recording()) {
                 replay.set_input(isJump1Pressed() || isJump2Pressed(), isRightPressed(), isLeftPressed(), isSuicidePressed());
-                setProgress(replay.progress() + 1);
+                replay.tick();
+                setProgress(replay.progress());
             } else if (progress() < replayLength()) {
-                setProgress(progress() + 1);
+                replay.tick();
+                setProgress(replay.progress());
             } else {
                 setIsPlaying(false);
             }
+            renderFrame(replay);
         }
         stats?.end();
         requestAnimationFrame(tick);
@@ -368,12 +358,31 @@ function App() {
             </svg>
             <div>
                 <Scrubber
-                    recording={[recording, setRecording]}
-                    isPlaying={[isPlaying, setIsPlaying]}
-                    dragStart={[dragStart, setDragStart]}
+                    recording={recording}
+                    setRecording={setRecording}
+                    isPlaying={isPlaying}
+                    setIsPlaying={setIsPlaying}
+                    dragStart={dragStart}
+                    setDragStart={setDragStart}
                     length={replayLength}
-                    progress={[progress, setProgress]}
-                    previewProgress={[previewProgress, setPreviewProgress]}
+                    progress={progress}
+                    previewProgress={previewProgress}
+                    seek={frame => {
+                        setProgress(frame);
+                        if (replay) {
+                            replay.seek(frame);
+                            renderFrame(replay);
+                        }
+                    }}
+                    previewSeek={frame => {
+                        setPreviewProgress(frame);
+                        if (replay) {
+                            if (frame !== undefined && dragStart() === undefined) {
+                                replay.seek_preview(frame);
+                            }
+                            renderFrame(replay);
+                        }
+                    }}
                 />
             </div>
         </>

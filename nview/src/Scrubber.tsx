@@ -1,18 +1,23 @@
-import { Match, onCleanup, Switch, type Accessor, type Signal } from "solid-js";
+import { Match, onCleanup, Switch, type Accessor, type Setter } from "solid-js";
 import "./Scrubber.css";
 
 type ScrubberProps = {
-    recording: Signal<boolean>,
-    isPlaying: Signal<boolean>,
-    dragStart: Signal<number | undefined>,
+    recording: Accessor<boolean>,
+    setRecording: Setter<boolean>,
+    isPlaying: Accessor<boolean>,
+    setIsPlaying: Setter<boolean>,
+    dragStart: Accessor<number | undefined>,
+    setDragStart: Setter<number | undefined>,
     length: Accessor<number>,
-    progress: Signal<number>,
-    previewProgress: Signal<number | undefined>,
+    progress: Accessor<number>,
+    seek(frame: number): void,
+    previewProgress: Accessor<number | undefined>,
+    previewSeek(frame: number | undefined): void,
 };
 
 export function Scrubber(props: ScrubberProps) {
     const progressWidth = () => {
-        const progress = props.progress[0]();
+        const progress = props.progress();
         const length = props.length();
         if (length === 0 || progress >= length) {
             return "100%";
@@ -22,8 +27,8 @@ export function Scrubber(props: ScrubberProps) {
     };
 
     const previewProgressSize = () => {
-        const progress = props.progress[0]();
-        const previewProgress = props.previewProgress[0]();
+        const progress = props.progress();
+        const previewProgress = props.previewProgress();
         const length = props.length();
         if (previewProgress === undefined || length === 0) {
             return {
@@ -78,51 +83,51 @@ export function Scrubber(props: ScrubberProps) {
 
     function onMouseMove(event: MouseEvent) {
         if (scrubber) {
-            const dragStart = props.dragStart[0]();
+            const dragStart = props.dragStart();
             if (dragStart !== undefined) {
                 const { targetFrame, strength } = targetFrameFromMouse(event);
                 // reduce effect of dragging if mouse is farther away from scrubber
-                props.progress[1](Math.round(dragStart + (targetFrame - dragStart) * strength));
-                props.previewProgress[1](undefined);
+                props.seek(Math.round(dragStart + (targetFrame - dragStart) * strength));
+                props.previewSeek(undefined);
             } else if (scrubber.matches(':hover')) {
-                props.previewProgress[1](targetFrameFromMouse(event).targetFrame);
+                props.previewSeek(targetFrameFromMouse(event).targetFrame);
             } else {
-                props.previewProgress[1](undefined);
+                props.previewSeek(undefined);
             }
         }
     }
 
     function onMouseUp() {
         // Stop dragging
-        props.dragStart[1](undefined);
+        props.setDragStart(undefined);
     }
 
     return <div id="media-controls">
-        <div class="text-button" classList={{ recording: props.recording[0]() }} onclick={() => {
-            props.recording[1](!props.recording[0]());
+        <div class="text-button" classList={{ recording: props.recording() }} onclick={() => {
+            props.setRecording(!props.recording());
         }}><div>⏺</div></div>
         <div class="text-button" onclick={() => {
-            if (props.isPlaying[0]()) {
-                props.isPlaying[1](false);
+            if (props.isPlaying()) {
+                props.setIsPlaying(false);
             } else {
-                if (props.progress[0]() >= props.length() && !props.recording[0]()) {
+                if (props.progress() >= props.length() && !props.recording()) {
                     // Go back to start if we press play after reaching the end of the recorded inputs.
-                    props.progress[1](0);
+                    props.seek(0);
                 }
-                props.isPlaying[1](true);
+                props.setIsPlaying(true);
             }
         }}><div>
             <Switch>
-                <Match when={!props.isPlaying[0]()}>
+                <Match when={!props.isPlaying()}>
                     {'▶'}
                 </Match>
-                <Match when={props.isPlaying[0]()}>
+                <Match when={props.isPlaying()}>
                     {'⏸'}
                 </Match>
             </Switch>
         </div></div>
         <div ref={scrubber} class="scrubber" onmousedown={event => {
-            props.dragStart[1](targetFrameFromMouse(event).targetFrame);
+            props.setDragStart(targetFrameFromMouse(event).targetFrame);
             onMouseMove(event);
             event.preventDefault();
         }}>
