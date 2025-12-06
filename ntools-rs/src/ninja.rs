@@ -39,7 +39,7 @@ pub struct Ninja {
     launch_pad_buffer: Option<u8>,
     floor_unit_normal: DVec2,
     ceiling_unit_normal: DVec2,
-    anim_state: u32,
+    anim_state: AnimState,
     facing: f64,
     tilt: DVec2,
     anim_rate: f64,
@@ -56,7 +56,7 @@ pub struct Ninja {
 pub struct PastNinja {
     pos: DVec2,
     facing: f64,
-    anim_state: u32,
+    anim_state: AnimState,
     anim_frame: usize,
     run_cycle: usize,
     tilt: DVec2,
@@ -74,6 +74,16 @@ pub enum NinjaState {
     AwaitingDeath,
     Celebrating,
     Disabled,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum AnimState {
+    Standing,
+    Running,
+    Skidding,
+    Airborne,
+    WallSliding,
+    Celebrating,
 }
 
 pub struct CollisionState {
@@ -118,7 +128,7 @@ impl Ninja {
             launch_pad_buffer: None,
             floor_unit_normal: DVec2::new(0.0, -1.0),
             ceiling_unit_normal: DVec2::new(0.0, 1.0),
-            anim_state: 0,
+            anim_state: AnimState::Standing,
             facing: 1.0,
             tilt: DVec2::X,
             anim_rate: 0.0,
@@ -129,7 +139,7 @@ impl Ninja {
             prev: PastNinja {
                 pos,
                 facing: 1.0,
-                anim_state: 0,
+                anim_state: AnimState::Standing,
                 anim_frame: 11,
                 run_cycle: 0,
                 tilt: DVec2::X,
@@ -596,30 +606,30 @@ impl Ninja {
 
         let anim_state_old = self.anim_state;
         if self.state == NinjaState::WallSliding {
-            self.anim_state = 4;
+            self.anim_state = AnimState::WallSliding;
             self.tilt = -self.gravity_dir.perp();
             self.facing = -self.wall_normal.signum();
             self.anim_rate = self.grav_get_vert(self.speed);
         } else if !self.airborne && self.state != NinjaState::Jumping {
             self.tilt = self.floor_unit_normal.perp();
             match self.state {
-                NinjaState::Standing => self.anim_state = 0,
+                NinjaState::Standing => self.anim_state = AnimState::Standing,
                 NinjaState::Running => {
-                    self.anim_state = 1;
+                    self.anim_state = AnimState::Running;
                     self.anim_rate = self.speed.perp_dot(self.floor_unit_normal).abs();
                     if hor_input != 0.0 {
                         self.facing = hor_input;
                     }
                 }
                 NinjaState::Skidding => {
-                    self.anim_state = 2;
+                    self.anim_state = AnimState::Skidding;
                     self.anim_rate = self.speed.perp_dot(self.floor_unit_normal).abs();
                 }
-                NinjaState::Celebrating => self.anim_state = 6,
+                NinjaState::Celebrating => self.anim_state = AnimState::Celebrating,
                 _ => {}
             }
         } else {
-            self.anim_state = 3;
+            self.anim_state = AnimState::Airborne;
             self.anim_rate = self.grav_get_vert(self.speed);
             if self.state == NinjaState::Jumping {
                 self.tilt = -self.gravity_dir.perp();
@@ -638,11 +648,11 @@ impl Ninja {
 
         if self.anim_state != anim_state_old {
             match self.anim_state {
-                0 => if self.anim_frame > 0 {
+                AnimState::Standing => if self.anim_frame > 0 {
                     self.anim_frame = 1;
                 }
-                1 => if anim_state_old != 3 {
-                    if anim_state_old == 2 {
+                AnimState::Running => if anim_state_old != AnimState::Airborne {
+                    if anim_state_old == AnimState::Skidding {
                         self.anim_frame = 39;
                         self.run_cycle = 162;
                         self.frame_residual = 0.0;
@@ -656,29 +666,28 @@ impl Ninja {
                     self.run_cycle = 36;
                     self.frame_residual = 0.0;
                 }
-                2 => self.anim_frame = 0,
-                3 => self.anim_frame = 84,
-                4 => self.anim_frame = 103,
-                6 => {
+                AnimState::Skidding => self.anim_frame = 0,
+                AnimState::Airborne => self.anim_frame = 84,
+                AnimState::WallSliding => self.anim_frame = 103,
+                AnimState::Celebrating => {
                     let dance = DANCES.choose(&mut self.prng()).unwrap_or(&DANCES[0]);
                     self.anim_frame = dance.0;
                     self.dance_end = dance.1;
                 }
-                _ => {}
             }
         }
 
         match self.anim_state {
-            0 => if self.anim_frame < 11 {
+            AnimState::Standing => if self.anim_frame < 11 {
                 self.anim_frame += 1;
             }
-            1 => {
+            AnimState::Running => {
                 let new_cycle = self.anim_rate / 0.15 + self.frame_residual;
                 self.frame_residual = new_cycle - new_cycle.floor();
                 self.run_cycle = (self.run_cycle + new_cycle.floor() as usize) % 432;
                 self.anim_frame = self.run_cycle / 6 + 12;
             }
-            3 => {
+            AnimState::Airborne => {
                 let rate = if self.anim_rate >= 0.0 {
                     (self.anim_rate * 0.6).min(1.0).sqrt()
                 } else {
@@ -686,7 +695,7 @@ impl Ninja {
                 };
                 self.anim_frame = (93 + (9.0 * rate).floor() as isize) as usize;
             }
-            6 => if self.anim_frame < self.dance_end {
+            AnimState::Celebrating => if self.anim_frame < self.dance_end {
                 self.anim_frame += 1;
             }
             _ => {}
@@ -709,9 +718,9 @@ impl Ninja {
         bones
     }
 
-    fn calc_ninja_position_inner(anim_frame: usize, anim_state: u32, run_cycle: usize, facing: f64, tilt: DVec2) -> Bones {
+    fn calc_ninja_position_inner(anim_frame: usize, anim_state: AnimState, run_cycle: usize, facing: f64, tilt: DVec2) -> Bones {
         let mut bones = get_anim_frame(anim_frame);
-        if anim_state == 1 {
+        if anim_state == AnimState::Running {
             let interpolation = (run_cycle % 6) as f32 / 6.0;
             if interpolation > 0.0 {
                 let next_bones = get_anim_frame(((anim_frame as isize - 12) % 72 + 12) as usize);
