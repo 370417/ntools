@@ -10,6 +10,7 @@ const STRENGTH: f64 = 0.2;
 #[derive(Clone)]
 pub struct BounceBlock {
     pub pos: DVec2,
+    pub pos_old: DVec2,
     pub origin: DVec2,
     pub speed: DVec2,
     // At first I tried to get away with calculating grid_pos on the fly from self.pos,
@@ -33,6 +34,7 @@ impl BounceBlock {
     pub fn new(origin: DVec2) -> BounceBlock {
         BounceBlock {
             pos: origin,
+            pos_old: origin,
             origin,
             speed: DVec2::ZERO,
             grid_pos: GridPos::from_world_pos(origin),
@@ -95,6 +97,7 @@ impl Mob for BounceBlock {
 
     /// Update the position and speed of the bounce block by applying the spring force and dampening.
     fn move_entity(&mut self) {
+        self.pos_old = self.pos;
         self.speed *= DAMPENING;
         self.pos += self.speed;
         let force = STIFFNESS * (self.origin - self.pos);

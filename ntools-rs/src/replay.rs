@@ -201,13 +201,15 @@ impl Replay {
     }
 
     #[wasm_bindgen]
-    pub fn bounce_block_x(&self, i: usize) -> f64 {
-        self.current_sim.entities.bounce_blocks[i].pos.x
+    pub fn bounce_block_x(&self, i: usize, partial_frame: f64) -> f64 {
+        let bounce_block = &self.current_sim.entities.bounce_blocks[i];
+        bounce_block.pos_old.x.lerp(bounce_block.pos.x, partial_frame)
     }
 
     #[wasm_bindgen]
-    pub fn bounce_block_y(&self, i: usize) -> f64 {
-        self.current_sim.entities.bounce_blocks[i].pos.y
+    pub fn bounce_block_y(&self, i: usize, partial_frame: f64) -> f64 {
+        let bounce_block = &self.current_sim.entities.bounce_blocks[i];
+        bounce_block.pos_old.y.lerp(bounce_block.pos.y, partial_frame)
     }
 
     #[wasm_bindgen]

@@ -218,8 +218,8 @@ function App() {
         const bounceBlocksLen = replay.bounce_blocks_len();
         for (let i = 0; i < bounceBlocksLen; i++) {
             bounceBlocksArr.push({
-                x: replay.bounce_block_x(i),
-                y: replay.bounce_block_y(i),
+                x: replay.bounce_block_x(i, partialFrame),
+                y: replay.bounce_block_y(i, partialFrame),
                 deg: replay.bounce_block_deg(i),
             });
         }
