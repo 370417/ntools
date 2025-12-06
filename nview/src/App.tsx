@@ -112,7 +112,7 @@ function App() {
         else if (event.code === 'Enter') {
             replay?.place_ninja(mouseGamePos().x, mouseGamePos().y);
             if (replay && !isPlaying()) {
-                renderFrame(replay);
+                renderFrame(replay, 1);
             }
         }
     });
@@ -147,12 +147,32 @@ function App() {
 
     const socket = new WebSocket('ws://localhost:8080');
 
+    let timeMs = performance.now();
+    const fps = 60;
+    const msPerTick = 1000 / fps;
+    let accumulator = 0;
     function tick() {
         stats?.begin();
+        const newTimeMs = performance.now();
+        const frameTimeMs = Math.min(newTimeMs - timeMs, 250);
+        timeMs = newTimeMs;
+
+        let partialFrame = 1;
+
         if (isPlaying() && dragStart() === undefined && replay) {
-            if (recording()) {
-                replay.set_input(isJump1Pressed() || isJump2Pressed(), isRightPressed(), isLeftPressed(), isSuicidePressed());
-                replay.tick();
+            if (recording() || progress() < replayLength()) {
+
+                accumulator += frameTimeMs;
+
+                while (accumulator >= msPerTick) {
+                    if (recording()) {
+                        replay.set_input(isJump1Pressed() || isJump2Pressed(), isRightPressed(), isLeftPressed(), isSuicidePressed());
+                    }
+                    replay.tick();
+                    accumulator -= msPerTick;
+                }
+                partialFrame = accumulator / msPerTick;
+
                 setProgress(replay.progress());
             } else if (progress() < replayLength()) {
                 replay.tick();
@@ -160,27 +180,27 @@ function App() {
             } else {
                 setIsPlaying(false);
             }
-            renderFrame(replay);
+            renderFrame(replay, partialFrame);
         }
         stats?.end();
         requestAnimationFrame(tick);
     }
     tick();
 
-    function renderFrame(replay: Replay) {
+    function renderFrame(replay: Replay, partialFrame: number) {
         setNinja({
-            x: replay.ninja_x(),
-            y: replay.ninja_y(),
+            x: replay.ninja_x(partialFrame),
+            y: replay.ninja_y(partialFrame),
         });
         setNinjaPreview({
-            x: replay.ninja_preview_x(),
-            y: replay.ninja_preview_y(),
+            x: replay.ninja_preview_x(partialFrame),
+            y: replay.ninja_preview_y(partialFrame),
         });
-        setNinjaBones(replay.ninja_bones());
+        setNinjaBones(replay.ninja_bones(partialFrame));
         if (previewProgress() === undefined) {
             setNinjaPreviewBones(undefined);
         } else {
-            setNinjaPreviewBones(replay.ninja_preview_bones());
+            setNinjaPreviewBones(replay.ninja_preview_bones(partialFrame));
         }
 
         const minesArr: Mine[] = [];
@@ -222,8 +242,8 @@ function App() {
             boostPadsArr.push({
                 x: replay.boost_pad_x(i),
                 y: replay.boost_pad_y(i),
-                deg: replay.boost_pad_rotation(i),
-                anim: replay.boost_pad_anim_progress(i),
+                deg: replay.boost_pad_rotation(i, partialFrame),
+                anim: replay.boost_pad_anim_progress(i, partialFrame),
             });
         }
         setBoostPads(boostPadsArr);
@@ -258,7 +278,7 @@ function App() {
             replay = Replay.from_attract(bytes);
             const path = replay.tiles_path();
             setTilePath(path);
-            renderFrame(replay);
+            renderFrame(replay, 1);
         });
     });
 
@@ -371,7 +391,7 @@ function App() {
                         setProgress(frame);
                         if (replay) {
                             replay.seek(frame);
-                            renderFrame(replay);
+                            renderFrame(replay, 1);
                         }
                     }}
                     previewSeek={frame => {
@@ -380,7 +400,7 @@ function App() {
                             if (frame !== undefined && dragStart() === undefined) {
                                 replay.seek_preview(frame);
                             }
-                            renderFrame(replay);
+                            renderFrame(replay, 1);
                         }
                     }}
                 />

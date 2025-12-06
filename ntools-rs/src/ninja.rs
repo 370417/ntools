@@ -47,6 +47,19 @@ pub struct Ninja {
     frame_residual: f64,
     dance_end: usize,
     run_cycle: usize,
+    // TODO: store this in a list of PastNinja history instead of in Ninja
+    prev: PastNinja,
+}
+
+/// Position and animation state for evil ninjas
+#[derive(Clone)]
+pub struct PastNinja {
+    pos: DVec2,
+    facing: f64,
+    anim_state: u32,
+    anim_frame: usize,
+    run_cycle: usize,
+    tilt: DVec2,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -86,7 +99,7 @@ impl NinjaState {
 impl Ninja {
     pub fn new(pos: DVec2) -> Ninja {
         let mut ninja = Ninja {
-            pos: pos,
+            pos,
             pos_old: pos,
             speed: DVec2::ZERO,
             gravity_dir: DVec2::new(0.0, 1.0),
@@ -113,6 +126,14 @@ impl Ninja {
             frame_residual: 0.0,
             dance_end: 0,
             run_cycle: 0,
+            prev: PastNinja {
+                pos,
+                facing: 1.0,
+                anim_state: 0,
+                anim_frame: 11,
+                run_cycle: 0,
+                tilt: DVec2::X,
+            },
         };
         ninja.update_graphics(0.0);
         ninja
@@ -564,6 +585,15 @@ impl Ninja {
 
     /// Update parameters necessary to draw the limbs of the ninja.
     pub fn update_graphics(&mut self, hor_input: f64) {
+        self.prev = PastNinja {
+            pos: self.pos_old,
+            facing: self.facing,
+            anim_state: self.anim_state,
+            anim_frame: self.anim_frame,
+            tilt: self.tilt,
+            run_cycle: self.run_cycle,
+        };
+
         let anim_state_old = self.anim_state;
         if self.state == NinjaState::WallSliding {
             self.anim_state = 4;
@@ -665,20 +695,34 @@ impl Ninja {
 
     /// Calculate the positions of ninja's joints. The positions are fetched from the animation data,
     /// after applying mirroring, rotation or interpolation if necessary.
-    pub fn calc_ninja_position(&self) -> Bones {
-        let mut bones = get_anim_frame(self.anim_frame);
-        if self.anim_state == 1 {
-            let interpolation = (self.run_cycle % 6) as f32 / 6.0;
+    pub fn calc_ninja_position(&self, partial_frame: f64) -> Bones {
+        let mut bones = Ninja::calc_ninja_position_inner(self.anim_frame, self.anim_state, self.run_cycle, self.facing, self.tilt);
+
+        if self.facing != self.prev.facing || self.anim_state != self.prev.anim_state {
+            return bones;
+        }
+
+        let prev_bones = Ninja::calc_ninja_position_inner(self.prev.anim_frame, self.prev.anim_state, self.prev.run_cycle, self.prev.facing, self.prev.tilt);
+        for i in 0..bones.len() {
+            bones[i] = prev_bones[i].lerp(bones[i], partial_frame as f32)
+        }
+        bones
+    }
+
+    fn calc_ninja_position_inner(anim_frame: usize, anim_state: u32, run_cycle: usize, facing: f64, tilt: DVec2) -> Bones {
+        let mut bones = get_anim_frame(anim_frame);
+        if anim_state == 1 {
+            let interpolation = (run_cycle % 6) as f32 / 6.0;
             if interpolation > 0.0 {
-                let next_bones = get_anim_frame(((self.anim_frame as isize - 12) % 72 + 12) as usize);
+                let next_bones = get_anim_frame(((anim_frame as isize - 12) % 72 + 12) as usize);
                 for i in 0..13 {
                     bones[i] += interpolation * (next_bones[i] - bones[i]);
                 }
             }
         }
         for i in 0..13 {
-            bones[i].x *= self.facing as f32;
-            bones[i] = self.tilt.as_vec2().rotate(bones[i]);
+            bones[i].x *= facing as f32;
+            bones[i] = tilt.as_vec2().rotate(bones[i]);
         }
         bones
     }

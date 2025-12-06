@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use glam::DVec2;
+use glam::{DVec2, FloatExt};
 use wasm_bindgen::prelude::*;
 
 use crate::{anim_data::flatten_bones, attract::Attract, entity::mine::Mine, grid::{Grid, COLS, ROWS}, ninja::Ninja, segment::{extract_path, Segment}, simulation::{Input, KeyFrame, Simulation}, tile::TILE_SIZE};
@@ -141,33 +141,33 @@ impl Replay {
     }
 
     #[wasm_bindgen]
-    pub fn ninja_x(&self) -> f64 {
-        self.current_sim.ninja.pos.x
+    pub fn ninja_x(&self, partial_frame: f64) -> f64 {
+        self.current_sim.ninja.pos_old.x.lerp(self.current_sim.ninja.pos.x, partial_frame)
     }
 
     #[wasm_bindgen]
-    pub fn ninja_y(&self) -> f64 {
-        self.current_sim.ninja.pos.y
+    pub fn ninja_y(&self, partial_frame: f64) -> f64 {
+        self.current_sim.ninja.pos_old.y.lerp(self.current_sim.ninja.pos.y, partial_frame)
     }
 
     #[wasm_bindgen]
-    pub fn ninja_preview_x(&self) -> f64 {
-        self.preview_sim.ninja.pos.x
+    pub fn ninja_preview_x(&self, partial_frame: f64) -> f64 {
+        self.preview_sim.ninja.pos_old.x.lerp(self.preview_sim.ninja.pos.x, partial_frame)
     }
 
     #[wasm_bindgen]
-    pub fn ninja_preview_y(&self) -> f64 {
-        self.preview_sim.ninja.pos.y
+    pub fn ninja_preview_y(&self, partial_frame: f64) -> f64 {
+        self.preview_sim.ninja.pos_old.y.lerp(self.preview_sim.ninja.pos.y, partial_frame)
     }
 
     #[wasm_bindgen]
-    pub fn ninja_bones(&self) -> Box<[f32]> {
-        flatten_bones(&self.current_sim.ninja.calc_ninja_position())
+    pub fn ninja_bones(&self, partial_frame: f64) -> Box<[f32]> {
+        flatten_bones(&self.current_sim.ninja.calc_ninja_position(partial_frame))
     }
 
     #[wasm_bindgen]
-    pub fn ninja_preview_bones(&self) -> Box<[f32]> {
-        flatten_bones(&self.preview_sim.ninja.calc_ninja_position())
+    pub fn ninja_preview_bones(&self, partial_frame: f64) -> Box<[f32]> {
+        flatten_bones(&self.preview_sim.ninja.calc_ninja_position(partial_frame))
     }
 
     #[wasm_bindgen]
@@ -251,13 +251,13 @@ impl Replay {
     }
 
     #[wasm_bindgen]
-    pub fn boost_pad_rotation(&self, i: usize) -> f64 {
-        self.current_sim.entities.boost_pads[i].rotation().to_degrees()
+    pub fn boost_pad_rotation(&self, i: usize, partial_frame: f64) -> f64 {
+        self.current_sim.entities.boost_pads[i].rotation(partial_frame).to_degrees()
     }
 
     #[wasm_bindgen]
-    pub fn boost_pad_anim_progress(&self, i: usize) -> f64 {
-        self.current_sim.entities.boost_pads[i].eased_animation_progress()
+    pub fn boost_pad_anim_progress(&self, i: usize, partial_frame: f64) -> f64 {
+        self.current_sim.entities.boost_pads[i].eased_animation_progress(partial_frame)
     }
 
     #[wasm_bindgen]
