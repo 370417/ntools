@@ -74,6 +74,9 @@ impl Entities {
             grid[GridPos::from_world_pos(exit.door_pos).clamp()].push((EntityType::ExitDoor, i));
             grid[GridPos::from_world_pos(exit.switch_pos).clamp()].push((EntityType::ExitSwitch, i));
         }
+        for (i, thwump) in self.thwumps.iter().enumerate() {
+            grid[GridPos::from_world_pos(thwump.pos).clamp()].push((EntityType::Thwump, i));
+        }
         grid
     }
 }

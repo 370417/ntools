@@ -8,12 +8,14 @@ const BACKWARD_SPEED: f64 = 8.0 / 7.0;
 
 #[derive(Clone)]
 pub struct Thwump {
-    pos: DVec2,
+    pub pos: DVec2,
     origin: DVec2,
     pub orientation: Orientation,
     state: ThwumpState,
-    blocked: bool,
-    // detection_rect
+    // keep track of moving separate from state because thwump can stop moving
+    // when state is backward if it gets blocked by something
+    is_moving: bool,
+    detection_range: Option<f64>,
 }
 
 #[derive(Clone)]
@@ -31,7 +33,8 @@ impl Thwump {
             orientation,
             // state: ThwumpState::Waiting,
             state: ThwumpState::Forward,
-            blocked: false,
+            is_moving: false,
+            detection_range: None,
         }
     }
 
@@ -46,7 +49,7 @@ impl Thwump {
     }
 
     fn interpolated_pos(&self, partial_frame: f64) -> DVec2 {
-        if self.blocked {
+        if !self.is_moving {
             return self.pos;
         }
         let old_pos = match self.state {
@@ -86,6 +89,16 @@ impl Mob for Thwump {
         };
         let new_pos = self.pos + speed_magnitude * speed_dir;
 
+        if let ThwumpState::Backward = self.state {
+            if self.orientation.vec2().dot(new_pos - self.origin) <= 0.0 {
+                // If the thwump as retreated past its starting point, set its position to the origin.
+                self.pos = self.origin;
+                self.is_moving = false;
+                self.state = ThwumpState::Forward;
+                return;
+            }
+        }
+
         let leading_edge_center = new_pos + 11.0 * speed_dir;
         let leading_edge_corners = (
             leading_edge_center + 11.0 * speed_dir.perp(),
@@ -96,13 +109,33 @@ impl Mob for Thwump {
 
         // TODO: can skip computation if orientation is orthogonal and leading edge is not about to cross into new half grid tile
 
-        let has_collision = segments.iter_rect_region(leading_edge_corners.0, leading_edge_corners.1).flat_map(|segment| {
+        let segments_iter = segments.iter_rect_region(leading_edge_corners.0, leading_edge_corners.1);
+
+        let has_collision = segments_in_fov(leading_edge_center, basis_matrix_inverse, segments_iter).any(|(start, end)| {
+            // We check that y isn't too small to try and avoid collisions with walls that are behind the leading edge of the thwump
+            start.y <= 0.0 && start.y > -1.1 * speed_magnitude || end.y <= 0.0 && end.y > -1.1 * speed_magnitude
+        });
+
+        if has_collision {
+            match self.state {
+                ThwumpState::Backward => self.is_moving = false,
+                _ => self.state = ThwumpState::Backward,
+            }
+        } else {
+            self.pos = new_pos;
+            self.is_moving = true;
+        }
+    }
+}
+
+fn segments_in_fov<'a>(origin: DVec2, basis_matrix_inverse: DMat2, segments: impl Iterator<Item = &'a Segment>) -> impl Iterator<Item = (DVec2, DVec2)> {
+    segments.flat_map(move |segment| {
             // convert into segments relative to leading edge
             match segment {
                 Segment::Linear { start, end, .. } => {
                     // Create iterators from arrays of options in a hare-brained scheme to avoid allocation.
-                    let start = basis_matrix_inverse * (start - leading_edge_center);
-                    let end = basis_matrix_inverse * (end - leading_edge_center);
+                    let start = basis_matrix_inverse * (start - origin);
+                    let end = basis_matrix_inverse * (end - origin);
                     if (end - start).length_squared() > 1.99 {
                         // split 45° diagonal segments into two because each half occupies a different spot
                         // in the half tile grid
@@ -114,15 +147,15 @@ impl Mob for Thwump {
                 }
                 Segment::Circular { start, end, curvature: Curvature::Concave, .. } => {
                     // A concave circular segment's collision is the same as a 45° diagonal segment
-                    let start = basis_matrix_inverse * (start - leading_edge_center);
-                    let end = basis_matrix_inverse * (end - leading_edge_center);
+                    let start = basis_matrix_inverse * (start - origin);
+                    let end = basis_matrix_inverse * (end - origin);
                     let mid = (start + end) / 2.0;
                     [Some((start, mid)), Some((mid, end))].into_iter()
                 }
                 Segment::Circular { start, end, center, curvature: Curvature::Convex } => {
-                    let start = basis_matrix_inverse * (start - leading_edge_center);
-                    let end = basis_matrix_inverse * (end - leading_edge_center);
-                    let center = basis_matrix_inverse * (center - leading_edge_center);
+                    let start = basis_matrix_inverse * (start - origin);
+                    let end = basis_matrix_inverse * (end - origin);
+                    let center = basis_matrix_inverse * (center - origin);
                     [Some((start, center)), Some((center, end))].into_iter()
                 }
                 Segment::Door => todo!(),
@@ -140,18 +173,4 @@ impl Mob for Thwump {
             let is_right = start.x > 11.0 && end.x > 11.0;
             !is_left && !is_right
         })
-        .any(|(start, end)| {
-            start.y <= 0.0 || end.y <= 0.0
-        });
-
-        if has_collision {
-            match self.state {
-                ThwumpState::Backward => self.blocked = true,
-                _ => self.state = ThwumpState::Backward,
-            }
-        } else {
-            self.pos = new_pos;
-            self.blocked = false;
-        }
-    }
 }
