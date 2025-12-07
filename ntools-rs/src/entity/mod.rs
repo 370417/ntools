@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{entity::{boost_pad::BoostPad, bounce_block::BounceBlock, exit::Exit, mine::Mine, one_way::OneWay}, grid::{Grid, GridPos}};
+use crate::{entity::{boost_pad::BoostPad, bounce_block::BounceBlock, exit::Exit, mine::Mine, one_way::OneWay, thwump::Thwump}, grid::{Grid, GridPos}, segment::Segment};
 
 pub mod boost_pad;
 pub mod bounce_block;
@@ -8,6 +8,7 @@ pub mod exit;
 pub mod mine;
 pub mod one_way;
 pub mod polymorphism;
+pub mod thwump;
 
 #[derive(Clone)]
 pub struct Entities {
@@ -17,6 +18,7 @@ pub struct Entities {
     pub one_ways: Vec<OneWay>,
     pub boost_pads: Vec<BoostPad>,
     pub exits: Vec<Exit>,
+    pub thwumps: Vec<Thwump>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -28,6 +30,7 @@ pub enum EntityType {
     BoostPad,
     ExitDoor,
     ExitSwitch,
+    Thwump,
 }
 
 pub trait Entity {
@@ -46,6 +49,7 @@ impl Entities {
             one_ways: Vec::new(),
             boost_pads: Vec::new(),
             exits: Vec::new(),
+            thwumps: Vec::new(),
         }
     }
 
@@ -90,15 +94,15 @@ pub trait Mob {
     fn grid_pos(&self) -> GridPos;
     /// Gets called after self.move_entity if it resulted in self moving to a new grid cell.
     fn set_grid_pos(&mut self, grid_pos: GridPos);
-    fn move_entity(&mut self);
+    fn move_entity(&mut self, grid: &Grid<Segment>);
 }
 
 /// Call move_entity for each entity and update its position in the entity grid
 /// if it has changed.
-pub fn move_entities<T: Mob + Entity>(entities: &mut [T], entity_grid: &mut Grid<EntityIndex>) {
+pub fn move_entities<T: Mob + Entity>(entities: &mut [T], entity_grid: &mut Grid<EntityIndex>, segments: &Grid<Segment>) {
     for (i, entity) in entities.iter_mut().enumerate() {
         let old_grid_pos = entity.grid_pos();
-        entity.move_entity();
+        entity.move_entity(segments);
         let new_grid_pos = GridPos::from_world_pos(entity.pos());
         if old_grid_pos != new_grid_pos {
             let entity_index = (entity.entity_type(), i);
@@ -142,6 +146,8 @@ impl Orientation {
     /// Orientation represented by unit vector.
     pub fn vec2(&self) -> DVec2 {
         let sqrt = std::f64::consts::FRAC_1_SQRT_2;
+        let short = 0.4472135955; // 1/sqrt(5)
+        let long = short * 2.0;
         match self {
             Orientation::W => DVec2::new(1.0, 0.0),
             Orientation::SW => DVec2::new(sqrt, sqrt),
@@ -151,40 +157,19 @@ impl Orientation {
             Orientation::NE => DVec2::new(-sqrt, -sqrt),
             Orientation::N => DVec2::new(0.0, -1.0),
             Orientation::NW => DVec2::new(sqrt, -sqrt),
-            Orientation::WSW => todo!(),
-            Orientation::SSW => todo!(),
-            Orientation::SSE => todo!(),
-            Orientation::ESE => todo!(),
-            Orientation::ENE => todo!(),
-            Orientation::NNE => todo!(),
-            Orientation::NNW => todo!(),
-            Orientation::WNW => todo!(),
+            Orientation::WSW => DVec2::new(-long, short),
+            Orientation::SSW => DVec2::new(-short, long),
+            Orientation::SSE => DVec2::new(short, long),
+            Orientation::ESE => DVec2::new(long, short),
+            Orientation::ENE => DVec2::new(long, -short),
+            Orientation::NNE => DVec2::new(short, -long),
+            Orientation::NNW => DVec2::new(-short, -long),
+            Orientation::WNW => DVec2::new(-long, -short),
         }
     }
 
-    // TODO: replace this with self.vec2().to_angle()
-    /// Orientation represented by degrees of rotation.
-    /// Positive rotation is counterclockwise.
     pub fn rotation_deg(&self) -> f64 {
-        let shallow_rotation = 0.5_f64.atan().to_degrees();
-        match self {
-            Orientation::W => 90.0,
-            Orientation::SW => 135.0,
-            Orientation::S => 180.0,
-            Orientation::SE => 225.0,
-            Orientation::E => 270.0,
-            Orientation::NE => 315.0,
-            Orientation::N => 0.0,
-            Orientation::NW => 45.0,
-            Orientation::WSW => 90.0 + shallow_rotation,
-            Orientation::SSW => 180.0 - shallow_rotation,
-            Orientation::SSE => 180.0 + shallow_rotation,
-            Orientation::ESE => 270.0 - shallow_rotation,
-            Orientation::ENE => 270.0 + shallow_rotation,
-            Orientation::NNE => 360.0 - shallow_rotation,
-            Orientation::NNW => shallow_rotation,
-            Orientation::WNW => 90.0 - shallow_rotation,
-        }
+        self.vec2().to_angle().to_degrees()
     }
 }
 

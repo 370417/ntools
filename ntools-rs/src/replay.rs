@@ -291,6 +291,26 @@ impl Replay {
     pub fn exit_switch_y(&self, i: usize) -> f64 {
         self.current_sim.entities.exits[i].switch_pos.y
     }
+
+    #[wasm_bindgen]
+    pub fn thwumps_len(&self) -> usize {
+        self.current_sim.entities.thwumps.len()
+    }
+
+    #[wasm_bindgen]
+    pub fn thwump_x(&self, i: usize, partial_frame: f64) -> f64 {
+        self.current_sim.entities.thwumps[i].x(partial_frame)
+    }
+
+    #[wasm_bindgen]
+    pub fn thwump_y(&self, i: usize, partial_frame: f64) -> f64 {
+        self.current_sim.entities.thwumps[i].y(partial_frame)
+    }
+
+    #[wasm_bindgen]
+    pub fn thwump_deg(&self, i: usize) -> f64 {
+        self.current_sim.entities.thwumps[i].orientation.rotation_deg()
+    }
 }
 
 // Separate impl block for functions without #[wasm_bindgen]

@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{entity::{boost_pad::BoostPad, bounce_block::BounceBlock, exit::Exit, mine::Mine, one_way::OneWay, Entities, Orientation}, grid::{Grid, GridPos, COLS, ROWS}, segment::Segment, tile::Tile};
+use crate::{entity::{Entities, Orientation, boost_pad::BoostPad, bounce_block::BounceBlock, exit::Exit, mine::Mine, one_way::OneWay, thwump::Thwump}, grid::{COLS, Grid, GridPos, ROWS}, segment::Segment, tile::Tile};
 
 /// Represents a parsed attract file.
 /// An attract file is what gets shown in the game's main menu: a replay of a failed attempt at a level.
@@ -159,7 +159,7 @@ impl Attract {
                 // Gauss
                 19 => {}
                 // Thwump
-                20 => {}
+                20 => entities.thwumps.push(Thwump::new(6.0 * pos, orientation?)),
                 // Toggle mine
                 21 => entities.mines.push(Mine::new_untoggled(6.0 * pos)),
                 // Evil ninja

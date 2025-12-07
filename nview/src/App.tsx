@@ -38,6 +38,12 @@ type ExitSwitch = {
     y: number;
 }
 
+type Thwump = {
+    x: number;
+    y: number;
+    deg: number;
+};
+
 const LIMBS = [[0, 12], [1, 12], [2, 8], [3, 9], [4, 10], [5, 11], [6, 7], [8, 0], [9, 0], [10, 1], [11, 1]];
 
 // Mine
@@ -144,6 +150,7 @@ function App() {
     const [boostPads, setBoostPads] = createSignal<BoostPad[]>([]);
     const [exitDoors, setExitDoors] = createSignal<ExitDoor[]>([]);
     const [exitSwitches, setExitSwitches] = createSignal<ExitSwitch[]>([]);
+    const [thwumps, setThwumps] = createSignal<Thwump[]>([]);
 
     const socket = new WebSocket('ws://localhost:8080');
 
@@ -268,6 +275,17 @@ function App() {
         }
         setExitSwitches(exitSwitchesArr);
 
+        const thwumpsArr: Thwump[] = [];
+        const thwumpsLen = replay.thwumps_len();
+        for (let i = 0; i < thwumpsLen; i++) {
+            thwumpsArr.push({
+                x: replay.thwump_x(i, partialFrame),
+                y: replay.thwump_y(i, partialFrame),
+                deg: replay.thwump_deg(i),
+            });
+        }
+        setThwumps(thwumpsArr);
+
         setReplayLength(replay.replay_length());
     }
 
@@ -324,6 +342,9 @@ function App() {
                         <line x1={boostPadMid} y1={boostPadLong} x2={-boostPadLong} y2={-boostPadMid} />
                         <line x1={boostPadShort} y1={boostPadLong} x2={-boostPadLong} y2={-boostPadShort} />
                     </g>
+                    <g id="thwump">
+                        <path stroke="black" fill="none" d={`M 8.5 8.5 H -8.5 V -8.5 H 8.5`} />
+                    </g>
                 </defs>
                 <Index each={exitDoors()}>
                     {exitDoor => <>
@@ -343,6 +364,9 @@ function App() {
                     {exitSwitch => <>
                         <path class="exit-switch" d={`M ${exitSwitch().x} ${exitSwitch().y} m ${-exitSwitchHalfWidth + exitSwitchCorner} ${-exitSwitchHalfHeight} h ${2 * (exitSwitchHalfWidth - exitSwitchCorner)} l ${exitSwitchCorner} ${exitSwitchCorner} v ${2 * (exitSwitchHalfHeight - exitSwitchCorner)} l ${-exitSwitchCorner} ${exitSwitchCorner} h ${2 * (-exitSwitchHalfWidth + exitSwitchCorner)} l ${-exitSwitchCorner} ${-exitSwitchCorner} v ${2 * (-exitSwitchHalfHeight + exitSwitchCorner)} l ${exitSwitchCorner} ${-exitSwitchCorner}`} />
                     </>}
+                </Index>
+                <Index each={thwumps()}>
+                    {thwump => <use href="#thwump" x={thwump().x} y={thwump().y} transform={`rotate(${thwump().deg},${thwump().x},${thwump().y})`} />}
                 </Index>
                 <Index each={bounceBlocks()}>
                     {bounceBlock => <use href="#bounceblock" x={bounceBlock().x} y={bounceBlock().y} transform={`rotate(${bounceBlock().deg},${bounceBlock().x},${bounceBlock().y})`} />}
