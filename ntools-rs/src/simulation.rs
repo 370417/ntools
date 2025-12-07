@@ -1,4 +1,4 @@
-use crate::{entity::{bounce_block::BounceBlock, mine::{mine_diffs, mines_from_diff, Mine, MineState}, move_entities, Entities, EntityIndex, EntityType}, grid::{Grid, GridPos}, ninja::{Ninja, NinjaState}, segment::Segment};
+use crate::{entity::{Entities, EntityIndex, EntityType, bounce_block::BounceBlock, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, thwump::Thwump}, grid::Grid, ninja::{Ninja, NinjaState}, segment::Segment};
 
 #[derive(Clone)]
 pub struct Simulation {
@@ -24,6 +24,7 @@ pub struct KeyFrame {
     // it is constant across frames. For now we just store the entire bounce block.
     bounce_blocks: Vec<BounceBlock>,
     exit_open_frames: Vec<Option<u32>>,
+    thwumps: Vec<Thwump>,
 }
 
 impl Input {
@@ -82,7 +83,8 @@ impl Simulation {
         }
 
         // Make all thinkable entities think
-        self.entities.mines.iter_mut().for_each(|mine| mine.think(&self.ninja));
+        for mine in &mut self.entities.mines { mine.think(&self.ninja) }
+        for thwump in &mut self.entities.thwumps { thwump.think(&self.ninja, segments) }
 
         if self.ninja.state != NinjaState::Disabled {
             self.ninja.integrate();
@@ -106,6 +108,7 @@ impl KeyFrame {
             mine_state_diffs: mine_diffs(initial_mines, &sim.entities.mines),
             bounce_blocks: sim.entities.bounce_blocks.clone(),
             exit_open_frames: sim.entities.exits.iter().map(|exit| exit.door_open_frame).collect(),
+            thwumps: sim.entities.thwumps.clone(),
         }
     }
 
@@ -123,10 +126,15 @@ impl KeyFrame {
             sim.entities.exits[i].door_open_frame = *exit_open_frame;
         }
 
+        self.thwumps.clone_into(&mut sim.entities.thwumps);
+
         sim.entity_grid.drain_mobs();
         // add all mobs back into entity_grid
         for (i, bounce_block) in sim.entities.bounce_blocks.iter().enumerate() {
-            sim.entity_grid[GridPos::from_world_pos(bounce_block.pos).clamp()].push((EntityType::BounceBlock, i));
+            sim.entity_grid[bounce_block.pos].push((EntityType::BounceBlock, i));
+        }
+        for (i, thwump) in sim.entities.thwumps.iter().enumerate() {
+            sim.entity_grid[thwump.pos].push((EntityType::Thwump, i));
         }
     }
 }

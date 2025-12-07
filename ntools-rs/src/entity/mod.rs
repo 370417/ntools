@@ -57,25 +57,25 @@ impl Entities {
     pub fn grid(&self) -> Grid<EntityIndex> {
         let mut grid = Grid::new();
         for (i, mine) in self.mines.iter().enumerate() {
-            grid[GridPos::from_world_pos(mine.pos).clamp()].push((EntityType::Mine, i));
+            grid[mine.pos].push((EntityType::Mine, i));
         }
         for (i, bounce_block) in self.bounce_blocks.iter().enumerate() {
-            grid[GridPos::from_world_pos(bounce_block.pos).clamp()].push((EntityType::BounceBlock, i));
+            grid[bounce_block.pos].push((EntityType::BounceBlock, i));
         }
         for (i, one_way) in self.one_ways.iter().enumerate() {
-            grid[GridPos::from_world_pos(one_way.pos).clamp()].push((EntityType::OneWay, i));
+            grid[one_way.pos].push((EntityType::OneWay, i));
         }
         // Intentionally don't add boost pads to grid because boost pad logic never
         // makes use of the grid.
         // for (i, boost_pad) in self.boost_pads.iter().enumerate() {
-        //     grid[GridPos::from_world_pos(boost_pad.pos).clamp()].push((EntityType::BoostPad, i));
+        //     grid[boost_pad.pos].push((EntityType::BoostPad, i));
         // }
         for (i, exit) in self.exits.iter().enumerate() {
-            grid[GridPos::from_world_pos(exit.door_pos).clamp()].push((EntityType::ExitDoor, i));
-            grid[GridPos::from_world_pos(exit.switch_pos).clamp()].push((EntityType::ExitSwitch, i));
+            grid[exit.door_pos].push((EntityType::ExitDoor, i));
+            grid[exit.switch_pos].push((EntityType::ExitSwitch, i));
         }
         for (i, thwump) in self.thwumps.iter().enumerate() {
-            grid[GridPos::from_world_pos(thwump.pos).clamp()].push((EntityType::Thwump, i));
+            grid[thwump.pos].push((EntityType::Thwump, i));
         }
         grid
     }

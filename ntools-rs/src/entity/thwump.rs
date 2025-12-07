@@ -1,6 +1,6 @@
 use glam::{DMat2, DVec2};
 
-use crate::{entity::{Entity, EntityType, Mob, Orientation}, grid::{Grid, GridPos}, segment::{Curvature, Segment}};
+use crate::{entity::{Entity, EntityType, Mob, Orientation}, grid::{Grid, GridPos}, ninja::{self, Ninja}, segment::{Curvature, Segment}};
 
 const SEMI_SIDE: f64 = 9.0;
 const FORWARD_SPEED: f64 = 20.0 / 7.0;
@@ -31,8 +31,7 @@ impl Thwump {
             pos,
             origin: pos,
             orientation,
-            // state: ThwumpState::Waiting,
-            state: ThwumpState::Forward,
+            state: ThwumpState::Waiting,
             is_moving: false,
             detection_range: None,
         }
@@ -58,6 +57,36 @@ impl Thwump {
             ThwumpState::Backward => self.pos + self.orientation.vec2() * BACKWARD_SPEED,
         };
         old_pos.lerp(self.pos, partial_frame)
+    }
+
+    /// Make the thwump charge if it has sight of the ninja.
+    pub fn think(&mut self, ninja: &Ninja, segments: &Grid<Segment>) {
+        let orientation = self.orientation.vec2();
+        let basis_matrix = DMat2::from_cols(orientation.perp(), orientation);
+        let basis_matrix_inverse = basis_matrix.inverse();
+
+        if let (&ThwumpState::Waiting, None) = (&self.state, self.detection_range) {
+            // TODO: could optimize by iterating over less of the grid
+            self.detection_range = segments_in_fov(self.pos - SEMI_SIDE * orientation, basis_matrix_inverse, segments.flat_iter())
+                .filter(|(start, end)| {
+                    // filter out walls that are fully behind the thwump
+                    start.y > 0.0 || end.y > 0.0
+                })
+                .flat_map(|(start, end)| {
+                    [start.y, end.y].into_iter()
+                })
+                .reduce(f64::min);
+        }
+
+        if let (&ThwumpState::Waiting, Some(detection_range)) = (&self.state, self.detection_range) {
+            if ninja.is_valid_target() {
+                let activation_range = 2.0 * (SEMI_SIDE + ninja::RADIUS);
+                let ninja_pos = basis_matrix_inverse * (ninja.pos - self.pos);
+                if ninja_pos.x.abs() < activation_range && ninja_pos.y > 0.0 && ninja_pos.y < detection_range {
+                    self.state = ThwumpState::Forward;
+                }
+            }
+        }
     }
 }
 
@@ -94,7 +123,7 @@ impl Mob for Thwump {
                 // If the thwump as retreated past its starting point, set its position to the origin.
                 self.pos = self.origin;
                 self.is_moving = false;
-                self.state = ThwumpState::Forward;
+                self.state = ThwumpState::Waiting;
                 return;
             }
         }
@@ -112,7 +141,7 @@ impl Mob for Thwump {
         let segments_iter = segments.iter_rect_region(leading_edge_corners.0, leading_edge_corners.1);
 
         let has_collision = segments_in_fov(leading_edge_center, basis_matrix_inverse, segments_iter).any(|(start, end)| {
-            // We check that y isn't too small to try and avoid collisions with walls that are behind the leading edge of the thwump
+            // We check that y isn't too small to try to avoid collisions with walls that are behind the leading edge of the thwump
             start.y <= 0.0 && start.y > -1.1 * speed_magnitude || end.y <= 0.0 && end.y > -1.1 * speed_magnitude
         });
 

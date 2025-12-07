@@ -151,6 +151,20 @@ impl <T> IndexMut<GridPos> for Grid<T> {
     }
 }
 
+impl <T> Index<DVec2> for Grid<T> {
+    type Output = Vec<T>;
+
+    fn index(&self, index: DVec2) -> &Self::Output {
+        self.index(GridPos::from_world_pos(index).clamp())
+    }
+}
+
+impl <T> IndexMut<DVec2> for Grid<T> {
+    fn index_mut(&mut self, index: DVec2) -> &mut Self::Output {
+        self.index_mut(GridPos::from_world_pos(index).clamp())
+    }
+}
+
 pub fn is_pos_in_bounds(pos: DVec2) -> bool {
     pos.x >= TILE_SIZE && pos.x <= TILE_SIZE * (1.0 + COLS as f64) &&
     pos.y >= TILE_SIZE && pos.y <= TILE_SIZE * (1.0 + ROWS as f64)
