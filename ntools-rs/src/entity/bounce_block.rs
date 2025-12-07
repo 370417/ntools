@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{collision_util::{Depenetration, penetration_square_vs_circle_with_orientation, penetration_square_vs_point}, entity::{Entity, Mob, Orientation}, grid::{Grid, GridPos}, ninja::{self, Ninja}, segment::Segment};
+use crate::{collision_util::{Depenetration, penetration_square_vs_circle_with_orientation}, entity::{Entity, Mob, Orientation}, grid::{Grid, GridPos}, ninja::{self, Ninja}, segment::Segment};
 
 pub const SEMI_SIDE: f64 = 9.0;
 const STIFFNESS: f64 = 0.02222222222222222; // 1/45
@@ -25,7 +25,7 @@ pub struct BounceBlock {
 }
 
 #[derive(Clone, Copy)]
-enum Corners {
+pub enum Corners {
     Round,
     Square,
 }
@@ -47,7 +47,7 @@ impl BounceBlock {
     pub fn physical_collision(&mut self, ninja_pos: DVec2) -> Option<Depenetration> {
         let depen = match self.corners {
             Corners::Round => penetration_square_vs_circle_with_orientation(self.pos, SEMI_SIDE, ninja_pos, ninja::RADIUS, self.orientation),
-            Corners::Square => penetration_square_vs_point(self.pos, ninja_pos, SEMI_SIDE + ninja::RADIUS),
+            Corners::Square => penetration_square_vs_circle_with_orientation(self.pos, SEMI_SIDE + ninja::RADIUS, ninja_pos, 0.0, self.orientation),
         };
         depen.map(|depen| {
             self.pos -= depen.depen_unit_normal * depen.depen_dist * (1.0 - STRENGTH);
@@ -63,7 +63,7 @@ impl BounceBlock {
     pub fn logical_collision(&self, ninja: &Ninja) -> Option<f64> {
         let depen = match self.corners {
             Corners::Round => penetration_square_vs_circle_with_orientation(self.pos, SEMI_SIDE, ninja.pos, ninja::RADIUS + 0.1, self.orientation),
-            Corners::Square => penetration_square_vs_point(self.pos, ninja.pos, SEMI_SIDE + ninja::RADIUS + 0.1),
+            Corners::Square => penetration_square_vs_circle_with_orientation(self.pos, SEMI_SIDE + ninja::RADIUS + 0.1, ninja.pos, 0.0, self.orientation),
         };
         if let Some(depen) = depen {
             if ninja.grav_eq_abs_horiz(depen.depen_unit_normal, 1.0) {

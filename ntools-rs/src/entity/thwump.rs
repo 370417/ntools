@@ -1,6 +1,6 @@
 use glam::{DMat2, DVec2};
 
-use crate::{entity::{Entity, EntityType, Mob, Orientation}, grid::{Grid, GridPos}, ninja::{self, Ninja}, segment::{Curvature, Segment}, tile::TILE_HALF_SIZE};
+use crate::{collision_util::{Depenetration, overlap_circle_vs_segment, penetration_square_vs_circle_with_orientation}, entity::{Entity, EntityType, Mob, Orientation}, grid::{Grid, GridPos}, ninja::{self, Ninja}, segment::{Curvature, Segment}, tile::TILE_HALF_SIZE};
 
 const SEMI_SIDE: f64 = 9.0;
 const FORWARD_SPEED: f64 = 20.0 / 7.0;
@@ -16,6 +16,7 @@ pub struct Thwump {
     // when state is backward if it gets blocked by something
     is_moving: bool,
     detection_range: Option<f64>,
+    corners: Corners,
 }
 
 #[derive(Clone)]
@@ -23,6 +24,11 @@ enum ThwumpState {
     Waiting,
     Forward,
     Backward,
+}
+#[derive(Clone, Copy)]
+pub enum Corners {
+    Round,
+    Square,
 }
 
 impl Thwump {
@@ -34,6 +40,7 @@ impl Thwump {
             state: ThwumpState::Waiting,
             is_moving: false,
             detection_range: None,
+            corners: Corners::Square,
         }
     }
 
@@ -102,6 +109,29 @@ impl Thwump {
             let ninja_pos_rel_thwump = basis_matrix_inverse * (ninja_pos - self.pos);
             ninja_pos_rel_thwump.y > -TILE_HALF_SIZE
         }
+    }
+
+    /// Return the depenetration vector for the ninja if it collides with the thwump.
+    pub fn physical_collision(&self, ninja: &Ninja) -> Option<Depenetration> {
+        match self.corners {
+            Corners::Round => penetration_square_vs_circle_with_orientation(self.pos, SEMI_SIDE, ninja.pos, ninja::RADIUS, self.orientation),
+            Corners::Square => penetration_square_vs_circle_with_orientation(self.pos, SEMI_SIDE + ninja::RADIUS, ninja.pos, 0.0, self.orientation),
+        }
+    }
+
+    pub fn logical_collision(&self, ninja: &mut Ninja) -> Option<f64> {
+        let depen = match self.corners {
+            Corners::Round => penetration_square_vs_circle_with_orientation(self.pos, SEMI_SIDE, ninja.pos, ninja::RADIUS + 0.1, self.orientation),
+            Corners::Square => penetration_square_vs_circle_with_orientation(self.pos, SEMI_SIDE + ninja::RADIUS + 0.1, ninja.pos, 0.0, self.orientation),
+        };
+        if let Some(depen) = depen {
+            // kill ninja if touching spicy part
+            // overlap_circle_vs_segment();
+            if ninja.grav_eq_abs_horiz(depen.depen_unit_normal, 1.0) {
+                return Some(ninja.grav_get_horiz(depen.depen_unit_normal));
+            }
+        }
+        None
     }
 }
 

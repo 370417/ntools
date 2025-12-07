@@ -183,10 +183,10 @@ impl Ninja {
                 collision_state.crush += pop;
                 collision_state.crush_len += depen.depen_dist;
             }
-            // if entity_type == EntityType::Thwump {
-            //     collision_state.is_crushable = true;
-            // }
-            if let EntityType::BounceBlock /* | EntityType::Thwump | EntityType::ShoveThwump */ = entity_type {
+            if entity_type == EntityType::Thwump {
+                collision_state.is_crushable = true;
+            }
+            if let EntityType::BounceBlock | EntityType::Thwump /* | EntityType::ShoveThwump */ = entity_type {
                 self.speed += pop;
             }
             if let EntityType::OneWay = entity_type {
@@ -259,17 +259,23 @@ impl Ninja {
                 EntityType::Mine => {
                     entities.mines[i].logical_collision(self);
                 }
-                EntityType::BounceBlock => if wall_normal.is_none() {
-                    wall_normal = entities.bounce_blocks[i].logical_collision(self);
+                EntityType::BounceBlock => {
+                    let new_wall_normal = entities.bounce_blocks[i].logical_collision(self);
+                    if wall_normal.is_none() { wall_normal = new_wall_normal }
                 }
-                EntityType::OneWay => if wall_normal.is_none() {
-                    wall_normal = entities.one_ways[i].logical_collision(self);
+                EntityType::OneWay => {
+                    let new_wall_normal = entities.one_ways[i].logical_collision(self);
+                    if wall_normal.is_none() { wall_normal = new_wall_normal }
                 }
                 EntityType::ExitDoor => {
                     entities.exits[i].door_logical_collision(self);
                 }
                 EntityType::ExitSwitch => {
                     entities.exits[i].switch_logical_collision(self.pos, frame);
+                }
+                EntityType::Thwump => {
+                    let new_wall_normal = entities.thwumps[i].logical_collision(self);
+                    if wall_normal.is_none() { wall_normal = new_wall_normal }
                 }
                 _ => {}
             }

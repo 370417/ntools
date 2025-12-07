@@ -142,7 +142,7 @@ pub struct Depenetration {
 /// The square is defined by its center and semi side length. In the case of depenetrating the
 /// ninja out of square entity (bounce block, thwump, shwump), we consider a square of with a
 /// semi side equal to the semi side of the entity plus the radius of the ninja.
-pub fn penetration_square_vs_point(square_pos: DVec2, point_pos: DVec2, semi_side: f64) -> Option<Depenetration> {
+fn penetration_square_vs_point(square_pos: DVec2, point_pos: DVec2, semi_side: f64) -> Option<Depenetration> {
     let delta = point_pos - square_pos;
     let pen_x = semi_side - delta.x.abs();
     let pen_y = semi_side - delta.y.abs();
