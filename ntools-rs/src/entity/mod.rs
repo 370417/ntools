@@ -174,6 +174,13 @@ impl Orientation {
     pub fn rotation_deg(&self) -> f64 {
         self.vec2().to_angle().to_degrees()
     }
+
+    pub fn is_orthogonal(&self) -> bool {
+        match self {
+            Self::W | Self::S | Self::E | Self::N => true,
+            _ => false,
+        }
+    }
 }
 
 impl TryFrom<u8> for Orientation {

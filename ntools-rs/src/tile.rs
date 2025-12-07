@@ -294,27 +294,6 @@ impl TileCategory {
     }
 }
 
-impl TileVariant {
-    pub fn opposite(self) -> TileVariant {
-        match self {
-            TileVariant::Q => TileVariant::S,
-            TileVariant::W => TileVariant::A,
-            TileVariant::A => TileVariant::W,
-            TileVariant::S => TileVariant::Q,
-            TileVariant::E => TileVariant::D,
-            TileVariant::D => TileVariant::E,
-        }
-    }
-
-    pub fn shift(self, shift: bool) -> TileVariant {
-        if shift {
-            self.opposite()
-        } else {
-            self
-        }
-    }
-}
-
 impl Tile {
     pub fn from_u8(value: u8) -> Option<Self> {
         match value {

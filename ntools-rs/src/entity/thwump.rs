@@ -1,6 +1,6 @@
 use glam::{DMat2, DVec2};
 
-use crate::{entity::{Entity, EntityType, Mob, Orientation}, grid::{Grid, GridPos}, ninja::{self, Ninja}, segment::{Curvature, Segment}};
+use crate::{entity::{Entity, EntityType, Mob, Orientation}, grid::{Grid, GridPos}, ninja::{self, Ninja}, segment::{Curvature, Segment}, tile::TILE_HALF_SIZE};
 
 const SEMI_SIDE: f64 = 9.0;
 const FORWARD_SPEED: f64 = 20.0 / 7.0;
@@ -81,11 +81,26 @@ impl Thwump {
         if let (&ThwumpState::Waiting, Some(detection_range)) = (&self.state, self.detection_range) {
             if ninja.is_valid_target() {
                 let activation_range = 2.0 * (SEMI_SIDE + ninja::RADIUS);
-                let ninja_pos = basis_matrix_inverse * (ninja.pos - self.pos);
-                if ninja_pos.x.abs() < activation_range && ninja_pos.y > 0.0 && ninja_pos.y < detection_range {
+                let ninja_pos_rel_thwump = basis_matrix_inverse * (ninja.pos - self.pos);
+                if ninja_pos_rel_thwump.x.abs() < activation_range && self.is_facing_ninja(ninja.pos, basis_matrix_inverse) && ninja_pos_rel_thwump.y < detection_range {
                     self.state = ThwumpState::Forward;
                 }
             }
+        }
+    }
+
+    /// Returns true if the ninja is abreast or in front of this thwump.
+    fn is_facing_ninja(&self, ninja_pos: DVec2, basis_matrix_inverse: DMat2) -> bool {
+        if self.orientation.is_orthogonal() {
+            // For compatibility with N++, orthogonal thwumps check if the ninja
+            // is close enough using the half tile grid.
+            let ninja_half_tile_y = ((basis_matrix_inverse * ninja_pos).y / TILE_HALF_SIZE).floor();
+            // subtract 11 to get the the coordinate of the back of the thwump
+            let self_half_tile_y = (((basis_matrix_inverse * self.pos).y - 11.0) / TILE_HALF_SIZE).floor();
+            ninja_half_tile_y >= self_half_tile_y
+        } else {
+            let ninja_pos_rel_thwump = basis_matrix_inverse * (ninja_pos - self.pos);
+            ninja_pos_rel_thwump.y > -TILE_HALF_SIZE
         }
     }
 }
