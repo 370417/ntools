@@ -311,6 +311,26 @@ impl Replay {
     pub fn thwump_deg(&self, i: usize) -> f64 {
         self.current_sim.entities.thwumps[i].orientation.rotation_deg()
     }
+
+    #[wasm_bindgen]
+    pub fn launch_pads_len(&self) -> usize {
+        self.current_sim.entities.launch_pads.len()
+    }
+
+    #[wasm_bindgen]
+    pub fn launch_pad_x(&self, i: usize) -> f64 {
+        self.current_sim.entities.launch_pads[i].pos.x
+    }
+
+    #[wasm_bindgen]
+    pub fn launch_pad_y(&self, i: usize) -> f64 {
+        self.current_sim.entities.launch_pads[i].pos.y
+    }
+
+    #[wasm_bindgen]
+    pub fn launch_pad_deg(&self, i: usize) -> f64 {
+        self.current_sim.entities.launch_pads[i].orientation.rotation_deg()
+    }
 }
 
 // Separate impl block for functions without #[wasm_bindgen]

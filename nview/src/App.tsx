@@ -2,6 +2,7 @@ import { createEffect, createSignal, Index } from 'solid-js';
 import { Replay } from './assets/ntools_rs';
 import { Scrubber } from './Scrubber';
 import Stats from 'stats-js';
+import { LaunchPads, updateLaunchPads, type LaunchPadType } from './entities/LaunchPad';
 
 type Mine = {
     x: number;
@@ -151,6 +152,7 @@ function App() {
     const [exitDoors, setExitDoors] = createSignal<ExitDoor[]>([]);
     const [exitSwitches, setExitSwitches] = createSignal<ExitSwitch[]>([]);
     const [thwumps, setThwumps] = createSignal<Thwump[]>([]);
+    const launchPads = createSignal<LaunchPadType[]>([]);
 
     const socket = new WebSocket('ws://localhost:8080');
 
@@ -210,14 +212,25 @@ function App() {
             setNinjaPreviewBones(replay.ninja_preview_bones(partialFrame));
         }
 
+        function mineEquals(a: Mine, b: Mine): boolean {
+            return a.type === b.type && a.x === b.x && a.y === b.y;
+        }
+
         const minesArr: Mine[] = [];
         const minesLen = replay.mines_len();
+        let oldMines = mines();
         for (let i = 0; i < minesLen; i++) {
-            minesArr.push({
+            const newMine = {
                 x: replay.mine_x(i),
                 y: replay.mine_y(i),
                 type: replay.mine_state(i) as 0 | 1 | 2,
-            });
+            };
+            const oldMine = oldMines.at(i);
+            if (oldMine && mineEquals(oldMine, newMine)) {
+                minesArr.push(oldMine);
+            } else {
+                minesArr.push(newMine);
+            }
         }
         setMines(minesArr);
 
@@ -285,6 +298,8 @@ function App() {
             });
         }
         setThwumps(thwumpsArr);
+
+        updateLaunchPads(launchPads, replay);
 
         setReplayLength(replay.replay_length());
     }
@@ -365,6 +380,7 @@ function App() {
                         <path class="exit-switch" d={`M ${exitSwitch().x} ${exitSwitch().y} m ${-exitSwitchHalfWidth + exitSwitchCorner} ${-exitSwitchHalfHeight} h ${2 * (exitSwitchHalfWidth - exitSwitchCorner)} l ${exitSwitchCorner} ${exitSwitchCorner} v ${2 * (exitSwitchHalfHeight - exitSwitchCorner)} l ${-exitSwitchCorner} ${exitSwitchCorner} h ${2 * (-exitSwitchHalfWidth + exitSwitchCorner)} l ${-exitSwitchCorner} ${-exitSwitchCorner} v ${2 * (-exitSwitchHalfHeight + exitSwitchCorner)} l ${exitSwitchCorner} ${-exitSwitchCorner}`} />
                     </>}
                 </Index>
+                <LaunchPads launchPads={launchPads} />
                 <Index each={thwumps()}>
                     {thwump => <use href="#thwump" x={thwump().x} y={thwump().y} transform={`rotate(${thwump().deg},${thwump().x},${thwump().y})`} />}
                 </Index>

@@ -24,6 +24,9 @@ body {
     --boost-pad: #000000;
     --boost-pad-wooshing: #C2CEB1;
 
+    --launch-pad-short: #000000;
+    --launch-pad-long: #999999;
+
     --exit-panel: #B9C3B2;
     --exit-border: #323323;
     --exit-switch-border: #323323;
@@ -120,6 +123,14 @@ svg {
 
 #oneway line.short {
     stroke: var(--oneway-short);
+}
+
+.launch-pad rect {
+    fill: var(--launch-pad-long);
+}
+
+.launch-pad line {
+    stroke: var(--launch-pad-short);
 }
 
 .exit-door {
