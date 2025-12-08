@@ -1,17 +1,12 @@
 import { createSignal, Index } from 'solid-js';
 import { Replay } from './assets/ntools_rs';
 import { Scrubber } from './Scrubber';
-import Stats from 'stats-js';
+// import Stats from 'stats-js';
 import { LaunchPads, updateLaunchPads, type LaunchPadData } from './entities/LaunchPad';
 import { MineDefs, Mines, updateMines, type MineData } from './entities/Mine';
+import { OneWayDefs, OneWays, updateOneWays, type OneWayData } from './entities/OneWay';
 
 type BounceBlock = {
-    x: number;
-    y: number;
-    deg: number;
-};
-
-type OneWay = {
     x: number;
     y: number;
     deg: number;
@@ -54,11 +49,6 @@ const bounceBlockPath = `M -${n18} -${n18} L ${n18} -${n18} L ${n18} ${n18} L -$
 // at corners, so instead we recreate the effect with a path.
 const bounceBlockStrokePath = `M -${n17} ${n17b} V ${n17} H -${n17b} M -${n17a} ${n17} H ${n17a} M ${n17b} ${n17} H ${n17} V ${n17b} M ${n17} ${n17a} V -${n17a} M ${n17} -${n17b} V -${n17} H ${n17b} M ${n17a} -${n17} H -${n17a} M -${n17b} -${n17} H -${n17} V -${n17b} M -${n17} -${n17a} V ${n17a}`;
 const bounceBlockStroke = 2 * 24 / 44;
-
-// OneWay
-const oneWayHalfWidth = 12;
-const oneWayHalfWidthSmall = 9;
-const oneWayLineSpacing = 3;
 
 // BoostPad
 const boostPadLong = 6;
@@ -132,7 +122,7 @@ function App() {
 
     const mines = createSignal<MineData[]>([]);
     const [bounceBlocks, setBounceBlocks] = createSignal<BounceBlock[]>([]);
-    const [oneWays, setOneWays] = createSignal<OneWay[]>([]);
+    const oneWays = createSignal<OneWayData[]>([]);
     const [boostPads, setBoostPads] = createSignal<BoostPad[]>([]);
     const [exitDoors, setExitDoors] = createSignal<ExitDoor[]>([]);
     const [exitSwitches, setExitSwitches] = createSignal<ExitSwitch[]>([]);
@@ -210,16 +200,7 @@ function App() {
         }
         setBounceBlocks(bounceBlocksArr);
 
-        const oneWaysArr: OneWay[] = [];
-        const oneWaysLen = replay.one_ways_len();
-        for (let i = 0; i < oneWaysLen; i++) {
-            oneWaysArr.push({
-                x: replay.one_way_x(i),
-                y: replay.one_way_y(i),
-                deg: replay.one_way_deg(i),
-            });
-        }
-        setOneWays(oneWaysArr);
+        updateOneWays(oneWays, replay);
 
         const boostPadsArr: BoostPad[] = [];
         const boostPadsLen = replay.boost_pads_len();
@@ -298,10 +279,7 @@ function App() {
                         <path id="bounceblockFill" d={bounceBlockPath} />
                         <path id="bounceblockStroke" d={bounceBlockStrokePath} fill="none" stroke-width={bounceBlockStroke} />
                     </g>
-                    <g id="oneway">
-                        <line class="long" x1={-oneWayHalfWidth} y1="0" x2={oneWayHalfWidth} y2="0" stroke-linecap="butt" />
-                        <line class="short" x1={-oneWayHalfWidthSmall} y1={oneWayLineSpacing} x2={oneWayHalfWidthSmall} y2={oneWayLineSpacing} stroke-linecap="butt" />
-                    </g>
+                    <OneWayDefs />
                     <g id="boostpad" stroke-width="1.25">
                         <line x1={boostPadLong} y1={boostPadShort} x2={-boostPadShort} y2={-boostPadLong} />
                         <line x1={boostPadLong} y1={boostPadMid} x2={-boostPadMid} y2={-boostPadLong} />
@@ -321,9 +299,7 @@ function App() {
                         <path class="exit-door-stroke" stroke-width="3" fill="none" stroke-linecap="round" d={`M ${exitDoor().x} ${exitDoor().y} m 0 ${(1 - 0) * exitDoorRadius} v ${(0) * exitDoorRadius} h ${exitDoorRadius - exitDoorCorner} l ${exitDoorCorner} ${-exitDoorCorner} v ${(1 - 0) * (-exitDoorRadius + exitDoorCorner)}`} />
                     </>}
                 </Index>
-                <Index each={oneWays()}>
-                    {oneWay => <use href="#oneway" x={oneWay().x} y={oneWay().y} transform={`rotate(${oneWay().deg},${oneWay().x},${oneWay().y})`} />}
-                </Index>
+                <OneWays oneWays={oneWays} />
                 <Mines mines={mines} />
                 <Index each={exitSwitches()}>
                     {exitSwitch => <>

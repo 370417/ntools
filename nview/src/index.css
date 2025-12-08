@@ -117,12 +117,12 @@ svg {
     stroke: var(--bounceblock-border);
 }
 
-#oneway line.long {
-    stroke: var(--oneway-long);
+#one-way rect.long {
+    fill: var(--oneway-long);
 }
 
-#oneway line.short {
-    stroke: var(--oneway-short);
+#one-way rect.short {
+    fill: var(--oneway-short);
 }
 
 .launch-pad rect {
