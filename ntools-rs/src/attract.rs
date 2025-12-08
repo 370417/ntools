@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{entity::{Entities, Orientation, boost_pad::BoostPad, bounce_block::BounceBlock, exit::Exit, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, thwump::Thwump}, grid::{COLS, Grid, GridPos, ROWS}, segment::Segment, tile::Tile};
+use crate::{entity::{Entities, Orientation, OrientationZeroNorth, boost_pad::BoostPad, bounce_block::BounceBlock, exit::Exit, floorchaser::Floorchaser, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, thwump::Thwump}, grid::{COLS, Grid, GridPos, ROWS}, segment::Segment, tile::Tile};
 
 /// Represents a parsed attract file.
 /// An attract file is what gets shown in the game's main menu: a replay of a failed attempt at a level.
@@ -113,6 +113,7 @@ impl Attract {
             // we want to ignore invalid orientations for objects that do
             // not need orientation.
             let orientation = Orientation::try_from(map_data[i + 3]);
+            let orientation_zero_north = OrientationZeroNorth::try_from(map_data[i + 3]);
             let _mode = map_data[i + 4];
 
             let pos = DVec2::new(x as f64, y as f64);
@@ -151,7 +152,7 @@ impl Attract {
                 // Chaser drone
                 15 => {}
                 // Floor chaser
-                16 => {}
+                16 => entities.floorchasers.push(Floorchaser::new(6.0 * pos, orientation_zero_north?)),
                 // Bounce block
                 17 => entities.bounce_blocks.push(BounceBlock::new(6.0 * pos)),
                 // Rocket

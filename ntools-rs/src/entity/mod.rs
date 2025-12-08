@@ -1,10 +1,11 @@
 use glam::DVec2;
 
-use crate::{entity::{boost_pad::BoostPad, bounce_block::BounceBlock, exit::Exit, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, thwump::Thwump}, grid::{Grid, GridPos}, segment::Segment};
+use crate::{entity::{boost_pad::BoostPad, bounce_block::BounceBlock, exit::Exit, floorchaser::Floorchaser, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, thwump::Thwump}, grid::{Grid, GridPos}, segment::Segment};
 
 pub mod boost_pad;
 pub mod bounce_block;
 pub mod exit;
+pub mod floorchaser;
 pub mod launch_pad;
 pub mod mine;
 pub mod one_way;
@@ -21,6 +22,7 @@ pub struct Entities {
     pub exits: Vec<Exit>,
     pub thwumps: Vec<Thwump>,
     pub launch_pads: Vec<LaunchPad>,
+    pub floorchasers: Vec<Floorchaser>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -34,6 +36,7 @@ pub enum EntityType {
     ExitSwitch,
     Thwump,
     LaunchPad,
+    Floorchaser,
 }
 
 pub trait Entity {
@@ -54,6 +57,7 @@ impl Entities {
             exits: Vec::new(),
             thwumps: Vec::new(),
             launch_pads: Vec::new(),
+            floorchasers: Vec::new(),
         }
     }
 
@@ -84,6 +88,9 @@ impl Entities {
         for (i, launch_pad) in self.launch_pads.iter().enumerate() {
             grid[launch_pad.pos].push((EntityType::LaunchPad, i));
         }
+        for (i, floorchaser) in self.floorchasers.iter().enumerate() {
+            grid[floorchaser.pos].push((EntityType::Floorchaser, i));
+        }
         grid
     }
 }
@@ -91,9 +98,16 @@ impl Entities {
 impl EntityType {
     pub fn is_mob(&self) -> bool {
         match self {
-            EntityType::Ninja |
+            EntityType::Ninja => true,
+            EntityType::Mine => false,
             EntityType::BounceBlock => true,
-            _ => false,
+            EntityType::OneWay => false,
+            EntityType::BoostPad => false,
+            EntityType::ExitDoor => false,
+            EntityType::ExitSwitch => false,
+            EntityType::Thwump => true,
+            EntityType::LaunchPad => false,
+            EntityType::Floorchaser => true,
         }
     }
 }
@@ -133,23 +147,55 @@ pub fn move_entities<T: Mob + Entity>(entities: &mut [T], entity_grid: &mut Grid
 
 #[derive(Clone, Copy)]
 pub enum Orientation {
-    W,
-    SW,
-    S,
-    SE,
     E,
-    NE,
-    N,
+    SE,
+    S,
+    SW,
+    W,
     NW,
+    N,
+    NE,
     // non-standard orientations below
-    WSW,
-    SSW,
-    SSE,
     ESE,
-    ENE,
-    NNE,
-    NNW,
+    SSE,
+    SSW,
+    WSW,
     WNW,
+    NNW,
+    NNE,
+    ENE,
+}
+
+/// Orientation where 0 means north instead of west.
+///
+/// This is used by entities if:
+/// - the entity did not support multiple orientations in the original game.
+/// - the entity's natural orientation was facing north.
+///
+/// "Natural orientation" is the orientation you would expect to use in editor
+/// to rotate the entity to its default orientation.
+///
+/// Entities that don't support rotation in game get stored with their rotation
+/// byte set to 0. If we used the regular orientation enum for them, they'd all
+/// appear to be oriented westward when we load them.
+#[derive(Clone, Copy)]
+pub enum OrientationZeroNorth {
+    N,
+    NE,
+    E,
+    SE,
+    S,
+    SW,
+    W,
+    NW,
+    NNE,
+    ENE,
+    ESE,
+    SSE,
+    SSW,
+    WSW,
+    WNW,
+    NNW,
 }
 
 impl Orientation {
@@ -159,27 +205,66 @@ impl Orientation {
         let short = 0.4472135955; // 1/sqrt(5)
         let long = short * 2.0;
         match self {
-            Orientation::W => DVec2::new(1.0, 0.0),
-            Orientation::SW => DVec2::new(sqrt, sqrt),
-            Orientation::S => DVec2::new(0.0, 1.0),
-            Orientation::SE => DVec2::new(-sqrt, sqrt),
-            Orientation::E => DVec2::new(-1.0, 0.0),
-            Orientation::NE => DVec2::new(-sqrt, -sqrt),
-            Orientation::N => DVec2::new(0.0, -1.0),
-            Orientation::NW => DVec2::new(sqrt, -sqrt),
-            Orientation::WSW => DVec2::new(-long, short),
-            Orientation::SSW => DVec2::new(-short, long),
-            Orientation::SSE => DVec2::new(short, long),
-            Orientation::ESE => DVec2::new(long, short),
-            Orientation::ENE => DVec2::new(long, -short),
-            Orientation::NNE => DVec2::new(short, -long),
-            Orientation::NNW => DVec2::new(-short, -long),
-            Orientation::WNW => DVec2::new(-long, -short),
+            Self::E => DVec2::new(1.0, 0.0),
+            Self::SE => DVec2::new(sqrt, sqrt),
+            Self::S => DVec2::new(0.0, 1.0),
+            Self::SW => DVec2::new(-sqrt, sqrt),
+            Self::W => DVec2::new(-1.0, 0.0),
+            Self::NW => DVec2::new(-sqrt, -sqrt),
+            Self::N => DVec2::new(0.0, -1.0),
+            Self::NE => DVec2::new(sqrt, -sqrt),
+            Self::ESE => DVec2::new(long, short),
+            Self::SSE => DVec2::new(short, long),
+            Self::SSW => DVec2::new(-short, long),
+            Self::WSW => DVec2::new(-long, short),
+            Self::WNW => DVec2::new(-long, -short),
+            Self::NNW => DVec2::new(-short, -long),
+            Self::NNE => DVec2::new(short, -long),
+            Self::ENE => DVec2::new(long, -short),
         }
     }
 
     pub fn rotation_deg(&self) -> f64 {
         self.vec2().to_angle().to_degrees()
+    }
+
+    pub fn is_orthogonal(&self) -> bool {
+        match self {
+            Self::W | Self::S | Self::E | Self::N => true,
+            _ => false,
+        }
+    }
+}
+
+impl OrientationZeroNorth {
+    /// Orientation represented by unit vector.
+    pub fn vec2(&self) -> DVec2 {
+        let sqrt = std::f64::consts::FRAC_1_SQRT_2;
+        let short = 0.4472135955; // 1/sqrt(5)
+        let long = short * 2.0;
+        match self {
+            Self::E => DVec2::new(1.0, 0.0),
+            Self::SE => DVec2::new(sqrt, sqrt),
+            Self::S => DVec2::new(0.0, 1.0),
+            Self::SW => DVec2::new(-sqrt, sqrt),
+            Self::W => DVec2::new(-1.0, 0.0),
+            Self::NW => DVec2::new(-sqrt, -sqrt),
+            Self::N => DVec2::new(0.0, -1.0),
+            Self::NE => DVec2::new(sqrt, -sqrt),
+            Self::ESE => DVec2::new(long, short),
+            Self::SSE => DVec2::new(short, long),
+            Self::SSW => DVec2::new(-short, long),
+            Self::WSW => DVec2::new(-long, short),
+            Self::WNW => DVec2::new(-long, -short),
+            Self::NNW => DVec2::new(-short, -long),
+            Self::NNE => DVec2::new(short, -long),
+            Self::ENE => DVec2::new(long, -short),
+        }
+    }
+
+    pub fn rotation_deg(&self) -> f64 {
+        // Add 90 so that north gets represented as 0 rotation.
+        self.vec2().to_angle().to_degrees() + 90.0
     }
 
     pub fn is_orthogonal(&self) -> bool {
@@ -211,6 +296,32 @@ impl TryFrom<u8> for Orientation {
             13 => Ok(Self::NNE),
             14 => Ok(Self::NNW),
             15 => Ok(Self::WNW),
+            _ => Err("Orientation must be less than 16".into())
+        }
+    }
+}
+
+impl TryFrom<u8> for OrientationZeroNorth {
+    type Error = String;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(Self::N),
+            1 => Ok(Self::NE),
+            2 => Ok(Self::E),
+            3 => Ok(Self::SE),
+            4 => Ok(Self::S),
+            5 => Ok(Self::SW),
+            6 => Ok(Self::W),
+            7 => Ok(Self::NW),
+            8 => Ok(Self::NNE),
+            9 => Ok(Self::ENE),
+            10 => Ok(Self::ESE),
+            11 => Ok(Self::SSE),
+            12 => Ok(Self::SSW),
+            13 => Ok(Self::WSW),
+            14 => Ok(Self::WNW),
+            15 => Ok(Self::NNW),
             _ => Err("Orientation must be less than 16".into())
         }
     }

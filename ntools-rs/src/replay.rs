@@ -331,6 +331,28 @@ impl Replay {
     pub fn launch_pad_deg(&self, i: usize) -> f64 {
         self.current_sim.entities.launch_pads[i].orientation.rotation_deg()
     }
+
+    #[wasm_bindgen]
+    pub fn floorguards_len(&self) -> usize {
+        self.current_sim.entities.floorchasers.len()
+    }
+
+    #[wasm_bindgen]
+    pub fn floorguard_x(&self, i: usize, partial_frame: f64) -> f64 {
+        // TODO: handle partial_frame
+        self.current_sim.entities.floorchasers[i].pos.x
+    }
+
+    #[wasm_bindgen]
+    pub fn floorguard_y(&self, i: usize, partial_frame: f64) -> f64 {
+        // TODO: handle partial_frame
+        self.current_sim.entities.floorchasers[i].pos.y
+    }
+
+    #[wasm_bindgen]
+    pub fn floorguard_deg(&self, i: usize) -> f64 {
+        self.current_sim.entities.floorchasers[i].orientation.rotation_deg()
+    }
 }
 
 // Separate impl block for functions without #[wasm_bindgen]

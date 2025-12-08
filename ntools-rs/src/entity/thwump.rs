@@ -74,7 +74,7 @@ impl Thwump {
 
         if let (&ThwumpState::Waiting, None) = (&self.state, self.detection_range) {
             // TODO: could optimize by iterating over less of the grid
-            self.detection_range = segments_in_fov(self.pos - SEMI_SIDE * orientation, basis_matrix_inverse, segments.flat_iter())
+            self.detection_range = segments_in_fov(self.pos - SEMI_SIDE * orientation, basis_matrix_inverse, 11.0, segments.flat_iter())
                 .filter(|(start, end)| {
                     // filter out walls that are fully behind the thwump
                     start.y > 0.0 || end.y > 0.0
@@ -185,8 +185,8 @@ impl Mob for Thwump {
 
         let segments_iter = segments.iter_rect_region(leading_edge_corners.0, leading_edge_corners.1);
 
-        let has_collision = segments_in_fov(leading_edge_center, basis_matrix_inverse, segments_iter).any(|(start, end)| {
-            // We check that y isn't too small to try to avoid collisions with walls that are behind the leading edge of the thwump
+        let has_collision = segments_in_fov(leading_edge_center, basis_matrix_inverse, 11.0, segments_iter).any(|(start, end)| {
+            // We check that y isn't too small to try to avoid collisions with walls that are behind the leading edge
             start.y <= 0.0 && start.y > -1.1 * speed_magnitude || end.y <= 0.0 && end.y > -1.1 * speed_magnitude
         });
 
@@ -202,49 +202,55 @@ impl Mob for Thwump {
     }
 }
 
-fn segments_in_fov<'a>(origin: DVec2, basis_matrix_inverse: DMat2, segments: impl Iterator<Item = &'a Segment>) -> impl Iterator<Item = (DVec2, DVec2)> {
+/// Returns an iterator over segments in a field of view.
+///
+/// A segment is considered to be in the fov if,
+/// in the frame of reference defined by basis_matrix_inverse:
+/// - segment is not vertical
+/// - segment's x span at least partially overlaps [-half_width, half_width]
+pub fn segments_in_fov<'a>(origin: DVec2, basis_matrix_inverse: DMat2, half_width: f64, segments: impl Iterator<Item = &'a Segment>) -> impl Iterator<Item = (DVec2, DVec2)> {
     segments.flat_map(move |segment| {
-            // convert into segments relative to leading edge
-            match segment {
-                Segment::Linear { start, end, .. } => {
-                    // Create iterators from arrays of options in a hare-brained scheme to avoid allocation.
-                    let start = basis_matrix_inverse * (start - origin);
-                    let end = basis_matrix_inverse * (end - origin);
-                    if (end - start).length_squared() > 1.99 {
-                        // split 45° diagonal segments into two because each half occupies a different spot
-                        // in the half tile grid
-                        let mid = (start + end) / 2.0;
-                        [Some((start, mid)), Some((mid, end))].into_iter()
-                    } else {
-                        [Some((start, end)), None].into_iter()
-                    }
-                }
-                Segment::Circular { start, end, curvature: Curvature::Concave, .. } => {
-                    // A concave circular segment's collision is the same as a 45° diagonal segment
-                    let start = basis_matrix_inverse * (start - origin);
-                    let end = basis_matrix_inverse * (end - origin);
+        // convert into segments relative to origin
+        match segment {
+            Segment::Linear { start, end, .. } => {
+                // Create iterators from arrays of options in a hare-brained scheme to avoid allocation.
+                let start = basis_matrix_inverse * (start - origin);
+                let end = basis_matrix_inverse * (end - origin);
+                if (end - start).length_squared() > 1.99 {
+                    // split 45° diagonal segments into two because each half occupies a different spot
+                    // in the half tile grid
                     let mid = (start + end) / 2.0;
                     [Some((start, mid)), Some((mid, end))].into_iter()
+                } else {
+                    [Some((start, end)), None].into_iter()
                 }
-                Segment::Circular { start, end, center, curvature: Curvature::Convex } => {
-                    let start = basis_matrix_inverse * (start - origin);
-                    let end = basis_matrix_inverse * (end - origin);
-                    let center = basis_matrix_inverse * (center - origin);
-                    [Some((start, center)), Some((center, end))].into_iter()
-                }
-                Segment::Door => todo!(),
             }
-        })
-        .flat_map(|option| option.into_iter())
-        .filter(|(start, end)| {
-            // filter out segments that are parallel with thwump's direction of motion
-            let is_parallel = (start.x - end.x).abs() < 0.01;
-            !is_parallel
-        })
-        .filter(|(start, end)| {
-            // filter out segments that are fully to the side of the thwump
-            let is_left = start.x < -11.0 && end.x < -11.0;
-            let is_right = start.x > 11.0 && end.x > 11.0;
-            !is_left && !is_right
-        })
+            Segment::Circular { start, end, curvature: Curvature::Concave, .. } => {
+                // A concave circular segment's collision is the same as a 45° diagonal segment
+                let start = basis_matrix_inverse * (start - origin);
+                let end = basis_matrix_inverse * (end - origin);
+                let mid = (start + end) / 2.0;
+                [Some((start, mid)), Some((mid, end))].into_iter()
+            }
+            Segment::Circular { start, end, center, curvature: Curvature::Convex } => {
+                let start = basis_matrix_inverse * (start - origin);
+                let end = basis_matrix_inverse * (end - origin);
+                let center = basis_matrix_inverse * (center - origin);
+                [Some((start, center)), Some((center, end))].into_iter()
+            }
+            Segment::Door => todo!(),
+        }
+    })
+    .flat_map(|option| option.into_iter())
+    .filter(|(start, end)| {
+        // filter out segments that are parallel with thwump's direction of motion
+        let is_parallel = (start.x - end.x).abs() < 0.01;
+        !is_parallel
+    })
+    .filter(move |(start, end)| {
+        // filter out segments that are fully to the side of the thwump
+        let is_left = start.x < -half_width && end.x < -half_width;
+        let is_right = start.x > half_width && end.x > half_width;
+        !is_left && !is_right
+    })
 }
