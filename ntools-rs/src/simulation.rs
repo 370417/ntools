@@ -25,6 +25,7 @@ pub struct KeyFrame {
     bounce_blocks: Vec<BounceBlock>,
     exit_open_frames: Vec<Option<u32>>,
     thwumps: Vec<Thwump>,
+    launch_pad_touch_frames: Vec<Option<u32>>,
 }
 
 impl Input {
@@ -93,7 +94,7 @@ impl Simulation {
                 self.ninja.collide_vs_objects(&mut collision_state, &mut self.entities, &self.entity_grid);
                 self.ninja.collide_vs_tiles(&mut collision_state, segments);
             }
-            self.ninja.post_collision(&collision_state, &mut self.entities, &self.entity_grid, segments, self.frame);
+            self.ninja.post_collision(&mut collision_state, &mut self.entities, &self.entity_grid, segments, self.frame);
             self.ninja.think(input.jump, hor_input);
             self.ninja.update_graphics(hor_input);
         }
@@ -109,6 +110,7 @@ impl KeyFrame {
             bounce_blocks: sim.entities.bounce_blocks.clone(),
             exit_open_frames: sim.entities.exits.iter().map(|exit| exit.door_open_frame).collect(),
             thwumps: sim.entities.thwumps.clone(),
+            launch_pad_touch_frames: sim.entities.launch_pads.iter().map(|launch_pad| launch_pad.last_touch_frame).collect(),
         }
     }
 
@@ -127,6 +129,10 @@ impl KeyFrame {
         }
 
         self.thwumps.clone_into(&mut sim.entities.thwumps);
+
+        for (i, launch_pad_touch_frame) in self.launch_pad_touch_frames.iter().enumerate() {
+            sim.entities.launch_pads[i].last_touch_frame = *launch_pad_touch_frame;
+        }
 
         sim.entity_grid.drain_mobs();
         // add all mobs back into entity_grid

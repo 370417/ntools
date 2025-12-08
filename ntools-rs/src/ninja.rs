@@ -37,6 +37,7 @@ pub struct Ninja {
     floor_buffer: Option<u8>,
     wall_buffer: Option<u8>,
     launch_pad_buffer: Option<u8>,
+    launch_pad_boost_normal: DVec2,
     floor_unit_normal: DVec2,
     ceiling_unit_normal: DVec2,
     anim_state: AnimState,
@@ -126,6 +127,7 @@ impl Ninja {
             floor_buffer: None,
             wall_buffer: None,
             launch_pad_buffer: None,
+            launch_pad_boost_normal: -DVec2::Y,
             floor_unit_normal: DVec2::new(0.0, -1.0),
             ceiling_unit_normal: DVec2::new(0.0, 1.0),
             anim_state: AnimState::Standing,
@@ -249,7 +251,7 @@ impl Ninja {
 
     /// Perform logical collisions with entities, check for airborn state,
     /// check for walled state, calculate floor normals, check for impact or crush death.
-    pub fn post_collision(&mut self, collision_state: &CollisionState, entities: &mut Entities, entity_grid: &Grid<EntityIndex>, segments: &Grid<Segment>, frame: u32) {
+    pub fn post_collision(&mut self, collision_state: &mut CollisionState, entities: &mut Entities, entity_grid: &Grid<EntityIndex>, segments: &Grid<Segment>, frame: u32) {
         // Perform LOGICAL collisions between the ninja and nearby entities.
         // Also check if the ninja can interact with the walls of entities when applicable.
         // todo
@@ -276,6 +278,22 @@ impl Ninja {
                 EntityType::Thwump => {
                     let new_wall_normal = entities.thwumps[i].logical_collision(self);
                     if wall_normal.is_none() { wall_normal = new_wall_normal }
+                }
+                EntityType::LaunchPad => {
+                    if let Some(boost) = entities.launch_pads[i].logical_collision(self, frame) {
+                        // If collision with launch pad, update speed and position.
+                        let boost = 2.0 / 3.0 * boost;
+                        self.pos += boost;
+                        self.speed = boost;
+                        collision_state.floor_count = 0;
+                        self.floor_buffer = None;
+                        self.launch_pad_boost_normal = boost.normalize();
+                        self.launch_pad_buffer = Some(0);
+                        if self.state == NinjaState::Jumping {
+                            self.applied_gravity = GRAVITY_FALL;
+                        }
+                        self.state = NinjaState::Falling;
+                    }
                 }
                 _ => {}
             }
@@ -417,7 +435,15 @@ impl Ninja {
 
     /// Perform launch pad jump.
     fn launch_pad_jump(&mut self) {
-        todo!()
+        self.floor_buffer = None;
+        self.wall_buffer = None;
+        self.jump_buffer = None;
+        self.launch_pad_buffer = None;
+        let mut boost_scalar = 2.0 * self.launch_pad_boost_normal.x.abs() + 2.0;
+        if boost_scalar == 2.0 {
+            boost_scalar = 1.7;
+        }
+        self.speed += self.launch_pad_boost_normal * boost_scalar * 2.0 / 3.0;
     }
 
     /// Handles all the ninja's actions depending on the inputs and its environment.

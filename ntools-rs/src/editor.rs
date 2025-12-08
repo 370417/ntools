@@ -26,6 +26,7 @@ pub enum EditorMode {
     MoveSelection,
     PlaceEntity,
     SelectEntities,
+    ModifyEntity,
     EntityPalette,
     PenTool(PenTool),
 }
@@ -54,8 +55,9 @@ impl Editor {
             EditorMode::MoveSelection => 3,
             EditorMode::PlaceEntity => 4,
             EditorMode::SelectEntities => 5,
-            EditorMode::EntityPalette => 6,
-            EditorMode::PenTool(_) => 7,
+            EditorMode::ModifyEntity => 6,
+            EditorMode::EntityPalette => 7,
+            EditorMode::PenTool(_) => 8,
         }
     }
 

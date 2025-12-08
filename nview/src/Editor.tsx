@@ -19,8 +19,9 @@ const MODE_SELECT_TILES = 2;
 const MODE_MOVE_SELECTION = 3;
 const MODE_PLACE_ENTITY = 4;
 const MODE_SELECT_ENTITIES = 5;
-const MODE_ENTITY_PALETTE = 6;
-const MODE_PEN_TOOL = 7;
+const MODE_MODIFY_ENTITY = 6;
+const MODE_ENTITY_PALETTE = 7;
+const MODE_PEN_TOOL = 8;
 
 export function EditorApp() {
     const editor = Editor.new();

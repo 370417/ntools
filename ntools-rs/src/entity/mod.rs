@@ -1,10 +1,11 @@
 use glam::DVec2;
 
-use crate::{entity::{boost_pad::BoostPad, bounce_block::BounceBlock, exit::Exit, mine::Mine, one_way::OneWay, thwump::Thwump}, grid::{Grid, GridPos}, segment::Segment};
+use crate::{entity::{boost_pad::BoostPad, bounce_block::BounceBlock, exit::Exit, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, thwump::Thwump}, grid::{Grid, GridPos}, segment::Segment};
 
 pub mod boost_pad;
 pub mod bounce_block;
 pub mod exit;
+pub mod launch_pad;
 pub mod mine;
 pub mod one_way;
 pub mod polymorphism;
@@ -19,6 +20,7 @@ pub struct Entities {
     pub boost_pads: Vec<BoostPad>,
     pub exits: Vec<Exit>,
     pub thwumps: Vec<Thwump>,
+    pub launch_pads: Vec<LaunchPad>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -31,6 +33,7 @@ pub enum EntityType {
     ExitDoor,
     ExitSwitch,
     Thwump,
+    LaunchPad,
 }
 
 pub trait Entity {
@@ -50,6 +53,7 @@ impl Entities {
             boost_pads: Vec::new(),
             exits: Vec::new(),
             thwumps: Vec::new(),
+            launch_pads: Vec::new(),
         }
     }
 
@@ -76,6 +80,9 @@ impl Entities {
         }
         for (i, thwump) in self.thwumps.iter().enumerate() {
             grid[thwump.pos].push((EntityType::Thwump, i));
+        }
+        for (i, launch_pad) in self.launch_pads.iter().enumerate() {
+            grid[launch_pad.pos].push((EntityType::LaunchPad, i));
         }
         grid
     }

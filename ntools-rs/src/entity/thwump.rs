@@ -125,7 +125,7 @@ impl Thwump {
             Corners::Square => penetration_square_vs_circle_with_orientation(self.pos, SEMI_SIDE + ninja::RADIUS + 0.1, ninja.pos, 0.0, self.orientation),
         };
         if let Some(depen) = depen {
-            // kill ninja if touching spicy part
+            // TODO: kill ninja if touching spicy part
             // overlap_circle_vs_segment();
             if ninja.grav_eq_abs_horiz(depen.depen_unit_normal, 1.0) {
                 return Some(ninja.grav_get_horiz(depen.depen_unit_normal));

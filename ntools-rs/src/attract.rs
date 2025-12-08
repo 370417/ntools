@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{entity::{Entities, Orientation, boost_pad::BoostPad, bounce_block::BounceBlock, exit::Exit, mine::Mine, one_way::OneWay, thwump::Thwump}, grid::{COLS, Grid, GridPos, ROWS}, segment::Segment, tile::Tile};
+use crate::{entity::{Entities, Orientation, boost_pad::BoostPad, bounce_block::BounceBlock, exit::Exit, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, thwump::Thwump}, grid::{COLS, Grid, GridPos, ROWS}, segment::Segment, tile::Tile};
 
 /// Represents a parsed attract file.
 /// An attract file is what gets shown in the game's main menu: a replay of a failed attempt at a level.
@@ -139,7 +139,7 @@ impl Attract {
                 // C switch
                 9 => {}
                 // Launch pad
-                10 => {}
+                10 => entities.launch_pads.push(LaunchPad::new(6.0 * pos, orientation?)),
                 // One way
                 11 => entities.one_ways.push(OneWay::new(6.0 * pos, orientation?)),
                 // Chainsaw drone
