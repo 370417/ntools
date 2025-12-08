@@ -5,12 +5,7 @@ import { Scrubber } from './Scrubber';
 import { LaunchPads, updateLaunchPads, type LaunchPadData } from './entities/LaunchPad';
 import { MineDefs, Mines, updateMines, type MineData } from './entities/Mine';
 import { OneWayDefs, OneWays, updateOneWays, type OneWayData } from './entities/OneWay';
-
-type BounceBlock = {
-    x: number;
-    y: number;
-    deg: number;
-};
+import { BounceBlockDefs, BounceBlocks, updateBounceBlocks, type BounceBlockData } from './entities/BounceBlock';
 
 type BoostPad = {
     x: number;
@@ -36,19 +31,6 @@ type Thwump = {
 };
 
 const LIMBS = [[0, 12], [1, 12], [2, 8], [3, 9], [4, 10], [5, 11], [6, 7], [8, 0], [9, 0], [10, 1], [11, 1]];
-
-// Bounceblock
-// In 1080p:
-// <path d="M -18 -18 L 18 -18 L 18 18 L -18 18 Z" />
-const n17 = 17 * 24 / 44;
-const n17a = 4 * 24 / 44;
-const n17b = 10 * 24 / 44;
-const n18 = 18 * 24 / 44;
-const bounceBlockPath = `M -${n18} -${n18} L ${n18} -${n18} L ${n18} ${n18} L -${n18} ${n18} Z`;
-// I would use svg's stroke dasharray to make the dashed lines, but they result in artifacts
-// at corners, so instead we recreate the effect with a path.
-const bounceBlockStrokePath = `M -${n17} ${n17b} V ${n17} H -${n17b} M -${n17a} ${n17} H ${n17a} M ${n17b} ${n17} H ${n17} V ${n17b} M ${n17} ${n17a} V -${n17a} M ${n17} -${n17b} V -${n17} H ${n17b} M ${n17a} -${n17} H -${n17a} M -${n17b} -${n17} H -${n17} V -${n17b} M -${n17} -${n17a} V ${n17a}`;
-const bounceBlockStroke = 2 * 24 / 44;
 
 // BoostPad
 const boostPadLong = 6;
@@ -121,7 +103,7 @@ function App() {
     const [ninjaPreviewBones, setNinjaPreviewBones] = createSignal<Float32Array<ArrayBufferLike> | undefined>(undefined);
 
     const mines = createSignal<MineData[]>([]);
-    const [bounceBlocks, setBounceBlocks] = createSignal<BounceBlock[]>([]);
+    const bounceBlocks = createSignal<BounceBlockData[]>([]);
     const oneWays = createSignal<OneWayData[]>([]);
     const [boostPads, setBoostPads] = createSignal<BoostPad[]>([]);
     const [exitDoors, setExitDoors] = createSignal<ExitDoor[]>([]);
@@ -188,18 +170,7 @@ function App() {
         }
 
         updateMines(mines, replay);
-
-        const bounceBlocksArr: BounceBlock[] = [];
-        const bounceBlocksLen = replay.bounce_blocks_len();
-        for (let i = 0; i < bounceBlocksLen; i++) {
-            bounceBlocksArr.push({
-                x: replay.bounce_block_x(i, partialFrame),
-                y: replay.bounce_block_y(i, partialFrame),
-                deg: replay.bounce_block_deg(i),
-            });
-        }
-        setBounceBlocks(bounceBlocksArr);
-
+        updateBounceBlocks(bounceBlocks, replay, partialFrame);
         updateOneWays(oneWays, replay);
 
         const boostPadsArr: BoostPad[] = [];
@@ -275,10 +246,7 @@ function App() {
                         <use href="#tiles" />
                     </clipPath>
                     <MineDefs />
-                    <g id="bounceblock">
-                        <path id="bounceblockFill" d={bounceBlockPath} />
-                        <path id="bounceblockStroke" d={bounceBlockStrokePath} fill="none" stroke-width={bounceBlockStroke} />
-                    </g>
+                    <BounceBlockDefs />
                     <OneWayDefs />
                     <g id="boostpad" stroke-width="1.25">
                         <line x1={boostPadLong} y1={boostPadShort} x2={-boostPadShort} y2={-boostPadLong} />
@@ -310,9 +278,7 @@ function App() {
                 <Index each={thwumps()}>
                     {thwump => <use href="#thwump" x={thwump().x} y={thwump().y} transform={`rotate(${thwump().deg},${thwump().x},${thwump().y})`} />}
                 </Index>
-                <Index each={bounceBlocks()}>
-                    {bounceBlock => <use href="#bounceblock" x={bounceBlock().x} y={bounceBlock().y} transform={`rotate(${bounceBlock().deg},${bounceBlock().x},${bounceBlock().y})`} />}
-                </Index>
+                <BounceBlocks bounceBlocks={bounceBlocks} />
                 <Index each={boostPads()}>
                     {boostPad => <use href="#boostpad" x={boostPad().x} y={boostPad().y} stroke={`color-mix(in srgb-linear, var(--boost-pad) ${boostPad().anim * 100}%, var(--boost-pad-wooshing))`} transform={`rotate(${boostPad().deg},${boostPad().x},${boostPad().y})`} />}
                 </Index>
