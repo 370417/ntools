@@ -1,14 +1,9 @@
-import { createEffect, createSignal, Index } from 'solid-js';
+import { createSignal, Index } from 'solid-js';
 import { Replay } from './assets/ntools_rs';
 import { Scrubber } from './Scrubber';
 import Stats from 'stats-js';
-import { LaunchPads, updateLaunchPads, type LaunchPadType } from './entities/LaunchPad';
-
-type Mine = {
-    x: number;
-    y: number;
-    type: 0 | 1 | 2;
-};
+import { LaunchPads, updateLaunchPads, type LaunchPadData } from './entities/LaunchPad';
+import { MineDefs, Mines, updateMines, type MineData } from './entities/Mine';
 
 type BounceBlock = {
     x: number;
@@ -46,16 +41,6 @@ type Thwump = {
 };
 
 const LIMBS = [[0, 12], [1, 12], [2, 8], [3, 9], [4, 10], [5, 11], [6, 7], [8, 0], [9, 0], [10, 1], [11, 1]];
-
-// Mine
-// In 1080p, mine spoke diameter is 15
-const spokeRadius = 15 / 2 * 24 / 44;
-const spokeDiag = spokeRadius / Math.pow(2, 0.5);
-const spokeWidth = 2.5 * 24 / 44;
-const mineInnerRadius = 3.5 * 24 / 44;
-const mineOuterRadius = 5 * 24 / 44;
-const toggleRadius = 5 * 24 / 44;
-const toggleThickness = 2 * 24 / 44;
 
 // Bounceblock
 // In 1080p:
@@ -145,14 +130,14 @@ function App() {
     const [ninjaBones, setNinjaBones] = createSignal<Float32Array<ArrayBufferLike> | undefined>(undefined);
     const [ninjaPreviewBones, setNinjaPreviewBones] = createSignal<Float32Array<ArrayBufferLike> | undefined>(undefined);
 
-    const [mines, setMines] = createSignal<Mine[]>([]);
+    const mines = createSignal<MineData[]>([]);
     const [bounceBlocks, setBounceBlocks] = createSignal<BounceBlock[]>([]);
     const [oneWays, setOneWays] = createSignal<OneWay[]>([]);
     const [boostPads, setBoostPads] = createSignal<BoostPad[]>([]);
     const [exitDoors, setExitDoors] = createSignal<ExitDoor[]>([]);
     const [exitSwitches, setExitSwitches] = createSignal<ExitSwitch[]>([]);
     const [thwumps, setThwumps] = createSignal<Thwump[]>([]);
-    const launchPads = createSignal<LaunchPadType[]>([]);
+    const launchPads = createSignal<LaunchPadData[]>([]);
 
     const socket = new WebSocket('ws://localhost:8080');
 
@@ -212,27 +197,7 @@ function App() {
             setNinjaPreviewBones(replay.ninja_preview_bones(partialFrame));
         }
 
-        function mineEquals(a: Mine, b: Mine): boolean {
-            return a.type === b.type && a.x === b.x && a.y === b.y;
-        }
-
-        const minesArr: Mine[] = [];
-        const minesLen = replay.mines_len();
-        let oldMines = mines();
-        for (let i = 0; i < minesLen; i++) {
-            const newMine = {
-                x: replay.mine_x(i),
-                y: replay.mine_y(i),
-                type: replay.mine_state(i) as 0 | 1 | 2,
-            };
-            const oldMine = oldMines.at(i);
-            if (oldMine && mineEquals(oldMine, newMine)) {
-                minesArr.push(oldMine);
-            } else {
-                minesArr.push(newMine);
-            }
-        }
-        setMines(minesArr);
+        updateMines(mines, replay);
 
         const bounceBlocksArr: BounceBlock[] = [];
         const bounceBlocksLen = replay.bounce_blocks_len();
@@ -328,20 +293,7 @@ function App() {
                     <clipPath id="tiles-clip">
                         <use href="#tiles" />
                     </clipPath>
-                    <g id="toggled">
-                        <line stroke-linecap="round" stroke-width={spokeWidth} x1={-spokeRadius} y1={0} x2={spokeRadius} y2={0} />
-                        <line stroke-linecap="round" stroke-width={spokeWidth} x1={0} y1={-spokeRadius} x2={0} y2={spokeRadius} />
-                        <line stroke-linecap="round" stroke-width={spokeWidth} x1={-spokeDiag} y1={-spokeDiag} x2={spokeDiag} y2={spokeDiag} />
-                        <line stroke-linecap="round" stroke-width={spokeWidth} x1={-spokeDiag} y1={spokeDiag} x2={spokeDiag} y2={-spokeDiag} />
-                        <circle id="mineOuter" r={mineOuterRadius} />
-                        <circle id="mineInner" r={mineInnerRadius} />
-                    </g>
-                    <g id="untoggled">
-                        <circle r={toggleRadius} stroke-width={toggleThickness} fill="none" />
-                    </g>
-                    <g id="toggling">
-                        <circle r={toggleRadius} stroke-width={toggleThickness} fill="none" />
-                    </g>
+                    <MineDefs />
                     <g id="bounceblock">
                         <path id="bounceblockFill" d={bounceBlockPath} />
                         <path id="bounceblockStroke" d={bounceBlockStrokePath} fill="none" stroke-width={bounceBlockStroke} />
@@ -372,9 +324,7 @@ function App() {
                 <Index each={oneWays()}>
                     {oneWay => <use href="#oneway" x={oneWay().x} y={oneWay().y} transform={`rotate(${oneWay().deg},${oneWay().x},${oneWay().y})`} />}
                 </Index>
-                <Index each={mines()}>
-                    {mine => <use href={["#toggled", "#untoggled", "#toggling"][mine().type]} x={mine().x} y={mine().y} />}
-                </Index>
+                <Mines mines={mines} />
                 <Index each={exitSwitches()}>
                     {exitSwitch => <>
                         <path class="exit-switch" d={`M ${exitSwitch().x} ${exitSwitch().y} m ${-exitSwitchHalfWidth + exitSwitchCorner} ${-exitSwitchHalfHeight} h ${2 * (exitSwitchHalfWidth - exitSwitchCorner)} l ${exitSwitchCorner} ${exitSwitchCorner} v ${2 * (exitSwitchHalfHeight - exitSwitchCorner)} l ${-exitSwitchCorner} ${exitSwitchCorner} h ${2 * (-exitSwitchHalfWidth + exitSwitchCorner)} l ${-exitSwitchCorner} ${-exitSwitchCorner} v ${2 * (-exitSwitchHalfHeight + exitSwitchCorner)} l ${exitSwitchCorner} ${-exitSwitchCorner}`} />

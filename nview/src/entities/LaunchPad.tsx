@@ -1,25 +1,25 @@
 import { Index, type Accessor, type Signal } from "solid-js";
 import type { Replay } from "../assets/ntools_rs";
 
-export type LaunchPadType = {
+export type LaunchPadData = {
     x: number;
     y: number;
     deg: number;
 };
 
-function equals(a: LaunchPadType, b: LaunchPadType): boolean {
+function equals(a: LaunchPadData, b: LaunchPadData): boolean {
     return a.x == b.x && a.y == b.y && a.deg == b.deg;
 }
 
-function transform(launchPad: Accessor<LaunchPadType>): string {
+function transform(launchPad: Accessor<LaunchPadData>): string {
     const { x, y, deg } = launchPad();
     return `translate(${x},${y}) rotate(${deg},0,0)`;
 }
 
-export function updateLaunchPads([launchPads, setLaunchPads]: Signal<LaunchPadType[]>, replay: Replay) {
+export function updateLaunchPads([launchPads, setLaunchPads]: Signal<LaunchPadData[]>, replay: Replay) {
     const oldLaunchPads = launchPads();
     const newLaunchPadsLen = replay.launch_pads_len();
-    const newLaunchPads = [];
+    const newLaunchPads: LaunchPadData[] = [];
     for (let i = 0; i < newLaunchPadsLen; i++) {
         const oldLaunchPad = oldLaunchPads.at(i);
         const newLaunchPad = {
@@ -36,7 +36,7 @@ export function updateLaunchPads([launchPads, setLaunchPads]: Signal<LaunchPadTy
     setLaunchPads(newLaunchPads);
 }
 
-export function LaunchPads(props: { launchPads: Signal<LaunchPadType[]> }) {
+export function LaunchPads(props: { launchPads: Signal<LaunchPadData[]> }) {
     const [launchPads] = props.launchPads;
 
     return <Index each={launchPads()}>
@@ -48,7 +48,7 @@ const thickness = 1.5;
 const baseHalfLen = 7.5;
 const topHalfLen = 4.5;
 
-export function LaunchPad(props: { launchPad: Accessor<LaunchPadType> }) {
+export function LaunchPad(props: { launchPad: Accessor<LaunchPadData> }) {
     return <g class="launch-pad" transform={transform(props.launchPad)}>
         <rect x="0" y={-baseHalfLen} width={thickness} height={2 * baseHalfLen} />
         <line stroke-width={thickness} stroke-linecap="round" x1={1.5 * thickness} y1={-topHalfLen} x2={1.5 * thickness} y2={topHalfLen} />
