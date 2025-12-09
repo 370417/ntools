@@ -28,15 +28,15 @@ impl LaunchPad {
                 let self_normal = self.orientation.vec2();
                 if (self.pos - ninja.pos + ninja::RADIUS * self_normal).dot(self_normal) >= -0.1 {
                     self.last_touch_frame = Some(frame);
-                    let yboost_scale = if self_normal.y < 0.0 {
-                        1.0 - self_normal.y
+                    let yboost_scale = if ninja.grav_get_vert(self_normal) < 0.0 {
+                        1.0 - ninja.grav_get_vert(self_normal)
                     } else {
                         1.0
                     };
-                    return Some(DVec2::new(
-                        self_normal.x * BOOST,
-                        self_normal.y * BOOST * yboost_scale,
-                    ));
+                    return Some(ninja.grav_vec(DVec2::new(
+                        ninja.grav_get_horiz(self_normal) * BOOST,
+                        ninja.grav_get_vert(self_normal) * BOOST * yboost_scale,
+                    )));
                 }
             }
         }
