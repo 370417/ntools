@@ -21,10 +21,16 @@ pub struct Replay {
 impl Replay {
     #[wasm_bindgen]
     pub fn from_attract(attract_bytes: &[u8]) -> Result<Replay, String> {
-        let Attract { level_name, author_name, segments, ninjas, entities, inputs } = Attract::from_bytes(attract_bytes)?;
+        let Attract { level_name, author_name, tile_segments, ninjas, entities, inputs } = Attract::from_bytes(attract_bytes)?;
+
+        let mut segments = tile_segments;
+        entities.doors.populate_grid(&mut segments);
+
         let current_sim = Simulation::new(ninjas, entities)?;
+
         let mut keyframes = BTreeMap::new();
         keyframes.insert(0, KeyFrame::from_sim(&current_sim, &current_sim.entities.mines));
+
         Ok(Replay {
             level_name,
             author_name: Some(author_name),
@@ -350,6 +356,41 @@ impl Replay {
     #[wasm_bindgen]
     pub fn floorguard_deg(&self, i: usize) -> f64 {
         self.current_sim.entities.floorchasers[i].orientation.rotation_deg()
+    }
+
+    #[wasm_bindgen]
+    pub fn locked_doors_len(&self) -> usize {
+        self.current_sim.entities.doors.locked.len()
+    }
+
+    #[wasm_bindgen]
+    pub fn locked_door_x(&self, i: usize) -> f64 {
+        self.current_sim.entities.doors.locked[i].pos.x
+    }
+
+    #[wasm_bindgen]
+    pub fn locked_door_y(&self, i: usize) -> f64 {
+        self.current_sim.entities.doors.locked[i].pos.y
+    }
+
+    #[wasm_bindgen]
+    pub fn locked_door_deg(&self, i: usize) -> f64 {
+        self.current_sim.entities.doors.locked[i].orientation.rotation_deg()
+    }
+
+    #[wasm_bindgen]
+    pub fn locked_door_anim_progress(&self, i: usize, partial_frame: f64) -> f64 {
+        0.0
+    }
+
+    #[wasm_bindgen]
+    pub fn locked_switch_x(&self, i: usize) -> f64 {
+        self.current_sim.entities.doors.locked[i].switch_pos.x
+    }
+
+    #[wasm_bindgen]
+    pub fn locked_switch_y(&self, i: usize) -> f64 {
+        self.current_sim.entities.doors.locked[i].switch_pos.y
     }
 }
 

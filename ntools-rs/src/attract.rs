@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{entity::{Entities, Orientation, OrientationZeroNorth, boost_pad::BoostPad, bounce_block::BounceBlock, exit::Exit, floorchaser::Floorchaser, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, thwump::Thwump}, grid::{COLS, Grid, GridPos, ROWS}, ninja::Ninja, segment::Segment, tile::Tile};
+use crate::{entity::{Entities, Orientation, OrientationZeroNorth, boost_pad::BoostPad, bounce_block::BounceBlock, door::LockedDoor, exit::Exit, floorchaser::Floorchaser, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, thwump::Thwump}, grid::{COLS, Grid, GridPos, ROWS}, ninja::Ninja, segment::Segment, tile::Tile};
 
 /// Represents a parsed attract file.
 /// An attract file is what gets shown in the game's main menu: a replay of a failed attempt at a level.
@@ -8,7 +8,8 @@ use crate::{entity::{Entities, Orientation, OrientationZeroNorth, boost_pad::Boo
 pub struct Attract {
     pub level_name: String,
     pub author_name: String,
-    pub segments: Grid<Segment>,
+    /// does not include door segments
+    pub tile_segments: Grid<Segment>,
     pub ninjas: Vec<Ninja>,
     pub entities: Entities,
     pub inputs: Vec<u8>,
@@ -102,6 +103,9 @@ impl Attract {
         let mut ninjas = Vec::new();
         let mut entities = Entities::new();
 
+        let mut locked_doors = Vec::new();
+        let mut locked_switches = Vec::new();
+
         let mut exit_doors = Vec::new();
         let mut exit_switches = Vec::new();
 
@@ -141,9 +145,9 @@ impl Attract {
                 // Regular door
                 5 => {}
                 // O door
-                6 => {}
+                6 => locked_doors.push((6.0 * pos, orientation?)),
                 // O switch
-                7 => {}
+                7 => locked_switches.push(6.0 * pos),
                 // C door
                 8 => {}
                 // C switch
@@ -190,6 +194,10 @@ impl Attract {
             }
         }
 
+        for ((door_pos, orientation), switch_pos) in locked_doors.into_iter().zip(locked_switches) {
+            entities.doors.locked.push(LockedDoor::new(door_pos, orientation, switch_pos));
+        }
+
         for (exit_door, exit_switch) in exit_doors.into_iter().zip(exit_switches) {
             entities.exits.push(Exit::new(exit_door, exit_switch));
         }
@@ -217,7 +225,7 @@ impl Attract {
         Ok(Attract {
             level_name,
             author_name,
-            segments: grid,
+            tile_segments: grid,
             ninjas,
             entities,
             inputs: frames.to_vec(),
@@ -236,10 +244,10 @@ mod tests {
     #[test]
     fn regression_test() {
         // Level "Chamoska Demon"
-        extract_path(&Attract::from_bytes(include_bytes!("testfiles/6876")).unwrap().segments, true);
+        extract_path(&Attract::from_bytes(include_bytes!("testfiles/6876")).unwrap().tile_segments, true);
 
-        extract_path(&Attract::from_bytes(include_bytes!("testfiles/22906")).unwrap().segments, true);
-        extract_path(&Attract::from_bytes(include_bytes!("testfiles/6861")).unwrap().segments, true);
-        extract_path(&Attract::from_bytes(include_bytes!("testfiles/6883")).unwrap().segments, true);
+        extract_path(&Attract::from_bytes(include_bytes!("testfiles/22906")).unwrap().tile_segments, true);
+        extract_path(&Attract::from_bytes(include_bytes!("testfiles/6861")).unwrap().tile_segments, true);
+        extract_path(&Attract::from_bytes(include_bytes!("testfiles/6883")).unwrap().tile_segments, true);
     }
 }
