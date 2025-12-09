@@ -87,6 +87,7 @@ impl Simulation {
         // Make all thinkable entities think
         for mine in &mut self.entities.mines { mine.think(&self.ninja) }
         for thwump in &mut self.entities.thwumps { thwump.think(&self.ninja, segments) }
+        for floorchaser in &mut self.entities.floorchasers { floorchaser.think(&self.ninja, segments) }
 
         if self.ninja.state != NinjaState::Disabled {
             self.ninja.integrate();
