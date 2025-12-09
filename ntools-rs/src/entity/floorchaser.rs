@@ -17,27 +17,11 @@ pub struct Floorchaser {
     detection_range: Option<DetectionRange>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 enum FloorchaserState {
     Waiting,
     ChasingLeft,
     ChasingRight,
-    /// Floorchaser has moved all the way left and cannot move further
-    FlushLeft,
-    /// Floorchaser has moved all the way right and cannot move further
-    FlushRight,
-}
-
-impl FloorchaserState {
-    fn is_chasing(&self) -> bool {
-        match self {
-            FloorchaserState::Waiting => false,
-            FloorchaserState::ChasingLeft => true,
-            FloorchaserState::ChasingRight => true,
-            FloorchaserState::FlushLeft => false,
-            FloorchaserState::FlushRight => false,
-        }
-    }
 }
 
 #[derive(Clone, Copy)]
@@ -91,7 +75,7 @@ impl Floorchaser {
         let basis_matrix = DMat2::from_cols(self.orientation.vec2(), self.orientation.vec2().perp());
         let basis_matrix_inverse = basis_matrix.inverse();
 
-        if self.detection_range.is_none() && !self.state.is_chasing() {
+        if self.detection_range.is_none() && self.state == FloorchaserState::Waiting {
             // TODO: could optimize by iterating over less of the grid
             let (negative_x, positive_x) = segments_in_fov(self.pos, basis_matrix_inverse, RADIUS - 1.0, segments.flat_iter())
                 .flat_map(|(start, end)| {
@@ -125,16 +109,6 @@ impl Floorchaser {
                         if ninja_pos_rel_floorguard.x >= 0.0 && ninja_pos_rel_floorguard.x <= detection_range.positive_x {
                             self.state = FloorchaserState::ChasingRight;
                         } else if ninja_pos_rel_floorguard.x <= 0.0 && ninja_pos_rel_floorguard.x >= detection_range.negative_x {
-                            self.state = FloorchaserState::ChasingLeft;
-                        }
-                    }
-                    (FloorchaserState::FlushLeft, Some(detection_range)) => {
-                        if ninja_pos_rel_floorguard.x >= 0.0 && ninja_pos_rel_floorguard.x <= detection_range.total() {
-                            self.state = FloorchaserState::ChasingRight;
-                        }
-                    }
-                    (FloorchaserState::FlushRight, Some(detection_range)) => {
-                        if ninja_pos_rel_floorguard.x <= 0.0 && ninja_pos_rel_floorguard.x >= -detection_range.total() {
                             self.state = FloorchaserState::ChasingLeft;
                         }
                     }
@@ -202,11 +176,7 @@ impl Mob for Floorchaser {
         if let Some(collision) = collision {
             self.pos = collision - (RADIUS + 0.01) * speed_dir;
             self.is_moving = false;
-            match self.state {
-                FloorchaserState::ChasingLeft => self.state = FloorchaserState::FlushLeft,
-                FloorchaserState::ChasingRight => self.state = FloorchaserState::FlushRight,
-                _ => {}
-            }
+            self.state = FloorchaserState::Waiting;
             return;
         }
 
@@ -243,14 +213,11 @@ impl Mob for Floorchaser {
                 self.pos = max_pos - (RADIUS + 0.01) * speed_dir;
             }
             self.is_moving = false;
-            match self.state {
-                FloorchaserState::ChasingLeft => self.state = FloorchaserState::FlushLeft,
-                FloorchaserState::ChasingRight => self.state = FloorchaserState::FlushRight,
-                _ => {}
-            }
+            self.state = FloorchaserState::Waiting;
         } else {
             self.pos = new_pos;
             self.is_moving = true;
+            self.detection_range = None;
         }
     }
 }
