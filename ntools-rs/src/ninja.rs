@@ -562,7 +562,7 @@ impl Ninja {
                         } else {
                             let projection = self.speed.perp_dot(self.floor_unit_normal).abs();
                             if projection < 0.1 {
-                                self.speed.x *= FRICTION_GROUND_SLOW;
+                                self.speed = self.grav_mul_horiz(self.speed, FRICTION_GROUND_SLOW);
                                 state
                             } else {
                                 NinjaState::Skidding
