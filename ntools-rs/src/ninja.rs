@@ -2,7 +2,7 @@ use glam::{DMat2, DVec2};
 use rand::{seq::IndexedRandom, RngCore, SeedableRng};
 use rand_xoshiro::{SplitMix64, Xoroshiro64StarStar};
 
-use crate::{anim_data::{Bones, DANCES, get_anim_frame}, collision_util::{get_single_closest_point, sweep_circle_vs_tiles}, entity::{Entities, EntityIndex, EntityType, OrientationZeroNorth, polymorphism::physical_collisions}, grid::Grid, segment::Segment};
+use crate::{anim_data::{Bones, DANCES, get_anim_frame}, collision_util::{get_single_closest_point, sweep_circle_vs_tiles}, entity::{Entities, EntityIndex, EntityType, OrientationZeroNorth, door::Doors, polymorphism::physical_collisions}, grid::Grid, segment::Segment};
 
 const GRAVITY_FALL: f64 = 0.06666666666666665;
 const GRAVITY_JUMP: f64 = 0.01111111111111111;
@@ -208,15 +208,15 @@ impl Ninja {
     }
 
     /// Gather all tile segments in neighbourhood and handle collisions with those.
-    pub fn collide_vs_tiles(&mut self, collision_state: &mut CollisionState, segments: &Grid<Segment>) {
+    pub fn collide_vs_tiles(&mut self, collision_state: &mut CollisionState, segments: &Grid<Segment>, doors: &Doors) {
         // Interpolation routine mainly to prevent from going through walls.
         let delta = self.pos - self.pos_old;
-        let time = sweep_circle_vs_tiles(self.pos_old, delta, RADIUS * 0.5, segments);
+        let time = sweep_circle_vs_tiles(self.pos_old, delta, RADIUS * 0.5, segments, doors);
         self.pos = self.pos_old + time * delta;
 
         // Find the closest point from the ninja, apply depenetration and update speed. Loop 32 times.
         for _ in 0..32 {
-            let Some(closest_point) = get_single_closest_point(self.pos, RADIUS, segments) else { return };
+            let Some(closest_point) = get_single_closest_point(self.pos, RADIUS, segments, doors) else { return };
             let delta = self.pos - closest_point.point;
             // For now skipping the corner case check
             // https://github.com/SimonV42/nclone/blob/842190b2a216579b5b5c551e0a0b4505fc3381cc/nsim.py#L180
@@ -302,7 +302,8 @@ impl Ninja {
 
         // Check if the ninja can interact with walls from nearby tile segments.
         let rad = RADIUS + 0.1;
-        let segments = segments.iter_rect_region(self.pos - DVec2::new(rad, rad), self.pos + DVec2::new(rad, rad));
+        let segments = segments.iter_rect_region(self.pos - DVec2::new(rad, rad), self.pos + DVec2::new(rad, rad))
+            .filter(|segment| segment.is_active(&entities.doors));
 
         for segment in segments {
             let closest = segment.get_closest_point(self.pos).point;

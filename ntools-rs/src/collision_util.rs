@@ -1,14 +1,15 @@
 use glam::{DMat2, DVec2};
 
-use crate::{entity::Orientation, grid::Grid, segment::{ClosestPoint, Segment}};
+use crate::{entity::{Orientation, door::Doors}, grid::Grid, segment::{ClosestPoint, Segment}};
 
 /// Fetch all segments from neighbourhood. Return shortest intersection time from interpolation.
-pub fn sweep_circle_vs_tiles(pos_old: DVec2, delta: DVec2, radius: f64, segments: &Grid<Segment>) -> f64 {
+pub fn sweep_circle_vs_tiles(pos_old: DVec2, delta: DVec2, radius: f64, segments: &Grid<Segment>, doors: &Doors) -> f64 {
     let pos_new = pos_old + delta;
     let width = radius + 1.0;
     let min = pos_old.min(pos_new) - DVec2::new(width, width);
     let max = pos_old.max(pos_new) + DVec2::new(width, width);
     segments.iter_rect_region(min, max)
+        .filter(|segment| segment.is_active(doors))
         .map(|segment| segment.intersect_with_ray(pos_old, delta, radius))
         .reduce(f64::min)
         .unwrap_or(1.0)
@@ -88,8 +89,9 @@ pub fn get_time_of_intersection_circle_vs_arc(center_circle: DVec2, vel: DVec2, 
 }
 
 /// Find the closest point belonging to a collidable segment from the given position.
-pub fn get_single_closest_point(pos: DVec2, radius: f64, segments: &Grid<Segment>) -> Option<ClosestPoint> {
+pub fn get_single_closest_point(pos: DVec2, radius: f64, segments: &Grid<Segment>, doors: &Doors) -> Option<ClosestPoint> {
     segments.iter_rect_region(pos - DVec2::new(radius, radius), pos + DVec2::new(radius, radius))
+        .filter(|segment| segment.is_active(doors))
         .map(|segment| {
             let closest = segment.get_closest_point(pos);
             let mut distance_sq = (pos - closest.point).length_squared();

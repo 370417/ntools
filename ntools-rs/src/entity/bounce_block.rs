@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{collision_util::{Depenetration, penetration_square_vs_circle_with_orientation}, entity::{Entity, Mob, Orientation}, grid::{Grid, GridPos}, ninja::{self, Ninja}, segment::Segment};
+use crate::{collision_util::{Depenetration, penetration_square_vs_circle_with_orientation}, entity::{Entity, Mob, Orientation, door::Doors}, grid::{Grid, GridPos}, ninja::{self, Ninja}, segment::Segment};
 
 pub const SEMI_SIDE: f64 = 9.0;
 const STIFFNESS: f64 = 0.02222222222222222; // 1/45
@@ -96,7 +96,7 @@ impl Mob for BounceBlock {
     }
 
     /// Update the position and speed of the bounce block by applying the spring force and dampening.
-    fn move_entity(&mut self, _segments: &Grid<Segment>) {
+    fn move_entity(&mut self, _segments: &Grid<Segment>, _doors: &Doors) {
         self.pos_old = self.pos;
         self.speed *= DAMPENING;
         self.pos += self.speed;

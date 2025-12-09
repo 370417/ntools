@@ -74,9 +74,9 @@ impl Simulation {
         };
 
         // Move all movable entities
-        move_entities(&mut self.entities.bounce_blocks, &mut self.entity_grid, segments);
-        move_entities(&mut self.entities.thwumps, &mut self.entity_grid, segments);
-        move_entities(&mut self.entities.floorchasers, &mut self.entity_grid, segments);
+        move_entities(&mut self.entities.bounce_blocks, &mut self.entity_grid, segments, &self.entities.doors);
+        move_entities(&mut self.entities.thwumps, &mut self.entity_grid, segments, &self.entities.doors);
+        move_entities(&mut self.entities.floorchasers, &mut self.entity_grid, segments, &self.entities.doors);
         // Apparently boost pad logic is called as a move method.
         // I'd expect it to go in logical_collision, but in case the order matters,
         // I'll leave it here.
@@ -86,15 +86,15 @@ impl Simulation {
 
         // Make all thinkable entities think
         for mine in &mut self.entities.mines { mine.think(&self.ninja) }
-        for thwump in &mut self.entities.thwumps { thwump.think(&self.ninja, segments) }
-        for floorchaser in &mut self.entities.floorchasers { floorchaser.think(&self.ninja, segments) }
+        for thwump in &mut self.entities.thwumps { thwump.think(&self.ninja, segments, &self.entities.doors) }
+        for floorchaser in &mut self.entities.floorchasers { floorchaser.think(&self.ninja, segments, &self.entities.doors) }
 
         if self.ninja.state != NinjaState::Disabled {
             self.ninja.integrate();
             let mut collision_state = self.ninja.pre_collision();
             for _ in 0..4 {
                 self.ninja.collide_vs_objects(&mut collision_state, &mut self.entities, &self.entity_grid);
-                self.ninja.collide_vs_tiles(&mut collision_state, segments);
+                self.ninja.collide_vs_tiles(&mut collision_state, segments, &self.entities.doors);
             }
             self.ninja.post_collision(&mut collision_state, &mut self.entities, &self.entity_grid, segments, self.frame);
             self.ninja.think(input.jump, hor_input);

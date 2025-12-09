@@ -1,9 +1,10 @@
 use glam::DVec2;
 
-use crate::{entity::{boost_pad::BoostPad, bounce_block::BounceBlock, exit::Exit, floorchaser::Floorchaser, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, thwump::Thwump}, grid::{Grid, GridPos}, segment::Segment};
+use crate::{entity::{boost_pad::BoostPad, bounce_block::BounceBlock, door::Doors, exit::Exit, floorchaser::Floorchaser, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, thwump::Thwump}, grid::{Grid, GridPos}, segment::Segment};
 
 pub mod boost_pad;
 pub mod bounce_block;
+pub mod door;
 pub mod exit;
 pub mod floorchaser;
 pub mod launch_pad;
@@ -22,6 +23,7 @@ pub struct Entities {
     pub thwumps: Vec<Thwump>,
     pub launch_pads: Vec<LaunchPad>,
     pub floorchasers: Vec<Floorchaser>,
+    pub doors: Doors,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -56,6 +58,7 @@ impl Entities {
             thwumps: Vec::new(),
             launch_pads: Vec::new(),
             floorchasers: Vec::new(),
+            doors: Doors::new(),
         }
     }
 
@@ -116,15 +119,15 @@ pub trait Mob {
     fn grid_pos(&self) -> GridPos;
     /// Gets called after self.move_entity if it resulted in self moving to a new grid cell.
     fn set_grid_pos(&mut self, grid_pos: GridPos);
-    fn move_entity(&mut self, grid: &Grid<Segment>);
+    fn move_entity(&mut self, segments: &Grid<Segment>, doors: &Doors);
 }
 
 /// Call move_entity for each entity and update its position in the entity grid
 /// if it has changed.
-pub fn move_entities<T: Mob + Entity>(entities: &mut [T], entity_grid: &mut Grid<EntityIndex>, segments: &Grid<Segment>) {
+pub fn move_entities<T: Mob + Entity>(entities: &mut [T], entity_grid: &mut Grid<EntityIndex>, segments: &Grid<Segment>, doors: &Doors) {
     for (i, entity) in entities.iter_mut().enumerate() {
         let old_grid_pos = entity.grid_pos();
-        entity.move_entity(segments);
+        entity.move_entity(segments, doors);
         let new_grid_pos = GridPos::from_world_pos(entity.pos());
         if old_grid_pos != new_grid_pos {
             let entity_index = (entity.entity_type(), i);

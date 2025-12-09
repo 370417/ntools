@@ -1,6 +1,6 @@
 use glam::{DMat2, DVec2};
 
-use crate::{collision_util::{Depenetration, overlap_circle_vs_segment, penetration_square_vs_circle_with_orientation}, entity::{Entity, EntityType, Mob, Orientation}, grid::{Grid, GridPos}, ninja::{self, Ninja}, segment::{Curvature, Segment}, tile::TILE_HALF_SIZE};
+use crate::{collision_util::{Depenetration, overlap_circle_vs_segment, penetration_square_vs_circle_with_orientation}, entity::{Entity, EntityType, Mob, Orientation, door::Doors}, grid::{Grid, GridPos}, ninja::{self, Ninja}, segment::{Curvature, Segment}, tile::TILE_HALF_SIZE};
 
 const SEMI_SIDE: f64 = 9.0;
 const FORWARD_SPEED: f64 = 20.0 / 7.0;
@@ -67,14 +67,15 @@ impl Thwump {
     }
 
     /// Make the thwump charge if it has sight of the ninja.
-    pub fn think(&mut self, ninja: &Ninja, segments: &Grid<Segment>) {
+    pub fn think(&mut self, ninja: &Ninja, segments: &Grid<Segment>, doors: &Doors) {
         let orientation = self.orientation.vec2();
         let basis_matrix = DMat2::from_cols(orientation.perp(), orientation);
         let basis_matrix_inverse = basis_matrix.inverse();
 
         if let (&ThwumpState::Waiting, None) = (&self.state, self.detection_range) {
             // TODO: could optimize by iterating over less of the grid
-            self.detection_range = segments_in_fov(self.pos - SEMI_SIDE * orientation, basis_matrix_inverse, 11.0, segments.flat_iter())
+            let segments_iter = segments.flat_iter().filter(|segment| segment.is_active(doors));
+            self.detection_range = segments_in_fov(self.pos - SEMI_SIDE * orientation, basis_matrix_inverse, 11.0, segments_iter)
                 .filter(|(start, end)| {
                     // filter out walls that are fully behind the thwump
                     start.y > 0.0 || end.y > 0.0
@@ -155,7 +156,7 @@ impl Mob for Thwump {
         assert!(GridPos::from_world_pos(self.pos) == grid_pos);
     }
 
-    fn move_entity(&mut self, segments: &Grid<Segment>) {
+    fn move_entity(&mut self, segments: &Grid<Segment>, doors: &Doors) {
         let (speed_magnitude, speed_dir) = match self.state {
             ThwumpState::Waiting => return,
             ThwumpState::Forward => (FORWARD_SPEED, self.orientation.vec2()),
@@ -183,7 +184,8 @@ impl Mob for Thwump {
 
         // TODO: can skip computation if orientation is orthogonal and leading edge is not about to cross into new half grid tile
 
-        let segments_iter = segments.iter_rect_region(leading_edge_corners.0, leading_edge_corners.1);
+        let segments_iter = segments.iter_rect_region(leading_edge_corners.0, leading_edge_corners.1)
+            .filter(|segment| segment.is_active(doors));
 
         let has_collision = segments_in_fov(leading_edge_center, basis_matrix_inverse, 11.0, segments_iter).any(|(start, end)| {
             // We check that y isn't too small to try to avoid collisions with walls that are behind the leading edge
@@ -209,10 +211,11 @@ impl Mob for Thwump {
 /// - segment is not vertical
 /// - segment's x span at least partially overlaps [-half_width, half_width]
 pub fn segments_in_fov<'a>(origin: DVec2, basis_matrix_inverse: DMat2, half_width: f64, segments: impl Iterator<Item = &'a Segment>) -> impl Iterator<Item = (DVec2, DVec2)> {
+    // TODO: filter out inactive doors
     segments.flat_map(move |segment| {
         // convert into segments relative to origin
         match segment {
-            Segment::Linear { start, end, .. } => {
+            Segment::Linear { start, end, .. } | Segment::Door { start, end, .. } => {
                 // Create iterators from arrays of options in a hare-brained scheme to avoid allocation.
                 let start = basis_matrix_inverse * (start - origin);
                 let end = basis_matrix_inverse * (end - origin);
@@ -238,7 +241,6 @@ pub fn segments_in_fov<'a>(origin: DVec2, basis_matrix_inverse: DMat2, half_widt
                 let center = basis_matrix_inverse * (center - origin);
                 [Some((start, center)), Some((center, end))].into_iter()
             }
-            Segment::Door => todo!(),
         }
     })
     .flat_map(|option| option.into_iter())

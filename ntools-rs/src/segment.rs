@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{collision_util::{get_time_of_intersection_circle_vs_arc, get_time_of_intersection_circle_vs_circle, get_time_of_intersection_circle_vs_lineseg}, grid::{Grid, COLS, ROWS}, tile::TILE_SIZE};
+use crate::{collision_util::{get_time_of_intersection_circle_vs_arc, get_time_of_intersection_circle_vs_circle, get_time_of_intersection_circle_vs_lineseg}, entity::door::{DoorType, Doors}, grid::{COLS, Grid, ROWS}, tile::TILE_SIZE};
 
 /// Represents a solid edge of a tile or door.
 #[derive(Clone)]
@@ -19,7 +19,12 @@ pub enum Segment {
         center: DVec2,
         curvature: Curvature,
     },
-    Door,
+    Door {
+        start: DVec2,
+        end: DVec2,
+        door_type: DoorType,
+        index: usize,
+    },
 }
 
 #[derive(Clone)]
@@ -55,14 +60,21 @@ impl Segment {
 
     pub fn end(&self) -> DVec2 {
         match self {
-            Segment::Linear { end, .. } | Self::Circular { end, .. } => *end,
+            Self::Linear { end, .. } | Self::Circular { end, .. } => *end,
             _ => todo!(),
         }
     }
 
     pub fn is_from_tile(&self) -> bool {
         match self {
-            Self::Door => false,
+            Self::Door { .. } => false,
+            _ => true,
+        }
+    }
+
+    pub fn is_active(&self, doors: &Doors) -> bool {
+        match self {
+            &Self::Door { door_type, index, .. } => doors.is_active(door_type, index),
             _ => true,
         }
     }
@@ -111,7 +123,19 @@ impl Segment {
                     }
                 }
             }
-            Segment::Door => todo!(),
+            Segment::Door { start, end, .. } => {
+                // Same logic as for linear segments, except is_back_facing is always false
+                let seg = end - start;
+                let delta = pos - start;
+                let u = seg.dot(delta) / seg.length_squared();
+                let u = u.clamp(0.0, 1.0);
+                // If u is between 0 and 1, position is closest to the line segment.
+                // If u is exactly 0 or 1, position is closest to one of the two edges.
+                ClosestPoint {
+                    point: start + u * seg,
+                    is_back_facing: false,
+                }
+            }
         }
     }
 
@@ -208,7 +232,7 @@ impl Segment {
     /// is already intersecting or 1 if it won't intersect within the frame
     pub fn intersect_with_ray(&self, pos: DVec2, delta: DVec2, radius: f64) -> f64 {
         match self {
-            Segment::Linear { start, end, .. } => {
+            Segment::Linear { start, end, .. } | Segment::Door { start, end, .. } => {
                 let time1 = get_time_of_intersection_circle_vs_circle(pos, delta, *start, radius);
                 let time2 = get_time_of_intersection_circle_vs_circle(pos, delta, *end, radius);
                 let time3 = get_time_of_intersection_circle_vs_lineseg(pos, delta, *start, *end, radius);
@@ -221,7 +245,6 @@ impl Segment {
                 let time3 = get_time_of_intersection_circle_vs_arc(pos, delta, *center, quadrant, TILE_SIZE, radius);
                 time1.min(time2).min(time3)
             }
-            Segment::Door => todo!(),
         }
     }
 

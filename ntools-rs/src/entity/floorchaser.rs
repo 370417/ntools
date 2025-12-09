@@ -1,6 +1,6 @@
 use glam::{DMat2, DVec2};
 
-use crate::{entity::{Entity, EntityType, Mob, OrientationZeroNorth, thwump::segments_in_fov}, grid::{Grid, GridPos}, ninja::Ninja, segment::Segment, tile::TILE_SIZE};
+use crate::{entity::{Entity, EntityType, Mob, OrientationZeroNorth, door::Doors, thwump::segments_in_fov}, grid::{Grid, GridPos}, ninja::Ninja, segment::Segment, tile::TILE_SIZE};
 
 const RADIUS: f64 = 6.0;
 const SPEED: f64 = 3.428571428571428; // 24 / 7
@@ -63,7 +63,7 @@ impl Floorchaser {
         old_pos.lerp(self.pos, partial_frame)
     }
 
-    pub fn think(&mut self, ninja: &Ninja, segments: &Grid<Segment>) {
+    pub fn think(&mut self, ninja: &Ninja, segments: &Grid<Segment>, doors: &Doors) {
         // In this basis, the y axis points in the direction of motion because that's what
         // the function segments_in_fov expects.
         let basis_matrix = DMat2::from_cols(self.orientation.vec2(), self.orientation.vec2().perp());
@@ -71,7 +71,8 @@ impl Floorchaser {
 
         if self.detection_range.is_none() && self.state == FloorchaserState::Waiting {
             // TODO: could optimize by iterating over less of the grid
-            let (negative_x, positive_x) = segments_in_fov(self.pos, basis_matrix_inverse, RADIUS - 1.0, segments.flat_iter())
+            let segments_iter = segments.flat_iter().filter(|segment| segment.is_active(doors));
+            let (negative_x, positive_x) = segments_in_fov(self.pos, basis_matrix_inverse, RADIUS - 1.0, segments_iter)
                 .flat_map(|(start, end)| {
                     // In the basis, the y coordinates represent distance until a collision in the floorchaser's fov.
                     // But oustside of the basis, these are actually x coordinates relative to the floorchaser,
@@ -133,7 +134,7 @@ impl Mob for Floorchaser {
         assert!(GridPos::from_world_pos(self.pos) == grid_pos);
     }
 
-    fn move_entity(&mut self, segments: &Grid<Segment>) {
+    fn move_entity(&mut self, segments: &Grid<Segment>, doors: &Doors) {
         let speed_dir = match self.state {
             FloorchaserState::ChasingLeft => -self.orientation.vec2().perp(),
             FloorchaserState::ChasingRight => self.orientation.vec2().perp(),
@@ -154,7 +155,8 @@ impl Mob for Floorchaser {
         let basis_matrix = DMat2::from_cols(speed_dir.perp(), speed_dir);
         let basis_matrix_inverse = basis_matrix.inverse();
 
-        let segments_iter = segments.iter_rect_region(leading_edge_corners.0, leading_edge_corners.1);
+        let segments_iter = segments.iter_rect_region(leading_edge_corners.0, leading_edge_corners.1)
+            .filter(|segment| segment.is_active(doors));
 
         let collision = segments_in_fov(leading_edge_center, basis_matrix_inverse, RADIUS - 1.0, segments_iter).find(|(start, end)| {
             // We check that y isn't too small to try to avoid collisions with walls that are behind the leading edge
@@ -225,8 +227,7 @@ pub fn floor_segments<'a>(origin: DVec2, basis_matrix_inverse: DMat2, segments: 
                 let end = basis_matrix_inverse * (end - origin);
                 Some((start, end)).into_iter()
             }
-            Segment::Circular { .. } => None.into_iter(),
-            Segment::Door => todo!(),
+            Segment::Circular { .. } | Segment::Door { .. } => None.into_iter(),
         }
     })
     .filter(|(start, end)| {
