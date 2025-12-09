@@ -53,11 +53,11 @@ impl Input {
 }
 
 impl Simulation {
-    pub fn new(entities: Entities) -> Result<Simulation, String> {
+    pub fn new(ninjas: Vec<Ninja>, entities: Entities) -> Result<Simulation, String> {
 
         Ok(Simulation {
             frame: 0,
-            ninja: Ninja::new(*entities.ninjas.get(0).ok_or("Map has no ninja")?),
+            ninja: ninjas.into_iter().next().ok_or("Map has no ninja")?,
             entity_grid: entities.grid(),
             entities,
         })

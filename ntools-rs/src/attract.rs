@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{entity::{Entities, Orientation, OrientationZeroNorth, boost_pad::BoostPad, bounce_block::BounceBlock, exit::Exit, floorchaser::Floorchaser, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, thwump::Thwump}, grid::{COLS, Grid, GridPos, ROWS}, segment::Segment, tile::Tile};
+use crate::{entity::{Entities, Orientation, OrientationZeroNorth, boost_pad::BoostPad, bounce_block::BounceBlock, exit::Exit, floorchaser::Floorchaser, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, thwump::Thwump}, grid::{COLS, Grid, GridPos, ROWS}, ninja::Ninja, segment::Segment, tile::Tile};
 
 /// Represents a parsed attract file.
 /// An attract file is what gets shown in the game's main menu: a replay of a failed attempt at a level.
@@ -9,6 +9,7 @@ pub struct Attract {
     pub level_name: String,
     pub author_name: String,
     pub segments: Grid<Segment>,
+    pub ninjas: Vec<Ninja>,
     pub entities: Entities,
     pub inputs: Vec<u8>,
 }
@@ -98,6 +99,7 @@ impl Attract {
             }
         }
 
+        let mut ninjas = Vec::new();
         let mut entities = Entities::new();
 
         let mut exit_doors = Vec::new();
@@ -120,7 +122,14 @@ impl Attract {
 
             match object_id {
                 // Ninja
-                0 => entities.ninjas.push(6.0 * pos),
+                0 => {
+                    // We don't use the rotation byte from the map data because
+                    // different platforms set it differently (to 0 or to 6),
+                    // and we don't want inconsistent behavior.
+                    // TODO: set a magic number in the entity's mode?
+                    // and if that is set, use the rotation byte?
+                    ninjas.push(Ninja::new(6.0 * pos, OrientationZeroNorth::N));
+                }
                 // Mine
                 1 => entities.mines.push(Mine::new_toggled(6.0 * pos)),
                 // Gold
@@ -209,6 +218,7 @@ impl Attract {
             level_name,
             author_name,
             segments: grid,
+            ninjas,
             entities,
             inputs: frames.to_vec(),
         })

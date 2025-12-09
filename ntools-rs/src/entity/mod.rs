@@ -14,7 +14,6 @@ pub mod thwump;
 
 #[derive(Clone)]
 pub struct Entities {
-    pub ninjas: Vec<DVec2>,
     pub mines: Vec<Mine>,
     pub bounce_blocks: Vec<BounceBlock>,
     pub one_ways: Vec<OneWay>,
@@ -49,7 +48,6 @@ pub type EntityIndex = (EntityType, usize);
 impl Entities {
     pub fn new() -> Entities {
         Entities {
-            ninjas: Vec::new(),
             mines: Vec::new(),
             bounce_blocks: Vec::new(),
             one_ways: Vec::new(),
@@ -176,7 +174,7 @@ pub enum Orientation {
 /// to rotate the entity to its default orientation.
 ///
 /// Entities that don't support rotation in game get stored with their rotation
-/// byte set to 0. If we used the regular orientation enum for them, they'd all
+/// byte set to 0 (or 6? for the ninja in some userlevels). If we used the regular orientation enum for them, they'd all
 /// appear to be oriented westward when we load them.
 #[derive(Clone, Copy)]
 pub enum OrientationZeroNorth {
@@ -280,22 +278,22 @@ impl TryFrom<u8> for Orientation {
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
-            0 => Ok(Self::W),
-            1 => Ok(Self::SW),
+            0 => Ok(Self::E),
+            1 => Ok(Self::SE),
             2 => Ok(Self::S),
-            3 => Ok(Self::SE),
-            4 => Ok(Self::E),
-            5 => Ok(Self::NE),
+            3 => Ok(Self::SW),
+            4 => Ok(Self::W),
+            5 => Ok(Self::NW),
             6 => Ok(Self::N),
-            7 => Ok(Self::NW),
-            8 => Ok(Self::WSW),
-            9 => Ok(Self::SSW),
-            10 => Ok(Self::SSE),
-            11 => Ok(Self::ESE),
-            12 => Ok(Self::ENE),
-            13 => Ok(Self::NNE),
-            14 => Ok(Self::NNW),
-            15 => Ok(Self::WNW),
+            7 => Ok(Self::NE),
+            8 => Ok(Self::ESE),
+            9 => Ok(Self::SSE),
+            10 => Ok(Self::SSW),
+            11 => Ok(Self::WSW),
+            12 => Ok(Self::WNW),
+            13 => Ok(Self::NNW),
+            14 => Ok(Self::NNE),
+            15 => Ok(Self::ENE),
             _ => Err("Orientation must be less than 16".into())
         }
     }
