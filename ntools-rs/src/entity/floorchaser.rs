@@ -173,6 +173,10 @@ impl Mob for Floorchaser {
         };
         let new_pos = self.pos + SPEED * speed_dir;
 
+        // ======
+        // 1. Check if floorguard is about to collide with a wall segment
+        // ======
+
         let leading_edge_center = new_pos + RADIUS * speed_dir;
         let leading_edge_corners = (
             // subtract 1 from radius to avoid intersecting segments from neighboring cells
@@ -184,10 +188,31 @@ impl Mob for Floorchaser {
 
         let segments_iter = segments.iter_rect_region(leading_edge_corners.0, leading_edge_corners.1);
 
-        let has_collision = segments_in_fov(leading_edge_center, basis_matrix_inverse, RADIUS - 1.0, segments_iter).any(|(start, end)| {
+        let collision = segments_in_fov(leading_edge_center, basis_matrix_inverse, RADIUS - 1.0, segments_iter).find(|(start, end)| {
             // We check that y isn't too small to try to avoid collisions with walls that are behind the leading edge
             start.y <= 0.0 && start.y > -1.1 * SPEED || end.y <= 0.0 && end.y > -1.1 * SPEED
+        }).map(|(start, end)| {
+            // Get the y coordinate of the collision
+            if start.y <= 0.0 && start.y > -1.1 * SPEED { start.y } else { end.y }
+        }).map(|y| {
+            // Convert the collision position back into the original frame of reference
+            basis_matrix * DVec2::new(0.0, y) + leading_edge_center
         });
+
+        if let Some(collision) = collision {
+            self.pos = collision - (RADIUS + 0.01) * speed_dir;
+            self.is_moving = false;
+            match self.state {
+                FloorchaserState::ChasingLeft => self.state = FloorchaserState::FlushLeft,
+                FloorchaserState::ChasingRight => self.state = FloorchaserState::FlushRight,
+                _ => {}
+            }
+            return;
+        }
+
+        // =====
+        // 2. Check if floorguard is about to run off the edge of the floor
+        // =====
 
         let lower_front_corner = new_pos + RADIUS * speed_dir - RADIUS * self.orientation.vec2();
         let basis_matrix = DMat2::from_cols(speed_dir, self.orientation.vec2());
@@ -195,14 +220,28 @@ impl Mob for Floorchaser {
 
         let segments_iter = segments.iter_rect_region(lower_front_corner + DVec2::new(7.0, 7.0), lower_front_corner - DVec2::new(7.0, 7.0));
 
-        let is_on_floor = floor_segments(lower_front_corner, basis_matrix_inverse, segments_iter).any(|(start, end)| {
-            // check if segment's endpoints are on opposite sides of origin
-            start.x * end.x <= 0.0
+        let best_floor = floor_segments(lower_front_corner, basis_matrix_inverse, segments_iter).filter(|(start, end)| {
+            // filter out floor segements that are in fully in front of floorchaser
+            start.x <= 0.0 || end.x <= 0.0
+        }).reduce(|a, b| {
+            // find the floor segment that is farthest in front
+            if a.1.x > b.1.x {
+                a
+            } else {
+                b
+            }
         });
+        let is_on_floor = best_floor.is_some_and(|(start, end)| start.x * end.x <= 0.0);
 
         // TODO: can skip computation if orientation is orthogonal and leading edge is not about to cross into new half grid tile
 
-        if has_collision || !is_on_floor {
+        if !is_on_floor {
+            if let Some((start, end)) = best_floor {
+                let max_floor_x = start.x.max(end.x);
+                // Convert the position back into the original frame of reference
+                let max_pos = basis_matrix * DVec2::new(max_floor_x, RADIUS) + lower_front_corner;
+                self.pos = max_pos - (RADIUS + 0.01) * speed_dir;
+            }
             self.is_moving = false;
             match self.state {
                 FloorchaserState::ChasingLeft => self.state = FloorchaserState::FlushLeft,
