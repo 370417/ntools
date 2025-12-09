@@ -7,6 +7,7 @@ import { MineDefs, Mines, updateMines, type MineData } from './entities/Mine';
 import { OneWayDefs, OneWays, updateOneWays, type OneWayData } from './entities/OneWay';
 import { BounceBlockDefs, BounceBlocks, updateBounceBlocks, type BounceBlockData } from './entities/BounceBlock';
 import { Floorguards, updateFloorguards, type FloorguardData } from './entities/Floorguard';
+import { Ninja } from './entities/Ninja';
 
 type BoostPad = {
     x: number;
@@ -30,8 +31,6 @@ type Thwump = {
     y: number;
     deg: number;
 };
-
-const LIMBS = [[0, 12], [1, 12], [2, 8], [3, 9], [4, 10], [5, 11], [6, 7], [8, 0], [9, 0], [10, 1], [11, 1]];
 
 // BoostPad
 const boostPadLong = 6;
@@ -97,8 +96,8 @@ function App() {
 
     const [tilePath, setTilePath] = createSignal('');
 
-    const [ninja, setNinja] = createSignal({ x: -50, y: -50 });
-    const [ninjaPreview, setNinjaPreview] = createSignal({ x: -50, y: -50 });
+    const [ninja, setNinja] = createSignal({ x: -50, y: -50, deg: 0 });
+    const [ninjaPreview, setNinjaPreview] = createSignal({ x: -50, y: -50, deg: 0 });
 
     const [ninjaBones, setNinjaBones] = createSignal<Float32Array<ArrayBufferLike> | undefined>(undefined);
     const [ninjaPreviewBones, setNinjaPreviewBones] = createSignal<Float32Array<ArrayBufferLike> | undefined>(undefined);
@@ -159,10 +158,12 @@ function App() {
         setNinja({
             x: replay.ninja_x(partialFrame),
             y: replay.ninja_y(partialFrame),
+            deg: 0,
         });
         setNinjaPreview({
             x: replay.ninja_preview_x(partialFrame),
             y: replay.ninja_preview_y(partialFrame),
+            deg: 0,
         });
         setNinjaBones(replay.ninja_bones(partialFrame));
         if (previewProgress() === undefined) {
@@ -278,7 +279,6 @@ function App() {
                     </>}
                 </Index>
                 <LaunchPads launchPads={launchPads} />
-                {/* floorguards TODO: on top or below launchpads */}
                 <Floorguards floorguards={floorguards} />
                 <Index each={thwumps()}>
                     {thwump => <use href="#thwump" x={thwump().x} y={thwump().y} transform={`rotate(${thwump().deg},${thwump().x},${thwump().y})`} />}
@@ -287,30 +287,8 @@ function App() {
                 <Index each={boostPads()}>
                     {boostPad => <use href="#boostpad" x={boostPad().x} y={boostPad().y} stroke={`color-mix(in srgb-linear, var(--boost-pad) ${boostPad().anim * 100}%, var(--boost-pad-wooshing))`} transform={`rotate(${boostPad().deg},${boostPad().x},${boostPad().y})`} />}
                 </Index>
-                <path class="ninja preview" d={(() => {
-                    let { x, y } = ninjaPreview();
-                    let bones = ninjaPreviewBones();
-                    if (!bones) return '';
-                    return LIMBS.map(([i1, i2]) => {
-                        const x1 = x + 20 * bones[i1];
-                        const y1 = y + 20 * bones[i1 + 13];
-                        const x2 = x + 20 * bones[i2];
-                        const y2 = y + 20 * bones[i2 + 13];
-                        return `M ${x1} ${y1} L ${x2} ${y2}`;
-                    }).join(' ');
-                })()} stroke-linejoin="round" stroke-linecap="round" stroke-width={2 / 44 * 24} />
-                <path class="ninja" d={(() => {
-                    let { x, y } = ninja();
-                    let bones = ninjaBones();
-                    if (!bones) return '';
-                    return LIMBS.map(([i1, i2]) => {
-                        const x1 = x + 20 * bones[i1];
-                        const y1 = y + 20 * bones[i1 + 13];
-                        const x2 = x + 20 * bones[i2];
-                        const y2 = y + 20 * bones[i2 + 13];
-                        return `M ${x1} ${y1} L ${x2} ${y2}`;
-                    }).join(' ');
-                })()} stroke-linejoin="round" stroke-linecap="round" stroke-width={2 / 44 * 24} />
+                <Ninja class="ninja preview" ninja={ninjaPreview} bones={ninjaPreviewBones} />
+                <Ninja class="ninja" ninja={ninja} bones={ninjaBones} />
                 <path id="tiles" stroke-width="2" clip-path="url(#tiles-clip)" clip-rule="evenodd" d={tilePath()} fill-rule="evenodd" />
             </svg>
             <div>

@@ -30,12 +30,6 @@ struct DetectionRange {
     positive_x: f64,
 }
 
-impl DetectionRange {
-    fn total(&self) -> f64 {
-        self.positive_x - self.negative_x
-    }
-}
-
 impl Floorchaser {
     pub fn new(pos: DVec2, orientation: OrientationZeroNorth) -> Floorchaser {
         Floorchaser {
