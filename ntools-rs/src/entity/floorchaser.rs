@@ -10,6 +10,11 @@ pub struct Floorchaser {
     pub pos: DVec2,
     pub orientation: OrientationZeroNorth,
     state: FloorchaserState,
+    // keep track of moving separate from state because the on first frame
+    // of ChasingLeft/Right, the floorchaser is not moving yet, so we don't
+    // want to interpolate its position.
+    is_moving: bool,
+    detection_range: Option<DetectionRange>,
 }
 
 #[derive(Clone)]
@@ -17,11 +22,49 @@ enum FloorchaserState {
     Waiting,
     ChasingLeft,
     ChasingRight,
+    /// Floorchaser has moved all the way left and cannot move further
+    FlushLeft,
+    /// Floorchaser has moved all the way right and cannot move further
+    FlushRight,
+}
+
+#[derive(Clone)]
+struct DetectionRange {
+    left: f64,
+    right: f64,
 }
 
 impl Floorchaser {
     pub fn new(pos: DVec2, orientation: OrientationZeroNorth) -> Floorchaser {
-        Floorchaser { pos, orientation, state: FloorchaserState::ChasingLeft }
+        Floorchaser {
+            pos,
+            orientation,
+            state: FloorchaserState::ChasingLeft,
+            is_moving: false,
+            detection_range: None,
+        }
+    }
+
+    /// Get the interpolated x position
+    pub fn x(&self, partial_frame: f64) -> f64 {
+        self.interpolated_pos(partial_frame).x
+    }
+
+    /// Get the interpolated y position
+    pub fn y(&self, partial_frame: f64) -> f64 {
+        self.interpolated_pos(partial_frame).y
+    }
+
+    fn interpolated_pos(&self, partial_frame: f64) -> DVec2 {
+        if !self.is_moving {
+            return self.pos;
+        }
+        let old_pos = match self.state {
+            FloorchaserState::ChasingLeft => self.pos + SPEED * self.orientation.vec2().perp(),
+            FloorchaserState::ChasingRight => self.pos - SPEED * self.orientation.vec2().perp(),
+            _ => self.pos,
+        };
+        old_pos.lerp(self.pos, partial_frame)
     }
 }
 
@@ -47,9 +90,9 @@ impl Mob for Floorchaser {
 
     fn move_entity(&mut self, segments: &Grid<Segment>) {
         let speed_dir = match self.state {
-            FloorchaserState::Waiting => return,
             FloorchaserState::ChasingLeft => -self.orientation.vec2().perp(),
             FloorchaserState::ChasingRight => self.orientation.vec2().perp(),
+            _ => return,
         };
         let new_pos = self.pos + SPEED * speed_dir;
 
@@ -83,13 +126,15 @@ impl Mob for Floorchaser {
         // TODO: can skip computation if orientation is orthogonal and leading edge is not about to cross into new half grid tile
 
         if has_collision || !is_on_floor {
+            self.is_moving = false;
             match self.state {
                 FloorchaserState::ChasingLeft => self.state = FloorchaserState::ChasingRight,
                 FloorchaserState::ChasingRight => self.state = FloorchaserState::ChasingLeft,
-                FloorchaserState::Waiting => {}
+                _ => {}
             }
         } else {
             self.pos = new_pos;
+            self.is_moving = true;
         }
     }
 }

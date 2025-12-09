@@ -339,14 +339,12 @@ impl Replay {
 
     #[wasm_bindgen]
     pub fn floorguard_x(&self, i: usize, partial_frame: f64) -> f64 {
-        // TODO: handle partial_frame
-        self.current_sim.entities.floorchasers[i].pos.x
+        self.current_sim.entities.floorchasers[i].x(partial_frame)
     }
 
     #[wasm_bindgen]
     pub fn floorguard_y(&self, i: usize, partial_frame: f64) -> f64 {
-        // TODO: handle partial_frame
-        self.current_sim.entities.floorchasers[i].pos.y
+        self.current_sim.entities.floorchasers[i].y(partial_frame)
     }
 
     #[wasm_bindgen]
