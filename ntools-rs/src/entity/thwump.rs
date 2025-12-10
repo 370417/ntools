@@ -135,7 +135,7 @@ impl Thwump {
         None
     }
 
-    /// Update the detection range.
+    /// Clear the detection range so that it updates on next think.
     /// This is needed if a door opens or closes.
     pub fn invalidate_detection_range(&mut self, door_pos: DVec2) {
         if self.detection_range.is_none() {

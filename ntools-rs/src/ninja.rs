@@ -305,6 +305,9 @@ impl Ninja {
                         for thwump in &mut entities.thwumps {
                             thwump.invalidate_detection_range(locked_door.pos);
                         }
+                        for floorchaser in &mut entities.floorchasers {
+                            floorchaser.invalidate_detection_range(locked_door.pos);
+                        }
                     }
                 }
             }
