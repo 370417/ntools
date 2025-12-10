@@ -52,11 +52,11 @@ export function LockedSwitchDefs() {
     return <>
         <g id="locked-switch">
             <rect x={-halfSize} y={-halfSize} width={2 * halfSize} height={2 * halfSize} />
-            <line x1={-dashSize} y1="0" x2={dashSize} y2="0" stroke-width={dashWidth} />
+            <line x1={-dashSize} y1="-0.5" x2={dashSize} y2="-0.5" stroke-width={dashWidth} />
         </g>
         <g id="locked-switch-touched">
             <rect x={-halfSize} y={-halfSize} width={2 * halfSize} height={2 * halfSize} />
-            <line x1={-dashSize} y1="0" x2={dashSize} y2="0" stroke-width={dashWidth} />
+            <line x1={-dashSize} y1="0.5" x2={dashSize} y2="0.5" stroke-width={dashWidth} />
         </g>
     </>;
 }

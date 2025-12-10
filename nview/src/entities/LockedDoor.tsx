@@ -58,7 +58,7 @@ export function LockedDoor(props: { lockedDoor: Accessor<LockedDoorData> }) {
         // animProgress between 0.5 and 1 -> t = 1
         t = Math.min(Math.max(2 * t, 0), 1);
 
-        return 5 + 4 * t;
+        return 4.5 + 4 * t;
     }
 
     function centerInnerX() {
@@ -70,10 +70,19 @@ export function LockedDoor(props: { lockedDoor: Accessor<LockedDoorData> }) {
         return 0 + 10 * t;
     }
 
+    function barInnerX() {
+        let t = props.lockedDoor().animProgress;
+        // animProgress between 0 and 0.4 -> t = 0
+        // animProgress between 0.4 and 1 -> t between 0 and 1
+        t = Math.min(Math.max((t - 0.4) / 0.6, 0), 1);
+
+        return 0 + (hh - 0) * t;
+    }
+
     return <g class="locked-door" transform={transform(props.lockedDoor)}>
         <Show when={props.lockedDoor().animProgress < 1}>
-            <line class="bar" stroke-width={2 * hw} x1={-hh} y1="0" x2={0} y2="0" />
-            <line class="bar" stroke-width={2 * hw} x1={hh} y1="0" x2={0} y2="0" />
+            <line class="bar" stroke-width={2 * hw} x1={-hh} y1="0" x2={-barInnerX()} y2="0" />
+            <line class="bar" stroke-width={2 * hw} x1={hh} y1="0" x2={barInnerX()} y2="0" />
         </Show>
         <Show when={props.lockedDoor().animProgress < 0.5}>
             <line class="center" stroke-width={4 * hw} stroke-linecap="round" x1={centerOuterX()} y1="0" x2={centerInnerX()} y2="0" />
