@@ -8,6 +8,7 @@ import { OneWayDefs, OneWays, updateOneWays, type OneWayData } from './entities/
 import { BounceBlockDefs, BounceBlocks, updateBounceBlocks, type BounceBlockData } from './entities/BounceBlock';
 import { Floorguards, updateFloorguards, type FloorguardData } from './entities/Floorguard';
 import { Ninja } from './entities/Ninja';
+import { LockedDoors, updateLockedDoors, type LockedDoorData } from './entities/LockedDoor';
 
 type BoostPad = {
     x: number;
@@ -111,6 +112,7 @@ function App() {
     const [thwumps, setThwumps] = createSignal<Thwump[]>([]);
     const launchPads = createSignal<LaunchPadData[]>([]);
     const floorguards = createSignal<FloorguardData[]>([]);
+    const lockedDoors = createSignal<LockedDoorData[]>([]);
 
     const socket = new WebSocket('ws://localhost:8080');
 
@@ -221,6 +223,7 @@ function App() {
 
         updateLaunchPads(launchPads, replay);
         updateFloorguards(floorguards, replay, partialFrame);
+        updateLockedDoors(lockedDoors, replay, partialFrame);
 
         setReplayLength(replay.replay_length());
     }
@@ -280,6 +283,7 @@ function App() {
                 </Index>
                 <LaunchPads launchPads={launchPads} />
                 <Floorguards floorguards={floorguards} />
+                <LockedDoors lockedDoors={lockedDoors} />
                 <Index each={thwumps()}>
                     {thwump => <use href="#thwump" x={thwump().x} y={thwump().y} transform={`rotate(${thwump().deg},${thwump().x},${thwump().y})`} />}
                 </Index>
