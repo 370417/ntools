@@ -35,6 +35,16 @@ body {
     --exit-switch-background-collected: #8C9487;
     --exit-switch-center: #FFFFFF;
 
+    --normal-door: #C2CEB1;
+    --locked-door-bar: #323323;
+    --locked-door-center: #C2CEB1;
+    --locked-switch-border: #323323;
+    --locked-switch-background: #8C9487;
+    --locked-switch-button: #000000;
+    --locked-switch-border-collected: #798076;
+    --locked-switch-background-collected: #8C9487;
+    --locked-switch-button-collected: #323323;
+
     --time-remaining: #FECC04;
     --hardcore-time: #DF9B43;
     --empty-timebar: #707A6B;
@@ -143,8 +153,26 @@ svg {
 }
 
 .exit-switch {
-    stroke: var(--exit-switch-border);
     fill: var(--exit-switch-background);
+    stroke: var(--exit-switch-border);
+}
+
+#locked-switch rect {
+    fill: var(--locked-switch-background);
+    stroke: var(--locked-switch-border);
+}
+
+#locked-switch line {
+    stroke: var(--locked-switch-button);
+}
+
+#locked-switch-touched rect {
+    fill: var(--locked-switch-background-collected);
+    stroke: var(--locked-switch-border-collected);
+}
+
+#locked-switch-touched line {
+    stroke: var(--locked-switch-button-collected);
 }
 
 .regular-grid {

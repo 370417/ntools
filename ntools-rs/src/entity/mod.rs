@@ -27,25 +27,24 @@ pub struct Entities {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
-pub enum EntityType {
-    Ninja,
+pub enum GridEntityType {
     Mine,
     BounceBlock,
     OneWay,
-    BoostPad,
     ExitDoor,
     ExitSwitch,
     Thwump,
     LaunchPad,
     Floorchaser,
+    LockedSwitch,
 }
 
 pub trait Entity {
-    fn entity_type(&self) -> EntityType;
+    fn entity_type(&self) -> GridEntityType;
     fn pos(&self) -> DVec2;
 }
 
-pub type EntityIndex = (EntityType, usize);
+pub type EntityIndex = (GridEntityType, usize);
 
 impl Entities {
     pub fn new() -> Entities {
@@ -66,13 +65,13 @@ impl Entities {
     pub fn grid(&self) -> Grid<EntityIndex> {
         let mut grid = Grid::new();
         for (i, mine) in self.mines.iter().enumerate() {
-            grid[mine.pos].push((EntityType::Mine, i));
+            grid[mine.pos].push((GridEntityType::Mine, i));
         }
         for (i, bounce_block) in self.bounce_blocks.iter().enumerate() {
-            grid[bounce_block.pos].push((EntityType::BounceBlock, i));
+            grid[bounce_block.pos].push((GridEntityType::BounceBlock, i));
         }
         for (i, one_way) in self.one_ways.iter().enumerate() {
-            grid[one_way.pos].push((EntityType::OneWay, i));
+            grid[one_way.pos].push((GridEntityType::OneWay, i));
         }
         // Intentionally don't add boost pads to grid because boost pad logic never
         // makes use of the grid.
@@ -80,35 +79,37 @@ impl Entities {
         //     grid[boost_pad.pos].push((EntityType::BoostPad, i));
         // }
         for (i, exit) in self.exits.iter().enumerate() {
-            grid[exit.door_pos].push((EntityType::ExitDoor, i));
-            grid[exit.switch_pos].push((EntityType::ExitSwitch, i));
+            grid[exit.door_pos].push((GridEntityType::ExitDoor, i));
+            grid[exit.switch_pos].push((GridEntityType::ExitSwitch, i));
         }
         for (i, thwump) in self.thwumps.iter().enumerate() {
-            grid[thwump.pos].push((EntityType::Thwump, i));
+            grid[thwump.pos].push((GridEntityType::Thwump, i));
         }
         for (i, launch_pad) in self.launch_pads.iter().enumerate() {
-            grid[launch_pad.pos].push((EntityType::LaunchPad, i));
+            grid[launch_pad.pos].push((GridEntityType::LaunchPad, i));
         }
         for (i, floorchaser) in self.floorchasers.iter().enumerate() {
-            grid[floorchaser.pos].push((EntityType::Floorchaser, i));
+            grid[floorchaser.pos].push((GridEntityType::Floorchaser, i));
+        }
+        for (i, locked_door) in self.doors.locked.iter().enumerate() {
+            grid[locked_door.switch_pos].push((GridEntityType::LockedSwitch, i));
         }
         grid
     }
 }
 
-impl EntityType {
+impl GridEntityType {
     pub fn is_mob(&self) -> bool {
         match self {
-            EntityType::Ninja => true,
-            EntityType::Mine => false,
-            EntityType::BounceBlock => true,
-            EntityType::OneWay => false,
-            EntityType::BoostPad => false,
-            EntityType::ExitDoor => false,
-            EntityType::ExitSwitch => false,
-            EntityType::Thwump => true,
-            EntityType::LaunchPad => false,
-            EntityType::Floorchaser => true,
+            GridEntityType::Mine => false,
+            GridEntityType::BounceBlock => true,
+            GridEntityType::OneWay => false,
+            GridEntityType::ExitDoor => false,
+            GridEntityType::ExitSwitch => false,
+            GridEntityType::Thwump => true,
+            GridEntityType::LaunchPad => false,
+            GridEntityType::Floorchaser => true,
+            GridEntityType::LockedSwitch => false,
         }
     }
 }

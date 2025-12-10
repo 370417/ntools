@@ -65,7 +65,7 @@ impl BoostPad {
     /// ninja touching boost pad -> return 0
     /// boost pad at rest -> return 1
     pub fn eased_animation_progress(&self, partial_frame: f64) -> f64 {
-        let prev_frames_since_last_touch = (self.frames_since_last_touch.saturating_sub(1)).max(0) as f64;
+        let prev_frames_since_last_touch = self.frames_since_last_touch.saturating_sub(1) as f64;
         let t = prev_frames_since_last_touch.lerp(self.frames_since_last_touch as f64, partial_frame) / ANIM_DURATION as f64;
         ease_out_quad(t)
     }

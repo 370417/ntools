@@ -2,7 +2,7 @@ use glam::{DMat2, DVec2};
 use rand::{seq::IndexedRandom, RngCore, SeedableRng};
 use rand_xoshiro::{SplitMix64, Xoroshiro64StarStar};
 
-use crate::{anim_data::{Bones, DANCES, get_anim_frame}, collision_util::{get_single_closest_point, sweep_circle_vs_tiles}, entity::{Entities, EntityIndex, EntityType, OrientationZeroNorth, door::Doors, polymorphism::physical_collisions}, grid::Grid, segment::Segment};
+use crate::{anim_data::{Bones, DANCES, get_anim_frame}, collision_util::{get_single_closest_point, sweep_circle_vs_tiles}, entity::{Entities, EntityIndex, GridEntityType, OrientationZeroNorth, door::Doors, polymorphism::physical_collisions}, grid::Grid, segment::Segment};
 
 const GRAVITY_FALL: f64 = 0.06666666666666665;
 const GRAVITY_JUMP: f64 = 0.01111111111111111;
@@ -182,17 +182,17 @@ impl Ninja {
             let pop = depen.depen_unit_normal * depen.depen_dist;
             self.pos += pop;
             let entity_type = entity_index.0;
-            if entity_type != EntityType::BounceBlock {
+            if entity_type != GridEntityType::BounceBlock {
                 collision_state.crush += pop;
                 collision_state.crush_len += depen.depen_dist;
             }
-            if entity_type == EntityType::Thwump {
+            if entity_type == GridEntityType::Thwump {
                 collision_state.is_crushable = true;
             }
-            if let EntityType::BounceBlock | EntityType::Thwump /* | EntityType::ShoveThwump */ = entity_type {
+            if let GridEntityType::BounceBlock | GridEntityType::Thwump /* | EntityType::ShoveThwump */ = entity_type {
                 self.speed += pop;
             }
-            if let EntityType::OneWay = entity_type {
+            if let GridEntityType::OneWay = entity_type {
                 self.speed = depen.depen_unit_normal.perp_dot(self.speed) * depen.depen_unit_normal.perp();
             }
             if self.grav_get_vert(depen.depen_unit_normal) >= -0.0001 {
@@ -250,37 +250,36 @@ impl Ninja {
         }
     }
 
-    /// Perform logical collisions with entities, check for airborn state,
+    /// Perform logical collisions with entities, check for airborne state,
     /// check for walled state, calculate floor normals, check for impact or crush death.
     pub fn post_collision(&mut self, collision_state: &mut CollisionState, entities: &mut Entities, entity_grid: &Grid<EntityIndex>, segments: &Grid<Segment>, frame: u32) {
         // Perform LOGICAL collisions between the ninja and nearby entities.
         // Also check if the ninja can interact with the walls of entities when applicable.
-        // todo
         let mut wall_normal = None;
         for &(entity_type, i) in entity_grid.iter_neighborhood(self.pos) {
             match entity_type {
-                EntityType::Mine => {
+                GridEntityType::Mine => {
                     entities.mines[i].logical_collision(self);
                 }
-                EntityType::BounceBlock => {
+                GridEntityType::BounceBlock => {
                     let new_wall_normal = entities.bounce_blocks[i].logical_collision(self);
                     if wall_normal.is_none() { wall_normal = new_wall_normal }
                 }
-                EntityType::OneWay => {
+                GridEntityType::OneWay => {
                     let new_wall_normal = entities.one_ways[i].logical_collision(self);
                     if wall_normal.is_none() { wall_normal = new_wall_normal }
                 }
-                EntityType::ExitDoor => {
+                GridEntityType::ExitDoor => {
                     entities.exits[i].door_logical_collision(self);
                 }
-                EntityType::ExitSwitch => {
+                GridEntityType::ExitSwitch => {
                     entities.exits[i].switch_logical_collision(self.pos, frame);
                 }
-                EntityType::Thwump => {
+                GridEntityType::Thwump => {
                     let new_wall_normal = entities.thwumps[i].logical_collision(self);
                     if wall_normal.is_none() { wall_normal = new_wall_normal }
                 }
-                EntityType::LaunchPad => {
+                GridEntityType::LaunchPad => {
                     if let Some(boost) = entities.launch_pads[i].logical_collision(self, frame) {
                         // If collision with launch pad, update speed and position.
                         let boost = 2.0 / 3.0 * boost;
@@ -296,7 +295,12 @@ impl Ninja {
                         self.state = NinjaState::Falling;
                     }
                 }
-                _ => {}
+                GridEntityType::Floorchaser => {
+                    entities.floorchasers[i].logical_collision(self);
+                }
+                GridEntityType::LockedSwitch => {
+                    entities.doors.locked[i].logical_collision(self, frame);
+                }
             }
         }
 

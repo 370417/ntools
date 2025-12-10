@@ -9,6 +9,7 @@ import { BounceBlockDefs, BounceBlocks, updateBounceBlocks, type BounceBlockData
 import { Floorguards, updateFloorguards, type FloorguardData } from './entities/Floorguard';
 import { Ninja } from './entities/Ninja';
 import { LockedDoors, updateLockedDoors, type LockedDoorData } from './entities/LockedDoor';
+import { LockedSwitchDefs, LockedSwitches, updateLockedSwitches, type LockedSwitchData } from './entities/LockedSwitch';
 
 type BoostPad = {
     x: number;
@@ -113,6 +114,7 @@ function App() {
     const launchPads = createSignal<LaunchPadData[]>([]);
     const floorguards = createSignal<FloorguardData[]>([]);
     const lockedDoors = createSignal<LockedDoorData[]>([]);
+    const lockedSwitches = createSignal<LockedSwitchData[]>([]);
 
     const socket = new WebSocket('ws://localhost:8080');
 
@@ -224,6 +226,7 @@ function App() {
         updateLaunchPads(launchPads, replay);
         updateFloorguards(floorguards, replay, partialFrame);
         updateLockedDoors(lockedDoors, replay, partialFrame);
+        updateLockedSwitches(lockedSwitches, replay);
 
         setReplayLength(replay.replay_length());
     }
@@ -255,6 +258,7 @@ function App() {
                     <MineDefs />
                     <BounceBlockDefs />
                     <OneWayDefs />
+                    <LockedSwitchDefs />
                     <g id="boostpad" stroke-width="1.25">
                         <line x1={boostPadLong} y1={boostPadShort} x2={-boostPadShort} y2={-boostPadLong} />
                         <line x1={boostPadLong} y1={boostPadMid} x2={-boostPadMid} y2={-boostPadLong} />
@@ -284,6 +288,7 @@ function App() {
                 <LaunchPads launchPads={launchPads} />
                 <Floorguards floorguards={floorguards} />
                 <LockedDoors lockedDoors={lockedDoors} />
+                <LockedSwitches lockedSwitches={lockedSwitches} />
                 <Index each={thwumps()}>
                     {thwump => <use href="#thwump" x={thwump().x} y={thwump().y} transform={`rotate(${thwump().deg},${thwump().x},${thwump().y})`} />}
                 </Index>

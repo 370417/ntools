@@ -1,4 +1,4 @@
-use crate::{entity::{Entities, EntityIndex, EntityType, bounce_block::BounceBlock, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, thwump::Thwump}, grid::Grid, ninja::{Ninja, NinjaState}, segment::Segment};
+use crate::{entity::{Entities, EntityIndex, GridEntityType, bounce_block::BounceBlock, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, thwump::Thwump}, grid::Grid, ninja::{Ninja, NinjaState}, segment::Segment};
 
 #[derive(Clone)]
 pub struct Simulation {
@@ -139,10 +139,10 @@ impl KeyFrame {
         sim.entity_grid.drain_mobs();
         // add all mobs back into entity_grid
         for (i, bounce_block) in sim.entities.bounce_blocks.iter().enumerate() {
-            sim.entity_grid[bounce_block.pos].push((EntityType::BounceBlock, i));
+            sim.entity_grid[bounce_block.pos].push((GridEntityType::BounceBlock, i));
         }
         for (i, thwump) in sim.entities.thwumps.iter().enumerate() {
-            sim.entity_grid[thwump.pos].push((EntityType::Thwump, i));
+            sim.entity_grid[thwump.pos].push((GridEntityType::Thwump, i));
         }
     }
 }

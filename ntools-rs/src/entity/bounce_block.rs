@@ -77,8 +77,8 @@ impl BounceBlock {
 }
 
 impl Entity for BounceBlock {
-    fn entity_type(&self) -> super::EntityType {
-        super::EntityType::BounceBlock
+    fn entity_type(&self) -> super::GridEntityType {
+        super::GridEntityType::BounceBlock
     }
 
     fn pos(&self) -> DVec2 {

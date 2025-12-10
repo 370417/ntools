@@ -1,6 +1,6 @@
 use glam::{DMat2, DVec2};
 
-use crate::{entity::{Entity, EntityType, Mob, OrientationZeroNorth, door::Doors, thwump::segments_in_fov}, grid::{Grid, GridPos}, ninja::Ninja, segment::Segment, tile::TILE_SIZE};
+use crate::{collision_util::overlap_circle_vs_circle, entity::{Entity, GridEntityType, Mob, OrientationZeroNorth, door::Doors, thwump::segments_in_fov}, grid::{Grid, GridPos}, ninja::{self, Ninja}, segment::Segment, tile::TILE_SIZE};
 
 const RADIUS: f64 = 6.0;
 const SPEED: f64 = 3.428571428571428; // 24 / 7
@@ -112,11 +112,19 @@ impl Floorchaser {
             }
         }
     }
+
+    pub fn logical_collision(&mut self, ninja: &mut Ninja) {
+        if ninja.is_valid_target() {
+            if overlap_circle_vs_circle(self.pos, RADIUS, ninja.pos, ninja::RADIUS) {
+                ninja.kill(0, DVec2::ZERO, DVec2::ZERO);
+            }
+        }
+    }
 }
 
 impl Entity for Floorchaser {
-    fn entity_type(&self) -> EntityType {
-        EntityType::Floorchaser
+    fn entity_type(&self) -> GridEntityType {
+        GridEntityType::Floorchaser
     }
 
     fn pos(&self) -> DVec2 {

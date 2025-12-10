@@ -1,6 +1,6 @@
-use glam::DVec2;
+use glam::{DVec2, FloatExt};
 
-use crate::{entity::Orientation, grid::Grid, segment::Segment, tile::{TILE_HALF_SIZE, TILE_SIZE}};
+use crate::{collision_util::overlap_circle_vs_circle, entity::{Orientation, boost_pad::ease_out_quad}, grid::Grid, ninja::{self, Ninja}, segment::Segment, tile::{TILE_HALF_SIZE, TILE_SIZE}};
 
 // nclone (and presumably n++ itself?) has a cool semaphore-like system where
 // they keep track of the number of closed doors to tell if a segment has a closed door or not.
@@ -8,6 +8,9 @@ use crate::{entity::Orientation, grid::Grid, segment::Segment, tile::{TILE_HALF_
 // We don't use the same system because we keep the grid segments immutable across frames.
 // We could create a similar optimization within the Doors struct, but for now,
 // we simply make multiple grid segments if there are multiple doors.
+
+const SWITCH_RADIUS: f64 = 5.0;
+const ANIM_DURATION: u32 = 15;
 
 #[derive(Clone)]
 pub struct Doors {
@@ -70,6 +73,27 @@ impl LockedDoor {
             orientation,
             switch_pos,
             door_open_frame: None,
+        }
+    }
+
+    pub fn logical_collision(&mut self, ninja: &Ninja, frame: u32) {
+        if self.door_open_frame.is_none() && overlap_circle_vs_circle(self.switch_pos, SWITCH_RADIUS, ninja.pos, ninja::RADIUS) {
+            self.door_open_frame = Some(frame);
+        }
+    }
+
+    /// door locked -> return -1 (we don't return 0 because we want to make sure that the 0th frame of animation
+    /// is different than the door still being locked)
+    /// door unlocked -> return 0 to 1
+    pub fn eased_animation_progress(&self, frame: u32, partial_frame: f64) -> f64 {
+        match self.door_open_frame {
+            None => -1.0,
+            Some(door_open_frame) => {
+                let frames_since_open = frame.saturating_sub(door_open_frame);
+                let prev_frames_since_open = frames_since_open.saturating_sub(1) as f64;
+                let t = prev_frames_since_open.lerp(frames_since_open as f64, partial_frame) / ANIM_DURATION as f64;
+                ease_out_quad(t)
+            }
         }
     }
 }

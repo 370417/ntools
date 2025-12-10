@@ -380,7 +380,7 @@ impl Replay {
 
     #[wasm_bindgen]
     pub fn locked_door_anim_progress(&self, i: usize, partial_frame: f64) -> f64 {
-        0.0
+        self.current_sim.entities.doors.locked[i].eased_animation_progress(self.current_sim.frame, partial_frame)
     }
 
     #[wasm_bindgen]
