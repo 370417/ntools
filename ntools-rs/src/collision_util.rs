@@ -6,9 +6,7 @@ use crate::{entity::{Orientation, door::Doors}, grid::Grid, segment::{ClosestPoi
 pub fn sweep_circle_vs_tiles(pos_old: DVec2, delta: DVec2, radius: f64, segments: &Grid<Segment>, doors: &Doors) -> f64 {
     let pos_new = pos_old + delta;
     let width = radius + 1.0;
-    let min = pos_old.min(pos_new) - DVec2::new(width, width);
-    let max = pos_old.max(pos_new) + DVec2::new(width, width);
-    segments.iter_rect_region(min, max)
+    segments.iter_rect_region(pos_old, pos_new, width)
         .filter(|segment| segment.is_active(doors))
         .map(|segment| segment.intersect_with_ray(pos_old, delta, radius))
         .reduce(f64::min)
@@ -90,7 +88,7 @@ pub fn get_time_of_intersection_circle_vs_arc(center_circle: DVec2, vel: DVec2, 
 
 /// Find the closest point belonging to a collidable segment from the given position.
 pub fn get_single_closest_point(pos: DVec2, radius: f64, segments: &Grid<Segment>, doors: &Doors) -> Option<ClosestPoint> {
-    segments.iter_rect_region(pos - DVec2::new(radius, radius), pos + DVec2::new(radius, radius))
+    segments.iter_rect_region(pos, pos, radius)
         .filter(|segment| segment.is_active(doors))
         .map(|segment| {
             let closest = segment.get_closest_point(pos);

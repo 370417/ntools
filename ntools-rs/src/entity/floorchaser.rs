@@ -163,7 +163,7 @@ impl Mob for Floorchaser {
         let basis_matrix = DMat2::from_cols(speed_dir.perp(), speed_dir);
         let basis_matrix_inverse = basis_matrix.inverse();
 
-        let segments_iter = segments.iter_rect_region(leading_edge_corners.0, leading_edge_corners.1)
+        let segments_iter = segments.iter_rect_region(leading_edge_corners.0, leading_edge_corners.1, RADIUS)
             .filter(|segment| segment.is_active(doors));
 
         let collision = segments_in_fov(leading_edge_center, basis_matrix_inverse, RADIUS - 1.0, segments_iter).find(|(start, end)| {
@@ -192,7 +192,7 @@ impl Mob for Floorchaser {
         let basis_matrix = DMat2::from_cols(speed_dir, self.orientation.vec2());
         let basis_matrix_inverse = basis_matrix.inverse();
 
-        let segments_iter = segments.iter_rect_region(lower_front_corner + DVec2::new(7.0, 7.0), lower_front_corner - DVec2::new(7.0, 7.0));
+        let segments_iter = segments.iter_rect_region(lower_front_corner, lower_front_corner, 7.0);
 
         let best_floor = floor_segments(lower_front_corner, basis_matrix_inverse, segments_iter).filter(|(start, end)| {
             // filter out floor segements that are in fully in front of floorchaser

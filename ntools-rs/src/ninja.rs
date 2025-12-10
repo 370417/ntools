@@ -299,14 +299,20 @@ impl Ninja {
                     entities.floorchasers[i].logical_collision(self);
                 }
                 GridEntityType::LockedSwitch => {
-                    entities.doors.locked[i].logical_collision(self, frame);
+                    let locked_door = &mut entities.doors.locked[i];
+                    let state_changed = locked_door.switch_logical_collision(self, frame);
+                    if state_changed {
+                        for thwump in &mut entities.thwumps {
+                            thwump.invalidate_detection_range(locked_door.pos);
+                        }
+                    }
                 }
             }
         }
 
         // Check if the ninja can interact with walls from nearby tile segments.
         let rad = RADIUS + 0.1;
-        let segments = segments.iter_rect_region(self.pos - DVec2::new(rad, rad), self.pos + DVec2::new(rad, rad))
+        let segments = segments.iter_rect_region(self.pos, self.pos, rad)
             .filter(|segment| segment.is_active(&entities.doors));
 
         for segment in segments {

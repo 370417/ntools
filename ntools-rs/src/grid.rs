@@ -39,9 +39,12 @@ impl <T> Grid<T> {
     }
 
     /// Iterator over the items contained in a reactangular region bounded by two points.
-    pub fn iter_rect_region(&self, a: DVec2, b: DVec2) -> impl Iterator<Item = &T> {
-        let grid_pos1 = GridPos::from_world_pos(a).clamp();
-        let grid_pos2 = GridPos::from_world_pos(b).clamp();
+    pub fn iter_rect_region(&self, a: DVec2, b: DVec2, padding: f64) -> impl Iterator<Item = &T> {
+        let min = a.min(b);
+        let max = a.max(b);
+        let padding = DVec2::splat(padding);
+        let grid_pos1 = GridPos::from_world_pos(min - padding).clamp();
+        let grid_pos2 = GridPos::from_world_pos(max + padding).clamp();
         GridPos::iter_range_inclusive(grid_pos1, grid_pos2).flat_map(|pos| self[pos].iter())
     }
 

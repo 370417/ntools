@@ -76,9 +76,14 @@ impl LockedDoor {
         }
     }
 
-    pub fn logical_collision(&mut self, ninja: &Ninja, frame: u32) {
+    /// Check for collision with the door switch.
+    /// Return true if door state changed.
+    pub fn switch_logical_collision(&mut self, ninja: &Ninja, frame: u32) -> bool {
         if self.door_open_frame.is_none() && overlap_circle_vs_circle(self.switch_pos, SWITCH_RADIUS, ninja.pos, ninja::RADIUS) {
             self.door_open_frame = Some(frame);
+            true
+        } else {
+            false
         }
     }
 

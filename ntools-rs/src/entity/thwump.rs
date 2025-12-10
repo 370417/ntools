@@ -1,6 +1,6 @@
 use glam::{DMat2, DVec2};
 
-use crate::{collision_util::{Depenetration, overlap_circle_vs_segment, penetration_square_vs_circle_with_orientation}, entity::{Entity, GridEntityType, Mob, Orientation, door::Doors}, grid::{Grid, GridPos}, ninja::{self, Ninja}, segment::{Curvature, Segment}, tile::TILE_HALF_SIZE};
+use crate::{collision_util::{Depenetration, overlap_circle_vs_segment, penetration_square_vs_circle_with_orientation}, entity::{Entity, GridEntityType, Mob, Orientation, door::Doors}, grid::{Grid, GridPos}, ninja::{self, Ninja}, segment::{Curvature, Segment}, tile::{TILE_HALF_SIZE, TILE_SIZE}};
 
 const SEMI_SIDE: f64 = 9.0;
 const FORWARD_SPEED: f64 = 20.0 / 7.0;
@@ -134,6 +134,24 @@ impl Thwump {
         }
         None
     }
+
+    /// Update the detection range.
+    /// This is needed if a door opens or closes.
+    pub fn invalidate_detection_range(&mut self, door_pos: DVec2) {
+        if self.detection_range.is_none() {
+            return;
+        }
+
+        let basis_matrix = DMat2::from_cols(self.orientation.vec2().perp(), self.orientation.vec2());
+        let basis_matrix_inverse = basis_matrix.inverse();
+
+        let door_pos_rel_self = basis_matrix_inverse * (door_pos - self.pos);
+
+        if door_pos_rel_self.x.abs() <= TILE_SIZE {
+            // Only invalidate the detection range if the door is potentially in the thwump's range.
+            self.detection_range = None;
+        }
+    }
 }
 
 impl Entity for Thwump {
@@ -184,7 +202,7 @@ impl Mob for Thwump {
 
         // TODO: can skip computation if orientation is orthogonal and leading edge is not about to cross into new half grid tile
 
-        let segments_iter = segments.iter_rect_region(leading_edge_corners.0, leading_edge_corners.1)
+        let segments_iter = segments.iter_rect_region(leading_edge_corners.0, leading_edge_corners.1, SEMI_SIDE)
             .filter(|segment| segment.is_active(doors));
 
         let has_collision = segments_in_fov(leading_edge_center, basis_matrix_inverse, 11.0, segments_iter).any(|(start, end)| {
