@@ -28,6 +28,7 @@ pub struct KeyFrame {
     launch_pad_touch_frames: Vec<Option<u32>>,
     floorchasers: Vec<Floorchaser>,
     locked_door_open_frames: Vec<Option<u32>>,
+    trap_door_close_frames: Vec<Option<u32>>,
 }
 
 impl Input {
@@ -117,6 +118,7 @@ impl KeyFrame {
             launch_pad_touch_frames: sim.entities.launch_pads.iter().map(|launch_pad| launch_pad.last_touch_frame).collect(),
             floorchasers: sim.entities.floorchasers.clone(),
             locked_door_open_frames: sim.entities.doors.locked.iter().map(|locked_door| locked_door.door_open_frame).collect(),
+            trap_door_close_frames: sim.entities.doors.trap.iter().map(|trap_door| trap_door.door_close_frame).collect(),
         }
     }
 
@@ -144,6 +146,10 @@ impl KeyFrame {
 
         for (i, locked_door_open_frame) in self.locked_door_open_frames.iter().enumerate() {
             sim.entities.doors.locked[i].door_open_frame = *locked_door_open_frame;
+        }
+
+        for (i, trap_door_close_frame) in self.trap_door_close_frames.iter().enumerate() {
+            sim.entities.doors.trap[i].door_close_frame = *trap_door_close_frame;
         }
 
         sim.entity_grid.drain_mobs();

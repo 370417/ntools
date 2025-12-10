@@ -392,6 +392,41 @@ impl Replay {
     pub fn locked_switch_y(&self, i: usize) -> f64 {
         self.current_sim.entities.doors.locked[i].switch_pos.y
     }
+
+    #[wasm_bindgen]
+    pub fn trap_doors_len(&self) -> usize {
+        self.current_sim.entities.doors.trap.len()
+    }
+
+    #[wasm_bindgen]
+    pub fn trap_door_x(&self, i: usize) -> f64 {
+        self.current_sim.entities.doors.trap[i].pos.x
+    }
+
+    #[wasm_bindgen]
+    pub fn trap_door_y(&self, i: usize) -> f64 {
+        self.current_sim.entities.doors.trap[i].pos.y
+    }
+
+    #[wasm_bindgen]
+    pub fn trap_door_deg(&self, i: usize) -> f64 {
+        self.current_sim.entities.doors.trap[i].orientation.rotation_deg()
+    }
+
+    #[wasm_bindgen]
+    pub fn trap_door_anim_progress(&self, i: usize, partial_frame: f64) -> f64 {
+        self.current_sim.entities.doors.trap[i].eased_animation_progress(self.current_sim.frame, partial_frame)
+    }
+
+    #[wasm_bindgen]
+    pub fn trap_switch_x(&self, i: usize) -> f64 {
+        self.current_sim.entities.doors.trap[i].switch_pos.x
+    }
+
+    #[wasm_bindgen]
+    pub fn trap_switch_y(&self, i: usize) -> f64 {
+        self.current_sim.entities.doors.trap[i].switch_pos.y
+    }
 }
 
 // Separate impl block for functions without #[wasm_bindgen]

@@ -16,8 +16,8 @@ function transform(lockedSwitch: Accessor<LockedSwitchData>): string {
     return `translate(${x},${y})`;
 }
 
-export function updateLockedSwitches([lockedSwitchs, setLockedSwitches]: Signal<LockedSwitchData[]>, replay: Replay) {
-    const oldLockedSwitchs = lockedSwitchs();
+export function updateLockedSwitches([lockedSwitches, setLockedSwitches]: Signal<LockedSwitchData[]>, replay: Replay) {
+    const oldLockedSwitchs = lockedSwitches();
     const newLockedSwitchsLen = replay.locked_doors_len();
     const newLockedSwitchs: LockedSwitchData[] = [];
     for (let i = 0; i < newLockedSwitchsLen; i++) {
@@ -44,7 +44,7 @@ export function LockedSwitches(props: { lockedSwitches: Signal<LockedSwitchData[
     </Index>
 }
 
-const halfSize = 3;
+const halfSize = 3.25;
 const dashSize = 1.5;
 const dashWidth = 1;
 

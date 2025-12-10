@@ -37,6 +37,7 @@ pub enum GridEntityType {
     LaunchPad,
     Floorchaser,
     LockedSwitch,
+    TrapSwitch,
 }
 
 pub trait Entity {
@@ -94,6 +95,9 @@ impl Entities {
         for (i, locked_door) in self.doors.locked.iter().enumerate() {
             grid[locked_door.switch_pos].push((GridEntityType::LockedSwitch, i));
         }
+        for (i, trap_door) in self.doors.trap.iter().enumerate() {
+            grid[trap_door.switch_pos].push((GridEntityType::TrapSwitch, i));
+        }
         grid
     }
 }
@@ -110,6 +114,7 @@ impl GridEntityType {
             GridEntityType::LaunchPad => false,
             GridEntityType::Floorchaser => true,
             GridEntityType::LockedSwitch => false,
+            GridEntityType::TrapSwitch => false,
         }
     }
 }

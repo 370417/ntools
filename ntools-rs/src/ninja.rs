@@ -310,6 +310,18 @@ impl Ninja {
                         }
                     }
                 }
+                GridEntityType::TrapSwitch => {
+                    let trap_door = &mut entities.doors.trap[i];
+                    let state_changed = trap_door.switch_logical_collision(self, frame);
+                    if state_changed {
+                        for thwump in &mut entities.thwumps {
+                            thwump.invalidate_detection_range(trap_door.pos);
+                        }
+                        for floorchaser in &mut entities.floorchasers {
+                            floorchaser.invalidate_detection_range(trap_door.pos);
+                        }
+                    }
+                }
             }
         }
 

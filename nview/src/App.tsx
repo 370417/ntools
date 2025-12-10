@@ -10,6 +10,8 @@ import { Floorguards, updateFloorguards, type FloorguardData } from './entities/
 import { Ninja } from './entities/Ninja';
 import { LockedDoors, updateLockedDoors, type LockedDoorData } from './entities/LockedDoor';
 import { LockedSwitchDefs, LockedSwitches, updateLockedSwitches, type LockedSwitchData } from './entities/LockedSwitch';
+import { TrapSwitchDefs, TrapSwitches, updateTrapSwitches, type TrapSwitchData } from './entities/TrapSwitch';
+import { TrapDoors, updateTrapDoors, type TrapDoorData } from './entities/TrapDoor';
 
 type BoostPad = {
     x: number;
@@ -115,6 +117,8 @@ function App() {
     const floorguards = createSignal<FloorguardData[]>([]);
     const lockedDoors = createSignal<LockedDoorData[]>([]);
     const lockedSwitches = createSignal<LockedSwitchData[]>([]);
+    const trapDoors = createSignal<TrapDoorData[]>([]);
+    const trapSwitches = createSignal<TrapSwitchData[]>([]);
 
     const socket = new WebSocket('ws://localhost:8080');
 
@@ -227,6 +231,8 @@ function App() {
         updateFloorguards(floorguards, replay, partialFrame);
         updateLockedDoors(lockedDoors, replay, partialFrame);
         updateLockedSwitches(lockedSwitches, replay);
+        updateTrapDoors(trapDoors, replay, partialFrame);
+        updateTrapSwitches(trapSwitches, replay);
 
         setReplayLength(replay.replay_length());
     }
@@ -259,6 +265,7 @@ function App() {
                     <BounceBlockDefs />
                     <OneWayDefs />
                     <LockedSwitchDefs />
+                    <TrapSwitchDefs />
                     <g id="boostpad" stroke-width="1.25">
                         <line x1={boostPadLong} y1={boostPadShort} x2={-boostPadShort} y2={-boostPadLong} />
                         <line x1={boostPadLong} y1={boostPadMid} x2={-boostPadMid} y2={-boostPadLong} />
@@ -280,6 +287,8 @@ function App() {
                 </Index>
                 <OneWays oneWays={oneWays} />
                 <Mines mines={mines} />
+                <LockedSwitches lockedSwitches={lockedSwitches} />
+                <TrapSwitches trapSwitches={trapSwitches} />
                 <Index each={exitSwitches()}>
                     {exitSwitch => <>
                         <path class="exit-switch" d={`M ${exitSwitch().x} ${exitSwitch().y} m ${-exitSwitchHalfWidth + exitSwitchCorner} ${-exitSwitchHalfHeight} h ${2 * (exitSwitchHalfWidth - exitSwitchCorner)} l ${exitSwitchCorner} ${exitSwitchCorner} v ${2 * (exitSwitchHalfHeight - exitSwitchCorner)} l ${-exitSwitchCorner} ${exitSwitchCorner} h ${2 * (-exitSwitchHalfWidth + exitSwitchCorner)} l ${-exitSwitchCorner} ${-exitSwitchCorner} v ${2 * (-exitSwitchHalfHeight + exitSwitchCorner)} l ${exitSwitchCorner} ${-exitSwitchCorner}`} />
@@ -288,7 +297,7 @@ function App() {
                 <LaunchPads launchPads={launchPads} />
                 <Floorguards floorguards={floorguards} />
                 <LockedDoors lockedDoors={lockedDoors} />
-                <LockedSwitches lockedSwitches={lockedSwitches} />
+                <TrapDoors trapDoors={trapDoors} />
                 <Index each={thwumps()}>
                     {thwump => <use href="#thwump" x={thwump().x} y={thwump().y} transform={`rotate(${thwump().deg},${thwump().x},${thwump().y})`} />}
                 </Index>

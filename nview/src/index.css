@@ -45,6 +45,13 @@ body {
     --locked-switch-background-collected: #8C9487;
     --locked-switch-button-collected: #323323;
 
+    --trap-door-bar: #323323;
+    --trap-door-center: #C2CEB1;
+    --trap-switch-border: #323323;
+    --trap-switch-background: #8C9487;
+    --trap-switch-border-collected: #798076;
+    --trap-switch-background-collected: #8C9487;
+
     --time-remaining: #FECC04;
     --hardcore-time: #DF9B43;
     --empty-timebar: #707A6B;
@@ -181,6 +188,27 @@ svg {
 
 #locked-switch-touched line {
     stroke: var(--locked-switch-button-collected);
+}
+
+.trap-door .bar {
+    stroke: var(--trap-door-bar);
+}
+
+.trap-door .center {
+    stroke: var(--trap-door-center);
+}
+
+#trap-switch rect {
+    fill: var(--trap-switch-background);
+    stroke: var(--trap-switch-border);
+}
+
+#trap-switch-touched rect {
+    fill: var(--trap-switch-background-collected);
+}
+
+#trap-switch-touched line {
+    stroke: var(--trap-switch-border-collected);
 }
 
 .regular-grid {

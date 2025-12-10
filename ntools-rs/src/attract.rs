@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{entity::{Entities, Orientation, OrientationZeroNorth, boost_pad::BoostPad, bounce_block::BounceBlock, door::LockedDoor, exit::Exit, floorchaser::Floorchaser, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, thwump::Thwump}, grid::{COLS, Grid, GridPos, ROWS}, ninja::Ninja, segment::Segment, tile::Tile};
+use crate::{entity::{Entities, Orientation, OrientationZeroNorth, boost_pad::BoostPad, bounce_block::BounceBlock, door::{LockedDoor, TrapDoor}, exit::Exit, floorchaser::Floorchaser, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, thwump::Thwump}, grid::{COLS, Grid, GridPos, ROWS}, ninja::Ninja, segment::Segment, tile::Tile};
 
 /// Represents a parsed attract file.
 /// An attract file is what gets shown in the game's main menu: a replay of a failed attempt at a level.
@@ -106,6 +106,9 @@ impl Attract {
         let mut locked_doors = Vec::new();
         let mut locked_switches = Vec::new();
 
+        let mut trap_doors = Vec::new();
+        let mut trap_switches = Vec::new();
+
         let mut exit_doors = Vec::new();
         let mut exit_switches = Vec::new();
 
@@ -149,9 +152,9 @@ impl Attract {
                 // O switch
                 7 => locked_switches.push(6.0 * pos),
                 // C door
-                8 => {}
+                8 => trap_doors.push((6.0 * pos, orientation?)),
                 // C switch
-                9 => {}
+                9 => trap_switches.push(6.0 * pos),
                 // Launch pad
                 10 => entities.launch_pads.push(LaunchPad::new(6.0 * pos, orientation?)),
                 // One way
@@ -196,6 +199,10 @@ impl Attract {
 
         for ((door_pos, orientation), switch_pos) in locked_doors.into_iter().zip(locked_switches) {
             entities.doors.locked.push(LockedDoor::new(door_pos, orientation, switch_pos));
+        }
+
+        for ((door_pos, orientation), switch_pos) in trap_doors.into_iter().zip(trap_switches) {
+            entities.doors.trap.push(TrapDoor::new(door_pos, orientation, switch_pos));
         }
 
         for (exit_door, exit_switch) in exit_doors.into_iter().zip(exit_switches) {
