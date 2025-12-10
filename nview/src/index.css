@@ -157,6 +157,14 @@ svg {
     stroke: var(--exit-switch-border);
 }
 
+.locked-door .bar {
+    stroke: var(--locked-door-bar);
+}
+
+.locked-door .center {
+    stroke: var(--locked-door-center);
+}
+
 #locked-switch rect {
     fill: var(--locked-switch-background);
     stroke: var(--locked-switch-border);

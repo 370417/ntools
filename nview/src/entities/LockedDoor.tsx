@@ -1,14 +1,15 @@
-import { Index, type Accessor, type Signal } from "solid-js";
+import { Index, Show, type Accessor, type Signal } from "solid-js";
 import type { Replay } from "../assets/ntools_rs";
 
 export type LockedDoorData = {
     x: number;
     y: number;
     deg: number;
+    animProgress: number;
 };
 
 function equals(a: LockedDoorData, b: LockedDoorData): boolean {
-    return a.x == b.x && a.y == b.y && a.deg == b.deg;
+    return a.x == b.x && a.y == b.y && a.deg == b.deg && a.animProgress === b.animProgress;
 }
 
 function transform(floorguard: Accessor<LockedDoorData>): string {
@@ -26,6 +27,7 @@ export function updateLockedDoors([lockedDoors, setLockedDoors]: Signal<LockedDo
             x: replay.locked_door_x(i),
             y: replay.locked_door_y(i),
             deg: replay.locked_door_deg(i),
+            animProgress: replay.locked_door_anim_progress(i, partialFrame),
         };
         if (oldLockedDoor && equals(oldLockedDoor, newLockedDoor)) {
             newLockedDoors.push(oldLockedDoor);
@@ -50,7 +52,32 @@ const hw = 1;
 const hh = 12 - hw;
 
 export function LockedDoor(props: { lockedDoor: Accessor<LockedDoorData> }) {
-    return <g class="lockedDoor" transform={transform(props.lockedDoor)}>
-        <rect x={-hh} y={-hw} width={2 * hh} height={2 * hw} />
+    function centerOuterX() {
+        let t = props.lockedDoor().animProgress;
+        // animProgress between 0 and 0.5 -> t between 0 and 1
+        // animProgress between 0.5 and 1 -> t = 1
+        t = Math.min(Math.max(2 * t, 0), 1);
+
+        return 5 + 4 * t;
+    }
+
+    function centerInnerX() {
+        let t = props.lockedDoor().animProgress;
+        // animProgress between 0 and 0.5 -> t between 0 and 1
+        // animProgress between 0.5 and 1 -> t = 1
+        t = Math.min(Math.max(2 * t, 0), 1);
+
+        return 0 + 10 * t;
+    }
+
+    return <g class="locked-door" transform={transform(props.lockedDoor)}>
+        <Show when={props.lockedDoor().animProgress < 1}>
+            <line class="bar" stroke-width={2 * hw} x1={-hh} y1="0" x2={0} y2="0" />
+            <line class="bar" stroke-width={2 * hw} x1={hh} y1="0" x2={0} y2="0" />
+        </Show>
+        <Show when={props.lockedDoor().animProgress < 0.5}>
+            <line class="center" stroke-width={4 * hw} stroke-linecap="round" x1={centerOuterX()} y1="0" x2={centerInnerX()} y2="0" />
+            <line class="center" stroke-width={4 * hw} stroke-linecap="round" x1={-centerOuterX()} y1="0" x2={-centerInnerX()} y2="0" />
+        </Show>
     </g>;
 }

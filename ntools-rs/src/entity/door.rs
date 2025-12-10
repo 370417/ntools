@@ -10,7 +10,7 @@ use crate::{collision_util::overlap_circle_vs_circle, entity::{Orientation, boos
 // we simply make multiple grid segments if there are multiple doors.
 
 const SWITCH_RADIUS: f64 = 5.0;
-const ANIM_DURATION: u32 = 15;
+const ANIM_DURATION: u32 = 8;
 
 #[derive(Clone)]
 pub struct Doors {
@@ -29,7 +29,7 @@ pub struct LockedDoor {
     pub pos: DVec2,
     pub orientation: Orientation,
     pub switch_pos: DVec2,
-    door_open_frame: Option<u32>,
+    pub door_open_frame: Option<u32>,
 }
 
 impl Doors {

@@ -1,4 +1,4 @@
-use crate::{entity::{Entities, EntityIndex, GridEntityType, bounce_block::BounceBlock, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, thwump::Thwump}, grid::Grid, ninja::{Ninja, NinjaState}, segment::Segment};
+use crate::{entity::{Entities, EntityIndex, GridEntityType, bounce_block::BounceBlock, floorchaser::Floorchaser, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, thwump::Thwump}, grid::Grid, ninja::{Ninja, NinjaState}, segment::Segment};
 
 #[derive(Clone)]
 pub struct Simulation {
@@ -26,6 +26,8 @@ pub struct KeyFrame {
     exit_open_frames: Vec<Option<u32>>,
     thwumps: Vec<Thwump>,
     launch_pad_touch_frames: Vec<Option<u32>>,
+    floorchasers: Vec<Floorchaser>,
+    locked_door_open_frames: Vec<Option<u32>>,
 }
 
 impl Input {
@@ -113,6 +115,8 @@ impl KeyFrame {
             exit_open_frames: sim.entities.exits.iter().map(|exit| exit.door_open_frame).collect(),
             thwumps: sim.entities.thwumps.clone(),
             launch_pad_touch_frames: sim.entities.launch_pads.iter().map(|launch_pad| launch_pad.last_touch_frame).collect(),
+            floorchasers: sim.entities.floorchasers.clone(),
+            locked_door_open_frames: sim.entities.doors.locked.iter().map(|locked_door| locked_door.door_open_frame).collect(),
         }
     }
 
@@ -136,6 +140,12 @@ impl KeyFrame {
             sim.entities.launch_pads[i].last_touch_frame = *launch_pad_touch_frame;
         }
 
+        self.floorchasers.clone_into(&mut sim.entities.floorchasers);
+
+        for (i, locked_door_open_frame) in self.locked_door_open_frames.iter().enumerate() {
+            sim.entities.doors.locked[i].door_open_frame = *locked_door_open_frame;
+        }
+
         sim.entity_grid.drain_mobs();
         // add all mobs back into entity_grid
         for (i, bounce_block) in sim.entities.bounce_blocks.iter().enumerate() {
@@ -143,6 +153,9 @@ impl KeyFrame {
         }
         for (i, thwump) in sim.entities.thwumps.iter().enumerate() {
             sim.entity_grid[thwump.pos].push((GridEntityType::Thwump, i));
+        }
+        for (i, floorchaser) in sim.entities.floorchasers.iter().enumerate() {
+            sim.entity_grid[floorchaser.pos].push((GridEntityType::Floorchaser, i));
         }
     }
 }
