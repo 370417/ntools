@@ -38,6 +38,7 @@ pub enum GridEntityType {
     Floorchaser,
     LockedSwitch,
     TrapSwitch,
+    RegularDoor,
 }
 
 pub trait Entity {
@@ -98,6 +99,9 @@ impl Entities {
         for (i, trap_door) in self.doors.trap.iter().enumerate() {
             grid[trap_door.switch_pos].push((GridEntityType::TrapSwitch, i));
         }
+        for (i, regular_door) in self.doors.regular.iter().enumerate() {
+            grid[regular_door.pos].push((GridEntityType::RegularDoor, i));
+        }
         grid
     }
 }
@@ -115,6 +119,7 @@ impl GridEntityType {
             GridEntityType::Floorchaser => true,
             GridEntityType::LockedSwitch => false,
             GridEntityType::TrapSwitch => false,
+            GridEntityType::RegularDoor => false,
         }
     }
 }
@@ -331,5 +336,14 @@ impl TryFrom<u8> for OrientationZeroNorth {
             15 => Ok(Self::NNW),
             _ => Err("Orientation must be less than 16".into())
         }
+    }
+}
+
+pub fn on_door_state_change(door_pos: DVec2, thwumps: &mut Vec<Thwump>, floorchasers: &mut Vec<Floorchaser>) {
+    for thwump in thwumps {
+        thwump.invalidate_detection_range(door_pos);
+    }
+    for floorchaser in floorchasers {
+        floorchaser.invalidate_detection_range(door_pos);
     }
 }

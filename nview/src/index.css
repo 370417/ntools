@@ -35,7 +35,7 @@ body {
     --exit-switch-background-collected: #8C9487;
     --exit-switch-center: #FFFFFF;
 
-    --normal-door: #C2CEB1;
+    --regular-door: #C2CEB1;
     --locked-door-bar: #323323;
     --locked-door-center: #C2CEB1;
     --locked-switch-border: #323323;
@@ -209,6 +209,10 @@ svg {
 
 #trap-switch-touched line {
     stroke: var(--trap-switch-border-collected);
+}
+
+.regular-door .bar {
+    stroke: var(--regular-door);
 }
 
 .regular-grid {

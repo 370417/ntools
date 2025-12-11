@@ -1,4 +1,4 @@
-use crate::{entity::{Entities, EntityIndex, GridEntityType, bounce_block::BounceBlock, floorchaser::Floorchaser, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, thwump::Thwump}, grid::Grid, ninja::{Ninja, NinjaState}, segment::Segment};
+use crate::{entity::{Entities, EntityIndex, GridEntityType, bounce_block::BounceBlock, door::RegularDoor, floorchaser::Floorchaser, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, on_door_state_change, thwump::Thwump}, grid::Grid, ninja::{Ninja, NinjaState}, segment::Segment};
 
 #[derive(Clone)]
 pub struct Simulation {
@@ -29,6 +29,7 @@ pub struct KeyFrame {
     floorchasers: Vec<Floorchaser>,
     locked_door_open_frames: Vec<Option<u32>>,
     trap_door_close_frames: Vec<Option<u32>>,
+    regular_doors: Vec<RegularDoor>,
 }
 
 impl Input {
@@ -88,6 +89,11 @@ impl Simulation {
         }
 
         // Make all thinkable entities think
+        for door in &mut self.entities.doors.regular {
+            if door.think(self.frame) {
+                on_door_state_change(door.pos, &mut self.entities.thwumps, &mut self.entities.floorchasers);
+            }
+        }
         for mine in &mut self.entities.mines { mine.think(&self.ninja) }
         for thwump in &mut self.entities.thwumps { thwump.think(&self.ninja, segments, &self.entities.doors) }
         for floorchaser in &mut self.entities.floorchasers { floorchaser.think(&self.ninja, segments, &self.entities.doors) }
@@ -119,6 +125,7 @@ impl KeyFrame {
             floorchasers: sim.entities.floorchasers.clone(),
             locked_door_open_frames: sim.entities.doors.locked.iter().map(|locked_door| locked_door.door_open_frame).collect(),
             trap_door_close_frames: sim.entities.doors.trap.iter().map(|trap_door| trap_door.door_close_frame).collect(),
+            regular_doors: sim.entities.doors.regular.clone(),
         }
     }
 
@@ -151,6 +158,8 @@ impl KeyFrame {
         for (i, trap_door_close_frame) in self.trap_door_close_frames.iter().enumerate() {
             sim.entities.doors.trap[i].door_close_frame = *trap_door_close_frame;
         }
+
+        self.regular_doors.clone_into(&mut sim.entities.doors.regular);
 
         sim.entity_grid.drain_mobs();
         // add all mobs back into entity_grid

@@ -12,6 +12,7 @@ import { LockedDoors, updateLockedDoors, type LockedDoorData } from './entities/
 import { LockedSwitchDefs, LockedSwitches, updateLockedSwitches, type LockedSwitchData } from './entities/LockedSwitch';
 import { TrapSwitchDefs, TrapSwitches, updateTrapSwitches, type TrapSwitchData } from './entities/TrapSwitch';
 import { TrapDoors, updateTrapDoors, type TrapDoorData } from './entities/TrapDoor';
+import { RegularDoors, updateRegularDoors, type RegularDoorData } from './entities/RegularDoor';
 
 type BoostPad = {
     x: number;
@@ -119,6 +120,7 @@ function App() {
     const lockedSwitches = createSignal<LockedSwitchData[]>([]);
     const trapDoors = createSignal<TrapDoorData[]>([]);
     const trapSwitches = createSignal<TrapSwitchData[]>([]);
+    const regularDoors = createSignal<RegularDoorData[]>([]);
 
     const socket = new WebSocket('ws://localhost:8080');
 
@@ -233,6 +235,7 @@ function App() {
         updateLockedSwitches(lockedSwitches, replay);
         updateTrapDoors(trapDoors, replay, partialFrame);
         updateTrapSwitches(trapSwitches, replay);
+        updateRegularDoors(regularDoors, replay, partialFrame);
 
         setReplayLength(replay.replay_length());
     }
@@ -296,6 +299,7 @@ function App() {
                 </Index>
                 <LaunchPads launchPads={launchPads} />
                 <Floorguards floorguards={floorguards} />
+                <RegularDoors regularDoors={regularDoors} />
                 <LockedDoors lockedDoors={lockedDoors} />
                 <TrapDoors trapDoors={trapDoors} />
                 <Index each={thwumps()}>

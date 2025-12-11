@@ -2,7 +2,7 @@ use glam::{DMat2, DVec2};
 use rand::{seq::IndexedRandom, RngCore, SeedableRng};
 use rand_xoshiro::{SplitMix64, Xoroshiro64StarStar};
 
-use crate::{anim_data::{Bones, DANCES, get_anim_frame}, collision_util::{get_single_closest_point, sweep_circle_vs_tiles}, entity::{Entities, EntityIndex, GridEntityType, OrientationZeroNorth, door::Doors, polymorphism::physical_collisions}, grid::Grid, segment::Segment};
+use crate::{anim_data::{Bones, DANCES, get_anim_frame}, collision_util::{get_single_closest_point, sweep_circle_vs_tiles}, entity::{Entities, EntityIndex, GridEntityType, OrientationZeroNorth, door::Doors, on_door_state_change, polymorphism::physical_collisions}, grid::Grid, segment::Segment};
 
 const GRAVITY_FALL: f64 = 0.06666666666666665;
 const GRAVITY_JUMP: f64 = 0.01111111111111111;
@@ -302,24 +302,21 @@ impl Ninja {
                     let locked_door = &mut entities.doors.locked[i];
                     let state_changed = locked_door.switch_logical_collision(self, frame);
                     if state_changed {
-                        for thwump in &mut entities.thwumps {
-                            thwump.invalidate_detection_range(locked_door.pos);
-                        }
-                        for floorchaser in &mut entities.floorchasers {
-                            floorchaser.invalidate_detection_range(locked_door.pos);
-                        }
+                        on_door_state_change(locked_door.pos, &mut entities.thwumps, &mut entities.floorchasers);
                     }
                 }
                 GridEntityType::TrapSwitch => {
                     let trap_door = &mut entities.doors.trap[i];
                     let state_changed = trap_door.switch_logical_collision(self, frame);
                     if state_changed {
-                        for thwump in &mut entities.thwumps {
-                            thwump.invalidate_detection_range(trap_door.pos);
-                        }
-                        for floorchaser in &mut entities.floorchasers {
-                            floorchaser.invalidate_detection_range(trap_door.pos);
-                        }
+                        on_door_state_change(trap_door.pos, &mut entities.thwumps, &mut entities.floorchasers);
+                    }
+                }
+                GridEntityType::RegularDoor => {
+                    let regular_door = &mut entities.doors.regular[i];
+                    let state_changed = regular_door.logical_collision(self, frame);
+                    if state_changed {
+                        on_door_state_change(regular_door.pos, &mut entities.thwumps, &mut entities.floorchasers);
                     }
                 }
             }

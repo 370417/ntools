@@ -427,6 +427,31 @@ impl Replay {
     pub fn trap_switch_y(&self, i: usize) -> f64 {
         self.current_sim.entities.doors.trap[i].switch_pos.y
     }
+
+    #[wasm_bindgen]
+    pub fn regular_doors_len(&self) -> usize {
+        self.current_sim.entities.doors.regular.len()
+    }
+
+    #[wasm_bindgen]
+    pub fn regular_door_x(&self, i: usize) -> f64 {
+        self.current_sim.entities.doors.regular[i].pos.x
+    }
+
+    #[wasm_bindgen]
+    pub fn regular_door_y(&self, i: usize) -> f64 {
+        self.current_sim.entities.doors.regular[i].pos.y
+    }
+
+    #[wasm_bindgen]
+    pub fn regular_door_deg(&self, i: usize) -> f64 {
+        self.current_sim.entities.doors.regular[i].orientation.rotation_deg()
+    }
+
+    #[wasm_bindgen]
+    pub fn regular_door_anim_progress(&self, i: usize, partial_frame: f64) -> f64 {
+        self.current_sim.entities.doors.regular[i].eased_animation_progress(partial_frame)
+    }
 }
 
 // Separate impl block for functions without #[wasm_bindgen]
