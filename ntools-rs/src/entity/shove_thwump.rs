@@ -2,7 +2,7 @@ use core::panic;
 
 use glam::{DMat2, DVec2};
 
-use crate::{collision_util::{Depenetration, penetration_square_vs_circle_with_orientation}, entity::{Entity, EntityIndex, GridEntityType, Mob, Orientation, door::Doors, move_entity, thwump::segments_in_fov}, grid::{Grid, GridPos}, ninja::{self, Ninja}, segment::Segment};
+use crate::{collision_util::{Depenetration, penetration_circle_vs_point, penetration_square_vs_circle_with_orientation}, entity::{Entity, EntityIndex, GridEntityType, Mob, Orientation, door::Doors, move_entity, thwump::segments_in_fov}, grid::{Grid, GridPos}, ninja::{self, Ninja}, segment::Segment};
 
 const SEMI_SIDE: f64 = 12.0;
 const INNER_RADIUS: f64 = 8.0;
@@ -15,6 +15,7 @@ pub struct ShoveThwump {
     pub orientation: Orientation,
     origin: DVec2,
     state: ShoveThwumpState,
+    corners: Corners,
 }
 
 #[derive(Clone)]
@@ -28,6 +29,12 @@ enum ShoveThwumpState {
     Retreating(Orientation),
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum Corners {
+    Round,
+    Square,
+}
+
 impl ShoveThwump {
     pub fn new(pos: DVec2, orientation: Orientation) -> ShoveThwump {
         ShoveThwump {
@@ -35,6 +42,7 @@ impl ShoveThwump {
             orientation,
             origin: pos,
             state: ShoveThwumpState::Waiting,
+            corners: Corners::Square,
         }
     }
 
@@ -106,10 +114,13 @@ impl ShoveThwump {
     pub fn physical_collision(&self, ninja: &Ninja) -> Option<Depenetration> {
         match self.state {
             ShoveThwumpState::Waiting => {
-                penetration_square_vs_circle_with_orientation(self.pos, SEMI_SIDE + ninja::RADIUS, ninja.pos, 0.0, self.orientation)
+                match self.corners {
+                    Corners::Round => penetration_square_vs_circle_with_orientation(self.pos, SEMI_SIDE, ninja.pos, ninja::RADIUS, self.orientation),
+                    Corners::Square => penetration_square_vs_circle_with_orientation(self.pos, SEMI_SIDE + ninja::RADIUS, ninja.pos, 0.0, self.orientation),
+                }
             }
             ShoveThwumpState::Touched { touch, .. } => {
-                penetration_shwump(self.pos, self.orientation, touch, ninja.pos, ninja::RADIUS)
+                penetration_shwump(self.corners, self.pos, self.orientation, touch, ninja.pos, ninja::RADIUS)
             }
             ShoveThwumpState::Launching(_) => None,
             ShoveThwumpState::Retreating(_) => None,
@@ -119,7 +130,10 @@ impl ShoveThwump {
     pub fn logical_collision(&mut self, ninja: &mut Ninja) -> Option<f64> {
         match &mut self.state {
             ShoveThwumpState::Waiting => {
-                let depen = penetration_square_vs_circle_with_orientation(self.pos, SEMI_SIDE + ninja::RADIUS + 0.1, ninja.pos, 0.0, self.orientation);
+                let depen = match self.corners {
+                    Corners::Round => penetration_square_vs_circle_with_orientation(self.pos, SEMI_SIDE, ninja.pos, ninja::RADIUS + 0.1, self.orientation),
+                    Corners::Square => penetration_square_vs_circle_with_orientation(self.pos, SEMI_SIDE + ninja::RADIUS + 0.1, ninja.pos, 0.0, self.orientation),
+                };
                 if let Some(depen) = depen {
                     let basis_matrix = DMat2::from_cols(self.orientation.vec2(), self.orientation.vec2().perp());
                     let ninja_pos_rel_shwump = basis_matrix.inverse() * (ninja.pos - self.pos);
@@ -134,7 +148,7 @@ impl ShoveThwump {
                 None
             }
             ShoveThwumpState::Touched { touch, is_touched } => {
-                let depen = penetration_shwump(self.pos, self.orientation, *touch, ninja.pos, ninja::RADIUS + 0.1);
+                let depen = penetration_shwump(self.corners, self.pos, self.orientation, *touch, ninja.pos, ninja::RADIUS + 0.1);
                 *is_touched = depen.is_some();
                 if let Some(depen) = depen {
                     if ninja.grav_eq_abs_horiz(depen.depen_unit_normal, 1.0) {
@@ -233,7 +247,7 @@ fn round_cardinal_orientation(v: DVec2) -> Orientation {
 
 /// Depenetrate the ninja out of a shwump.
 /// Collision only happens with the active side of the thwump.
-fn penetration_shwump(pos: DVec2, orientation: Orientation, touch: Orientation, ninja_pos: DVec2, ninja_radius: f64) -> Option<Depenetration> {
+fn penetration_shwump(corners: Corners, pos: DVec2, orientation: Orientation, touch: Orientation, ninja_pos: DVec2, ninja_radius: f64) -> Option<Depenetration> {
     let basis_matrix = DMat2::from_cols(orientation.vec2(), orientation.vec2().perp());
     let basis_matrix_inverse = basis_matrix.inverse();
 
@@ -244,7 +258,11 @@ fn penetration_shwump(pos: DVec2, orientation: Orientation, touch: Orientation, 
         // ninja is touching top or bottom of shwump
         let line_y = touch_vec.y * SEMI_SIDE;
         if (ninja_pos_rel_shwump.y - line_y).abs() < ninja_radius && ninja_pos_rel_shwump.x.abs() < SEMI_SIDE + ninja_radius {
-            if ninja_pos_rel_shwump.y > line_y {
+            if corners == Corners::Round && ninja_pos_rel_shwump.x < -SEMI_SIDE {
+                penetration_circle_vs_point(DVec2::new(-SEMI_SIDE, line_y), ninja_pos_rel_shwump, ninja_radius)
+            } else if corners == Corners::Round && ninja_pos_rel_shwump.x > SEMI_SIDE {
+                penetration_circle_vs_point(DVec2::new(SEMI_SIDE, line_y), ninja_pos_rel_shwump, ninja_radius)
+            } else if ninja_pos_rel_shwump.y > line_y {
                 Some(Depenetration {
                     depen_unit_normal: DVec2::new(0.0, 1.0),
                     depen_dist: line_y + ninja_radius - ninja_pos_rel_shwump.y,
@@ -264,7 +282,11 @@ fn penetration_shwump(pos: DVec2, orientation: Orientation, touch: Orientation, 
         // ninja is touching left or right of thwump
         let line_x = touch_vec.x * SEMI_SIDE;
         if (ninja_pos_rel_shwump.x - line_x).abs() < ninja_radius && ninja_pos_rel_shwump.y.abs() < SEMI_SIDE + ninja_radius {
-            if ninja_pos_rel_shwump.x > line_x {
+            if corners == Corners::Round && ninja_pos_rel_shwump.y < -SEMI_SIDE {
+                penetration_circle_vs_point(DVec2::new(line_x, -SEMI_SIDE), ninja_pos_rel_shwump, ninja_radius)
+            } else if corners == Corners::Round && ninja_pos_rel_shwump.y > SEMI_SIDE {
+                penetration_circle_vs_point(DVec2::new(line_x, SEMI_SIDE), ninja_pos_rel_shwump, ninja_radius)
+            } else if ninja_pos_rel_shwump.x > line_x {
                 Some(Depenetration {
                     depen_unit_normal: DVec2::new(1.0, 0.0),
                     depen_dist: line_x + ninja_radius - ninja_pos_rel_shwump.x,

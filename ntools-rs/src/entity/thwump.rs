@@ -25,6 +25,7 @@ enum ThwumpState {
     Forward,
     Backward,
 }
+
 #[derive(Clone, Copy)]
 pub enum Corners {
     Round,
