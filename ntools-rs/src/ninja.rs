@@ -189,7 +189,7 @@ impl Ninja {
             if entity_type == GridEntityType::Thwump {
                 collision_state.is_crushable = true;
             }
-            if let GridEntityType::BounceBlock | GridEntityType::Thwump /* | EntityType::ShoveThwump */ = entity_type {
+            if let GridEntityType::BounceBlock | GridEntityType::Thwump | GridEntityType::ShoveThwump = entity_type {
                 self.speed += pop;
             }
             if let GridEntityType::OneWay = entity_type {
@@ -277,6 +277,10 @@ impl Ninja {
                 }
                 GridEntityType::Thwump => {
                     let new_wall_normal = entities.thwumps[i].logical_collision(self);
+                    if wall_normal.is_none() { wall_normal = new_wall_normal }
+                }
+                GridEntityType::ShoveThwump => {
+                    let new_wall_normal = entities.shove_thwumps[i].logical_collision(self);
                     if wall_normal.is_none() { wall_normal = new_wall_normal }
                 }
                 GridEntityType::LaunchPad => {

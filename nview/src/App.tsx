@@ -13,6 +13,7 @@ import { LockedSwitchDefs, LockedSwitches, updateLockedSwitches, type LockedSwit
 import { TrapSwitchDefs, TrapSwitches, updateTrapSwitches, type TrapSwitchData } from './entities/TrapSwitch';
 import { TrapDoors, updateTrapDoors, type TrapDoorData } from './entities/TrapDoor';
 import { RegularDoors, updateRegularDoors, type RegularDoorData } from './entities/RegularDoor';
+import { ShoveThwumps, updateShoveThwumps, type ShoveThwumpData } from './entities/ShoveThwump';
 
 type BoostPad = {
     x: number;
@@ -121,6 +122,7 @@ function App() {
     const trapDoors = createSignal<TrapDoorData[]>([]);
     const trapSwitches = createSignal<TrapSwitchData[]>([]);
     const regularDoors = createSignal<RegularDoorData[]>([]);
+    const shoveThwumps = createSignal<ShoveThwumpData[]>([]);
 
     const socket = new WebSocket('ws://localhost:8080');
 
@@ -236,6 +238,7 @@ function App() {
         updateTrapDoors(trapDoors, replay, partialFrame);
         updateTrapSwitches(trapSwitches, replay);
         updateRegularDoors(regularDoors, replay, partialFrame);
+        updateShoveThwumps(shoveThwumps, replay, partialFrame);
 
         setReplayLength(replay.replay_length());
     }
@@ -309,6 +312,7 @@ function App() {
                 <Index each={boostPads()}>
                     {boostPad => <use href="#boostpad" x={boostPad().x} y={boostPad().y} stroke={`color-mix(in srgb-linear, var(--boost-pad) ${boostPad().anim * 100}%, var(--boost-pad-wooshing))`} transform={`rotate(${boostPad().deg},${boostPad().x},${boostPad().y})`} />}
                 </Index>
+                <ShoveThwumps shoveThwumps={shoveThwumps} />
                 <Ninja class="ninja preview" ninja={ninjaPreview} bones={ninjaPreviewBones} />
                 <Ninja class="ninja" ninja={ninja} bones={ninjaBones} />
                 <path id="tiles" stroke-width="2" clip-path="url(#tiles-clip)" clip-rule="evenodd" d={tilePath()} fill-rule="evenodd" />

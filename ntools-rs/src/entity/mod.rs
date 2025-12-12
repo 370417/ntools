@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{entity::{boost_pad::BoostPad, bounce_block::BounceBlock, door::Doors, exit::Exit, floorchaser::Floorchaser, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, thwump::Thwump}, grid::{Grid, GridPos}, segment::Segment};
+use crate::{entity::{boost_pad::BoostPad, bounce_block::BounceBlock, door::Doors, exit::Exit, floorchaser::Floorchaser, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump}, grid::{Grid, GridPos}, segment::Segment};
 
 pub mod boost_pad;
 pub mod bounce_block;
@@ -11,6 +11,7 @@ pub mod launch_pad;
 pub mod mine;
 pub mod one_way;
 pub mod polymorphism;
+pub mod shove_thwump;
 pub mod thwump;
 
 #[derive(Clone)]
@@ -24,6 +25,7 @@ pub struct Entities {
     pub launch_pads: Vec<LaunchPad>,
     pub floorchasers: Vec<Floorchaser>,
     pub doors: Doors,
+    pub shove_thwumps: Vec<ShoveThwump>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -39,6 +41,7 @@ pub enum GridEntityType {
     LockedSwitch,
     TrapSwitch,
     RegularDoor,
+    ShoveThwump,
 }
 
 pub trait Entity {
@@ -60,6 +63,7 @@ impl Entities {
             launch_pads: Vec::new(),
             floorchasers: Vec::new(),
             doors: Doors::new(),
+            shove_thwumps: Vec::new(),
         }
     }
 
@@ -102,6 +106,9 @@ impl Entities {
         for (i, regular_door) in self.doors.regular.iter().enumerate() {
             grid[regular_door.pos].push((GridEntityType::RegularDoor, i));
         }
+        for (i, shove_thwump) in self.shove_thwumps.iter().enumerate() {
+            grid[shove_thwump.pos].push((GridEntityType::ShoveThwump, i));
+        }
         grid
     }
 }
@@ -109,16 +116,17 @@ impl Entities {
 impl GridEntityType {
     pub fn is_mob(&self) -> bool {
         match self {
-            GridEntityType::Mine => false,
-            GridEntityType::BounceBlock => true,
-            GridEntityType::OneWay => false,
-            GridEntityType::ExitDoor => false,
-            GridEntityType::ExitSwitch => false,
-            GridEntityType::Thwump => true,
-            GridEntityType::LaunchPad => false,
-            GridEntityType::Floorchaser => true,
-            GridEntityType::LockedSwitch => false,
-            GridEntityType::TrapSwitch => false,
+            GridEntityType::BounceBlock |
+            GridEntityType::Thwump |
+            GridEntityType::Floorchaser |
+            GridEntityType::ShoveThwump => true,
+            GridEntityType::Mine |
+            GridEntityType::OneWay |
+            GridEntityType::ExitDoor |
+            GridEntityType::ExitSwitch |
+            GridEntityType::LaunchPad |
+            GridEntityType::LockedSwitch |
+            GridEntityType::TrapSwitch |
             GridEntityType::RegularDoor => false,
         }
     }
@@ -246,6 +254,27 @@ impl Orientation {
             _ => false,
         }
     }
+
+    pub fn to_u8(self) -> u8 {
+        match self {
+            Orientation::E => 0,
+            Orientation::SE => 1,
+            Orientation::S => 2,
+            Orientation::SW => 3,
+            Orientation::W => 4,
+            Orientation::NW => 5,
+            Orientation::N => 6,
+            Orientation::NE => 7,
+            Orientation::ESE => 8,
+            Orientation::SSE => 9,
+            Orientation::SSW => 10,
+            Orientation::WSW => 11,
+            Orientation::WNW => 12,
+            Orientation::NNW => 13,
+            Orientation::NNE => 14,
+            Orientation::ENE => 15,
+        }
+    }
 }
 
 impl OrientationZeroNorth {
@@ -345,5 +374,18 @@ pub fn on_door_state_change(door_pos: DVec2, thwumps: &mut Vec<Thwump>, floorcha
     }
     for floorchaser in floorchasers {
         floorchaser.invalidate_detection_range(door_pos);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_orientation_u8() {
+        for i in 0..16 {
+            let j = Orientation::try_from(i).unwrap().to_u8();
+            assert_eq!(i, j);
+        }
     }
 }

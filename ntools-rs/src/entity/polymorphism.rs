@@ -10,6 +10,7 @@ pub fn physical_collisions(entities: &mut Entities, (entity_type, i): EntityInde
         GridEntityType::BounceBlock => entities.bounce_blocks.get_mut(i)?.physical_collision(ninja.pos),
         GridEntityType::OneWay => entities.one_ways.get(i)?.physical_collision(ninja),
         GridEntityType::Thwump => entities.thwumps.get(i)?.physical_collision(ninja),
+        GridEntityType::ShoveThwump => entities.shove_thwumps.get(i)?.physical_collision(ninja),
         _ => None,
     }
 }

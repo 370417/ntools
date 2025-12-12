@@ -1,4 +1,4 @@
-use crate::{entity::{Entities, EntityIndex, GridEntityType, bounce_block::BounceBlock, door::RegularDoor, floorchaser::Floorchaser, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, on_door_state_change, thwump::Thwump}, grid::Grid, ninja::{Ninja, NinjaState}, segment::Segment};
+use crate::{entity::{Entities, EntityIndex, GridEntityType, bounce_block::BounceBlock, door::RegularDoor, floorchaser::Floorchaser, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, on_door_state_change, shove_thwump::ShoveThwump, thwump::Thwump}, grid::Grid, ninja::{Ninja, NinjaState}, segment::Segment};
 
 #[derive(Clone)]
 pub struct Simulation {
@@ -30,6 +30,7 @@ pub struct KeyFrame {
     locked_door_open_frames: Vec<Option<u32>>,
     trap_door_close_frames: Vec<Option<u32>>,
     regular_doors: Vec<RegularDoor>,
+    shove_thwumps: Vec<ShoveThwump>,
 }
 
 impl Input {
@@ -126,6 +127,7 @@ impl KeyFrame {
             locked_door_open_frames: sim.entities.doors.locked.iter().map(|locked_door| locked_door.door_open_frame).collect(),
             trap_door_close_frames: sim.entities.doors.trap.iter().map(|trap_door| trap_door.door_close_frame).collect(),
             regular_doors: sim.entities.doors.regular.clone(),
+            shove_thwumps: sim.entities.shove_thwumps.clone(),
         }
     }
 
@@ -171,6 +173,9 @@ impl KeyFrame {
         }
         for (i, floorchaser) in sim.entities.floorchasers.iter().enumerate() {
             sim.entity_grid[floorchaser.pos].push((GridEntityType::Floorchaser, i));
+        }
+        for (i, shove_thwump) in sim.entities.shove_thwumps.iter().enumerate() {
+            sim.entity_grid[shove_thwump.pos].push((GridEntityType::ShoveThwump, i));
         }
     }
 }

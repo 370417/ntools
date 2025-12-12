@@ -452,6 +452,31 @@ impl Replay {
     pub fn regular_door_anim_progress(&self, i: usize, partial_frame: f64) -> f64 {
         self.current_sim.entities.doors.regular[i].eased_animation_progress(partial_frame)
     }
+
+    #[wasm_bindgen]
+    pub fn shove_thwumps_len(&self) -> usize {
+        self.current_sim.entities.shove_thwumps.len()
+    }
+
+    #[wasm_bindgen]
+    pub fn shove_thwump_x(&self, i: usize, partial_frame: f64) -> f64 {
+        self.current_sim.entities.shove_thwumps[i].pos.x
+    }
+
+    #[wasm_bindgen]
+    pub fn shove_thwump_y(&self, i: usize, partial_frame: f64) -> f64 {
+        self.current_sim.entities.shove_thwumps[i].pos.y
+    }
+
+    #[wasm_bindgen]
+    pub fn shove_thwump_deg(&self, i: usize) -> f64 {
+        self.current_sim.entities.shove_thwumps[i].orientation.rotation_deg()
+    }
+
+    #[wasm_bindgen]
+    pub fn shove_thwump_touch(&self, i: usize) -> i32 {
+        self.current_sim.entities.shove_thwumps[i].touch_as_num()
+    }
 }
 
 // Separate impl block for functions without #[wasm_bindgen]

@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{entity::{Entities, Orientation, OrientationZeroNorth, boost_pad::BoostPad, bounce_block::BounceBlock, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floorchaser::Floorchaser, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, thwump::Thwump}, grid::{COLS, Grid, GridPos, ROWS}, ninja::Ninja, segment::Segment, tile::Tile};
+use crate::{entity::{Entities, Orientation, OrientationZeroNorth, boost_pad::BoostPad, bounce_block::BounceBlock, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floorchaser::Floorchaser, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump}, grid::{COLS, Grid, GridPos, ROWS}, ninja::Ninja, segment::Segment, tile::Tile};
 
 /// Represents a parsed attract file.
 /// An attract file is what gets shown in the game's main menu: a replay of a failed attempt at a level.
@@ -192,7 +192,7 @@ impl Attract {
                 // Bat
                 27 => {}
                 // Shove thwump
-                28 => {}
+                28 => entities.shove_thwumps.push(ShoveThwump::new(6.0 * pos, orientation?)),
                 _ => return Err("Invalid object id".into()),
             }
         }
