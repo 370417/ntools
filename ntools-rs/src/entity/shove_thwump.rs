@@ -38,6 +38,28 @@ impl ShoveThwump {
         }
     }
 
+    /// Get the interpolated x position
+    pub fn x(&self, partial_frame: f64) -> f64 {
+        self.interpolated_pos(partial_frame).x
+    }
+
+    /// Get the interpolated y position
+    pub fn y(&self, partial_frame: f64) -> f64 {
+        self.interpolated_pos(partial_frame).y
+    }
+
+    fn interpolated_pos(&self, partial_frame: f64) -> DVec2 {
+        let basis_matrix = DMat2::from_cols(self.orientation.vec2(), self.orientation.vec2().perp());
+
+        let old_pos = match self.state {
+            ShoveThwumpState::Waiting => self.pos,
+            ShoveThwumpState::Touched { .. } => self.pos,
+            ShoveThwumpState::Launching(touch) => self.pos + basis_matrix * touch.vec2() * LAUNCHING_SPEED,
+            ShoveThwumpState::Retreating(touch) => self.pos - basis_matrix * touch.vec2() * RETREATING_SPEED,
+        };
+        old_pos.lerp(self.pos, partial_frame)
+    }
+
     /// if return >= 16 -> show all 4 thwump edges
     /// if return < 0 -> show no thwump edges
     /// else -> show one thwump edge according to orientation

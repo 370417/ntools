@@ -460,12 +460,12 @@ impl Replay {
 
     #[wasm_bindgen]
     pub fn shove_thwump_x(&self, i: usize, partial_frame: f64) -> f64 {
-        self.current_sim.entities.shove_thwumps[i].pos.x
+        self.current_sim.entities.shove_thwumps[i].x(partial_frame)
     }
 
     #[wasm_bindgen]
     pub fn shove_thwump_y(&self, i: usize, partial_frame: f64) -> f64 {
-        self.current_sim.entities.shove_thwumps[i].pos.y
+        self.current_sim.entities.shove_thwumps[i].y(partial_frame)
     }
 
     #[wasm_bindgen]
