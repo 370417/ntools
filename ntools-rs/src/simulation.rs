@@ -98,6 +98,7 @@ impl Simulation {
         for mine in &mut self.entities.mines { mine.think(&self.ninja) }
         for thwump in &mut self.entities.thwumps { thwump.think(&self.ninja, segments, &self.entities.doors) }
         for floorchaser in &mut self.entities.floorchasers { floorchaser.think(&self.ninja, segments, &self.entities.doors) }
+        for (i, shove_thwump) in self.entities.shove_thwumps.iter_mut().enumerate() {  shove_thwump.think(i, &mut self.entity_grid, segments, &self.entities.doors) }
 
         if self.ninja.state != NinjaState::Disabled {
             self.ninja.integrate();
@@ -162,6 +163,8 @@ impl KeyFrame {
         }
 
         self.regular_doors.clone_into(&mut sim.entities.doors.regular);
+
+        self.shove_thwumps.clone_into(&mut sim.entities.shove_thwumps);
 
         sim.entity_grid.drain_mobs();
         // add all mobs back into entity_grid

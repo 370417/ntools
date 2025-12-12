@@ -2,17 +2,18 @@ use core::panic;
 
 use glam::{DMat2, DVec2};
 
-use crate::{collision_util::{Depenetration, penetration_square_vs_circle_with_orientation}, entity::Orientation, ninja::{self, Ninja}};
+use crate::{collision_util::{Depenetration, penetration_square_vs_circle_with_orientation}, entity::{Entity, EntityIndex, GridEntityType, Mob, Orientation, door::Doors, move_entity, thwump::segments_in_fov}, grid::{Grid, GridPos}, ninja::{self, Ninja}, segment::Segment};
 
 const SEMI_SIDE: f64 = 12.0;
 const INNER_RADIUS: f64 = 8.0;
+const LAUNCHING_SPEED: f64 = 4.0;
+const RETREATING_SPEED: f64 = 1.0;
 
 #[derive(Clone)]
 pub struct ShoveThwump {
     pub pos: DVec2,
     pub orientation: Orientation,
     origin: DVec2,
-    is_being_touched: bool,
     state: ShoveThwumpState,
 }
 
@@ -33,17 +34,50 @@ impl ShoveThwump {
             pos,
             orientation,
             origin: pos,
-            is_being_touched: false,
             state: ShoveThwumpState::Waiting,
         }
     }
 
+    /// if return >= 16 -> show all 4 thwump edges
+    /// if return < 0 -> show no thwump edges
+    /// else -> show one thwump edge according to orientation
     pub fn touch_as_num(&self) -> i32 {
         match self.state {
-            ShoveThwumpState::Waiting => -1,
+            ShoveThwumpState::Waiting => 99,
             ShoveThwumpState::Touched { touch, .. } => touch.to_u8() as i32,
-            ShoveThwumpState::Launching(orientation) => todo!(),
-            ShoveThwumpState::Retreating(orientation) => todo!(),
+            ShoveThwumpState::Launching(_) => -1,
+            ShoveThwumpState::Retreating(_) => -1,
+        }
+    }
+
+    /// Update the state of the shwump and move it if possible.
+    pub fn think(&mut self, self_i: usize, entity_grid: &mut Grid<EntityIndex>, segments: &Grid<Segment>, doors: &Doors) {
+        match &mut self.state {
+            ShoveThwumpState::Waiting => {}
+            ShoveThwumpState::Touched { touch, is_touched } => {
+                if *is_touched {
+                    // We set is_touched to false wait one frame to see if
+                    // logical_collision sets it back to true.
+                    // We can rely on logical_collision to set is_touched if there
+                    // is a collision, but we can't rely on it to set is_touched to
+                    // false if there is no collision because logical_collision
+                    // might not even get called depending on the grid cells.
+                    *is_touched = false;
+                } else {
+                    self.state = ShoveThwumpState::Launching(*touch);
+                }
+            }
+            ShoveThwumpState::Launching(_) => {
+                move_entity(self_i, self, entity_grid, segments, doors);
+            }
+            ShoveThwumpState::Retreating(_) => {
+                if (self.pos - self.origin).length_squared() < 1.0 {
+                    self.pos = self.origin;
+                    self.state = ShoveThwumpState::Waiting;
+                } else {
+                    move_entity(self_i, self, entity_grid, segments, doors);
+                }
+            }
         }
     }
 
@@ -55,13 +89,13 @@ impl ShoveThwump {
             ShoveThwumpState::Touched { touch, .. } => {
                 penetration_shwump(self.pos, self.orientation, touch, ninja.pos, ninja::RADIUS)
             }
-            ShoveThwumpState::Launching(_) => todo!(),
-            ShoveThwumpState::Retreating(_) => todo!(),
+            ShoveThwumpState::Launching(_) => None,
+            ShoveThwumpState::Retreating(_) => None,
         }
     }
 
     pub fn logical_collision(&mut self, ninja: &mut Ninja) -> Option<f64> {
-        match self.state {
+        match &mut self.state {
             ShoveThwumpState::Waiting => {
                 let depen = penetration_square_vs_circle_with_orientation(self.pos, SEMI_SIDE + ninja::RADIUS + 0.1, ninja.pos, 0.0, self.orientation);
                 if let Some(depen) = depen {
@@ -77,9 +111,82 @@ impl ShoveThwump {
                 }
                 None
             }
-            ShoveThwumpState::Touched { .. } => None,
-            ShoveThwumpState::Launching(_) => todo!(),
-            ShoveThwumpState::Retreating(_) => todo!(),
+            ShoveThwumpState::Touched { touch, is_touched } => {
+                let depen = penetration_shwump(self.pos, self.orientation, *touch, ninja.pos, ninja::RADIUS + 0.1);
+                *is_touched = depen.is_some();
+                if let Some(depen) = depen {
+                    if ninja.grav_eq_abs_horiz(depen.depen_unit_normal, 1.0) {
+                        return Some(ninja.grav_get_horiz(depen.depen_unit_normal));
+                    }
+                }
+                None
+            }
+            ShoveThwumpState::Launching(_) => None,
+            ShoveThwumpState::Retreating(_) => None,
+        }
+    }
+}
+
+impl Entity for ShoveThwump {
+    fn entity_type(&self) -> GridEntityType {
+        GridEntityType::ShoveThwump
+    }
+
+    fn pos(&self) -> DVec2 {
+        self.pos
+    }
+}
+
+impl Mob for ShoveThwump {
+    fn grid_pos(&self) -> GridPos {
+        GridPos::from_world_pos(self.pos)
+    }
+
+    fn set_grid_pos(&mut self, grid_pos: GridPos) {
+        #[cfg(debug_assertions)]
+        assert!(GridPos::from_world_pos(self.pos) == grid_pos);
+    }
+
+    fn move_entity(&mut self, segments: &Grid<Segment>, doors: &Doors) {
+        let basis_matrix = DMat2::from_cols(self.orientation.vec2(), self.orientation.vec2().perp());
+
+        let (speed_magnitude, speed_dir, touch) = match self.state {
+            ShoveThwumpState::Waiting => return,
+            ShoveThwumpState::Touched { .. } => return,
+            // touch orientation is relative to shwump's orientation, so use basis matrix
+            // to transform it into standard reference frame
+            ShoveThwumpState::Launching(touch) => (LAUNCHING_SPEED, basis_matrix * -touch.vec2(), touch),
+            ShoveThwumpState::Retreating(touch) => (RETREATING_SPEED, basis_matrix * touch.vec2(), touch),
+        };
+        let new_pos = self.pos + speed_magnitude * speed_dir;
+
+        // Avoid going out of bounds.
+        // This isn't how the game works, but it makes life easier for now.
+        if !GridPos::from_world_pos(new_pos).in_bounds() {
+            self.state = ShoveThwumpState::Retreating(touch);
+            return;
+        }
+
+        let leading_edge_center = new_pos + INNER_RADIUS * speed_dir;
+        let leading_edge_corners = (
+            leading_edge_center + INNER_RADIUS * speed_dir.perp(),
+            leading_edge_center - INNER_RADIUS * speed_dir.perp(),
+        );
+        let basis_matrix = DMat2::from_cols(speed_dir.perp(), speed_dir);
+        let basis_matrix_inverse = basis_matrix.inverse();
+
+        let segments_iter = segments.iter_rect_region(leading_edge_corners.0, leading_edge_corners.1, SEMI_SIDE)
+            .filter(|segment| segment.is_active(doors));
+
+        let has_collision = segments_in_fov(leading_edge_center, basis_matrix_inverse, INNER_RADIUS, segments_iter).any(|(start, end)| {
+            // We check that y isn't too small to try to avoid collisions with walls that are behind the leading edge
+            start.y <= 0.0 && start.y > -1.1 * speed_magnitude || end.y <= 0.0 && end.y > -1.1 * speed_magnitude
+        });
+
+        if has_collision {
+            self.state = ShoveThwumpState::Retreating(touch);
+        } else {
+            self.pos = new_pos;
         }
     }
 }

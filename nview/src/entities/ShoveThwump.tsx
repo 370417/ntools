@@ -60,7 +60,7 @@ const cbt = 2;
 export function ShoveThwump(props: { shoveThwump: Accessor<ShoveThwumpData> }) {
     return <g class="shove-thwump" transform={transform(props.shoveThwump)}>
         <For each={[0, 2, 4, 6]}>
-            {orientation => <Show when={props.shoveThwump().touch < 0 || orientation === props.shoveThwump().touch}><g transform={`rotate(${45 * orientation},0,0)`}>
+            {orientation => <Show when={props.shoveThwump().touch >= 16 || orientation === props.shoveThwump().touch}><g transform={`rotate(${45 * orientation},0,0)`}>
                 <line stroke="black" x1="0" y1="0" x2={hw} y2="0" />
                 <line stroke="black" stroke-linecap="round" x1={hw} y1={-hw} x2={hw} y2={hw} />
                 <line stroke="black" stroke-linecap="round" stroke-width={tt} x1={hw} y1={-tl} x2={hw} y2={tl} />
