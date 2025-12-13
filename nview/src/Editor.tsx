@@ -1,5 +1,6 @@
-import { createSignal, Show } from "solid-js";
+import { createSignal, For, Show } from "solid-js";
 import { Editor } from "./assets/ntools_rs";
+import { Ninja, type NinjaData } from "./entities/Ninja";
 
 const COLS = 42;
 const ROWS = 23;
@@ -23,6 +24,11 @@ const MODE_MODIFY_ENTITY = 6;
 const MODE_ENTITY_PALETTE = 7;
 const MODE_PEN_TOOL = 8;
 
+const ENTITY_NINJA = 0;
+
+const BONES_STANDING = new Float32Array([-0.039, -0.0249, 0.1127, -0.1738, 0.1115, -0.1512, -0.0846, 0.0749, 0.1072, -0.0423, 0.0263, -0.1452, -0.0358, -0.075, -0.377, 0.4686, 0.4643, -0.0225, -0.0453, -0.5054, -0.4724, 0.1962, 0.2293, -0.1812, -0.2266, -0.2224]);
+const BONES_FALLING = new Float32Array([0.018, 0.0, 0.4156, 0.0988, 0.3581, -0.3242, -0.0708, 0.0845, 0.2924, 0.3212, 0.1853, -0.1927, -0.0236, -0.06, -0.3602, 0.3086, 0.1278, -0.3238, -0.2018, -0.4976, -0.4488, 0.0656, -0.024, -0.2729, -0.3268, -0.2042]);
+
 export function EditorApp() {
     const editor = Editor.new();
 
@@ -32,7 +38,9 @@ export function EditorApp() {
     const [showQuarterGrid, setShowQuarterGrid] = createSignal(false);
     const [mode, setMode] = createSignal(MODE_PAINT_TILES);
     const [tilemodeCrosshairPos, setTilemodeCrosshairPos] = createSignal({ row: 1, col: 1 });
-    const [penToolCrosshairPos, setPenToolCrosshairPos] = createSignal({ x: 24, y: 24 });
+    const [crosshairPos, setCrosshairPos] = createSignal({ x: 24, y: 24 });
+
+    const [previewNinjas, setPreviewNinjas] = createSignal<NinjaData[]>([]);
 
     document.addEventListener('keydown', event => {
         let change = false;
@@ -46,6 +54,8 @@ export function EditorApp() {
         else if (event.code === 'Digit6') change = true, editor.press_6(event.shiftKey);
         else if (event.code === 'Digit7') change = true, editor.press_7(event.shiftKey);
         else if (event.code === 'Digit8') change = true, editor.press_8(event.shiftKey);
+
+        else if (event.code === 'Digit9') change = true, editor.press_9();
 
         else if (event.code === 'KeyQ') change = true, editor.press_q(event.shiftKey);
         else if (event.code === 'KeyW') change = true, editor.press_w(event.shiftKey);
@@ -97,10 +107,25 @@ export function EditorApp() {
         setShowHalfGrid(editor.show_half_grid());
         setShowQuarterGrid(editor.show_quarter_grid());
 
-        setPenToolCrosshairPos({
-            x: editor.pen_tool_crosshair_x(),
-            y: editor.pen_tool_crosshair_y(),
+        setCrosshairPos({
+            x: editor.crosshair_x(),
+            y: editor.crosshair_y(),
         });
+
+        const previewNinjas: NinjaData[] = [];
+
+        const previewEntitiesLen = editor.preview_entities_len();
+        for (let i = 0; i < previewEntitiesLen; i++) {
+            const type = editor.preview_entity_type(i);
+            const x = editor.preview_entity_x(i);
+            const y = editor.preview_entity_y(i);
+            const deg = editor.preview_entity_deg(i);
+            if (type === ENTITY_NINJA) {
+                previewNinjas.push({ x, y, deg });
+            }
+        }
+
+        setPreviewNinjas(previewNinjas);
     }
 
     const regularGridXs = [];
@@ -165,11 +190,14 @@ export function EditorApp() {
             {regularGridYs.map(y => <line class="regular-grid" x1="24" x2={24 * 43} y1={y} y2={y} />)}
             <path id="tiles" stroke-width="2" clip-path="url(#tiles-clip)" clip-rule="evenodd" d={tilePath()} fill-rule="evenodd" />
             <path id="selected-tiles" d={selectedTilePath()} fill-rule="evenodd" />
+            <For each={previewNinjas()}>
+                {ninja => <Ninja class="ninja" ninja={() => ninja} bones={() => BONES_FALLING} />}
+            </For>
             <Show when={mode() === MODE_PAINT_TILES}>
                 <use href="#tilemode-crosshair" x={tilemodeCrosshairPos().col * 24 + 12} y={tilemodeCrosshairPos().row * 24 + 12} />
             </Show>
             <Show when={mode() === MODE_PEN_TOOL}>
-                <use href="#crosshair" x={penToolCrosshairPos().x} y={penToolCrosshairPos().y} />
+                <use href="#crosshair" x={crosshairPos().x} y={crosshairPos().y} />
             </Show>
         </svg>
     </>;

@@ -110,7 +110,9 @@ impl Editor {
             y.clamp(TILE_SIZE, TILE_SIZE * (1 + ROWS) as f64),
         );
 
-        match self.mode {
+        let old_crosshair = self.crosshair();
+
+        match &mut self.mode {
             EditorMode::PaintTiles => {
                 let old_crosshair = self.tile_crosshair();
                 self.cursor_pos = new_cursor_pos;
@@ -122,9 +124,14 @@ impl Editor {
                 }
             }
             EditorMode::PenTool(_) => {
-                let old_crosshair = self.pen_tool_crosshair();
                 self.cursor_pos = new_cursor_pos;
-                self.pen_tool_crosshair() != old_crosshair
+                self.crosshair() != old_crosshair
+            }
+            EditorMode::PlaceEntity(place_entity) => {
+                self.cursor_pos = new_cursor_pos;
+                let new_crosshair = place_entity.crosshair(self.cursor_pos, self.entity_fine_grid);
+                place_entity.set_pos(new_crosshair);
+                new_crosshair != old_crosshair
             }
             _ => false
         }
@@ -150,13 +157,73 @@ impl Editor {
     }
 
     #[wasm_bindgen]
-    pub fn pen_tool_crosshair_x(&self) -> f64 {
-        self.pen_tool_crosshair().x
+    pub fn crosshair_x(&self) -> f64 {
+        self.crosshair().x
     }
 
     #[wasm_bindgen]
-    pub fn pen_tool_crosshair_y(&self) -> f64 {
-        self.pen_tool_crosshair().y
+    pub fn crosshair_y(&self) -> f64 {
+        self.crosshair().y
+    }
+
+    #[wasm_bindgen]
+    pub fn preview_entities_len(&self) -> usize {
+        match self.mode {
+            EditorMode::PlaceEntity(_) => 1,
+            _ => 0,
+        }
+    }
+
+    #[wasm_bindgen]
+    pub fn preview_entity_type(&self, i: usize) -> u32 {
+        match &self.mode {
+            EditorMode::PlaceEntity(place_entity) => place_entity.entity.type_int(),
+            _ => u32::MAX,
+        }
+    }
+
+    #[wasm_bindgen]
+    pub fn preview_entity_x(&self, i: usize) -> f64 {
+        match &self.mode {
+            EditorMode::PlaceEntity(place_entity) => place_entity.entity.pos().to_world_pos().x,
+            _ => f64::NAN,
+        }
+    }
+
+    #[wasm_bindgen]
+    pub fn preview_entity_y(&self, i: usize) -> f64 {
+        match &self.mode {
+            EditorMode::PlaceEntity(place_entity) => place_entity.entity.pos().to_world_pos().y,
+            _ => f64::NAN,
+        }
+    }
+
+    #[wasm_bindgen]
+    pub fn preview_entity_deg(&self, i: usize) -> f64 {
+        match &self.mode {
+            EditorMode::PlaceEntity(place_entity) => place_entity.entity.rotation_deg(),
+            _ => f64::NAN,
+        }
+    }
+
+    #[wasm_bindgen]
+    pub fn preview_entity_switch_x(&self, i: usize) -> f64 {
+        match &self.mode {
+            EditorMode::PlaceEntity(place_entity) => {
+                place_entity.entity.switch_pos().map(|pos| pos.to_world_pos().x).unwrap_or(f64::NAN)
+            }
+            _ => f64::NAN,
+        }
+    }
+
+    #[wasm_bindgen]
+    pub fn preview_entity_switch_y(&self, i: usize) -> f64 {
+        match &self.mode {
+            EditorMode::PlaceEntity(place_entity) => {
+                place_entity.entity.switch_pos().map(|pos| pos.to_world_pos().y).unwrap_or(f64::NAN)
+            }
+            _ => f64::NAN,
+        }
     }
 
     #[wasm_bindgen]
@@ -433,9 +500,10 @@ impl Editor {
         }
     }
 
-    fn pen_tool_crosshair(&self) -> DVec2 {
+    fn crosshair(&self) -> DVec2 {
         match &self.mode {
             EditorMode::PenTool(pen_tool) => pen_tool.crosshair(self.cursor_pos, self.state.latest(), self.pen_tool_fine_grid),
+            EditorMode::PlaceEntity(place_entity) => place_entity.crosshair(self.cursor_pos, self.entity_fine_grid),
             _ => DVec2::new(TILE_SIZE, TILE_SIZE),
         }
     }
