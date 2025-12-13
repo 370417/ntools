@@ -142,6 +142,9 @@ impl Editor {
         let cursor_pos = self.cursor_pos;
         match &mut self.mode {
             EditorMode::PenTool(pen_tool) => pen_tool.cursor_click(cursor_pos, self.pen_tool_is_clockwise, &mut self.state, self.pen_tool_fine_grid),
+            EditorMode::PlaceEntity(place_entity) => if let Some(command) = place_entity.cursor_click(self.state.entities()) {
+                self.state.apply(command);
+            },
             _ => {}
         }
     }

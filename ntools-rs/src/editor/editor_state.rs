@@ -36,9 +36,9 @@ pub struct PaintTile {
 
 #[derive(Clone)]
 pub struct SetEntityCount {
-    entity: EditorEntity,
-    old_count: u16,
-    new_count: u16,
+    pub entity: EditorEntity,
+    pub old_count: u16,
+    pub new_count: u16,
 }
 
 impl EditorState {
@@ -53,6 +53,10 @@ impl EditorState {
 
     pub fn tiles(&self) -> &Tiles {
         &self.tiles
+    }
+
+    pub fn entities(&self) -> &BTreeMap<EditorEntity, u16> {
+        &self.entities
     }
 
     pub fn latest(&self) -> Option<&Command> {

@@ -1,6 +1,8 @@
+use std::collections::BTreeMap;
+
 use glam::DVec2;
 
-use crate::editor::editor_entity::{EditorEntity, EntityPos};
+use crate::editor::{editor_entity::{EditorEntity, EntityPos}, editor_state::{Command, SetEntityCount}};
 
 pub struct PlaceEntity {
     pub entity: EditorEntity,
@@ -35,6 +37,19 @@ impl PlaceEntity {
                 Some(Stage::PlaceDoor) => *exit_pos = new_pos,
                 Some(Stage::PlaceSwitch) | None => *switch_pos = new_pos,
             },
+        }
+    }
+
+    pub fn cursor_click(&mut self, entities: &BTreeMap<EditorEntity, u16>) -> Option<Command> {
+        match self.entity {
+            entity @ EditorEntity::Ninja { .. } => {
+                Some(Command::SetEntityCount(SetEntityCount {
+                    entity,
+                    old_count: *entities.get(&entity).unwrap_or(&0),
+                    new_count: 1,
+                }))
+            }
+            EditorEntity::Exit { exit_pos, switch_pos } => todo!(),
         }
     }
 }
