@@ -1,11 +1,12 @@
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{editor::{editor_state::{Command, EditorState}, pen_tool::{PenTool, PenToolStart, create_command}}, grid::{COLS, GridPos, ROWS}, segment::extract_path, tile::{TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
+use crate::{editor::{editor_entity::{EditorEntity, EntityPos}, editor_state::{Command, EditorState}, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::PlaceEntity}, grid::{COLS, GridPos, ROWS}, orientation::Orientation, segment::extract_path, tile::{TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
 
 pub mod editor_entity;
 pub mod editor_state;
 pub mod pen_tool;
+pub mod place_entity;
 
 #[wasm_bindgen]
 pub struct Editor {
@@ -21,6 +22,8 @@ pub struct Editor {
     /// If false, it closes tiles to the left.
     pen_tool_is_clockwise: bool,
     pen_tool_fine_grid: bool,
+    entity_fine_grid: bool,
+    entity_orientation: Orientation,
 }
 
 pub enum EditorMode {
@@ -28,7 +31,7 @@ pub enum EditorMode {
     TilePalette,
     SelectTiles,
     MoveSelection,
-    PlaceEntity,
+    PlaceEntity(PlaceEntity),
     SelectEntities,
     ModifyEntity,
     EntityPalette,
@@ -47,6 +50,8 @@ impl Editor {
             pressed_tile_variants: Vec::new(),
             pen_tool_is_clockwise: true,
             pen_tool_fine_grid: true,
+            entity_fine_grid: false,
+            entity_orientation: Orientation::N,
         }
     }
 
@@ -57,7 +62,7 @@ impl Editor {
             EditorMode::TilePalette => 1,
             EditorMode::SelectTiles => 2,
             EditorMode::MoveSelection => 3,
-            EditorMode::PlaceEntity => 4,
+            EditorMode::PlaceEntity(_) => 4,
             EditorMode::SelectEntities => 5,
             EditorMode::ModifyEntity => 6,
             EditorMode::EntityPalette => 7,
@@ -158,13 +163,17 @@ impl Editor {
     pub fn show_half_grid(&self) -> bool {
         match self.mode {
             EditorMode::PenTool(_) => self.pen_tool_fine_grid,
+            EditorMode::PlaceEntity(_) => true,
             _ => false,
         }
     }
 
     #[wasm_bindgen]
     pub fn show_quarter_grid(&self) -> bool {
-        false
+        match self.mode {
+            EditorMode::PlaceEntity(_) => self.entity_fine_grid,
+            _ => false,
+        }
     }
 
     #[wasm_bindgen]
@@ -263,6 +272,17 @@ impl Editor {
     }
 
     #[wasm_bindgen]
+    pub fn press_9(&mut self) {
+        self.mode = EditorMode::PlaceEntity(PlaceEntity {
+            entity: EditorEntity::Ninja {
+                pos: EntityPos::from_world_pos(self.cursor_pos),
+                orientation: self.entity_orientation.into(),
+            },
+            stage: None,
+        });
+    }
+
+    #[wasm_bindgen]
     pub fn press_q(&mut self, shift: bool) {
         match self.mode {
             EditorMode::PaintTiles => {
@@ -342,6 +362,9 @@ impl Editor {
     pub fn press_slash(&mut self) {
         match self.mode {
             EditorMode::PenTool(_) => self.pen_tool_fine_grid = !self.pen_tool_fine_grid,
+            EditorMode::PlaceEntity(_) | EditorMode::ModifyEntity | EditorMode::SelectEntities => {
+                self.entity_fine_grid = !self.entity_fine_grid;
+            }
             _ => {}
         }
     }

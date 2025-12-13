@@ -564,6 +564,12 @@ pub fn create_command_tiles(start: DVec2, end: DVec2, is_clockwise: bool, tiles:
     }
 }
 
+/// Given a linear inner segment (see inner_segment function), return the tile
+/// that corresponds to that inner segment.
+///
+/// The inner segment is represented by a start and end point relative to the
+/// center of the tile. Note that inner_segment and other functions tend to
+/// be relative to the corner of a tile, not the center.
 fn tile_from_intercept(local_start: DVec2, local_end: DVec2) -> Tile {
     match ((local_start.x, local_start.y), (local_end.x, local_end.y)) {
         ((12.0, 12.0), (-12.0, -12.0)) => Tile::Tile1A,

@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{collision_util::Depenetration, entity::Orientation, ninja::{self, Ninja}};
+use crate::{collision_util::Depenetration, orientation::Orientation, ninja::{self, Ninja}};
 
 const SEMI_SIDE: f64 = 12.0;
 

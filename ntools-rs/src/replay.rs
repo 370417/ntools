@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use glam::{DVec2, FloatExt};
 use wasm_bindgen::prelude::*;
 
-use crate::{anim_data::flatten_bones, attract::Attract, entity::{OrientationExt, mine::Mine}, grid::{COLS, Grid, ROWS}, ninja::Ninja, segment::{Segment, extract_path}, simulation::{Input, KeyFrame, Simulation}, tile::TILE_SIZE};
+use crate::{anim_data::flatten_bones, attract::Attract, entity::mine::Mine, grid::{COLS, Grid, ROWS}, ninja::Ninja, orientation::OrientationExt, segment::{Segment, extract_path}, simulation::{Input, KeyFrame, Simulation}, tile::TILE_SIZE};
 
 #[wasm_bindgen]
 pub struct Replay {

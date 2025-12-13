@@ -1,6 +1,6 @@
 use glam::{DVec2, FloatExt};
 
-use crate::{collision_util::overlap_circle_vs_circle, entity::{Orientation, boost_pad::ease_out_quad}, grid::Grid, ninja::{self, Ninja}, segment::Segment, tile::{TILE_HALF_SIZE, TILE_SIZE}};
+use crate::{collision_util::overlap_circle_vs_circle, entity::boost_pad::ease_out_quad, grid::Grid, ninja::{self, Ninja}, orientation::Orientation, segment::Segment, tile::{TILE_HALF_SIZE, TILE_SIZE}};
 
 // nclone (and presumably n++ itself?) has a cool semaphore-like system where
 // they keep track of the number of closed doors to tell if a segment has a closed door or not.

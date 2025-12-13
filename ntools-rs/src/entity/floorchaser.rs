@@ -1,6 +1,6 @@
 use glam::{DMat2, DVec2};
 
-use crate::{collision_util::overlap_circle_vs_circle, entity::{Entity, GridEntityType, Mob, OrientationExt, door::Doors, thwump::segments_in_fov}, grid::{Grid, GridPos}, ninja::{self, Ninja}, segment::Segment, tile::TILE_SIZE};
+use crate::{collision_util::overlap_circle_vs_circle, entity::{Entity, GridEntityType, Mob, door::Doors, thwump::segments_in_fov}, grid::{Grid, GridPos}, ninja::{self, Ninja}, orientation::OrientationExt, segment::Segment, tile::TILE_SIZE};
 
 const RADIUS: f64 = 6.0;
 const SPEED: f64 = 3.428571428571428; // 24 / 7

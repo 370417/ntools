@@ -1,6 +1,6 @@
 use glam::{DMat2, DVec2};
 
-use crate::{collision_util::{Depenetration, overlap_circle_vs_segment, penetration_square_vs_circle_with_orientation}, entity::{Entity, GridEntityType, Mob, Orientation, door::Doors}, grid::{Grid, GridPos}, ninja::{self, Ninja}, segment::{Curvature, Segment}, tile::{TILE_HALF_SIZE, TILE_SIZE}};
+use crate::{collision_util::{Depenetration, penetration_square_vs_circle_with_orientation}, entity::{Entity, GridEntityType, Mob, door::Doors}, grid::{Grid, GridPos}, ninja::{self, Ninja}, orientation::Orientation, segment::{Curvature, Segment}, tile::{TILE_HALF_SIZE, TILE_SIZE}};
 
 const SEMI_SIDE: f64 = 9.0;
 const FORWARD_SPEED: f64 = 20.0 / 7.0;

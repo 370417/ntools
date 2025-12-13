@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{collision_util::overlap_circle_vs_circle, entity::Orientation, ninja::{self, Ninja}};
+use crate::{collision_util::overlap_circle_vs_circle, ninja::{self, Ninja}, orientation::Orientation};
 
 const RADIUS: f64 = 6.0;
 const BOOST: f64 = 36.0 / 7.0;

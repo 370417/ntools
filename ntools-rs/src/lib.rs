@@ -5,6 +5,7 @@ mod editor;
 mod entity;
 mod grid;
 mod ninja;
+mod orientation;
 mod replay;
 mod segment;
 mod simulation;

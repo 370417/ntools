@@ -1,6 +1,6 @@
 use glam::{DMat2, DVec2};
 
-use crate::{entity::{Orientation, door::Doors}, grid::Grid, segment::{ClosestPoint, Segment}};
+use crate::{entity::door::Doors, grid::Grid, orientation::Orientation, segment::{ClosestPoint, Segment}};
 
 /// Fetch all segments from neighbourhood. Return shortest intersection time from interpolation.
 pub fn sweep_circle_vs_tiles(pos_old: DVec2, delta: DVec2, radius: f64, segments: &Grid<Segment>, doors: &Doors) -> f64 {

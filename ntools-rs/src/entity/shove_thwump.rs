@@ -2,7 +2,7 @@ use core::panic;
 
 use glam::{DMat2, DVec2};
 
-use crate::{collision_util::{Depenetration, penetration_circle_vs_point, penetration_square_vs_circle_with_orientation}, entity::{Entity, EntityIndex, GridEntityType, Mob, Orientation, door::Doors, move_entity, thwump::segments_in_fov}, grid::{Grid, GridPos}, ninja::{self, Ninja}, segment::Segment};
+use crate::{collision_util::{Depenetration, penetration_circle_vs_point, penetration_square_vs_circle_with_orientation}, entity::{Entity, EntityIndex, GridEntityType, Mob, door::Doors, move_entity, thwump::segments_in_fov}, grid::{Grid, GridPos}, ninja::{self, Ninja}, orientation::Orientation, segment::Segment};
 
 const SEMI_SIDE: f64 = 12.0;
 const INNER_RADIUS: f64 = 8.0;

@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{collision_util::{Depenetration, penetration_square_vs_circle_with_orientation}, entity::{Entity, Mob, Orientation, door::Doors}, grid::{Grid, GridPos}, ninja::{self, Ninja}, segment::Segment};
+use crate::{collision_util::{Depenetration, penetration_square_vs_circle_with_orientation}, entity::{Entity, Mob, door::Doors}, grid::{Grid, GridPos}, ninja::{self, Ninja}, orientation::Orientation, segment::Segment};
 
 pub const SEMI_SIDE: f64 = 9.0;
 const STIFFNESS: f64 = 0.02222222222222222; // 1/45
