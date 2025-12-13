@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{entity::{Entities, Orientation, OrientationZeroNorth, boost_pad::BoostPad, bounce_block::BounceBlock, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floorchaser::Floorchaser, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump}, grid::{COLS, Grid, GridPos, ROWS}, ninja::Ninja, segment::Segment, tile::Tile};
+use crate::{entity::{Entities, Orientation, OrientationExt, boost_pad::BoostPad, bounce_block::BounceBlock, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floorchaser::Floorchaser, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump}, grid::{COLS, Grid, GridPos, ROWS}, ninja::Ninja, segment::Segment, tile::Tile};
 
 /// Represents a parsed attract file.
 /// An attract file is what gets shown in the game's main menu: a replay of a failed attempt at a level.
@@ -122,21 +122,14 @@ impl Attract {
             // we want to ignore invalid orientations for objects that do
             // not need orientation.
             let orientation = Orientation::try_from(map_data[i + 3]);
-            let orientation_zero_north = OrientationZeroNorth::try_from(map_data[i + 3]);
+            let orientation_ext = OrientationExt::from(map_data[i + 3]);
             let _mode = map_data[i + 4];
 
             let pos = DVec2::new(x as f64, y as f64);
 
             match object_id {
                 // Ninja
-                0 => {
-                    // We don't use the rotation byte from the map data because
-                    // different platforms set it differently (to 0 or to 6),
-                    // and we don't want inconsistent behavior.
-                    // TODO: set a magic number in the entity's mode?
-                    // and if that is set, use the rotation byte?
-                    ninjas.push(Ninja::new(6.0 * pos, OrientationZeroNorth::N));
-                }
+                0 => ninjas.push(Ninja::new(6.0 * pos, orientation_ext)),
                 // Mine
                 1 => entities.mines.push(Mine::new_toggled(6.0 * pos)),
                 // Gold
@@ -168,7 +161,7 @@ impl Attract {
                 // Chaser drone
                 15 => {}
                 // Floor chaser
-                16 => entities.floorchasers.push(Floorchaser::new(6.0 * pos, orientation_zero_north?)),
+                16 => entities.floorchasers.push(Floorchaser::new(6.0 * pos, orientation_ext)),
                 // Bounce block
                 17 => entities.bounce_blocks.push(BounceBlock::new(6.0 * pos)),
                 // Rocket

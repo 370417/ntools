@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use glam::{DVec2, FloatExt};
 use wasm_bindgen::prelude::*;
 
-use crate::{anim_data::flatten_bones, attract::Attract, entity::{OrientationZeroNorth, mine::Mine}, grid::{COLS, Grid, ROWS}, ninja::Ninja, segment::{Segment, extract_path}, simulation::{Input, KeyFrame, Simulation}, tile::TILE_SIZE};
+use crate::{anim_data::flatten_bones, attract::Attract, entity::{OrientationExt, mine::Mine}, grid::{COLS, Grid, ROWS}, ninja::Ninja, segment::{Segment, extract_path}, simulation::{Input, KeyFrame, Simulation}, tile::TILE_SIZE};
 
 #[wasm_bindgen]
 pub struct Replay {
@@ -121,7 +121,7 @@ impl Replay {
         self.inputs.clear();
         self.keyframes.clear();
         self.current_sim.frame = 0;
-        self.current_sim.ninja = Ninja::new(DVec2::new(x, y), OrientationZeroNorth::N);
+        self.current_sim.ninja = Ninja::new(DVec2::new(x, y), OrientationExt::N);
         self.keyframes.insert(0, KeyFrame::from_sim(&self.current_sim, &self.current_sim.entities.mines));
         self.initial_mines = self.current_sim.entities.mines.clone();
         self.preview_sim = self.current_sim.clone();

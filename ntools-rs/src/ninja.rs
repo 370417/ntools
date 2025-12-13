@@ -2,7 +2,7 @@ use glam::{DMat2, DVec2};
 use rand::{seq::IndexedRandom, RngCore, SeedableRng};
 use rand_xoshiro::{SplitMix64, Xoroshiro64StarStar};
 
-use crate::{anim_data::{Bones, DANCES, get_anim_frame}, collision_util::{get_single_closest_point, sweep_circle_vs_tiles}, entity::{Entities, EntityIndex, GridEntityType, OrientationZeroNorth, door::Doors, on_door_state_change, polymorphism::physical_collisions}, grid::Grid, segment::Segment};
+use crate::{anim_data::{Bones, DANCES, get_anim_frame}, collision_util::{get_single_closest_point, sweep_circle_vs_tiles}, entity::{Entities, EntityIndex, GridEntityType, OrientationExt, door::Doors, on_door_state_change, polymorphism::physical_collisions}, grid::Grid, segment::Segment};
 
 const GRAVITY_FALL: f64 = 0.06666666666666665;
 const GRAVITY_JUMP: f64 = 0.01111111111111111;
@@ -108,7 +108,7 @@ impl NinjaState {
 }
 
 impl Ninja {
-    pub fn new(pos: DVec2, orientation: OrientationZeroNorth) -> Ninja {
+    pub fn new(pos: DVec2, orientation: OrientationExt) -> Ninja {
         println!("{}", orientation.vec2());
         let mut ninja = Ninja {
             pos,

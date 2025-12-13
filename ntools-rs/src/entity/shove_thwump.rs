@@ -74,7 +74,7 @@ impl ShoveThwump {
     pub fn touch_as_num(&self) -> i32 {
         match self.state {
             ShoveThwumpState::Waiting => 99,
-            ShoveThwumpState::Touched { touch, .. } => touch.to_u8() as i32,
+            ShoveThwumpState::Touched { touch, .. } => touch as i32,
             ShoveThwumpState::Launching(_) => -1,
             ShoveThwumpState::Retreating(_) => -1,
         }

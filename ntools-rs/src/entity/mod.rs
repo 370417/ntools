@@ -169,57 +169,51 @@ pub fn move_entity<T: Mob + Entity>(i: usize, entity: &mut T, entity_grid: &mut 
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Orientation {
-    E,
-    SE,
-    S,
-    SW,
-    W,
-    NW,
-    N,
-    NE,
+    E = 0,
+    SE = 1,
+    S = 2,
+    SW = 3,
+    W = 4,
+    NW = 5,
+    N = 6,
+    NE = 7,
     // non-standard orientations below
-    ESE,
-    SSE,
-    SSW,
-    WSW,
-    WNW,
-    NNW,
-    NNE,
-    ENE,
+    ESE = 8,
+    SSE = 9,
+    SSW = 10,
+    WSW = 11,
+    WNW = 12,
+    NNW = 13,
+    NNE = 14,
+    ENE = 15,
 }
 
-/// Orientation where 0 means north instead of west.
+/// Orientation extended.
 ///
-/// This is used by entities if:
-/// - the entity did not support multiple orientations in the original game.
-/// - the entity's natural orientation was facing north.
-///
-/// "Natural orientation" is the orientation you would expect to use in editor
-/// to rotate the entity to its default orientation.
-///
-/// Entities that don't support rotation in game get stored with their rotation
-/// byte set to 0 (or 6? for the ninja in some userlevels). If we used the regular orientation enum for them, they'd all
-/// appear to be oriented westward when we load them.
-#[derive(Clone, Copy)]
-pub enum OrientationZeroNorth {
-    N,
-    NE,
-    E,
-    SE,
-    S,
-    SW,
-    W,
-    NW,
-    NNE,
-    ENE,
-    ESE,
-    SSE,
-    SSW,
-    WSW,
-    WNW,
-    NNW,
+/// This is for entities that did not originally support orientation in the base game.
+/// Orientations besides N are repesented by u8 values >= 8. This prevents wonky rotations
+/// from arising when non-rotatable entities have a rotation byte set due to bulk rotate
+/// in the editor.
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum OrientationExt {
+    N = 6,
+    NE = 16,
+    E = 17,
+    SE = 18,
+    S = 19,
+    SW = 20,
+    W = 21,
+    NW = 22,
+    NNE = 14,
+    ENE = 15,
+    ESE = 8,
+    SSE = 9,
+    SSW = 10,
+    WSW = 11,
+    WNW = 12,
+    NNW = 13,
 }
 
 impl Orientation {
@@ -258,30 +252,9 @@ impl Orientation {
             _ => false,
         }
     }
-
-    pub fn to_u8(self) -> u8 {
-        match self {
-            Orientation::E => 0,
-            Orientation::SE => 1,
-            Orientation::S => 2,
-            Orientation::SW => 3,
-            Orientation::W => 4,
-            Orientation::NW => 5,
-            Orientation::N => 6,
-            Orientation::NE => 7,
-            Orientation::ESE => 8,
-            Orientation::SSE => 9,
-            Orientation::SSW => 10,
-            Orientation::WSW => 11,
-            Orientation::WNW => 12,
-            Orientation::NNW => 13,
-            Orientation::NNE => 14,
-            Orientation::ENE => 15,
-        }
-    }
 }
 
-impl OrientationZeroNorth {
+impl OrientationExt {
     /// Orientation represented by unit vector.
     pub fn vec2(&self) -> DVec2 {
         let sqrt = std::f64::consts::FRAC_1_SQRT_2;
@@ -346,28 +319,26 @@ impl TryFrom<u8> for Orientation {
     }
 }
 
-impl TryFrom<u8> for OrientationZeroNorth {
-    type Error = String;
+impl From<u8> for OrientationExt {
 
-    fn try_from(value: u8) -> Result<Self, Self::Error> {
+    fn from(value: u8) -> Self {
         match value {
-            0 => Ok(Self::N),
-            1 => Ok(Self::NE),
-            2 => Ok(Self::E),
-            3 => Ok(Self::SE),
-            4 => Ok(Self::S),
-            5 => Ok(Self::SW),
-            6 => Ok(Self::W),
-            7 => Ok(Self::NW),
-            8 => Ok(Self::NNE),
-            9 => Ok(Self::ENE),
-            10 => Ok(Self::ESE),
-            11 => Ok(Self::SSE),
-            12 => Ok(Self::SSW),
-            13 => Ok(Self::WSW),
-            14 => Ok(Self::WNW),
-            15 => Ok(Self::NNW),
-            _ => Err("Orientation must be less than 16".into())
+            1 => Self::NE,
+            2 => Self::E,
+            3 => Self::SE,
+            4 => Self::S,
+            5 => Self::SW,
+            6 => Self::W,
+            7 => Self::NW,
+            8 => Self::NNE,
+            9 => Self::ENE,
+            10 => Self::ESE,
+            11 => Self::SSE,
+            12 => Self::SSW,
+            13 => Self::WSW,
+            14 => Self::WNW,
+            15 => Self::NNW,
+            _ => Self::N,
         }
     }
 }
@@ -388,8 +359,30 @@ mod tests {
     #[test]
     fn test_orientation_u8() {
         for i in 0..16 {
-            let j = Orientation::try_from(i).unwrap().to_u8();
+            let j = Orientation::try_from(i).unwrap() as u8;
             assert_eq!(i, j);
+        }
+
+        for orientation in [
+                OrientationExt::N,
+                OrientationExt::NE,
+                OrientationExt::E,
+                OrientationExt::SE,
+                OrientationExt::S,
+                OrientationExt::SW,
+                OrientationExt::W,
+                OrientationExt::NW,
+                OrientationExt::NNE,
+                OrientationExt::ENE,
+                OrientationExt::ESE,
+                OrientationExt::SSE,
+                OrientationExt::SSW,
+                OrientationExt::WSW,
+                OrientationExt::WNW,
+                OrientationExt::NNW,
+        ] {
+            let orientation2 = OrientationExt::from(orientation as u8);
+            assert!(orientation == orientation2);
         }
     }
 }

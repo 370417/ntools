@@ -1,6 +1,6 @@
 use glam::{DMat2, DVec2};
 
-use crate::{collision_util::overlap_circle_vs_circle, entity::{Entity, GridEntityType, Mob, OrientationZeroNorth, door::Doors, thwump::segments_in_fov}, grid::{Grid, GridPos}, ninja::{self, Ninja}, segment::Segment, tile::TILE_SIZE};
+use crate::{collision_util::overlap_circle_vs_circle, entity::{Entity, GridEntityType, Mob, OrientationExt, door::Doors, thwump::segments_in_fov}, grid::{Grid, GridPos}, ninja::{self, Ninja}, segment::Segment, tile::TILE_SIZE};
 
 const RADIUS: f64 = 6.0;
 const SPEED: f64 = 3.428571428571428; // 24 / 7
@@ -8,7 +8,7 @@ const SPEED: f64 = 3.428571428571428; // 24 / 7
 #[derive(Clone)]
 pub struct Floorchaser {
     pub pos: DVec2,
-    pub orientation: OrientationZeroNorth,
+    pub orientation: OrientationExt,
     state: FloorchaserState,
     // keep track of moving separate from state because the on first frame
     // of ChasingLeft/Right, the floorchaser is not moving yet, so we don't
@@ -31,7 +31,7 @@ struct DetectionRange {
 }
 
 impl Floorchaser {
-    pub fn new(pos: DVec2, orientation: OrientationZeroNorth) -> Floorchaser {
+    pub fn new(pos: DVec2, orientation: OrientationExt) -> Floorchaser {
         Floorchaser {
             pos,
             orientation,

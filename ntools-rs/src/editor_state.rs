@@ -1,6 +1,8 @@
+use std::collections::BTreeMap;
+
 use glam::DVec2;
 
-use crate::{grid::GridPos, tile::{Tile, Tiles}};
+use crate::{editor_entity::EditorEntity, grid::GridPos, tile::{Tile, Tiles}};
 
 /// State that is affected by undo and redo
 pub struct EditorState {
@@ -9,6 +11,7 @@ pub struct EditorState {
     /// Commands that were undone, stored so that the most recently undone command is last
     future: Vec<Command>,
     tiles: Tiles,
+    entities: BTreeMap<EditorEntity, u16>,
 }
 
 #[derive(Clone)]
@@ -21,6 +24,7 @@ pub enum Command {
         tiles: Vec<PaintTile>,
         end: DVec2,
     },
+    SetEntityCount(SetEntityCount),
 }
 
 #[derive(Clone)]
@@ -30,12 +34,20 @@ pub struct PaintTile {
     pub new: Tile,
 }
 
+#[derive(Clone)]
+pub struct SetEntityCount {
+    entity: EditorEntity,
+    old_count: u16,
+    new_count: u16,
+}
+
 impl EditorState {
     pub fn new() -> EditorState {
         EditorState {
             history: Vec::new(),
             future: Vec::new(),
             tiles: Tiles::default(),
+            entities: BTreeMap::default(),
         }
     }
 
@@ -64,7 +76,7 @@ impl EditorState {
         if command.is_noop() {
             return;
         }
-        Self::execute_command(&mut self.tiles, &command);
+        Self::execute_command(&mut self.tiles, &mut self.entities, &command);
         self.history.push(command);
         self.future.clear();
     }
@@ -72,7 +84,7 @@ impl EditorState {
     /// Preview the effects of a command without adding it to the history
     pub fn preview(&self, command: Command) -> Tiles {
         let mut tiles = self.tiles.clone();
-        Self::execute_command(&mut tiles, &command);
+        Self::execute_command(&mut tiles, &mut Default::default(), &command);
         tiles
     }
 
@@ -82,7 +94,7 @@ impl EditorState {
         if command.is_noop() {
             return;
         }
-        Self::execute_command(&mut self.tiles, &command);
+        Self::execute_command(&mut self.tiles, &mut self.entities, &command);
         if let Some(prev_command) = self.history.pop() {
             self.history.append(&mut prev_command.amend(command));
         } else {
@@ -99,12 +111,12 @@ impl EditorState {
 
     pub fn redo(&mut self) {
         if let Some(command) = self.future.pop() {
-            Self::execute_command(&mut self.tiles, &command);
+            Self::execute_command(&mut self.tiles, &mut self.entities, &command);
             self.history.push(command);
         }
     }
 
-    pub fn execute_command(tiles: &mut Tiles, command: &Command) {
+    pub fn execute_command(tiles: &mut Tiles, entities: &mut BTreeMap<EditorEntity, u16>, command: &Command) {
         match command {
             Command::PaintTile(paint_tile) => {
                 tiles[paint_tile.grid_pos] = paint_tile.new;
@@ -114,6 +126,13 @@ impl EditorState {
             }
             Command::PenTool { tiles: paint_tiles, .. } => for paint_tile in paint_tiles {
                 tiles[paint_tile.grid_pos] = paint_tile.new;
+            }
+            Command::SetEntityCount(set_entity_count) => {
+                if set_entity_count.new_count == 0 {
+                    entities.remove(&set_entity_count.entity);
+                } else {
+                    entities.insert(set_entity_count.entity, set_entity_count.new_count);
+                }
             }
         }
     }
@@ -128,6 +147,13 @@ impl EditorState {
             }
             Command::PenTool { tiles, .. } => for paint_tile in tiles {
                 self.tiles[paint_tile.grid_pos] = paint_tile.old;
+            }
+            Command::SetEntityCount(set_entity_count) => {
+                if set_entity_count.old_count == 0 {
+                    self.entities.remove(&set_entity_count.entity);
+                } else {
+                    self.entities.insert(set_entity_count.entity, set_entity_count.old_count);
+                }
             }
         }
     }
@@ -160,6 +186,7 @@ impl Command {
             // Even if no tiles get changed, we don't want to treat pen tool commands
             // as no-ops because we want to preserve the history of cursor movement.
             Command::PenTool { .. } => false,
+            Command::SetEntityCount(set_entity_count) => set_entity_count.old_count == set_entity_count.new_count,
         }
     }
 }

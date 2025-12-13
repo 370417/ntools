@@ -1,7 +1,7 @@
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{editor_state::{Command, EditorState}, grid::{GridPos, COLS, ROWS}, pen_tool::{create_command, PenTool, PenToolStart}, segment::extract_path, tile::{Tile, TileCategory, TileVariant, Tiles, TILE_SIZE}};
+use crate::{editor_state::{Command, EditorState}, grid::{COLS, GridPos, ROWS}, pen_tool::{PenTool, PenToolStart, create_command}, segment::extract_path, tile::{TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
 
 #[wasm_bindgen]
 pub struct Editor {
@@ -85,7 +85,7 @@ impl Editor {
                 if start != end {
                     let command = create_command(start, end, self.pen_tool_is_clockwise, None, self.state.tiles());
                     let mut tiles = Tiles::default();
-                    EditorState::execute_command(&mut tiles, &command);
+                    EditorState::execute_command(&mut tiles, &mut Default::default(), &command);
                     return extract_path(&tiles.segments_borderless(), false);
                 }
             }
