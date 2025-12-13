@@ -1,7 +1,11 @@
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{editor_state::{Command, EditorState}, grid::{COLS, GridPos, ROWS}, pen_tool::{PenTool, PenToolStart, create_command}, segment::extract_path, tile::{TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
+use crate::{editor::{editor_state::{Command, EditorState}, pen_tool::{PenTool, PenToolStart, create_command}}, grid::{COLS, GridPos, ROWS}, segment::extract_path, tile::{TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
+
+pub mod editor_entity;
+pub mod editor_state;
+pub mod pen_tool;
 
 #[wasm_bindgen]
 pub struct Editor {
