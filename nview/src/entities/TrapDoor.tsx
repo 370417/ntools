@@ -12,8 +12,8 @@ function equals(a: TrapDoorData, b: TrapDoorData): boolean {
     return a.x == b.x && a.y == b.y && a.deg == b.deg && a.animProgress === b.animProgress;
 }
 
-function transform(floorguard: Accessor<TrapDoorData>): string {
-    const { x, y, deg } = floorguard();
+function transform(trapDoor: Accessor<TrapDoorData>): string {
+    const { x, y, deg } = trapDoor();
     return `translate(${x},${y}) rotate(${deg},0,0)`;
 }
 

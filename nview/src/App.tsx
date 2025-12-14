@@ -14,6 +14,7 @@ import { TrapSwitchDefs, TrapSwitches, updateTrapSwitches, type TrapSwitchData }
 import { TrapDoors, updateTrapDoors, type TrapDoorData } from './entities/TrapDoor';
 import { RegularDoors, updateRegularDoors, type RegularDoorData } from './entities/RegularDoor';
 import { ShoveThwumps, updateShoveThwumps, type ShoveThwumpData } from './entities/ShoveThwump';
+import { ExitDoors, updateExitDoors, type ExitDoorData } from './entities/ExitDoor';
 
 type BoostPad = {
     x: number;
@@ -44,8 +45,6 @@ const boostPadMid = 1;
 const boostPadShort = -4;
 
 // Exit
-const exitDoorRadius = 10;
-const exitDoorCorner = 2.5;
 const exitSwitchHalfWidth = 7;
 const exitSwitchHalfHeight = 4.5;
 const exitSwitchCorner = 2;
@@ -112,7 +111,6 @@ function App() {
     const bounceBlocks = createSignal<BounceBlockData[]>([]);
     const oneWays = createSignal<OneWayData[]>([]);
     const [boostPads, setBoostPads] = createSignal<BoostPad[]>([]);
-    const [exitDoors, setExitDoors] = createSignal<ExitDoor[]>([]);
     const [exitSwitches, setExitSwitches] = createSignal<ExitSwitch[]>([]);
     const [thwumps, setThwumps] = createSignal<Thwump[]>([]);
     const launchPads = createSignal<LaunchPadData[]>([]);
@@ -123,6 +121,7 @@ function App() {
     const trapSwitches = createSignal<TrapSwitchData[]>([]);
     const regularDoors = createSignal<RegularDoorData[]>([]);
     const shoveThwumps = createSignal<ShoveThwumpData[]>([]);
+    const exitDoors = createSignal<ExitDoorData[]>([]);
 
     const socket = new WebSocket('ws://localhost:8080');
 
@@ -200,16 +199,6 @@ function App() {
         }
         setBoostPads(boostPadsArr);
 
-        const exitDoorsArr: ExitDoor[] = [];
-        const exitDoorsLen = replay.exit_doors_len();
-        for (let i = 0; i < exitDoorsLen; i++) {
-            exitDoorsArr.push({
-                x: replay.exit_door_x(i),
-                y: replay.exit_door_y(i),
-            });
-        }
-        setExitDoors(exitDoorsArr);
-
         const exitSwitchesArr: ExitSwitch[] = [];
         const exitSwitchesLen = replay.exit_switches_len();
         for (let i = 0; i < exitSwitchesLen; i++) {
@@ -239,6 +228,7 @@ function App() {
         updateTrapSwitches(trapSwitches, replay);
         updateRegularDoors(regularDoors, replay, partialFrame);
         updateShoveThwumps(shoveThwumps, replay, partialFrame);
+        updateExitDoors(exitDoors, replay, partialFrame);
 
         setReplayLength(replay.replay_length());
     }
@@ -283,14 +273,7 @@ function App() {
                         <path stroke="black" fill="none" d={`M 8.5 8.5 H -8.5 V -8.5 H 8.5`} />
                     </g>
                 </defs>
-                <Index each={exitDoors()}>
-                    {exitDoor => <>
-                        <path class="exit-door" d={`M ${exitDoor().x} ${exitDoor().y} v ${-exitDoorRadius} h ${-exitDoorRadius + exitDoorCorner} l ${-exitDoorCorner} ${exitDoorCorner} v ${2 * (exitDoorRadius - exitDoorCorner)} l ${exitDoorCorner} ${exitDoorCorner} h ${exitDoorRadius - exitDoorCorner} z`} />
-                        <path class="exit-door" d={`M ${exitDoor().x} ${exitDoor().y} v ${-exitDoorRadius} h ${exitDoorRadius - exitDoorCorner} l ${exitDoorCorner} ${exitDoorCorner} v ${2 * (exitDoorRadius - exitDoorCorner)} l ${-exitDoorCorner} ${exitDoorCorner} h ${-exitDoorRadius + exitDoorCorner} z`} />
-                        <path class="exit-door-stroke" stroke-width="3" fill="none" stroke-linecap="round" d={`M ${exitDoor().x} ${exitDoor().y} m 0 ${(1 - 0) * exitDoorRadius} v ${(0) * exitDoorRadius} h ${-exitDoorRadius + exitDoorCorner} l ${-exitDoorCorner} ${-exitDoorCorner} v ${(1 - 0) * (-exitDoorRadius + exitDoorCorner)}`} />
-                        <path class="exit-door-stroke" stroke-width="3" fill="none" stroke-linecap="round" d={`M ${exitDoor().x} ${exitDoor().y} m 0 ${(1 - 0) * exitDoorRadius} v ${(0) * exitDoorRadius} h ${exitDoorRadius - exitDoorCorner} l ${exitDoorCorner} ${-exitDoorCorner} v ${(1 - 0) * (-exitDoorRadius + exitDoorCorner)}`} />
-                    </>}
-                </Index>
+                <ExitDoors exitDoors={exitDoors} />
                 <OneWays oneWays={oneWays} />
                 <Mines mines={mines} />
                 <LockedSwitches lockedSwitches={lockedSwitches} />
