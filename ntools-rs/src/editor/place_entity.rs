@@ -56,7 +56,7 @@ impl PlaceEntity {
             self.stage = Some(Stage::PlaceSwitch);
             return None;
         }
-        match self.entity {
+        let command = match self.entity {
             entity @ EditorEntity::Ninja { .. } |
             entity @ EditorEntity::Exit { .. } => {
                 Some(Command::SetEntityCount(SetEntityCount {
@@ -65,6 +65,13 @@ impl PlaceEntity {
                     new_count: 1,
                 }))
             }
+        };
+        if let Some(Stage::PlaceSwitch) = self.stage {
+            self.stage = Some(Stage::PlaceDoor);
+            if let Some(switch_pos) = self.entity.switch_pos() {
+                self.set_pos(switch_pos.to_world_pos());
+            }
         }
+        command
     }
 }

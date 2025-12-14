@@ -1,6 +1,8 @@
 import { createSignal, For, Show } from "solid-js";
 import { Editor } from "./assets/ntools_rs";
 import { Ninja, type NinjaData } from "./entities/Ninja";
+import { ExitDoors, type ExitDoorData } from "./entities/ExitDoor";
+import { ExitSwitches, type ExitSwitchData } from "./entities/ExitSwitch";
 
 const COLS = 42;
 const ROWS = 23;
@@ -25,6 +27,7 @@ const MODE_ENTITY_PALETTE = 7;
 const MODE_PEN_TOOL = 8;
 
 const ENTITY_NINJA = 0;
+const ENTITY_EXIT = 3;
 
 const BONES_STANDING = new Float32Array([-0.039, -0.0249, 0.1127, -0.1738, 0.1115, -0.1512, -0.0846, 0.0749, 0.1072, -0.0423, 0.0263, -0.1452, -0.0358, -0.075, -0.377, 0.4686, 0.4643, -0.0225, -0.0453, -0.5054, -0.4724, 0.1962, 0.2293, -0.1812, -0.2266, -0.2224]);
 const BONES_FALLING = new Float32Array([0.018, 0.0, 0.4156, 0.0988, 0.3581, -0.3242, -0.0708, 0.0845, 0.2924, 0.3212, 0.1853, -0.1927, -0.0236, -0.06, -0.3602, 0.3086, 0.1278, -0.3238, -0.2018, -0.4976, -0.4488, 0.0656, -0.024, -0.2729, -0.3268, -0.2042]);
@@ -43,6 +46,8 @@ export function EditorApp() {
     const [ninjas, setNinjas] = createSignal<NinjaData[]>([]);
 
     const [previewNinjas, setPreviewNinjas] = createSignal<NinjaData[]>([]);
+    const [previewExitDoors, setPreviewExitDoors] = createSignal<ExitDoorData[]>([]);
+    const [previewExitSwitches, setPreviewExitSwitches] = createSignal<ExitSwitchData[]>([]);
 
     document.addEventListener('keydown', event => {
         let change = false;
@@ -124,22 +129,54 @@ export function EditorApp() {
         const ninjas: NinjaData[] = [];
 
         for (const entity of editor.entities()) {
+            // Make sure to create new objects instead of reusing entity
+            // because it is an object that comes from wasm.
             if (entity.type_int === ENTITY_NINJA) {
-                ninjas.push(entity);
+                ninjas.push({
+                    x: entity.x,
+                    y: entity.y,
+                    deg: entity.deg,
+                });
             }
+            // Do I need this?
+            entity.free();
         }
 
         setNinjas(ninjas);
 
         const previewNinjas: NinjaData[] = [];
+        const previewExitDoors: ExitDoorData[] = [];
+        const previewExitSwitches: ExitSwitchData[] = [];
 
         for (const entity of editor.preview_entities()) {
             if (entity.type_int === ENTITY_NINJA) {
-                previewNinjas.push(entity);
+                previewNinjas.push({
+                    x: entity.x,
+                    y: entity.y,
+                    deg: entity.deg,
+                });
+            } else if (entity.type_int === ENTITY_EXIT) {
+                previewExitDoors.push({
+                    // Note: spread operator won't work here
+                    x: entity.x,
+                    y: entity.y,
+                    animProgress: 0,
+                });
+                if (!Number.isNaN(entity.switch_x)) {
+                    previewExitSwitches.push({
+                        x: entity.switch_x,
+                        y: entity.switch_y,
+                        animProgress: 0,
+                    });
+                }
             }
+            // Do I need this?
+            entity.free();
         }
 
         setPreviewNinjas(previewNinjas);
+        setPreviewExitDoors(previewExitDoors);
+        setPreviewExitSwitches(previewExitSwitches);
     }
 
     const regularGridXs = [];
@@ -207,6 +244,8 @@ export function EditorApp() {
             </For>
             <path id="tiles" stroke-width="2" clip-path="url(#tiles-clip)" clip-rule="evenodd" d={tilePath()} fill-rule="evenodd" />
             <path id="selected-tiles" d={selectedTilePath()} fill-rule="evenodd" />
+            <ExitDoors exitDoors={[previewExitDoors, () => {}]} />
+            <ExitSwitches exitSwitches={[previewExitSwitches, () => {}]} />
             <For each={previewNinjas()}>
                 {ninja => <Ninja class="ninja" ninja={() => ninja} bones={() => BONES_STANDING} />}
             </For>
