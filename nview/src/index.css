@@ -236,3 +236,7 @@ svg {
     stroke: var(--editor-crosshair);
 }
 
+.door-switch-line {
+    stroke: var(--door-switch-line);
+}
+
