@@ -48,6 +48,32 @@ impl SelectTiles {
             active_selection.end = cursor_grid_pos;
         }
     }
+
+    pub fn finalize_selection(&mut self) {
+        if let Some(active_selection) = &self.active_selection {
+            for grid_pos in active_selection.iter() {
+                if active_selection.is_positive {
+                    self.selected_tiles.insert(grid_pos);
+                } else {
+                    self.selected_tiles.remove(&grid_pos);
+                }
+            }
+        }
+        self.active_selection = None;
+    }
+
+    pub fn start_selection(&mut self, cursor_pos: DVec2, preserve_existing_selection: bool) {
+        if preserve_existing_selection {
+            let grid_pos = GridPos::from_world_pos(cursor_pos).clamp();
+            self.active_selection = Some(RectSelection {
+                start: grid_pos,
+                end: grid_pos,
+                is_positive: !self.selected_tiles.contains(&grid_pos),
+            });
+        } else {
+            *self = SelectTiles::new(cursor_pos);
+        }
+    }
 }
 
 impl RectSelection {

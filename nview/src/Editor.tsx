@@ -278,7 +278,8 @@ export function EditorApp() {
             );
             if (cursorMoved) render();
         }}
-        onmousedown={() => { editor.cursor_down(); render() }}
+        onmousedown={event => { editor.cursor_down(event.shiftKey); render() }}
+        onmouseup={() => { editor.cursor_up(); render() }}
         onclick={() => { editor.cursor_click(); render() }}
         oncontextmenu={event => { if (editor.press_escape()) { render(); event.preventDefault(); } }} >
             <defs>

@@ -158,9 +158,18 @@ impl Editor {
     }
 
     #[wasm_bindgen]
-    pub fn cursor_down(&mut self) {
-        match self.mode {
+    pub fn cursor_down(&mut self, shift: bool) {
+        match &mut self.mode {
             EditorMode::PaintTiles => self.mode = EditorMode::SelectTiles(SelectTiles::new(self.cursor_pos)),
+            EditorMode::SelectTiles(select_tiles) => select_tiles.start_selection(self.cursor_pos, shift),
+            _ => {}
+        }
+    }
+
+    #[wasm_bindgen]
+    pub fn cursor_up(&mut self) {
+        match &mut self.mode {
+            EditorMode::SelectTiles(select_tiles) => select_tiles.finalize_selection(),
             _ => {}
         }
     }
@@ -173,6 +182,7 @@ impl Editor {
             EditorMode::PlaceEntity(place_entity) => if let Some(command) = place_entity.cursor_click(self.state.entities()) {
                 self.state.apply(command);
             },
+            // EditorMode::SelectTiles(select_tiles) => select_tiles.finalize_selection(),
             _ => {}
         }
     }
