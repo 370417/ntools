@@ -11,6 +11,7 @@ pub struct PlaceEntity {
     pub stage: Option<Stage>,
 }
 
+#[derive(Clone, Copy)]
 pub enum Stage {
     PlaceDoor,
     PlaceSwitch,
@@ -34,7 +35,10 @@ impl PlaceEntity {
         match &mut self.entity {
             EditorEntity::Ninja { pos, .. } => *pos = new_pos,
             EditorEntity::Exit { exit_pos, switch_pos } => match self.stage {
-                Some(Stage::PlaceDoor) => *exit_pos = new_pos,
+                Some(Stage::PlaceDoor) => {
+                    *exit_pos = new_pos;
+                    *switch_pos = new_pos;
+                }
                 Some(Stage::PlaceSwitch) | None => *switch_pos = new_pos,
             },
         }
@@ -48,15 +52,19 @@ impl PlaceEntity {
     }
 
     pub fn cursor_click(&mut self, entities: &BTreeMap<EditorEntity, u16>) -> Option<Command> {
+        if let Some(Stage::PlaceDoor) = self.stage {
+            self.stage = Some(Stage::PlaceSwitch);
+            return None;
+        }
         match self.entity {
-            entity @ EditorEntity::Ninja { .. } => {
+            entity @ EditorEntity::Ninja { .. } |
+            entity @ EditorEntity::Exit { .. } => {
                 Some(Command::SetEntityCount(SetEntityCount {
                     entity,
                     old_count: *entities.get(&entity).unwrap_or(&0),
                     new_count: 1,
                 }))
             }
-            EditorEntity::Exit { exit_pos, switch_pos } => todo!(),
         }
     }
 }

@@ -1,7 +1,7 @@
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::orientation::OrientationExt;
+use crate::{editor::place_entity::Stage, orientation::OrientationExt};
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum EditorEntity {
@@ -82,5 +82,18 @@ impl EntityPos {
 
     pub fn to_world_pos(self) -> DVec2 {
         DVec2::new(self.x as f64, self.y as f64) * 6.0
+    }
+}
+
+impl ExportedEntity {
+    /// Remove switch position if stage isn't Stage::PlaceSwitch
+    pub fn with_switch(mut self, stage: Option<Stage>) -> Self {
+        if let Some(Stage::PlaceSwitch) = stage {
+            self
+        } else {
+            self.switch_x = f64::NAN;
+            self.switch_y = f64::NAN;
+            self
+        }
     }
 }

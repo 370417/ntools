@@ -1,7 +1,7 @@
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{editor::{editor_entity::{EditorEntity, EntityPos, ExportedEntity}, editor_state::{Command, EditorState}, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::PlaceEntity}, grid::{COLS, GridPos, ROWS}, orientation::{Orientation, OrientationCardinal}, segment::extract_path, tile::{TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
+use crate::{editor::{editor_entity::{EditorEntity, EntityPos, ExportedEntity}, editor_state::{Command, EditorState}, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::{PlaceEntity, Stage}}, grid::{COLS, GridPos, ROWS}, orientation::{Orientation, OrientationCardinal}, segment::extract_path, tile::{TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
 
 pub mod editor_entity;
 pub mod editor_state;
@@ -185,7 +185,7 @@ impl Editor {
     #[wasm_bindgen]
     pub fn preview_entities(&self) -> Box<[ExportedEntity]> {
         match &self.mode {
-            EditorMode::PlaceEntity(place_entity) => Box::new([place_entity.entity.export()]),
+            EditorMode::PlaceEntity(place_entity) => Box::new([place_entity.entity.export().with_switch(place_entity.stage)]),
             _ => Box::new([]),
         }
     }
@@ -477,6 +477,17 @@ impl Editor {
             }
             _ => {}
         }
+    }
+
+    #[wasm_bindgen]
+    pub fn press_bracket_right(&mut self) {
+        self.mode = EditorMode::PlaceEntity(PlaceEntity {
+            entity: EditorEntity::Exit {
+                exit_pos: EntityPos::from_world_pos(PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid)),
+                switch_pos: EntityPos::from_world_pos(PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid)),
+            },
+            stage: Some(Stage::PlaceDoor),
+        })
     }
 
     #[wasm_bindgen]

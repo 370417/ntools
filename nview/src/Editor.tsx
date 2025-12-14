@@ -73,6 +73,8 @@ export function EditorApp() {
         else if (event.code === 'KeyX') change = true, editor.press_x();
         else if (event.code === 'KeyC') change = true, editor.press_c();
 
+        else if (event.code === 'BracketRight') change = true, editor.press_bracket_right();
+
         else if (event.code === 'Escape') change = editor.press_escape();
 
         else if (event.code === 'Slash') change = true, editor.press_slash();
