@@ -1,4 +1,5 @@
 use glam::DVec2;
+use wasm_bindgen::prelude::wasm_bindgen;
 
 use crate::orientation::OrientationExt;
 
@@ -20,7 +21,30 @@ pub struct EntityPos {
     y: i32,
 }
 
+#[wasm_bindgen]
+pub struct ExportedEntity {
+    pub type_int: u32,
+    pub x: f64,
+    pub y: f64,
+    pub deg: f64,
+    pub switch_x: f64,
+    pub switch_y: f64,
+}
+
 impl EditorEntity {
+    pub fn export(&self) -> ExportedEntity {
+        let pos = self.pos().to_world_pos();
+        let switch_pos = self.switch_pos().map(EntityPos::to_world_pos).unwrap_or(DVec2::splat(f64::NAN));
+        ExportedEntity {
+            type_int: self.type_int(),
+            x: pos.x,
+            y: pos.y,
+            deg: self.rotation_deg(),
+            switch_x: switch_pos.x,
+            switch_y: switch_pos.y,
+        }
+    }
+
     pub fn pos(&self) -> EntityPos {
         match self {
             &EditorEntity::Ninja { pos, .. } => pos,

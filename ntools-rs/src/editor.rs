@@ -1,7 +1,7 @@
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{editor::{editor_entity::{EditorEntity, EntityPos}, editor_state::{Command, EditorState}, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::PlaceEntity}, grid::{COLS, GridPos, ROWS}, orientation::{Orientation, OrientationCardinal}, segment::extract_path, tile::{TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
+use crate::{editor::{editor_entity::{EditorEntity, EntityPos, ExportedEntity}, editor_state::{Command, EditorState}, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::PlaceEntity}, grid::{COLS, GridPos, ROWS}, orientation::{Orientation, OrientationCardinal}, segment::extract_path, tile::{TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
 
 pub mod editor_entity;
 pub mod editor_state;
@@ -178,62 +178,15 @@ impl Editor {
     }
 
     #[wasm_bindgen]
-    pub fn preview_entities_len(&self) -> usize {
-        match self.mode {
-            EditorMode::PlaceEntity(_) => 1,
-            _ => 0,
-        }
+    pub fn entities(&self) -> Box<[ExportedEntity]> {
+        self.state.entities().keys().map(|entity| entity.export()).collect()
     }
 
     #[wasm_bindgen]
-    pub fn preview_entity_type(&self, i: usize) -> u32 {
+    pub fn preview_entities(&self) -> Box<[ExportedEntity]> {
         match &self.mode {
-            EditorMode::PlaceEntity(place_entity) => place_entity.entity.type_int(),
-            _ => u32::MAX,
-        }
-    }
-
-    #[wasm_bindgen]
-    pub fn preview_entity_x(&self, i: usize) -> f64 {
-        match &self.mode {
-            EditorMode::PlaceEntity(place_entity) => place_entity.entity.pos().to_world_pos().x,
-            _ => f64::NAN,
-        }
-    }
-
-    #[wasm_bindgen]
-    pub fn preview_entity_y(&self, i: usize) -> f64 {
-        match &self.mode {
-            EditorMode::PlaceEntity(place_entity) => place_entity.entity.pos().to_world_pos().y,
-            _ => f64::NAN,
-        }
-    }
-
-    #[wasm_bindgen]
-    pub fn preview_entity_deg(&self, i: usize) -> f64 {
-        match &self.mode {
-            EditorMode::PlaceEntity(place_entity) => place_entity.entity.rotation_deg(),
-            _ => f64::NAN,
-        }
-    }
-
-    #[wasm_bindgen]
-    pub fn preview_entity_switch_x(&self, i: usize) -> f64 {
-        match &self.mode {
-            EditorMode::PlaceEntity(place_entity) => {
-                place_entity.entity.switch_pos().map(|pos| pos.to_world_pos().x).unwrap_or(f64::NAN)
-            }
-            _ => f64::NAN,
-        }
-    }
-
-    #[wasm_bindgen]
-    pub fn preview_entity_switch_y(&self, i: usize) -> f64 {
-        match &self.mode {
-            EditorMode::PlaceEntity(place_entity) => {
-                place_entity.entity.switch_pos().map(|pos| pos.to_world_pos().y).unwrap_or(f64::NAN)
-            }
-            _ => f64::NAN,
+            EditorMode::PlaceEntity(place_entity) => Box::new([place_entity.entity.export()]),
+            _ => Box::new([]),
         }
     }
 
@@ -370,7 +323,7 @@ impl Editor {
             EditorMode::PlaceEntity(place_entity) => {
                 self.entity_orientation = match self.pressed_orientation {
                     Some(Orientation::N) => Orientation::NNW,
-                    Some(Orientation::W) => Orientation::NNW,
+                    Some(Orientation::W) => Orientation::WNW,
                     _ => Orientation::NW,
                 };
                 self.pressed_orientation = Some(Orientation::NW);

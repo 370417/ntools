@@ -40,6 +40,8 @@ export function EditorApp() {
     const [tilemodeCrosshairPos, setTilemodeCrosshairPos] = createSignal({ row: 1, col: 1 });
     const [crosshairPos, setCrosshairPos] = createSignal({ x: 24, y: 24 });
 
+    const [ninjas, setNinjas] = createSignal<NinjaData[]>([]);
+
     const [previewNinjas, setPreviewNinjas] = createSignal<NinjaData[]>([]);
 
     document.addEventListener('keydown', event => {
@@ -117,16 +119,21 @@ export function EditorApp() {
             y: editor.crosshair_y(),
         });
 
+        const ninjas: NinjaData[] = [];
+
+        for (const entity of editor.entities()) {
+            if (entity.type_int === ENTITY_NINJA) {
+                ninjas.push(entity);
+            }
+        }
+
+        setNinjas(ninjas);
+
         const previewNinjas: NinjaData[] = [];
 
-        const previewEntitiesLen = editor.preview_entities_len();
-        for (let i = 0; i < previewEntitiesLen; i++) {
-            const type = editor.preview_entity_type(i);
-            const x = editor.preview_entity_x(i);
-            const y = editor.preview_entity_y(i);
-            const deg = editor.preview_entity_deg(i);
-            if (type === ENTITY_NINJA) {
-                previewNinjas.push({ x, y, deg });
+        for (const entity of editor.preview_entities()) {
+            if (entity.type_int === ENTITY_NINJA) {
+                previewNinjas.push(entity);
             }
         }
 
@@ -193,10 +200,13 @@ export function EditorApp() {
             </Show>
             {regularGridXs.map(x => <line class="regular-grid" y1="24" y2={24 * 24} x1={x} x2={x} />)}
             {regularGridYs.map(y => <line class="regular-grid" x1="24" x2={24 * 43} y1={y} y2={y} />)}
+            <For each={ninjas()}>
+                {ninja => <Ninja class="ninja" ninja={() => ninja} bones={() => BONES_STANDING} />}
+            </For>
             <path id="tiles" stroke-width="2" clip-path="url(#tiles-clip)" clip-rule="evenodd" d={tilePath()} fill-rule="evenodd" />
             <path id="selected-tiles" d={selectedTilePath()} fill-rule="evenodd" />
             <For each={previewNinjas()}>
-                {ninja => <Ninja class="ninja" ninja={() => ninja} bones={() => BONES_FALLING} />}
+                {ninja => <Ninja class="ninja" ninja={() => ninja} bones={() => BONES_STANDING} />}
             </For>
             <Show when={mode() === MODE_PAINT_TILES}>
                 <use href="#tilemode-crosshair" x={tilemodeCrosshairPos().col * 24 + 12} y={tilemodeCrosshairPos().row * 24 + 12} />
