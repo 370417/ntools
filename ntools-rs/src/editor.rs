@@ -1,12 +1,13 @@
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{editor::{editor_entity::{EditorEntity, EntityPos, ExportedEntity}, editor_state::{Command, EditorState}, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::{PlaceEntity, Stage}}, grid::{COLS, GridPos, ROWS}, orientation::{Orientation, OrientationCardinal}, segment::extract_path, tile::{TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
+use crate::{editor::{editor_entity::{EditorEntity, EntityPos, ExportedEntity}, editor_state::{Command, EditorState}, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::{PlaceEntity, Stage}, select_tiles::SelectTiles}, grid::{COLS, GridPos, ROWS}, orientation::{Orientation, OrientationCardinal}, segment::extract_path, tile::{TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
 
 pub mod editor_entity;
 pub mod editor_state;
 pub mod pen_tool;
 pub mod place_entity;
+pub mod select_tiles;
 
 #[wasm_bindgen]
 pub struct Editor {
@@ -35,7 +36,7 @@ pub struct Editor {
 pub enum EditorMode {
     PaintTiles,
     TilePalette,
-    SelectTiles,
+    SelectTiles(SelectTiles),
     MoveSelection,
     PlaceEntity(PlaceEntity),
     SelectEntities,
@@ -68,7 +69,7 @@ impl Editor {
         match self.mode {
             EditorMode::PaintTiles => 0,
             EditorMode::TilePalette => 1,
-            EditorMode::SelectTiles => 2,
+            EditorMode::SelectTiles(_) => 2,
             EditorMode::MoveSelection => 3,
             EditorMode::PlaceEntity(_) => 4,
             EditorMode::SelectEntities => 5,
@@ -141,7 +142,26 @@ impl Editor {
                 place_entity.set_pos(new_crosshair);
                 new_crosshair != old_crosshair
             }
+            EditorMode::SelectTiles(select_tiles) => {
+                let old_crosshair = GridPos::from_world_pos(self.cursor_pos).clamp();
+                self.cursor_pos = new_cursor_pos;
+                let new_crosshair = GridPos::from_world_pos(self.cursor_pos).clamp();
+                if new_crosshair != old_crosshair {
+                    select_tiles.set_cursor_pos(new_crosshair);
+                    true
+                } else {
+                    false
+                }
+            }
             _ => false
+        }
+    }
+
+    #[wasm_bindgen]
+    pub fn cursor_down(&mut self) {
+        match self.mode {
+            EditorMode::PaintTiles => self.mode = EditorMode::SelectTiles(SelectTiles::new(self.cursor_pos)),
+            _ => {}
         }
     }
 
@@ -186,6 +206,16 @@ impl Editor {
     pub fn preview_entities(&self) -> Box<[ExportedEntity]> {
         match &self.mode {
             EditorMode::PlaceEntity(place_entity) => Box::new([place_entity.entity.export().with_switch(place_entity.stage)]),
+            _ => Box::new([]),
+        }
+    }
+
+    #[wasm_bindgen]
+    pub fn selected_tile_positions(&self) -> Box<[usize]> {
+        match &self.mode {
+            EditorMode::SelectTiles(select_tiles) => {
+                select_tiles.selection_preview().iter().flat_map(|pos| [pos.x, pos.y]).collect()
+            }
             _ => Box::new([]),
         }
     }

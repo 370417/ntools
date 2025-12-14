@@ -39,6 +39,8 @@ type Line = {
     y2: number;
 };
 
+const selectionPadding = 5;
+
 export function EditorApp() {
     const editor = Editor.new();
 
@@ -49,6 +51,7 @@ export function EditorApp() {
     const [mode, setMode] = createSignal(MODE_PAINT_TILES);
     const [tilemodeCrosshairPos, setTilemodeCrosshairPos] = createSignal({ row: 1, col: 1 });
     const [crosshairPos, setCrosshairPos] = createSignal({ x: 24, y: 24 });
+    const [selectedTilePositions, setSelectedTilePositions] = createSignal<{ x: number, y: number }[]>([]);
 
     const [ninjas, setNinjas] = createSignal<NinjaData[]>([]);
     const [exitDoors, setExitDoors] = createSignal<ExitDoorData[]>([]);
@@ -136,6 +139,16 @@ export function EditorApp() {
             x: editor.crosshair_x(),
             y: editor.crosshair_y(),
         });
+
+        const selectedTilePositionsRaw = editor.selected_tile_positions();
+        const selectedTilePositions: { x: number, y: number }[] = [];
+        for (let i = 1; i < selectedTilePositionsRaw.length; i += 2) {
+            selectedTilePositions.push({
+                x: selectedTilePositionsRaw[i - 1],
+                y: selectedTilePositionsRaw[i],
+            });
+        }
+        setSelectedTilePositions(selectedTilePositions);
 
         const lines: Line[] = [];
 
@@ -265,6 +278,7 @@ export function EditorApp() {
             );
             if (cursorMoved) render();
         }}
+        onmousedown={() => { editor.cursor_down(); render() }}
         onclick={() => { editor.cursor_click(); render() }}
         oncontextmenu={event => { if (editor.press_escape()) { render(); event.preventDefault(); } }} >
             <defs>
@@ -273,6 +287,19 @@ export function EditorApp() {
                 </clipPath>
                 <path id="tilemode-crosshair" stroke-width="1.5" fill="none" d={tilemodeCrosshairPath} />
                 <path id="crosshair" stroke-width="1.5" fill="none" d={crosshairPath} />
+                <filter id="outline" filterUnits="userSpaceOnUse" x="0" y="0" width="1056" height="600">
+                    <feMorphology in="SourceAlpha" operator="dilate" radius="0.5" result="DILATED" />
+                    <feFlood flood-color="var(--shove-thwump-ray)" flood-opacity="1" result="COLOR" />
+                    <feComposite in="COLOR" in2="DILATED" operator="in" result="OUTLINE" />
+                    <feMerge>
+                        <feMergeNode in="OUTLINE" />
+                        <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                </filter>
+                <filter id="hollow">
+                    <feMorphology in="SourceAlpha" operator="dilate" radius="3" result="DILATED" />
+                    <feComposite operator="out" in="DILATED" in2="SourceGraphic" />
+                </filter>
             </defs>
             <Show when={showQuarterGrid()}>
                 {quarterTileGridXs.map(x => <line class="fine-grid" y1="24" y2={24 * 24} x1={x} x2={x} />)}
@@ -291,14 +318,21 @@ export function EditorApp() {
             </For>
             <path id="tiles" stroke-width="2" clip-path="url(#tiles-clip)" clip-rule="evenodd" d={tilePath()} fill-rule="evenodd" />
             <path id="selected-tiles" d={selectedTilePath()} fill-rule="evenodd" />
-            <ExitDoors exitDoors={[previewExitDoors, () => {}]} />
-            <ExitSwitches exitSwitches={[previewExitSwitches, () => {}]} />
-            <For each={previewNinjas()}>
-                {ninja => <Ninja class="ninja" ninja={() => ninja} bones={() => BONES_STANDING} />}
-            </For>
+            <g filter="url(#outline)">
+                <ExitDoors exitDoors={[previewExitDoors, () => {}]} />
+                <ExitSwitches exitSwitches={[previewExitSwitches, () => {}]} />
+                <For each={previewNinjas()}>
+                    {ninja => <Ninja class="ninja" ninja={() => ninja} bones={() => BONES_STANDING} />}
+                </For>
+            </g>
             <For each={doorSwitchLines()}>
                 {line => <line class="door-switch-line" x1={line.x1} y1={line.y1} x2={line.x2} y2={line.y2} />}
             </For>
+            <g filter="url(#hollow)">
+                <For each={selectedTilePositions()}>
+                    {({ x, y }) => <rect x={24 * x - selectionPadding} y={24 * y - selectionPadding} width={24 + 2 * selectionPadding} height={24 + 2 * selectionPadding} />}
+                </For>
+            </g>
             <Show when={mode() === MODE_PAINT_TILES}>
                 <use href="#tilemode-crosshair" x={tilemodeCrosshairPos().col * 24 + 12} y={tilemodeCrosshairPos().row * 24 + 12} />
             </Show>

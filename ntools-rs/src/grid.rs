@@ -72,7 +72,7 @@ impl <T: Clone> Clone for Grid<T> {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct GridPos {
     pub x: usize,
     pub y: usize,
