@@ -15,6 +15,7 @@ import { TrapDoors, updateTrapDoors, type TrapDoorData } from './entities/TrapDo
 import { RegularDoors, updateRegularDoors, type RegularDoorData } from './entities/RegularDoor';
 import { ShoveThwumps, updateShoveThwumps, type ShoveThwumpData } from './entities/ShoveThwump';
 import { ExitDoors, updateExitDoors, type ExitDoorData } from './entities/ExitDoor';
+import { ExitSwitches, updateExitSwitches, type ExitSwitchData } from './entities/ExitSwitch';
 
 type BoostPad = {
     x: number;
@@ -22,16 +23,6 @@ type BoostPad = {
     deg: number;
     anim: number;
 };
-
-type ExitDoor = {
-    x: number;
-    y: number;
-};
-
-type ExitSwitch = {
-    x: number;
-    y: number;
-}
 
 type Thwump = {
     x: number;
@@ -43,11 +34,6 @@ type Thwump = {
 const boostPadLong = 6;
 const boostPadMid = 1;
 const boostPadShort = -4;
-
-// Exit
-const exitSwitchHalfWidth = 7;
-const exitSwitchHalfHeight = 4.5;
-const exitSwitchCorner = 2;
 
 function App() {
     let replay: Replay | undefined = undefined;
@@ -111,7 +97,6 @@ function App() {
     const bounceBlocks = createSignal<BounceBlockData[]>([]);
     const oneWays = createSignal<OneWayData[]>([]);
     const [boostPads, setBoostPads] = createSignal<BoostPad[]>([]);
-    const [exitSwitches, setExitSwitches] = createSignal<ExitSwitch[]>([]);
     const [thwumps, setThwumps] = createSignal<Thwump[]>([]);
     const launchPads = createSignal<LaunchPadData[]>([]);
     const floorguards = createSignal<FloorguardData[]>([]);
@@ -122,6 +107,7 @@ function App() {
     const regularDoors = createSignal<RegularDoorData[]>([]);
     const shoveThwumps = createSignal<ShoveThwumpData[]>([]);
     const exitDoors = createSignal<ExitDoorData[]>([]);
+    const exitSwitches = createSignal<ExitSwitchData[]>([]);
 
     const socket = new WebSocket('ws://localhost:8080');
 
@@ -199,16 +185,6 @@ function App() {
         }
         setBoostPads(boostPadsArr);
 
-        const exitSwitchesArr: ExitSwitch[] = [];
-        const exitSwitchesLen = replay.exit_switches_len();
-        for (let i = 0; i < exitSwitchesLen; i++) {
-            exitSwitchesArr.push({
-                x: replay.exit_switch_x(i),
-                y: replay.exit_switch_y(i),
-            });
-        }
-        setExitSwitches(exitSwitchesArr);
-
         const thwumpsArr: Thwump[] = [];
         const thwumpsLen = replay.thwumps_len();
         for (let i = 0; i < thwumpsLen; i++) {
@@ -229,6 +205,7 @@ function App() {
         updateRegularDoors(regularDoors, replay, partialFrame);
         updateShoveThwumps(shoveThwumps, replay, partialFrame);
         updateExitDoors(exitDoors, replay, partialFrame);
+        updateExitSwitches(exitSwitches, replay, partialFrame);
 
         setReplayLength(replay.replay_length());
     }
@@ -278,11 +255,7 @@ function App() {
                 <Mines mines={mines} />
                 <LockedSwitches lockedSwitches={lockedSwitches} />
                 <TrapSwitches trapSwitches={trapSwitches} />
-                <Index each={exitSwitches()}>
-                    {exitSwitch => <>
-                        <path class="exit-switch" d={`M ${exitSwitch().x} ${exitSwitch().y} m ${-exitSwitchHalfWidth + exitSwitchCorner} ${-exitSwitchHalfHeight} h ${2 * (exitSwitchHalfWidth - exitSwitchCorner)} l ${exitSwitchCorner} ${exitSwitchCorner} v ${2 * (exitSwitchHalfHeight - exitSwitchCorner)} l ${-exitSwitchCorner} ${exitSwitchCorner} h ${2 * (-exitSwitchHalfWidth + exitSwitchCorner)} l ${-exitSwitchCorner} ${-exitSwitchCorner} v ${2 * (-exitSwitchHalfHeight + exitSwitchCorner)} l ${exitSwitchCorner} ${-exitSwitchCorner}`} />
-                    </>}
-                </Index>
+                <ExitSwitches exitSwitches={exitSwitches} />
                 <LaunchPads launchPads={launchPads} />
                 <Floorguards floorguards={floorguards} />
                 <RegularDoors regularDoors={regularDoors} />
