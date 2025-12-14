@@ -18,10 +18,10 @@ pub enum Stage {
 
 impl PlaceEntity {
     pub fn crosshair(&self, cursor_pos: DVec2, fine_grid: bool) -> DVec2 {
-        self.round_to_grid(cursor_pos, fine_grid)
+        Self::round_to_grid(cursor_pos, fine_grid)
     }
 
-    pub fn round_to_grid(&self, cursor_pos: DVec2, fine_grid: bool) -> DVec2 {
+    pub fn round_to_grid(cursor_pos: DVec2, fine_grid: bool) -> DVec2 {
         if fine_grid {
             (cursor_pos / 6.0).round() * 6.0
         } else {

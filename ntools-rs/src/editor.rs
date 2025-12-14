@@ -306,7 +306,7 @@ impl Editor {
     pub fn press_9(&mut self) {
         self.mode = EditorMode::PlaceEntity(PlaceEntity {
             entity: EditorEntity::Ninja {
-                pos: EntityPos::from_world_pos(self.cursor_pos),
+                pos: EntityPos::from_world_pos(PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid)),
                 orientation: self.entity_orientation.into(),
             },
             stage: None,
