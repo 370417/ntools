@@ -44,6 +44,8 @@ export function EditorApp() {
     const [crosshairPos, setCrosshairPos] = createSignal({ x: 24, y: 24 });
 
     const [ninjas, setNinjas] = createSignal<NinjaData[]>([]);
+    const [exitDoors, setExitDoors] = createSignal<ExitDoorData[]>([]);
+    const [exitSwitches, setExitSwitches] = createSignal<ExitSwitchData[]>([]);
 
     const [previewNinjas, setPreviewNinjas] = createSignal<NinjaData[]>([]);
     const [previewExitDoors, setPreviewExitDoors] = createSignal<ExitDoorData[]>([]);
@@ -127,6 +129,8 @@ export function EditorApp() {
         });
 
         const ninjas: NinjaData[] = [];
+        const exitDoors: ExitDoorData[] = [];
+        const exitSwitches: ExitSwitchData[] = [];
 
         for (const entity of editor.entities()) {
             // Make sure to create new objects instead of reusing entity
@@ -137,12 +141,28 @@ export function EditorApp() {
                     y: entity.y,
                     deg: entity.deg,
                 });
+            } else if (entity.type_int === ENTITY_EXIT) {
+                exitDoors.push({
+                    // Note: spread operator won't work here
+                    x: entity.x,
+                    y: entity.y,
+                    animProgress: 0,
+                });
+                if (!Number.isNaN(entity.switch_x)) {
+                    exitSwitches.push({
+                        x: entity.switch_x,
+                        y: entity.switch_y,
+                        animProgress: 0,
+                    });
+                }
             }
             // Do I need this?
             entity.free();
         }
 
         setNinjas(ninjas);
+        setExitDoors(exitDoors);
+        setExitSwitches(exitSwitches);
 
         const previewNinjas: NinjaData[] = [];
         const previewExitDoors: ExitDoorData[] = [];
@@ -239,6 +259,8 @@ export function EditorApp() {
             </Show>
             {regularGridXs.map(x => <line class="regular-grid" y1="24" y2={24 * 24} x1={x} x2={x} />)}
             {regularGridYs.map(y => <line class="regular-grid" x1="24" x2={24 * 43} y1={y} y2={y} />)}
+            <ExitDoors exitDoors={[exitDoors, () => {}]} />
+            <ExitSwitches exitSwitches={[exitSwitches, () => {}]} />
             <For each={ninjas()}>
                 {ninja => <Ninja class="ninja" ninja={() => ninja} bones={() => BONES_STANDING} />}
             </For>
