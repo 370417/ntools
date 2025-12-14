@@ -57,17 +57,19 @@ export function EditorApp() {
 
         else if (event.code === 'Digit9') change = true, editor.press_9();
 
+        else if (event.code === 'KeyZ' && (event.ctrlKey || event.metaKey) && event.shiftKey) change = true, editor.redo();
+        else if (event.code === 'KeyZ' && (event.ctrlKey || event.metaKey)) change = true, editor.undo();
+        else if (event.code === 'KeyY' && (event.ctrlKey || event.metaKey)) change = true, editor.redo();
+
         else if (event.code === 'KeyQ') change = true, editor.press_q(event.shiftKey);
         else if (event.code === 'KeyW') change = true, editor.press_w(event.shiftKey);
         else if (event.code === 'KeyA') change = true, editor.press_a(event.shiftKey);
         else if (event.code === 'KeyS') change = true, editor.press_s(event.shiftKey);
         else if (event.code === 'KeyE') change = true, editor.press_e();
         else if (event.code === 'KeyD') change = true, editor.press_d();
+        else if (event.code === 'KeyZ') change = true, editor.press_z();
         else if (event.code === 'KeyX') change = true, editor.press_x();
-
-        else if (event.code === 'KeyZ' && (event.ctrlKey || event.metaKey) && event.shiftKey) change = true, editor.redo();
-        else if (event.code === 'KeyZ' && (event.ctrlKey || event.metaKey)) change = true, editor.undo();
-        else if (event.code === 'KeyY' && (event.ctrlKey || event.metaKey)) change = true, editor.redo();
+        else if (event.code === 'KeyC') change = true, editor.press_c();
 
         else if (event.code === 'Escape') change = editor.press_escape();
 
@@ -87,6 +89,9 @@ export function EditorApp() {
         else if (event.code === 'KeyS') change = true, editor.release_s();
         else if (event.code === 'KeyE') change = true, editor.release_e();
         else if (event.code === 'KeyD') change = true, editor.release_d();
+        else if (event.code === 'KeyZ') change = true, editor.release_z();
+        else if (event.code === 'KeyX') change = true, editor.release_x();
+        else if (event.code === 'KeyC') change = true, editor.release_c();
 
         if (change) {
             render();

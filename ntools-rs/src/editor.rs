@@ -1,7 +1,7 @@
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{editor::{editor_entity::{EditorEntity, EntityPos}, editor_state::{Command, EditorState}, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::PlaceEntity}, grid::{COLS, GridPos, ROWS}, orientation::Orientation, segment::extract_path, tile::{TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
+use crate::{editor::{editor_entity::{EditorEntity, EntityPos}, editor_state::{Command, EditorState}, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::PlaceEntity}, grid::{COLS, GridPos, ROWS}, orientation::{Orientation, OrientationCardinal}, segment::extract_path, tile::{TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
 
 pub mod editor_entity;
 pub mod editor_state;
@@ -24,6 +24,12 @@ pub struct Editor {
     pen_tool_fine_grid: bool,
     entity_fine_grid: bool,
     entity_orientation: Orientation,
+    entity_orientation_cardinal: OrientationCardinal,
+    /// Keep track of the orientation key that is currently pressed
+    /// to allow for inputing secondary diagonals by pressing two orientation
+    /// keys at once.
+    /// We only track the most recently pressed orientation key.
+    pressed_orientation: Option<Orientation>,
 }
 
 pub enum EditorMode {
@@ -52,6 +58,8 @@ impl Editor {
             pen_tool_fine_grid: true,
             entity_fine_grid: false,
             entity_orientation: Orientation::N,
+            entity_orientation_cardinal: OrientationCardinal::N,
+            pressed_orientation: None,
         }
     }
 
@@ -354,10 +362,19 @@ impl Editor {
 
     #[wasm_bindgen]
     pub fn press_q(&mut self, shift: bool) {
-        match self.mode {
+        match &mut self.mode {
             EditorMode::PaintTiles => {
                 self.pressed_tile_variants.push(TileVariant::Q);
                 self.paint_tile(PaintTileArgs { amend: false, shift });
+            }
+            EditorMode::PlaceEntity(place_entity) => {
+                self.entity_orientation = match self.pressed_orientation {
+                    Some(Orientation::N) => Orientation::NNW,
+                    Some(Orientation::W) => Orientation::NNW,
+                    _ => Orientation::NW,
+                };
+                self.pressed_orientation = Some(Orientation::NW);
+                place_entity.set_orientation(self.entity_orientation);
             }
             _ => {}
         }
@@ -365,10 +382,20 @@ impl Editor {
 
     #[wasm_bindgen]
     pub fn press_w(&mut self, shift: bool) {
-        match self.mode {
+        match &mut self.mode {
             EditorMode::PaintTiles => {
                 self.pressed_tile_variants.push(TileVariant::W);
                 self.paint_tile(PaintTileArgs { amend: false, shift });
+            }
+            EditorMode::PlaceEntity(place_entity) => {
+                self.entity_orientation = match self.pressed_orientation {
+                    Some(Orientation::NW) => Orientation::NNW,
+                    Some(Orientation::NE) => Orientation::NNE,
+                    _ => Orientation::N,
+                };
+                self.entity_orientation_cardinal = OrientationCardinal::N;
+                self.pressed_orientation = Some(Orientation::N);
+                place_entity.set_orientation(self.entity_orientation);
             }
             _ => {}
         }
@@ -376,10 +403,20 @@ impl Editor {
 
     #[wasm_bindgen]
     pub fn press_a(&mut self, shift: bool) {
-        match self.mode {
+        match &mut self.mode {
             EditorMode::PaintTiles => {
                 self.pressed_tile_variants.push(TileVariant::A);
                 self.paint_tile(PaintTileArgs { amend: false, shift });
+            }
+            EditorMode::PlaceEntity(place_entity) => {
+                self.entity_orientation = match self.pressed_orientation {
+                    Some(Orientation::NW) => Orientation::WNW,
+                    Some(Orientation::SW) => Orientation::WSW,
+                    _ => Orientation::W,
+                };
+                self.entity_orientation_cardinal = OrientationCardinal::W;
+                self.pressed_orientation = Some(Orientation::W);
+                place_entity.set_orientation(self.entity_orientation);
             }
             _ => {}
         }
@@ -398,10 +435,19 @@ impl Editor {
 
     #[wasm_bindgen]
     pub fn press_e(&mut self) {
-        match self.mode {
+        match &mut self.mode {
             EditorMode::PaintTiles => {
                 self.pressed_tile_variants.push(TileVariant::E);
                 self.paint_tile(PaintTileArgs { amend: false, shift: false });
+            }
+            EditorMode::PlaceEntity(place_entity) => {
+                self.entity_orientation = match self.pressed_orientation {
+                    Some(Orientation::N) => Orientation::NNE,
+                    Some(Orientation::E) => Orientation::ENE,
+                    _ => Orientation::NE,
+                };
+                self.pressed_orientation = Some(Orientation::NE);
+                place_entity.set_orientation(self.entity_orientation);
             }
             _ => {}
         }
@@ -409,10 +455,36 @@ impl Editor {
 
     #[wasm_bindgen]
     pub fn press_d(&mut self) {
-        match self.mode {
+        match &mut self.mode {
             EditorMode::PaintTiles => {
                 self.pressed_tile_variants.push(TileVariant::D);
                 self.paint_tile(PaintTileArgs { amend: false, shift: false });
+            }
+            EditorMode::PlaceEntity(place_entity) => {
+                self.entity_orientation = match self.pressed_orientation {
+                    Some(Orientation::NE) => Orientation::ENE,
+                    Some(Orientation::SE) => Orientation::ESE,
+                    _ => Orientation::E,
+                };
+                self.entity_orientation_cardinal = OrientationCardinal::E;
+                self.pressed_orientation = Some(Orientation::E);
+                place_entity.set_orientation(self.entity_orientation);
+            }
+            _ => {}
+        }
+    }
+
+    #[wasm_bindgen]
+    pub fn press_z(&mut self) {
+        match &mut self.mode {
+            EditorMode::PlaceEntity(place_entity) => {
+                self.entity_orientation = match self.pressed_orientation {
+                    Some(Orientation::S) => Orientation::SSW,
+                    Some(Orientation::W) => Orientation::WSW,
+                    _ => Orientation::SW,
+                };
+                self.pressed_orientation = Some(Orientation::SE);
+                place_entity.set_orientation(self.entity_orientation);
             }
             _ => {}
         }
@@ -420,9 +492,35 @@ impl Editor {
 
     #[wasm_bindgen]
     pub fn press_x(&mut self) {
-        match self.mode {
+        match &mut self.mode {
             EditorMode::PenTool(_) => {
                 self.pen_tool_is_clockwise = !self.pen_tool_is_clockwise;
+            }
+            EditorMode::PlaceEntity(place_entity) => {
+                self.entity_orientation = match self.pressed_orientation {
+                    Some(Orientation::SW) => Orientation::SSW,
+                    Some(Orientation::SE) => Orientation::SSE,
+                    _ => Orientation::S,
+                };
+                self.entity_orientation_cardinal = OrientationCardinal::S;
+                self.pressed_orientation = Some(Orientation::S);
+                place_entity.set_orientation(self.entity_orientation);
+            }
+            _ => {}
+        }
+    }
+
+    #[wasm_bindgen]
+    pub fn press_c(&mut self) {
+        match &mut self.mode {
+            EditorMode::PlaceEntity(place_entity) => {
+                self.entity_orientation = match self.pressed_orientation {
+                    Some(Orientation::S) => Orientation::SSE,
+                    Some(Orientation::E) => Orientation::ESE,
+                    _ => Orientation::SE,
+                };
+                self.pressed_orientation = Some(Orientation::SE);
+                place_entity.set_orientation(self.entity_orientation);
             }
             _ => {}
         }
@@ -444,6 +542,9 @@ impl Editor {
         // Releasing keys should still clean up pressed state even in other modes
         // because the user could switch modes while holding down a key.
         self.pressed_tile_variants.retain(|variant| *variant != TileVariant::Q);
+        if let Some(Orientation::NW) = self.pressed_orientation {
+            self.pressed_orientation = None;
+        }
     }
 
     #[wasm_bindgen]
@@ -451,6 +552,9 @@ impl Editor {
         // Releasing keys should still clean up pressed state even in other modes
         // because the user could switch modes while holding down a key.
         self.pressed_tile_variants.retain(|variant| *variant != TileVariant::W);
+        if let Some(Orientation::N) = self.pressed_orientation {
+            self.pressed_orientation = None;
+        }
     }
 
     #[wasm_bindgen]
@@ -458,6 +562,9 @@ impl Editor {
         // Releasing keys should still clean up pressed state even in other modes
         // because the user could switch modes while holding down a key.
         self.pressed_tile_variants.retain(|variant| *variant != TileVariant::A);
+        if let Some(Orientation::W) = self.pressed_orientation {
+            self.pressed_orientation = None;
+        }
     }
 
     #[wasm_bindgen]
@@ -472,6 +579,9 @@ impl Editor {
         // Releasing keys should still clean up pressed state even in other modes
         // because the user could switch modes while holding down a key.
         self.pressed_tile_variants.retain(|variant| *variant != TileVariant::E);
+        if let Some(Orientation::NE) = self.pressed_orientation {
+            self.pressed_orientation = None;
+        }
     }
 
     #[wasm_bindgen]
@@ -479,6 +589,36 @@ impl Editor {
         // Releasing keys should still clean up pressed state even in other modes
         // because the user could switch modes while holding down a key.
         self.pressed_tile_variants.retain(|variant| *variant != TileVariant::D);
+        if let Some(Orientation::W) = self.pressed_orientation {
+            self.pressed_orientation = None;
+        }
+    }
+
+    #[wasm_bindgen]
+    pub fn release_z(&mut self) {
+        // Releasing keys should still clean up pressed state even in other modes
+        // because the user could switch modes while holding down a key.
+        if let Some(Orientation::SW) = self.pressed_orientation {
+            self.pressed_orientation = None;
+        }
+    }
+
+    #[wasm_bindgen]
+    pub fn release_x(&mut self) {
+        // Releasing keys should still clean up pressed state even in other modes
+        // because the user could switch modes while holding down a key.
+        if let Some(Orientation::S) = self.pressed_orientation {
+            self.pressed_orientation = None;
+        }
+    }
+
+    #[wasm_bindgen]
+    pub fn release_c(&mut self) {
+        // Releasing keys should still clean up pressed state even in other modes
+        // because the user could switch modes while holding down a key.
+        if let Some(Orientation::SE) = self.pressed_orientation {
+            self.pressed_orientation = None;
+        }
     }
 }
 

@@ -47,6 +47,14 @@ pub enum OrientationExt {
     NNW = 13,
 }
 
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum OrientationCardinal {
+    E = 0,
+    S = 2,
+    W = 4,
+    N = 6,
+}
+
 impl Orientation {
     /// Orientation represented by unit vector.
     pub fn vec2(&self) -> DVec2 {
@@ -124,6 +132,29 @@ impl OrientationExt {
     }
 }
 
+impl OrientationCardinal {
+    /// Orientation represented by unit vector.
+    pub fn vec2(&self) -> DVec2 {
+        match self {
+            Self::E => DVec2::new(1.0, 0.0),
+            Self::S => DVec2::new(0.0, 1.0),
+            Self::W => DVec2::new(-1.0, 0.0),
+            Self::N => DVec2::new(0.0, -1.0),
+        }
+    }
+
+    pub fn rotation_deg(&self) -> f64 {
+        self.vec2().to_angle().to_degrees()
+    }
+
+    pub fn is_orthogonal(&self) -> bool {
+        match self {
+            Self::W | Self::S | Self::E | Self::N => true,
+            _ => false,
+        }
+    }
+}
+
 impl TryFrom<u8> for Orientation {
     type Error = String;
 
@@ -169,6 +200,20 @@ impl From<u8> for OrientationExt {
             12 => Self::WNW,
             13 => Self::NNW,
             _ => Self::N,
+        }
+    }
+}
+
+impl TryFrom<u8> for OrientationCardinal {
+    type Error = String;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(Self::E),
+            2 => Ok(Self::S),
+            4 => Ok(Self::W),
+            6 => Ok(Self::N),
+            _ => Err("Invalid orientation".into())
         }
     }
 }

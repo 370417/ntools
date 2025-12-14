@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use glam::DVec2;
 
-use crate::editor::{editor_entity::{EditorEntity, EntityPos}, editor_state::{Command, SetEntityCount}};
+use crate::{editor::{editor_entity::{EditorEntity, EntityPos}, editor_state::{Command, SetEntityCount}}, orientation::Orientation};
 
 pub struct PlaceEntity {
     pub entity: EditorEntity,
@@ -37,6 +37,13 @@ impl PlaceEntity {
                 Some(Stage::PlaceDoor) => *exit_pos = new_pos,
                 Some(Stage::PlaceSwitch) | None => *switch_pos = new_pos,
             },
+        }
+    }
+
+    pub fn set_orientation(&mut self, new_orientation: Orientation) {
+        match &mut self.entity {
+            EditorEntity::Ninja { orientation, .. } => *orientation = new_orientation.into(),
+            EditorEntity::Exit { .. } => {}
         }
     }
 
