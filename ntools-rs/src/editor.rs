@@ -1,7 +1,7 @@
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{editor::{editor_entity::{EditorEntity, EntityPos, ExportedEntity}, editor_state::{Command, EditorState}, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::{PlaceEntity, Stage}, select_tiles::SelectTiles}, grid::{COLS, GridPos, ROWS}, orientation::{Orientation, OrientationCardinal}, segment::extract_path, tile::{TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
+use crate::{attract::Attract, editor::{editor_entity::{EditorEntity, EntityPos, ExportedEntity}, editor_state::{Command, EditorState}, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::{PlaceEntity, Stage}, select_tiles::SelectTiles}, grid::{COLS, GridPos, ROWS}, orientation::{Orientation, OrientationCardinal}, segment::extract_path, tile::{TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
 
 pub mod editor_entity;
 pub mod editor_state;
@@ -62,6 +62,13 @@ impl Editor {
             entity_orientation_cardinal: OrientationCardinal::N,
             pressed_orientation: None,
         }
+    }
+
+    #[wasm_bindgen]
+    pub fn load_attract(&mut self, attract_bytes: &[u8]) -> Result<(), String> {
+        let attract = Attract::from_bytes(attract_bytes)?;
+        self.state = EditorState::from_attract(attract);
+        Ok(())
     }
 
     #[wasm_bindgen]

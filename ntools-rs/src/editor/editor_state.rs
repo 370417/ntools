@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use glam::DVec2;
 
-use crate::{editor::editor_entity::EditorEntity, grid::GridPos, tile::{Tile, Tiles}};
+use crate::{attract::Attract, editor::editor_entity::{EditorEntity, EntityPos}, grid::GridPos, orientation::OrientationExt, tile::{Tile, Tiles}};
 
 /// State that is affected by undo and redo
 pub struct EditorState {
@@ -48,6 +48,30 @@ impl EditorState {
             future: Vec::new(),
             tiles: Tiles::default(),
             entities: BTreeMap::default(),
+        }
+    }
+
+    pub fn from_attract(attract: Attract) -> EditorState {
+        let mut entities = BTreeMap::new();
+        for ninja in &attract.ninjas {
+            let count: &mut u16 = entities.entry(EditorEntity::Ninja {
+                pos: EntityPos::from_world_pos(ninja.pos),
+                orientation: OrientationExt::N, // TODO: should match ninja's gravity
+            }).or_default();
+            *count = count.saturating_add(1);
+        }
+        for exit in &attract.entities.exits {
+            let count: &mut u16 = entities.entry(EditorEntity::Exit {
+                exit_pos: EntityPos::from_world_pos(exit.door_pos),
+                switch_pos: EntityPos::from_world_pos(exit.switch_pos),
+            }).or_default();
+            *count = count.saturating_add(1);
+        }
+        EditorState {
+            history: Vec::new(),
+            future: Vec::new(),
+            tiles: attract.tiles,
+            entities,
         }
     }
 

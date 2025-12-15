@@ -1,5 +1,5 @@
 {
-  "name": "attract-watcher",
+  "name": "attract-server",
   "version": "0.1.0",
   "main": "src/index.js",
   "type": "module",
@@ -8,8 +8,5 @@
   },
   "author": "",
   "description": "",
-  "dependencies": {
-    "chokidar": "^4.0.3",
-    "ws": "^8.18.3"
-  }
+  "dependencies": {}
 }

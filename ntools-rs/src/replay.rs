@@ -21,7 +21,7 @@ pub struct Replay {
 impl Replay {
     #[wasm_bindgen]
     pub fn from_attract(attract_bytes: &[u8]) -> Result<Replay, String> {
-        let Attract { level_name, author_name, tile_segments, ninjas, entities, inputs } = Attract::from_bytes(attract_bytes)?;
+        let Attract { level_name, author_name, tile_segments, ninjas, entities, inputs, .. } = Attract::from_bytes(attract_bytes)?;
 
         let mut segments = tile_segments;
         entities.doors.populate_grid(&mut segments);

@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floorchaser::Floorchaser, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump}, grid::{COLS, Grid, GridPos, ROWS}, ninja::Ninja, orientation::{Orientation, OrientationExt}, segment::Segment, tile::Tile};
+use crate::{entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floorchaser::Floorchaser, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump}, grid::{COLS, Grid, GridPos, ROWS}, ninja::Ninja, orientation::{Orientation, OrientationExt}, segment::Segment, tile::{Tile, Tiles}};
 
 /// Represents a parsed attract file.
 /// An attract file is what gets shown in the game's main menu: a replay of a failed attempt at a level.
@@ -8,6 +8,7 @@ use crate::{entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, d
 pub struct Attract {
     pub level_name: String,
     pub author_name: String,
+    pub tiles: Tiles,
     /// does not include door segments
     pub tile_segments: Grid<Segment>,
     pub ninjas: Vec<Ninja>,
@@ -97,6 +98,16 @@ impl Attract {
                 let pos = GridPos::new(col + 1, row + 1);
                 let tile = Tile::from_u8(map_data[i]).ok_or("Invalid tile")?;
                 tile.add_inner_segments_to_grid(pos, &mut grid);
+            }
+        }
+
+        let mut tiles = Tiles::default();
+        for row in 0..ROWS {
+            for col in 0..COLS {
+                let i = row * COLS + col;
+                let pos = GridPos::new(col + 1, row + 1);
+                let tile = Tile::from_u8(map_data[i]).ok_or("Invalid tile")?;
+                tiles[pos] = tile;
             }
         }
 
@@ -225,6 +236,7 @@ impl Attract {
         Ok(Attract {
             level_name,
             author_name,
+            tiles,
             tile_segments: grid,
             ninjas,
             entities,
