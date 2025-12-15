@@ -276,6 +276,15 @@ export function EditorApp() {
 
     render();
 
+    // Path that covers all the positions in selectedTilePositions with extra
+    // padding around the edges equal to selectionPadding.
+    function selectedTilePosPath(): string {
+        const size = 24 + 2 * selectionPadding;
+        return selectedTilePositions().map(({ x, y }) => {
+            return `M ${24 * x - selectionPadding} ${24 * y - selectionPadding} h ${size} v ${size} h ${-size} v ${-size}`
+        }).join(' ');
+    }
+
     return <>
         <svg viewBox="0 0 1056 600" onmousemove={function(this: SVGElement, event) {
             const { left, top, width, height } = this.getBoundingClientRect();
@@ -345,9 +354,7 @@ export function EditorApp() {
                 {line => <line class="door-switch-line" x1={line.x1} y1={line.y1} x2={line.x2} y2={line.y2} />}
             </For>
             <g filter="url(#hollow)">
-                <For each={selectedTilePositions()}>
-                    {({ x, y }) => <rect x={24 * x - selectionPadding} y={24 * y - selectionPadding} width={24 + 2 * selectionPadding} height={24 + 2 * selectionPadding} />}
-                </For>
+                <path d={selectedTilePosPath()} />
             </g>
             <Show when={mode() === MODE_PAINT_TILES}>
                 <use href="#tilemode-crosshair" x={tilemodeCrosshairPos().col * 24 + 12} y={tilemodeCrosshairPos().row * 24 + 12} />
