@@ -160,6 +160,10 @@ impl Editor {
     #[wasm_bindgen]
     pub fn cursor_down(&mut self, shift: bool) {
         match &mut self.mode {
+            EditorMode::PenTool(pen_tool) => pen_tool.cursor_click(self.cursor_pos, self.pen_tool_is_clockwise, &mut self.state, self.pen_tool_fine_grid),
+            EditorMode::PlaceEntity(place_entity) => if let Some(command) = place_entity.cursor_click(self.state.entities()) {
+                self.state.apply(command);
+            },
             EditorMode::PaintTiles => self.mode = EditorMode::SelectTiles(SelectTiles::new(self.cursor_pos)),
             EditorMode::SelectTiles(select_tiles) => select_tiles.start_selection(self.cursor_pos, shift),
             _ => {}
@@ -169,20 +173,12 @@ impl Editor {
     #[wasm_bindgen]
     pub fn cursor_up(&mut self) {
         match &mut self.mode {
-            EditorMode::SelectTiles(select_tiles) => select_tiles.finalize_selection(),
-            _ => {}
-        }
-    }
-
-    #[wasm_bindgen]
-    pub fn cursor_click(&mut self) {
-        let cursor_pos = self.cursor_pos;
-        match &mut self.mode {
-            EditorMode::PenTool(pen_tool) => pen_tool.cursor_click(cursor_pos, self.pen_tool_is_clockwise, &mut self.state, self.pen_tool_fine_grid),
-            EditorMode::PlaceEntity(place_entity) => if let Some(command) = place_entity.cursor_click(self.state.entities()) {
-                self.state.apply(command);
-            },
-            // EditorMode::SelectTiles(select_tiles) => select_tiles.finalize_selection(),
+            EditorMode::SelectTiles(select_tiles) => {
+                select_tiles.finalize_selection();
+                if select_tiles.is_empty() {
+                    self.mode = EditorMode::PaintTiles;
+                }
+            }
             _ => {}
         }
     }
@@ -280,6 +276,10 @@ impl Editor {
                     pen_tool.start = PenToolStart::None;
                     return true;
                 }
+            }
+            EditorMode::SelectTiles(_) => {
+                self.mode = EditorMode::PaintTiles;
+                return true;
             }
             _ => {}
         }
@@ -442,6 +442,10 @@ impl Editor {
                 self.pressed_orientation = Some(Orientation::NE);
                 place_entity.set_orientation(self.entity_orientation);
             }
+            EditorMode::SelectTiles(select_tiles) => {
+                let command = select_tiles.command_fill_selection(&mut self.state, Tile::TileE);
+                self.state.apply(command);
+            }
             _ => {}
         }
     }
@@ -462,6 +466,10 @@ impl Editor {
                 self.entity_orientation_cardinal = OrientationCardinal::E;
                 self.pressed_orientation = Some(Orientation::E);
                 place_entity.set_orientation(self.entity_orientation);
+            }
+            EditorMode::SelectTiles(select_tiles) => {
+                let command = select_tiles.command_fill_selection(&mut self.state, Tile::TileD);
+                self.state.apply(command);
             }
             _ => {}
         }

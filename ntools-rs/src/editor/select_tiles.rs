@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use glam::DVec2;
 
-use crate::grid::GridPos;
+use crate::{editor::editor_state::{Command, EditorState, PaintTile}, grid::GridPos, tile::Tile};
 
 pub struct SelectTiles {
     selected_tiles: HashSet<GridPos>,
@@ -73,6 +73,20 @@ impl SelectTiles {
         } else {
             *self = SelectTiles::new(cursor_pos);
         }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.selected_tiles.is_empty()
+    }
+
+    pub fn command_fill_selection(&self, state: &EditorState, tile: Tile) -> Command {
+        Command::PaintTiles(self.selected_tiles.iter().map(|&grid_pos| {
+            PaintTile {
+                grid_pos,
+                old: state.tiles()[grid_pos],
+                new: tile,
+            }
+        }).collect())
     }
 }
 

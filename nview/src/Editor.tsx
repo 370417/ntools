@@ -39,7 +39,7 @@ type Line = {
     y2: number;
 };
 
-const selectionPadding = 5;
+const selectionPadding = 4;
 
 export function EditorApp() {
     const editor = Editor.new();
@@ -278,9 +278,8 @@ export function EditorApp() {
             );
             if (cursorMoved) render();
         }}
-        onmousedown={event => { editor.cursor_down(event.shiftKey); render() }}
+        onmousedown={event => { editor.cursor_down(event.shiftKey); console.log('down'); render() }}
         onmouseup={() => { editor.cursor_up(); render() }}
-        onclick={() => { editor.cursor_click(); render() }}
         oncontextmenu={event => { if (editor.press_escape()) { render(); event.preventDefault(); } }} >
             <defs>
                 <clipPath id="tiles-clip">
