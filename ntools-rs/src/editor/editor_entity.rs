@@ -1,7 +1,7 @@
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{editor::place_entity::Stage, orientation::OrientationExt};
+use crate::{editor::place_entity::Stage, orientation::{Orientation, OrientationExt}};
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum EditorEntity {
@@ -12,6 +12,10 @@ pub enum EditorEntity {
     Exit {
         exit_pos: EntityPos,
         switch_pos: EntityPos,
+    },
+    OneWay {
+        pos: EntityPos,
+        orientation: Orientation,
     }
 }
 
@@ -47,7 +51,8 @@ impl EditorEntity {
 
     pub fn pos(&self) -> EntityPos {
         match self {
-            &EditorEntity::Ninja { pos, .. } => pos,
+            &EditorEntity::Ninja { pos, .. } |
+            &EditorEntity::OneWay { pos, .. } => pos,
             &EditorEntity::Exit { exit_pos, .. } => exit_pos,
         }
     }
@@ -63,6 +68,7 @@ impl EditorEntity {
         match self {
             EditorEntity::Ninja { orientation, .. } => orientation.rotation_deg(),
             EditorEntity::Exit { .. } => 0.0,
+            EditorEntity::OneWay { orientation, .. } => orientation.rotation_deg(),
         }
     }
 
@@ -70,6 +76,7 @@ impl EditorEntity {
         match self {
             EditorEntity::Ninja { .. } => 0,
             EditorEntity::Exit { .. } => 3,
+            EditorEntity::OneWay { .. } => 11,
         }
     }
 }

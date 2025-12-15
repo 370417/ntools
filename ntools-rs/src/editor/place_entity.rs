@@ -33,7 +33,8 @@ impl PlaceEntity {
     pub fn set_pos(&mut self, new_pos: DVec2) {
         let new_pos = EntityPos::from_world_pos(new_pos);
         match &mut self.entity {
-            EditorEntity::Ninja { pos, .. } => *pos = new_pos,
+            EditorEntity::Ninja { pos, .. } |
+            EditorEntity::OneWay { pos, .. } => *pos = new_pos,
             EditorEntity::Exit { exit_pos, switch_pos } => match self.stage {
                 Some(Stage::PlaceDoor) => {
                     *exit_pos = new_pos;
@@ -48,6 +49,7 @@ impl PlaceEntity {
         match &mut self.entity {
             EditorEntity::Ninja { orientation, .. } => *orientation = new_orientation.into(),
             EditorEntity::Exit { .. } => {}
+            EditorEntity::OneWay { orientation, .. } => *orientation = new_orientation,
         }
     }
 
@@ -56,8 +58,10 @@ impl PlaceEntity {
             self.stage = Some(Stage::PlaceSwitch);
             return None;
         }
+        // TODO: allow stacking certain entities
         let command = match self.entity {
             entity @ EditorEntity::Ninja { .. } |
+            entity @ EditorEntity::OneWay { .. } |
             entity @ EditorEntity::Exit { .. } => {
                 Some(Command::SetEntityCount(SetEntityCount {
                     entity,

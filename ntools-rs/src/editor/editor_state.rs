@@ -67,6 +67,13 @@ impl EditorState {
             }).or_default();
             *count = count.saturating_add(1);
         }
+        for one_way in &attract.entities.one_ways {
+            let count: &mut u16 = entities.entry(EditorEntity::OneWay {
+                pos: EntityPos::from_world_pos(one_way.pos),
+                orientation: one_way.orientation,
+            }).or_default();
+            *count = count.saturating_add(1);
+        }
         EditorState {
             history: Vec::new(),
             future: Vec::new(),

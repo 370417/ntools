@@ -3,6 +3,7 @@ import { Editor } from "./assets/ntools_rs";
 import { Ninja, type NinjaData } from "./entities/Ninja";
 import { ExitDoors, type ExitDoorData } from "./entities/ExitDoor";
 import { ExitSwitches, type ExitSwitchData } from "./entities/ExitSwitch";
+import { OneWayDefs, OneWays, type OneWayData } from "./entities/OneWay";
 
 const COLS = 42;
 const ROWS = 23;
@@ -28,6 +29,7 @@ const MODE_PEN_TOOL = 8;
 
 const ENTITY_NINJA = 0;
 const ENTITY_EXIT = 3;
+const ENTITY_ONE_WAY = 11;
 
 const BONES_STANDING = new Float32Array([-0.039, -0.0249, 0.1127, -0.1738, 0.1115, -0.1512, -0.0846, 0.0749, 0.1072, -0.0423, 0.0263, -0.1452, -0.0358, -0.075, -0.377, 0.4686, 0.4643, -0.0225, -0.0453, -0.5054, -0.4724, 0.1962, 0.2293, -0.1812, -0.2266, -0.2224]);
 const BONES_FALLING = new Float32Array([0.018, 0.0, 0.4156, 0.0988, 0.3581, -0.3242, -0.0708, 0.0845, 0.2924, 0.3212, 0.1853, -0.1927, -0.0236, -0.06, -0.3602, 0.3086, 0.1278, -0.3238, -0.2018, -0.4976, -0.4488, 0.0656, -0.024, -0.2729, -0.3268, -0.2042]);
@@ -54,10 +56,12 @@ export function EditorApp({ editor, pastNinjas }: { editor: Editor, pastNinjas: 
     const [ninjas, setNinjas] = createSignal<NinjaData[]>([]);
     const [exitDoors, setExitDoors] = createSignal<ExitDoorData[]>([]);
     const [exitSwitches, setExitSwitches] = createSignal<ExitSwitchData[]>([]);
+    const [oneWays, setOneWays] = createSignal<OneWayData[]>([]);
 
     const [previewNinjas, setPreviewNinjas] = createSignal<NinjaData[]>([]);
     const [previewExitDoors, setPreviewExitDoors] = createSignal<ExitDoorData[]>([]);
     const [previewExitSwitches, setPreviewExitSwitches] = createSignal<ExitSwitchData[]>([]);
+    const [previewOneWays, setPreviewOneWays] = createSignal<OneWayData[]>([]);
 
     const [doorSwitchLines, setDoorSwitchLines] = createSignal<Line[]>([]);
 
@@ -161,6 +165,7 @@ export function EditorApp({ editor, pastNinjas }: { editor: Editor, pastNinjas: 
         const ninjas: NinjaData[] = [];
         const exitDoors: ExitDoorData[] = [];
         const exitSwitches: ExitSwitchData[] = [];
+        const oneWays: OneWayData[] = [];
 
         for (const entity of editor.entities()) {
             // Make sure to create new objects instead of reusing entity
@@ -191,6 +196,12 @@ export function EditorApp({ editor, pastNinjas }: { editor: Editor, pastNinjas: 
                         y2: entity.switch_y,
                     });
                 }
+            } else if (entity.type_int === ENTITY_ONE_WAY) {
+                oneWays.push({
+                    x: entity.x,
+                    y: entity.y,
+                    deg: entity.deg,
+                });
             }
             // Do I need this?
             entity.free();
@@ -199,10 +210,12 @@ export function EditorApp({ editor, pastNinjas }: { editor: Editor, pastNinjas: 
         setNinjas(ninjas);
         setExitDoors(exitDoors);
         setExitSwitches(exitSwitches);
+        setOneWays(oneWays);
 
         const previewNinjas: NinjaData[] = [];
         const previewExitDoors: ExitDoorData[] = [];
         const previewExitSwitches: ExitSwitchData[] = [];
+        const previewOneWays: OneWayData[] = [];
 
         for (const entity of editor.preview_entities()) {
             if (entity.type_int === ENTITY_NINJA) {
@@ -231,6 +244,12 @@ export function EditorApp({ editor, pastNinjas }: { editor: Editor, pastNinjas: 
                         y2: entity.switch_y,
                     });
                 }
+            } else if (entity.type_int === ENTITY_ONE_WAY) {
+                previewOneWays.push({
+                    x: entity.x,
+                    y: entity.y,
+                    deg: entity.deg,
+                });
             }
             // Do I need this?
             entity.free();
@@ -239,6 +258,7 @@ export function EditorApp({ editor, pastNinjas }: { editor: Editor, pastNinjas: 
         setPreviewNinjas(previewNinjas);
         setPreviewExitDoors(previewExitDoors);
         setPreviewExitSwitches(previewExitSwitches);
+        setPreviewOneWays(previewOneWays);
 
         setDoorSwitchLines(lines);
     }
@@ -308,6 +328,7 @@ export function EditorApp({ editor, pastNinjas }: { editor: Editor, pastNinjas: 
                 <clipPath id="tiles-clip">
                     <use href="#tiles" />
                 </clipPath>
+                <OneWayDefs />
                 <path id="tilemode-crosshair" stroke-width="1.5" fill="none" d={tilemodeCrosshairPath} />
                 <path id="crosshair" stroke-width="1.5" fill="none" d={crosshairPath} />
                 <filter id="outline" filterUnits="userSpaceOnUse" x="0" y="0" width="1056" height="600">
@@ -335,6 +356,7 @@ export function EditorApp({ editor, pastNinjas }: { editor: Editor, pastNinjas: 
             {regularGridXs.map(x => <line class="regular-grid" y1="24" y2={24 * 24} x1={x} x2={x} />)}
             {regularGridYs.map(y => <line class="regular-grid" x1="24" x2={24 * 43} y1={y} y2={y} />)}
             <ExitDoors exitDoors={[exitDoors, () => {}]} />
+            <OneWays oneWays={[oneWays, () => {}]} />
             <ExitSwitches exitSwitches={[exitSwitches, () => {}]} />
             <For each={ninjas()}>
                 {ninja => <Ninja class="ninja" ninja={() => ninja} bones={() => BONES_STANDING} />}
@@ -343,6 +365,7 @@ export function EditorApp({ editor, pastNinjas }: { editor: Editor, pastNinjas: 
             <path id="selected-tiles" d={selectedTilePath()} fill-rule="evenodd" />
             <g filter="url(#outline)">
                 <ExitDoors exitDoors={[previewExitDoors, () => {}]} />
+                <OneWays oneWays={[previewOneWays, () => {}]} />
                 <ExitSwitches exitSwitches={[previewExitSwitches, () => {}]} />
                 <For each={previewNinjas()}>
                     {ninja => <Ninja class="ninja" ninja={() => ninja} bones={() => BONES_STANDING} />}
