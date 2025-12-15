@@ -46,6 +46,10 @@ impl Replay {
     #[wasm_bindgen]
     pub fn set_input(&mut self, jump: bool, right: bool, left: bool, suicide: bool) {
         if self.current_sim.frame == self.inputs.len() as u32 {
+            if self.current_sim.frame >= 3 * 60 * 60 {
+                // limit max input length to three minutes because I don't want to use too much memory
+                return;
+            }
             self.inputs.push(Input::new(jump, right, left, suicide).into_byte());
         } else if let Some(&old_input) = self.inputs.get(self.current_sim.frame as usize) {
             let new_input = Input::new(jump, right, left, suicide).into_byte();
