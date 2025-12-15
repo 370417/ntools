@@ -8,10 +8,6 @@ pub enum Segment {
     Linear {
         start: DVec2,
         end: DVec2,
-        /// Normal pointing away from the wall.
-        /// Used to calculate which side of the wall a point is on.
-        /// Note: Does not have to have magnitude = 1.
-        normal: DVec2,
     },
     Circular {
         start: DVec2,
@@ -183,44 +179,38 @@ impl Segment {
         let (Segment::Linear {
             start: self_start,
             end: self_end,
-            normal: self_normal,
         }, Segment::Linear {
             start: other_start,
             end: other_end,
-            normal: other_normal,
         }) = (self, other) else {
             panic!("Invalid input - without_overlap is only valid for linear segments");
         };
 
-        let (longer_start, longer_end, longer_normal, shorter_start, shorter_end) = if (self_end - self_start).length_squared() > (other_end - other_start).length_squared() {
-            (self_start, self_end, self_normal, other_start, other_end)
+        let (longer_start, longer_end, shorter_start, shorter_end) = if (self_end - self_start).length_squared() > (other_end - other_start).length_squared() {
+            (self_start, self_end, other_start, other_end)
         } else {
-            (other_start, other_end, other_normal, self_start, self_end)
+            (other_start, other_end, self_start, self_end)
         };
 
         if longer_start == shorter_start {
             Segment::Linear {
                 start: *shorter_end,
                 end: *longer_end,
-                normal: *longer_normal,
             }
         } else if longer_start == shorter_end {
             Segment::Linear {
                 start: *shorter_start,
                 end: *longer_end,
-                normal: *longer_normal,
             }
         } else if longer_end == shorter_start {
             Segment::Linear {
                 start: *longer_start,
                 end: *shorter_end,
-                normal: *longer_normal,
             }
         } else if longer_end == shorter_end {
             Segment::Linear {
                 start: *longer_start,
                 end: *shorter_start,
-                normal: *longer_normal,
             }
         } else {
             panic!("Invalid state - cannot find overlap");
