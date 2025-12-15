@@ -35,7 +35,7 @@ const boostPadLong = 6;
 const boostPadMid = 1;
 const boostPadShort = -4;
 
-export function ReplayApp(props: { replay: Accessor<Replay> }) {
+export function ReplayApp(props: { replay: Replay }) {
     const replay = props.replay;
 
     const [recording, setRecording] = createSignal(false);
@@ -65,7 +65,7 @@ export function ReplayApp(props: { replay: Accessor<Replay> }) {
         else if (event.code === 'KeyV') setIsSuicidePressed(true);
 
         else if (event.code === 'Enter') {
-            replay().place_ninja(mouseGamePos().x, mouseGamePos().y);
+            replay.place_ninja(mouseGamePos().x, mouseGamePos().y);
             if (!isPlaying()) {
                 renderFrame(1);
             }
@@ -93,7 +93,7 @@ export function ReplayApp(props: { replay: Accessor<Replay> }) {
     stats?.showPanel(0);
     if (stats) document.body.appendChild(stats.dom);
 
-    const tilePath = () => replay().tiles_path();
+    const tilePath = () => replay.tiles_path();
 
     const [ninja, setNinja] = createSignal({ x: -50, y: -50, deg: 0 });
     const [ninjaPreview, setNinjaPreview] = createSignal({ x: -50, y: -50, deg: 0 });
@@ -130,7 +130,7 @@ export function ReplayApp(props: { replay: Accessor<Replay> }) {
 
         let partialFrame = 1;
 
-        const $replay = replay();
+        const $replay = replay;
 
         if (isPlaying() && dragStart() === undefined) {
             if (recording() || progress() < replayLength()) {
@@ -164,63 +164,62 @@ export function ReplayApp(props: { replay: Accessor<Replay> }) {
     });
 
     function renderFrame(partialFrame: number) {
-        const $replay = replay();
         setNinja({
-            x: $replay.ninja_x(partialFrame),
-            y: $replay.ninja_y(partialFrame),
+            x: replay.ninja_x(partialFrame),
+            y: replay.ninja_y(partialFrame),
             deg: 0,
         });
         setNinjaPreview({
-            x: $replay.ninja_preview_x(partialFrame),
-            y: $replay.ninja_preview_y(partialFrame),
+            x: replay.ninja_preview_x(partialFrame),
+            y: replay.ninja_preview_y(partialFrame),
             deg: 0,
         });
-        setNinjaBones($replay.ninja_bones(partialFrame));
+        setNinjaBones(replay.ninja_bones(partialFrame));
         if (previewProgress() === undefined) {
             setNinjaPreviewBones(undefined);
         } else {
-            setNinjaPreviewBones($replay.ninja_preview_bones(partialFrame));
+            setNinjaPreviewBones(replay.ninja_preview_bones(partialFrame));
         }
 
-        updateMines(mines, $replay);
-        updateBounceBlocks(bounceBlocks, $replay, partialFrame);
-        updateOneWays(oneWays, $replay);
+        updateMines(mines, replay);
+        updateBounceBlocks(bounceBlocks, replay, partialFrame);
+        updateOneWays(oneWays, replay);
 
         const boostPadsArr: BoostPad[] = [];
-        const boostPadsLen = $replay.boost_pads_len();
+        const boostPadsLen = replay.boost_pads_len();
         for (let i = 0; i < boostPadsLen; i++) {
             boostPadsArr.push({
-                x: $replay.boost_pad_x(i),
-                y: $replay.boost_pad_y(i),
-                deg: $replay.boost_pad_rotation(i, partialFrame),
-                anim: $replay.boost_pad_anim_progress(i, partialFrame),
+                x: replay.boost_pad_x(i),
+                y: replay.boost_pad_y(i),
+                deg: replay.boost_pad_rotation(i, partialFrame),
+                anim: replay.boost_pad_anim_progress(i, partialFrame),
             });
         }
         setBoostPads(boostPadsArr);
 
         const thwumpsArr: Thwump[] = [];
-        const thwumpsLen = $replay.thwumps_len();
+        const thwumpsLen = replay.thwumps_len();
         for (let i = 0; i < thwumpsLen; i++) {
             thwumpsArr.push({
-                x: $replay.thwump_x(i, partialFrame),
-                y: $replay.thwump_y(i, partialFrame),
-                deg: $replay.thwump_deg(i),
+                x: replay.thwump_x(i, partialFrame),
+                y: replay.thwump_y(i, partialFrame),
+                deg: replay.thwump_deg(i),
             });
         }
         setThwumps(thwumpsArr);
 
-        updateLaunchPads(launchPads, $replay);
-        updateFloorguards(floorguards, $replay, partialFrame);
-        updateLockedDoors(lockedDoors, $replay, partialFrame);
-        updateLockedSwitches(lockedSwitches, $replay);
-        updateTrapDoors(trapDoors, $replay, partialFrame);
-        updateTrapSwitches(trapSwitches, $replay);
-        updateRegularDoors(regularDoors, $replay, partialFrame);
-        updateShoveThwumps(shoveThwumps, $replay, partialFrame);
-        updateExitDoors(exitDoors, $replay, partialFrame);
-        updateExitSwitches(exitSwitches, $replay, partialFrame);
+        updateLaunchPads(launchPads, replay);
+        updateFloorguards(floorguards, replay, partialFrame);
+        updateLockedDoors(lockedDoors, replay, partialFrame);
+        updateLockedSwitches(lockedSwitches, replay);
+        updateTrapDoors(trapDoors, replay, partialFrame);
+        updateTrapSwitches(trapSwitches, replay);
+        updateRegularDoors(regularDoors, replay, partialFrame);
+        updateShoveThwumps(shoveThwumps, replay, partialFrame);
+        updateExitDoors(exitDoors, replay, partialFrame);
+        updateExitSwitches(exitSwitches, replay, partialFrame);
 
-        setReplayLength($replay.replay_length());
+        setReplayLength(replay.replay_length());
     }
 
     return (
@@ -288,14 +287,14 @@ export function ReplayApp(props: { replay: Accessor<Replay> }) {
                     previewProgress={previewProgress}
                     seek={frame => {
                         setProgress(frame);
-                        replay().seek(frame);
+                        replay.seek(frame);
                         renderFrame(1);
                     }}
                     previewSeek={frame => {
                         setPreviewProgress(frame);
                         if (replay) {
                             if (frame !== undefined && dragStart() === undefined) {
-                                replay().seek_preview(frame);
+                                replay.seek_preview(frame);
                             }
                             renderFrame(1);
                         }

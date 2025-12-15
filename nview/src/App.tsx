@@ -32,7 +32,7 @@ export function App() {
             <EditorApp editor={editor} />
         </Show>
         <Show when={!!replay()} keyed>
-            <ReplayApp replay={replay as any} />
+            <ReplayApp replay={replay()!} />
         </Show>
     </>;
 }
