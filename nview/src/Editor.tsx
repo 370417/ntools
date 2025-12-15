@@ -41,17 +41,7 @@ type Line = {
 
 const selectionPadding = 4;
 
-export function EditorApp() {
-    const editor = Editor.new();
-
-    if (location.hostname === 'localhost') {
-        fetch('http://localhost:8080').then(response => {
-            return response.arrayBuffer();
-        }).then(arrayBuffer => {
-            editor.load_attract(new Uint8Array(arrayBuffer));
-        });
-    }
-
+export function EditorApp({ editor }: { editor: Editor }) {
     const [tilePath, setTilePath] = createSignal('');
     const [selectedTilePath, setSelectedTilePath] = createSignal('');
     const [showHalfGrid, setShowHalfGrid] = createSignal(true);

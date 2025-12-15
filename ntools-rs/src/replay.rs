@@ -7,14 +7,14 @@ use crate::{anim_data::flatten_bones, attract::Attract, entity::mine::Mine, grid
 
 #[wasm_bindgen]
 pub struct Replay {
-    level_name: String,
-    author_name: Option<String>,
-    segments: Grid<Segment>,
-    inputs: Vec<u8>,
-    initial_mines: Vec<Mine>,
-    current_sim: Simulation,
-    preview_sim: Simulation,
-    keyframes: BTreeMap<u32, KeyFrame>,
+    pub(crate) level_name: String,
+    pub(crate) author_name: Option<String>,
+    pub(crate) segments: Grid<Segment>,
+    pub(crate) inputs: Vec<u8>,
+    pub(crate) initial_mines: Vec<Mine>,
+    pub(crate) current_sim: Simulation,
+    pub(crate) preview_sim: Simulation,
+    pub(crate) keyframes: BTreeMap<u32, KeyFrame>,
 }
 
 #[wasm_bindgen]
