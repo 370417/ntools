@@ -286,7 +286,15 @@ export function EditorApp() {
             );
             if (cursorMoved) render();
         }}
-        onmousedown={event => { editor.cursor_down(event.shiftKey); console.log('down'); render() }}
+        onmousedown={event => {
+            if (event.buttons & 2) {
+                // skip if secondary button is pressed (right click)
+            } else {
+                // primary click
+                editor.cursor_down(event.shiftKey);
+                render();
+            }
+        }}
         onmouseup={() => { editor.cursor_up(); render() }}
         oncontextmenu={event => { if (editor.press_escape()) { render(); event.preventDefault(); } }} >
             <defs>
