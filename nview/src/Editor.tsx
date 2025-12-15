@@ -1,4 +1,4 @@
-import { createSignal, For, Show } from "solid-js";
+import { createSignal, For, onCleanup, Show } from "solid-js";
 import { Editor } from "./assets/ntools_rs";
 import { Ninja, type NinjaData } from "./entities/Ninja";
 import { ExitDoors, type ExitDoorData } from "./entities/ExitDoor";
@@ -61,7 +61,7 @@ export function EditorApp({ editor }: { editor: Editor }) {
 
     const [doorSwitchLines, setDoorSwitchLines] = createSignal<Line[]>([]);
 
-    document.addEventListener('keydown', event => {
+    const keydownListener = (event: KeyboardEvent) => {
         let change = false;
 
         if (event.code ==='Backquote') change = true, editor.press_tilde();
@@ -100,9 +100,9 @@ export function EditorApp({ editor }: { editor: Editor }) {
             render();
             event.preventDefault();
         }
-    });
+    };
 
-    document.addEventListener('keyup', event => {
+    const keyupListener = (event: KeyboardEvent) => {
         let change = false;
         if (event.code === 'KeyQ') change = true, editor.release_q();
         else if (event.code === 'KeyW') change = true, editor.release_w();
@@ -118,6 +118,14 @@ export function EditorApp({ editor }: { editor: Editor }) {
             render();
             event.preventDefault();
         }
+    };
+
+    document.addEventListener('keydown', keydownListener);
+    document.addEventListener('keyup', keyupListener);
+
+    onCleanup(() => {
+        document.removeEventListener('keydown', keydownListener);
+        document.removeEventListener('keyup', keyupListener);
     });
 
     function render() {

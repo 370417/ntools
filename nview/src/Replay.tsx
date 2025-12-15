@@ -38,8 +38,8 @@ const boostPadShort = -4;
 export function ReplayApp(props: { replay: Replay }) {
     const replay = props.replay;
 
-    const [recording, setRecording] = createSignal(false);
-    const [isPlaying, setIsPlaying] = createSignal(false);
+    const [recording, setRecording] = createSignal(true);
+    const [isPlaying, setIsPlaying] = createSignal(true);
     // If dragging dragStart is the progress value (frame) that the drag started at.
     // If not dragging, dragStart is undefined.
     const [dragStart, setDragStart] = createSignal<number | undefined>(undefined);

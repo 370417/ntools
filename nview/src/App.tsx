@@ -24,6 +24,7 @@ export function App() {
             } else {
                 setReplay(editor.to_replay());
             }
+            event.preventDefault();
         }
     });
 
