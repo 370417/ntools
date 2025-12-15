@@ -4,7 +4,7 @@ use futures_channel::oneshot::{self, Receiver};
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{attract::Attract, editor::{editor_entity::{EditorEntity, EntityPos, ExportedEntity}, editor_state::{Command, EditorState}, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::{PlaceEntity, Stage}, select_tiles::SelectTiles}, entity::{Entities, exit::Exit, one_way::OneWay}, grid::{COLS, GridPos, ROWS}, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationCardinal}, replay::Replay, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
+use crate::{attract::Attract, editor::{editor_entity::{EditorEntity, EntityPos, ExportedEntity}, editor_state::{Command, EditorState}, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::{PlaceEntity, Stage}, select_tiles::SelectTiles}, entity::{Entities, exit::Exit, mine::Mine, one_way::OneWay}, grid::{COLS, GridPos, ROWS}, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationCardinal}, replay::Replay, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
 
 pub mod editor_entity;
 pub mod editor_state;
@@ -92,6 +92,9 @@ impl Editor {
             for _ in 0..count {
                 match entity {
                     EditorEntity::Ninja { .. } => {}
+                    EditorEntity::Mine { pos } => {
+                        entities.mines.push(Mine::new_toggled(pos.to_world_pos()));
+                    }
                     EditorEntity::Exit { exit_pos, switch_pos } => {
                         entities.exits.push(Exit::new(exit_pos.to_world_pos(), switch_pos.to_world_pos()));
                     }

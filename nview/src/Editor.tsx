@@ -1,9 +1,10 @@
-import { createSignal, For, onCleanup, Show, type Accessor } from "solid-js";
-import { Editor } from "./assets/ntools_rs";
+import { createSignal, For, onCleanup, Show, type Accessor, type Setter } from "solid-js";
+import { Editor, ExportedEntity } from "./assets/ntools_rs";
 import { Ninja, type NinjaData } from "./entities/Ninja";
 import { ExitDoors, type ExitDoorData } from "./entities/ExitDoor";
 import { ExitSwitches, type ExitSwitchData } from "./entities/ExitSwitch";
 import { OneWayDefs, OneWays, type OneWayData } from "./entities/OneWay";
+import { MINE_TOGGLED, MineDefs, Mines, type MineData } from "./entities/Mine";
 
 const COLS = 42;
 const ROWS = 23;
@@ -28,6 +29,7 @@ const MODE_ENTITY_PALETTE = 7;
 const MODE_PEN_TOOL = 8;
 
 const ENTITY_NINJA = 0;
+const ENTITY_MINE = 1;
 const ENTITY_EXIT = 3;
 const ENTITY_ONE_WAY = 11;
 
@@ -43,6 +45,106 @@ type Line = {
 
 const selectionPadding = 4;
 
+type EntitiesProps = {
+    ninjas: Accessor<NinjaData[]>,
+    setNinjas: Setter<NinjaData[]>,
+    mines: Accessor<MineData[]>,
+    setMines: Setter<MineData[]>,
+    exitDoors: Accessor<ExitDoorData[]>,
+    setExitDoors: Setter<ExitDoorData[]>,
+    exitSwitches: Accessor<ExitSwitchData[]>,
+    setExitSwitches: Setter<ExitSwitchData[]>,
+    oneWays: Accessor<OneWayData[]>,
+    setOneWays: Setter<OneWayData[]>,
+};
+
+function createEntities(): EntitiesProps {
+    const [ninjas, setNinjas] = createSignal<NinjaData[]>([]);
+    const [mines, setMines] = createSignal<MineData[]>([]);
+    const [exitDoors, setExitDoors] = createSignal<ExitDoorData[]>([]);
+    const [exitSwitches, setExitSwitches] = createSignal<ExitSwitchData[]>([]);
+    const [oneWays, setOneWays] = createSignal<OneWayData[]>([]);
+    return {
+        ninjas, setNinjas,
+        mines, setMines,
+        exitDoors, setExitDoors,
+        exitSwitches, setExitSwitches,
+        oneWays, setOneWays,
+    };
+}
+
+function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities: ExportedEntity[]) {
+    const ninjas: NinjaData[] = [];
+    const mines: MineData[] = [];
+    const exitDoors: ExitDoorData[] = [];
+    const exitSwitches: ExitSwitchData[] = [];
+    const oneWays: OneWayData[] = [];
+
+    for (const entity of exportedEntities) {
+        // Make sure to create new objects instead of reusing entity
+        // because it is an object that comes from wasm.
+        if (entity.type_int === ENTITY_NINJA) {
+            ninjas.push({
+                x: entity.x,
+                y: entity.y,
+                deg: entity.deg,
+            });
+        } else if (entity.type_int === ENTITY_MINE) {
+            mines.push({
+                type: MINE_TOGGLED,
+                x: entity.x,
+                y: entity.y,
+            });
+        } else if (entity.type_int === ENTITY_EXIT) {
+            exitDoors.push({
+                // Note: spread operator won't work here
+                x: entity.x,
+                y: entity.y,
+                animProgress: 0,
+            });
+            if (!Number.isNaN(entity.switch_x)) {
+                exitSwitches.push({
+                    x: entity.switch_x,
+                    y: entity.switch_y,
+                    animProgress: 0,
+                });
+                lines.push({
+                    x1: entity.x,
+                    y1: entity.y,
+                    x2: entity.switch_x,
+                    y2: entity.switch_y,
+                });
+            }
+        } else if (entity.type_int === ENTITY_ONE_WAY) {
+            oneWays.push({
+                x: entity.x,
+                y: entity.y,
+                deg: entity.deg,
+            });
+        }
+        // Do I need this?
+        entity.free();
+    }
+
+    entities.setNinjas(ninjas);
+    entities.setMines(mines);
+    entities.setExitDoors(exitDoors);
+    entities.setExitSwitches(exitSwitches);
+    entities.setOneWays(oneWays);
+}
+
+function Entities({ entities }: { entities: EntitiesProps }) {
+    return <>
+        <ExitDoors exitDoors={[entities.exitDoors, () => {}]} />
+        <OneWays oneWays={[entities.oneWays, () => {}]} />
+        <Mines mines={[entities.mines, () => {}]} />
+        <ExitSwitches exitSwitches={[entities.exitSwitches, () => {}]} />
+        <For each={entities.ninjas()}>
+            {ninja => <Ninja class="ninja" ninja={() => ninja} bones={() => BONES_STANDING} />}
+        </For>
+    </>;
+}
+
 export function EditorApp({ editor, pastNinjas }: { editor: Editor, pastNinjas: Accessor<{ x: number, y: number }[]> }) {
     const [tilePath, setTilePath] = createSignal('');
     const [selectedTilePath, setSelectedTilePath] = createSignal('');
@@ -53,15 +155,8 @@ export function EditorApp({ editor, pastNinjas }: { editor: Editor, pastNinjas: 
     const [crosshairPos, setCrosshairPos] = createSignal({ x: 24, y: 24 });
     const [selectedTilePositions, setSelectedTilePositions] = createSignal<{ x: number, y: number }[]>([]);
 
-    const [ninjas, setNinjas] = createSignal<NinjaData[]>([]);
-    const [exitDoors, setExitDoors] = createSignal<ExitDoorData[]>([]);
-    const [exitSwitches, setExitSwitches] = createSignal<ExitSwitchData[]>([]);
-    const [oneWays, setOneWays] = createSignal<OneWayData[]>([]);
-
-    const [previewNinjas, setPreviewNinjas] = createSignal<NinjaData[]>([]);
-    const [previewExitDoors, setPreviewExitDoors] = createSignal<ExitDoorData[]>([]);
-    const [previewExitSwitches, setPreviewExitSwitches] = createSignal<ExitSwitchData[]>([]);
-    const [previewOneWays, setPreviewOneWays] = createSignal<OneWayData[]>([]);
+    const entities = createEntities();
+    const previewEntities = createEntities();
 
     const [doorSwitchLines, setDoorSwitchLines] = createSignal<Line[]>([]);
 
@@ -162,103 +257,8 @@ export function EditorApp({ editor, pastNinjas }: { editor: Editor, pastNinjas: 
 
         const lines: Line[] = [];
 
-        const ninjas: NinjaData[] = [];
-        const exitDoors: ExitDoorData[] = [];
-        const exitSwitches: ExitSwitchData[] = [];
-        const oneWays: OneWayData[] = [];
-
-        for (const entity of editor.entities()) {
-            // Make sure to create new objects instead of reusing entity
-            // because it is an object that comes from wasm.
-            if (entity.type_int === ENTITY_NINJA) {
-                ninjas.push({
-                    x: entity.x,
-                    y: entity.y,
-                    deg: entity.deg,
-                });
-            } else if (entity.type_int === ENTITY_EXIT) {
-                exitDoors.push({
-                    // Note: spread operator won't work here
-                    x: entity.x,
-                    y: entity.y,
-                    animProgress: 0,
-                });
-                if (!Number.isNaN(entity.switch_x)) {
-                    exitSwitches.push({
-                        x: entity.switch_x,
-                        y: entity.switch_y,
-                        animProgress: 0,
-                    });
-                    lines.push({
-                        x1: entity.x,
-                        y1: entity.y,
-                        x2: entity.switch_x,
-                        y2: entity.switch_y,
-                    });
-                }
-            } else if (entity.type_int === ENTITY_ONE_WAY) {
-                oneWays.push({
-                    x: entity.x,
-                    y: entity.y,
-                    deg: entity.deg,
-                });
-            }
-            // Do I need this?
-            entity.free();
-        }
-
-        setNinjas(ninjas);
-        setExitDoors(exitDoors);
-        setExitSwitches(exitSwitches);
-        setOneWays(oneWays);
-
-        const previewNinjas: NinjaData[] = [];
-        const previewExitDoors: ExitDoorData[] = [];
-        const previewExitSwitches: ExitSwitchData[] = [];
-        const previewOneWays: OneWayData[] = [];
-
-        for (const entity of editor.preview_entities()) {
-            if (entity.type_int === ENTITY_NINJA) {
-                previewNinjas.push({
-                    x: entity.x,
-                    y: entity.y,
-                    deg: entity.deg,
-                });
-            } else if (entity.type_int === ENTITY_EXIT) {
-                previewExitDoors.push({
-                    // Note: spread operator won't work here
-                    x: entity.x,
-                    y: entity.y,
-                    animProgress: 0,
-                });
-                if (!Number.isNaN(entity.switch_x)) {
-                    previewExitSwitches.push({
-                        x: entity.switch_x,
-                        y: entity.switch_y,
-                        animProgress: 0,
-                    });
-                    lines.push({
-                        x1: entity.x,
-                        y1: entity.y,
-                        x2: entity.switch_x,
-                        y2: entity.switch_y,
-                    });
-                }
-            } else if (entity.type_int === ENTITY_ONE_WAY) {
-                previewOneWays.push({
-                    x: entity.x,
-                    y: entity.y,
-                    deg: entity.deg,
-                });
-            }
-            // Do I need this?
-            entity.free();
-        }
-
-        setPreviewNinjas(previewNinjas);
-        setPreviewExitDoors(previewExitDoors);
-        setPreviewExitSwitches(previewExitSwitches);
-        setPreviewOneWays(previewOneWays);
+        updateEntities(entities, lines, editor.entities());
+        updateEntities(previewEntities, lines, editor.preview_entities());
 
         setDoorSwitchLines(lines);
     }
@@ -328,6 +328,7 @@ export function EditorApp({ editor, pastNinjas }: { editor: Editor, pastNinjas: 
                 <clipPath id="tiles-clip">
                     <use href="#tiles" />
                 </clipPath>
+                <MineDefs />
                 <OneWayDefs />
                 <path id="tilemode-crosshair" stroke-width="1.5" fill="none" d={tilemodeCrosshairPath} />
                 <path id="crosshair" stroke-width="1.5" fill="none" d={crosshairPath} />
@@ -355,21 +356,11 @@ export function EditorApp({ editor, pastNinjas }: { editor: Editor, pastNinjas: 
             </Show>
             {regularGridXs.map(x => <line class="regular-grid" y1="24" y2={24 * 24} x1={x} x2={x} />)}
             {regularGridYs.map(y => <line class="regular-grid" x1="24" x2={24 * 43} y1={y} y2={y} />)}
-            <ExitDoors exitDoors={[exitDoors, () => {}]} />
-            <OneWays oneWays={[oneWays, () => {}]} />
-            <ExitSwitches exitSwitches={[exitSwitches, () => {}]} />
-            <For each={ninjas()}>
-                {ninja => <Ninja class="ninja" ninja={() => ninja} bones={() => BONES_STANDING} />}
-            </For>
+            <Entities entities={entities} />
             <path id="tiles" stroke-width="2" clip-path="url(#tiles-clip)" clip-rule="evenodd" d={tilePath()} fill-rule="evenodd" />
             <path id="selected-tiles" d={selectedTilePath()} fill-rule="evenodd" />
             <g filter="url(#outline)">
-                <ExitDoors exitDoors={[previewExitDoors, () => {}]} />
-                <OneWays oneWays={[previewOneWays, () => {}]} />
-                <ExitSwitches exitSwitches={[previewExitSwitches, () => {}]} />
-                <For each={previewNinjas()}>
-                    {ninja => <Ninja class="ninja" ninja={() => ninja} bones={() => BONES_STANDING} />}
-                </For>
+                <Entities entities={previewEntities} />
             </g>
             <For each={doorSwitchLines()}>
                 {line => <line class="door-switch-line" x1={line.x1} y1={line.y1} x2={line.x2} y2={line.y2} />}

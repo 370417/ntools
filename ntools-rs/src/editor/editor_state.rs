@@ -60,6 +60,12 @@ impl EditorState {
             }).or_default();
             *count = count.saturating_add(1);
         }
+        for mine in &attract.entities.mines {
+            let count: &mut u16 = entities.entry(EditorEntity::Mine {
+                pos: EntityPos::from_world_pos(mine.pos),
+            }).or_default();
+            *count = count.saturating_add(1);
+        }
         for exit in &attract.entities.exits {
             let count: &mut u16 = entities.entry(EditorEntity::Exit {
                 exit_pos: EntityPos::from_world_pos(exit.door_pos),

@@ -9,6 +9,9 @@ pub enum EditorEntity {
         pos: EntityPos,
         orientation: OrientationExt,
     },
+    Mine {
+        pos: EntityPos,
+    },
     Exit {
         exit_pos: EntityPos,
         switch_pos: EntityPos,
@@ -52,6 +55,7 @@ impl EditorEntity {
     pub fn pos(&self) -> EntityPos {
         match self {
             &EditorEntity::Ninja { pos, .. } |
+            &EditorEntity::Mine { pos } |
             &EditorEntity::OneWay { pos, .. } => pos,
             &EditorEntity::Exit { exit_pos, .. } => exit_pos,
         }
@@ -67,6 +71,7 @@ impl EditorEntity {
     pub fn rotation_deg(&self) -> f64 {
         match self {
             EditorEntity::Ninja { orientation, .. } => orientation.rotation_deg(),
+            EditorEntity::Mine { .. } |
             EditorEntity::Exit { .. } => 0.0,
             EditorEntity::OneWay { orientation, .. } => orientation.rotation_deg(),
         }
@@ -75,6 +80,7 @@ impl EditorEntity {
     pub fn type_int(&self) -> u32 {
         match self {
             EditorEntity::Ninja { .. } => 0,
+            EditorEntity::Mine { .. } => 1,
             EditorEntity::Exit { .. } => 3,
             EditorEntity::OneWay { .. } => 11,
         }

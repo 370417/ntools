@@ -4,8 +4,12 @@ import type { Replay } from "../assets/ntools_rs";
 export type MineData = {
     x: number;
     y: number;
-    type: 0 | 1 | 2;
+    type: typeof MINE_TOGGLED | typeof MINE_UNTOGGLED | typeof MINE_TOGGLING;
 };
+
+export const MINE_TOGGLED = 0;
+export const MINE_UNTOGGLED = 1;
+export const MINE_TOGGLING = 2;
 
 function equals(a: MineData, b: MineData): boolean {
     return a.x === b.x && a.y === b.y && a.type === b.type;

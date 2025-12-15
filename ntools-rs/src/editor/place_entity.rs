@@ -34,6 +34,7 @@ impl PlaceEntity {
         let new_pos = EntityPos::from_world_pos(new_pos);
         match &mut self.entity {
             EditorEntity::Ninja { pos, .. } |
+            EditorEntity::Mine { pos } |
             EditorEntity::OneWay { pos, .. } => *pos = new_pos,
             EditorEntity::Exit { exit_pos, switch_pos } => match self.stage {
                 Some(Stage::PlaceDoor) => {
@@ -48,6 +49,7 @@ impl PlaceEntity {
     pub fn set_orientation(&mut self, new_orientation: Orientation) {
         match &mut self.entity {
             EditorEntity::Ninja { orientation, .. } => *orientation = new_orientation.into(),
+            EditorEntity::Mine { .. } |
             EditorEntity::Exit { .. } => {}
             EditorEntity::OneWay { orientation, .. } => *orientation = new_orientation,
         }
@@ -61,6 +63,7 @@ impl PlaceEntity {
         // TODO: allow stacking certain entities
         let command = match self.entity {
             entity @ EditorEntity::Ninja { .. } |
+            entity @ EditorEntity::Mine { .. } | // TODO: handle placing mine on top of toggle mine -- or should that go in EditorState?
             entity @ EditorEntity::OneWay { .. } |
             entity @ EditorEntity::Exit { .. } => {
                 Some(Command::SetEntityCount(SetEntityCount {
