@@ -1,9 +1,10 @@
 use std::collections::BTreeMap;
 
+use futures_channel::oneshot::Sender;
 use glam::{DVec2, FloatExt};
 use wasm_bindgen::prelude::*;
 
-use crate::{anim_data::flatten_bones, attract::Attract, entity::mine::Mine, grid::{COLS, Grid, ROWS}, ninja::Ninja, orientation::OrientationExt, segment::{Segment, extract_path}, simulation::{Input, KeyFrame, Simulation}, tile::TILE_SIZE};
+use crate::{anim_data::flatten_bones, attract::Attract, entity::mine::Mine, grid::{COLS, Grid, ROWS}, ninja::{Ninja, PastNinja}, orientation::OrientationExt, segment::{Segment, extract_path}, simulation::{Input, KeyFrame, Simulation}, tile::TILE_SIZE};
 
 #[wasm_bindgen]
 pub struct Replay {
@@ -11,14 +12,17 @@ pub struct Replay {
     pub(crate) author_name: Option<String>,
     pub(crate) segments: Grid<Segment>,
     pub(crate) inputs: Vec<u8>,
+    pub(crate) past_ninjas: Vec<PastNinja>,
     pub(crate) initial_mines: Vec<Mine>,
     pub(crate) current_sim: Simulation,
     pub(crate) preview_sim: Simulation,
     pub(crate) keyframes: BTreeMap<u32, KeyFrame>,
+    pub(crate) sender: Option<Sender<Vec<PastNinja>>>,
 }
 
 #[wasm_bindgen]
 impl Replay {
+    // TODO: delete this?
     #[wasm_bindgen]
     pub fn from_attract(attract_bytes: &[u8]) -> Result<Replay, String> {
         let Attract { level_name, author_name, tile_segments, ninjas, entities, inputs, .. } = Attract::from_bytes(attract_bytes)?;
@@ -36,11 +40,20 @@ impl Replay {
             author_name: Some(author_name),
             segments,
             inputs,
+            past_ninjas: Vec::new(),
             initial_mines: current_sim.entities.mines.clone(),
             preview_sim: current_sim.clone(),
             current_sim,
             keyframes,
+            sender: None,
         })
+    }
+
+    #[wasm_bindgen]
+    pub fn send_past_ninjas(&mut self) {
+        if let Some(sender) = self.sender.take() {
+            let _ = sender.send(std::mem::replace(&mut self.past_ninjas, Vec::new()));
+        }
     }
 
     #[wasm_bindgen]
@@ -57,6 +70,8 @@ impl Replay {
                 // Invalidate future keyframes
                 self.keyframes.retain(|&frame, _| frame == 0 || frame < self.current_sim.frame);
                 self.inputs[self.current_sim.frame as usize] = new_input;
+
+                self.past_ninjas.truncate(self.current_sim.frame as usize);
             }
         }
     }
@@ -67,6 +82,15 @@ impl Replay {
             // Save keyframe every 120 frames
             if self.current_sim.frame % 120 == 0 && !self.keyframes.contains_key(&self.current_sim.frame) {
                 self.keyframes.insert(self.current_sim.frame, KeyFrame::from_sim(&self.current_sim, &self.initial_mines));
+            }
+
+            if let Some(past_ninja) = self.past_ninjas.get_mut(self.current_sim.frame as usize) {
+                *past_ninja = self.current_sim.ninja.to_past_ninja();
+            } else if self.current_sim.frame as usize == self.past_ninjas.len() {
+                self.past_ninjas.push(self.current_sim.ninja.to_past_ninja());
+            } else {
+                #[cfg(debug_assertions)]
+                panic!("past_ninja vec is shorter than expected");
             }
 
             let input = Input::from_byte(self.inputs[self.current_sim.frame as usize]);
@@ -129,6 +153,7 @@ impl Replay {
         self.keyframes.insert(0, KeyFrame::from_sim(&self.current_sim, &self.current_sim.entities.mines));
         self.initial_mines = self.current_sim.entities.mines.clone();
         self.preview_sim = self.current_sim.clone();
+        self.past_ninjas = vec![self.current_sim.ninja.to_past_ninja()];
     }
 
     #[wasm_bindgen]
@@ -172,12 +197,14 @@ impl Replay {
 
     #[wasm_bindgen]
     pub fn ninja_bones(&self, partial_frame: f64) -> Box<[f32]> {
-        flatten_bones(&self.current_sim.ninja.calc_ninja_position(partial_frame))
+        let prev = &self.past_ninjas[self.current_sim.frame.saturating_sub(1) as usize];
+        flatten_bones(&self.current_sim.ninja.calc_ninja_position(prev, partial_frame))
     }
 
     #[wasm_bindgen]
     pub fn ninja_preview_bones(&self, partial_frame: f64) -> Box<[f32]> {
-        flatten_bones(&self.preview_sim.ninja.calc_ninja_position(partial_frame))
+        let prev = &self.past_ninjas[self.current_sim.frame.saturating_sub(1) as usize];
+        flatten_bones(&self.preview_sim.ninja.calc_ninja_position(prev,partial_frame))
     }
 
     #[wasm_bindgen]

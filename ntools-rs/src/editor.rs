@@ -1,9 +1,10 @@
 use std::collections::BTreeMap;
 
+use futures_channel::oneshot::{self, Receiver};
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{attract::Attract, editor::{editor_entity::{EditorEntity, EntityPos, ExportedEntity}, editor_state::{Command, EditorState}, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::{PlaceEntity, Stage}, select_tiles::SelectTiles}, entity::{Entities, exit::Exit}, grid::{COLS, GridPos, ROWS}, ninja::Ninja, orientation::{Orientation, OrientationCardinal}, replay::Replay, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
+use crate::{attract::Attract, editor::{editor_entity::{EditorEntity, EntityPos, ExportedEntity}, editor_state::{Command, EditorState}, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::{PlaceEntity, Stage}, select_tiles::SelectTiles}, entity::{Entities, exit::Exit}, grid::{COLS, GridPos, ROWS}, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationCardinal}, replay::Replay, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
 
 pub mod editor_entity;
 pub mod editor_state;
@@ -33,6 +34,8 @@ pub struct Editor {
     /// keys at once.
     /// We only track the most recently pressed orientation key.
     pressed_orientation: Option<Orientation>,
+    past_ninjas: Vec<PastNinja>,
+    receiver: Option<Receiver<Vec<PastNinja>>>,
 }
 
 pub enum EditorMode {
@@ -63,6 +66,8 @@ impl Editor {
             entity_orientation: Orientation::N,
             entity_orientation_cardinal: OrientationCardinal::N,
             pressed_orientation: None,
+            past_ninjas: Vec::new(),
+            receiver: None,
         }
     }
 
@@ -74,7 +79,7 @@ impl Editor {
     }
 
     #[wasm_bindgen]
-    pub fn to_replay(&self) -> Result<Replay, String> {
+    pub fn to_replay(&mut self) -> Result<Replay, String> {
         let ninjas = self.state.entities().iter().filter_map(|(entity, _)| {
             match entity {
                 EditorEntity::Ninja { pos, orientation } => Some(Ninja::new(pos.to_world_pos(), *orientation)),
@@ -99,15 +104,20 @@ impl Editor {
         let mut keyframes = BTreeMap::new();
         keyframes.insert(0, KeyFrame::from_sim(&current_sim, &current_sim.entities.mines));
 
+        let (sender, receiver) = oneshot::channel();
+        self.receiver = Some(receiver);
+
         Ok(Replay {
             level_name: String::new(),
             author_name: None,
             segments: self.state.tiles().segments(),
             inputs: Vec::new(),
+            past_ninjas: vec![current_sim.ninja.to_past_ninja()],
             initial_mines: current_sim.entities.mines.clone(),
             preview_sim: current_sim.clone(),
             current_sim,
             keyframes,
+            sender: Some(sender),
         })
     }
 
@@ -678,6 +688,30 @@ impl Editor {
         if let Some(Orientation::SE) = self.pressed_orientation {
             self.pressed_orientation = None;
         }
+    }
+
+    #[wasm_bindgen]
+    pub fn receive_past_ninjas(&mut self) {
+        if let Some(receiver) = &mut self.receiver {
+            if let Ok(Some(past_ninjas)) = receiver.try_recv() {
+                self.past_ninjas = past_ninjas;
+            }
+        }
+    }
+
+    #[wasm_bindgen]
+    pub fn past_ninjas_len(&self) -> usize {
+        self.past_ninjas.len()
+    }
+
+    #[wasm_bindgen]
+    pub fn past_ninja_x(&self, i: usize) -> f64 {
+        self.past_ninjas[i].pos.x
+    }
+
+    #[wasm_bindgen]
+    pub fn past_ninja_y(&self, i: usize) -> f64 {
+        self.past_ninjas[i].pos.y
     }
 }
 

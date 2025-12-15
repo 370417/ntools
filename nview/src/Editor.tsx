@@ -1,4 +1,4 @@
-import { createSignal, For, onCleanup, Show } from "solid-js";
+import { createSignal, For, onCleanup, Show, type Accessor } from "solid-js";
 import { Editor } from "./assets/ntools_rs";
 import { Ninja, type NinjaData } from "./entities/Ninja";
 import { ExitDoors, type ExitDoorData } from "./entities/ExitDoor";
@@ -41,7 +41,7 @@ type Line = {
 
 const selectionPadding = 4;
 
-export function EditorApp({ editor }: { editor: Editor }) {
+export function EditorApp({ editor, pastNinjas }: { editor: Editor, pastNinjas: Accessor<{ x: number, y: number }[]> }) {
     const [tilePath, setTilePath] = createSignal('');
     const [selectedTilePath, setSelectedTilePath] = createSignal('');
     const [showHalfGrid, setShowHalfGrid] = createSignal(true);
@@ -360,6 +360,7 @@ export function EditorApp({ editor }: { editor: Editor }) {
             <Show when={mode() === MODE_PEN_TOOL}>
                 <use href="#crosshair" x={crosshairPos().x} y={crosshairPos().y} />
             </Show>
+            <polyline stroke="black" fill="none" points={pastNinjas().map(({ x, y }) => `${x},${y}`).join(' ')} />
         </svg>
     </>;
 }

@@ -9,6 +9,8 @@ crate-type = ["cdylib"]
 [dependencies]
 # convenience crate for sorting floats
 float-ord = "0.3.2"
+# send data between two wasm objects without needing to pass it through js
+futures-channel = "0.3"
 # vector math
 glam = { version = "0.30.9", default-features = false, features = ["libm"] }
 # bridge to js
@@ -17,6 +19,7 @@ wasm-bindgen = "0.2.105"
 rand = { version = "0.9.0", default-features = false }
 # random number generation implementation
 rand_xoshiro = "0.7.0"
+
 
 [profile.release]
 lto = "fat"
