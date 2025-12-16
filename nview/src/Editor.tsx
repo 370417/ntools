@@ -7,9 +7,9 @@ import { OneWayDefs, OneWays, type OneWayData } from "./entities/OneWay";
 import { MINE_TOGGLED, MINE_UNTOGGLED, MineDefs, Mines, type MineData } from "./entities/Mine";
 import { RegularDoors, type RegularDoorData } from "./entities/RegularDoor";
 import { LockedDoors, type LockedDoorData } from "./entities/LockedDoor";
-import type { LockedSwitchData } from "./entities/LockedSwitch";
+import { LockedSwitchDefs, LockedSwitches, type LockedSwitchData } from "./entities/LockedSwitch";
 import { TrapDoors, type TrapDoorData } from "./entities/TrapDoor";
-import type { TrapSwitchData } from "./entities/TrapSwitch";
+import { TrapSwitchDefs, TrapSwitches, type TrapSwitchData } from "./entities/TrapSwitch";
 import { LaunchPads, type LaunchPadData } from "./entities/LaunchPad";
 import { Floorguards, type FloorguardData } from "./entities/Floorguard";
 import { BounceBlockDefs, BounceBlocks, type BounceBlockData } from "./entities/BounceBlock";
@@ -225,6 +225,8 @@ function Entities({ entities }: { entities: EntitiesProps }) {
         <ExitDoors exitDoors={[entities.exitDoors, () => {}]} />
         <OneWays oneWays={[entities.oneWays, () => {}]} />
         <Mines mines={[entities.mines, () => {}]} />
+        <LockedSwitches lockedSwitches={[entities.lockedSwitches, () => {}]} />
+        <TrapSwitches trapSwitches={[entities.trapSwitches, () => {}]} />
         <ExitSwitches exitSwitches={[entities.exitSwitches, () => {}]} />
         <LaunchPads launchPads={[entities.launchPads, () => {}]} />
         <Floorguards floorguards={[entities.floorguards, () => {}]} />
@@ -282,7 +284,20 @@ export function EditorApp({ editor, pastNinjas }: { editor: Editor, pastNinjas: 
         else if (event.code === 'KeyX') change = true, editor.press_x();
         else if (event.code === 'KeyC') change = true, editor.press_c();
 
+        else if (event.code === 'KeyY') change = true, editor.press_y();
+        else if (event.code === 'KeyU') change = true, editor.press_u();
+        else if (event.code === 'KeyI') change = true, editor.press_i();
+        else if (event.code === 'KeyO') change = true, editor.press_o();
+        else if (event.code === 'KeyP') change = true, editor.press_p();
+        else if (event.code === 'BracketLeft') change = true, editor.press_bracket_left();
         else if (event.code === 'BracketRight') change = true, editor.press_bracket_right();
+        else if (event.code === 'KeyH') change = true, editor.press_h();
+        else if (event.code === 'KeyJ') change = true, editor.press_j();
+        else if (event.code === 'KeyK') change = true, editor.press_k();
+        else if (event.code === 'KeyL') change = true, editor.press_l();
+        else if (event.code === 'KeyN') change = true, editor.press_n();
+        else if (event.code === 'KeyM') change = true, editor.press_m();
+        else if (event.code === 'Comma') change = true, editor.press_comma();
 
         else if (event.code === 'Escape') change = editor.press_escape();
 
@@ -424,6 +439,8 @@ export function EditorApp({ editor, pastNinjas }: { editor: Editor, pastNinjas: 
                 <MineDefs />
                 <OneWayDefs />
                 <BounceBlockDefs />
+                <LockedSwitchDefs />
+                <TrapSwitchDefs />
                 <path id="tilemode-crosshair" stroke-width="1.5" fill="none" d={tilemodeCrosshairPath} />
                 <path id="crosshair" stroke-width="1.5" fill="none" d={crosshairPath} />
                 <filter id="outline" filterUnits="userSpaceOnUse" x="0" y="0" width="1056" height="600">

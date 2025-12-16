@@ -126,6 +126,9 @@ impl Editor {
             }
         }
 
+        let mut segments = self.state.tiles().segments().clone();
+        entities.doors.populate_grid(&mut segments);
+
         let current_sim = Simulation::new(ninjas, entities)?;
 
         let mut keyframes = BTreeMap::new();
@@ -137,7 +140,7 @@ impl Editor {
         Ok(Replay {
             level_name: String::new(),
             author_name: None,
-            segments: self.state.tiles().segments(),
+            segments,
             inputs: Vec::new(),
             past_ninjas: vec![current_sim.ninja.to_past_ninja()],
             initial_mines: current_sim.entities.mines.clone(),
@@ -438,6 +441,33 @@ impl Editor {
     }
 
     #[wasm_bindgen]
+    pub fn press_0(&mut self) {
+        // gold
+    }
+
+    #[wasm_bindgen]
+    pub fn press_dash(&mut self) {
+        self.mode = EditorMode::PlaceEntity(PlaceEntity {
+            entity: EditorEntity::BounceBlock {
+                pos: EntityPos::from_world_pos(PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid)),
+                orientation: self.entity_orientation,
+            },
+            stage: None,
+        });
+    }
+
+    #[wasm_bindgen]
+    pub fn press_equals(&mut self) {
+        self.mode = EditorMode::PlaceEntity(PlaceEntity {
+            entity: EditorEntity::LaunchPad {
+                pos: EntityPos::from_world_pos(PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid)),
+                orientation: self.entity_orientation,
+            },
+            stage: None,
+        });
+    }
+
+    #[wasm_bindgen]
     pub fn press_q(&mut self, shift: bool) {
         match &mut self.mode {
             EditorMode::PaintTiles => {
@@ -612,6 +642,62 @@ impl Editor {
     }
 
     #[wasm_bindgen]
+    pub fn press_y(&mut self) {
+        // gauss turret
+    }
+
+    #[wasm_bindgen]
+    pub fn press_u(&mut self) {
+        // rocket turret
+    }
+
+    #[wasm_bindgen]
+    pub fn press_i(&mut self) {
+        self.mode = EditorMode::PlaceEntity(PlaceEntity {
+            entity: EditorEntity::RegularDoor {
+                pos: EntityPos::from_world_pos(PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid)),
+                orientation: self.entity_orientation_cardinal,
+            },
+            stage: None,
+        });
+    }
+
+    #[wasm_bindgen]
+    pub fn press_o(&mut self) {
+        self.mode = EditorMode::PlaceEntity(PlaceEntity {
+            entity: EditorEntity::LockedDoor {
+                door_pos: EntityPos::from_world_pos(PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid)),
+                switch_pos: EntityPos::from_world_pos(PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid)),
+                orientation: self.entity_orientation_cardinal,
+            },
+            stage: Some(Stage::PlaceDoor),
+        });
+    }
+
+    #[wasm_bindgen]
+    pub fn press_p(&mut self) {
+        self.mode = EditorMode::PlaceEntity(PlaceEntity {
+            entity: EditorEntity::TrapDoor {
+                door_pos: EntityPos::from_world_pos(PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid)),
+                switch_pos: EntityPos::from_world_pos(PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid)),
+                orientation: self.entity_orientation_cardinal,
+            },
+            stage: Some(Stage::PlaceDoor),
+        });
+    }
+
+    #[wasm_bindgen]
+    pub fn press_bracket_left(&mut self) {
+        self.mode = EditorMode::PlaceEntity(PlaceEntity {
+            entity: EditorEntity::OneWay {
+                pos: EntityPos::from_world_pos(PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid)),
+                orientation: self.entity_orientation,
+            },
+            stage: None,
+        });
+    }
+
+    #[wasm_bindgen]
     pub fn press_bracket_right(&mut self) {
         self.mode = EditorMode::PlaceEntity(PlaceEntity {
             entity: EditorEntity::Exit {
@@ -623,6 +709,52 @@ impl Editor {
     }
 
     #[wasm_bindgen]
+    pub fn press_h(&mut self) {
+        // zap drone
+    }
+
+    #[wasm_bindgen]
+    pub fn press_j(&mut self) {
+        // chase drone
+    }
+
+    #[wasm_bindgen]
+    pub fn press_k(&mut self) {
+        // laser drone
+    }
+
+    #[wasm_bindgen]
+    pub fn press_l(&mut self) {
+        // chaingun drone
+    }
+
+    #[wasm_bindgen]
+    pub fn press_n(&mut self) {
+        self.mode = EditorMode::PlaceEntity(PlaceEntity {
+            entity: EditorEntity::Floorguard {
+                pos: EntityPos::from_world_pos(PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid)),
+                orientation: self.entity_orientation.into(),
+            },
+            stage: None,
+        });
+    }
+
+    #[wasm_bindgen]
+    pub fn press_m(&mut self) {
+        self.mode = EditorMode::PlaceEntity(PlaceEntity {
+            entity: EditorEntity::Mine {
+                pos: EntityPos::from_world_pos(PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid)),
+            },
+            stage: None,
+        });
+    }
+
+    #[wasm_bindgen]
+    pub fn press_comma(&mut self) {
+        // thwump
+    }
+
+    #[wasm_bindgen]
     pub fn press_slash(&mut self) {
         match self.mode {
             EditorMode::PenTool(_) => self.pen_tool_fine_grid = !self.pen_tool_fine_grid,
@@ -631,6 +763,46 @@ impl Editor {
             }
             _ => {}
         }
+    }
+
+    #[wasm_bindgen]
+    pub fn press_num_0(&mut self) {
+        self.mode = EditorMode::PlaceEntity(PlaceEntity {
+            entity: EditorEntity::ToggleMine {
+                pos: EntityPos::from_world_pos(PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid)),
+            },
+            stage: None,
+        });
+    }
+
+    #[wasm_bindgen]
+    pub fn press_num_1(&mut self) {
+        // evil ninja
+    }
+
+    #[wasm_bindgen]
+    pub fn press_num_2(&mut self) {
+        // laser turret
+    }
+
+    #[wasm_bindgen]
+    pub fn press_num_3(&mut self) {
+        // boost pad
+    }
+
+    #[wasm_bindgen]
+    pub fn press_num_4(&mut self) {
+        // death ball
+    }
+
+    #[wasm_bindgen]
+    pub fn press_num_5(&mut self) {
+        // mini drone
+    }
+
+    #[wasm_bindgen]
+    pub fn press_num_7(&mut self) {
+        // shove thwump
     }
 
     #[wasm_bindgen]
