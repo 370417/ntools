@@ -35,10 +35,23 @@ impl PlaceEntity {
         match &mut self.entity {
             EditorEntity::Ninja { pos, .. } |
             EditorEntity::Mine { pos } |
+            EditorEntity::ToggleMine { pos } |
+            EditorEntity::RegularDoor { pos, .. } |
+            EditorEntity::BounceBlock { pos, .. } |
+            EditorEntity::LaunchPad { pos, .. } |
+            EditorEntity::Floorguard { pos, .. } |
             EditorEntity::OneWay { pos, .. } => *pos = new_pos,
             EditorEntity::Exit { exit_pos, switch_pos } => match self.stage {
                 Some(Stage::PlaceDoor) => {
                     *exit_pos = new_pos;
+                    *switch_pos = new_pos;
+                }
+                Some(Stage::PlaceSwitch) | None => *switch_pos = new_pos,
+            },
+            EditorEntity::LockedDoor { door_pos, switch_pos, .. } |
+            EditorEntity::TrapDoor { door_pos, switch_pos, .. } => match self.stage {
+                Some(Stage::PlaceDoor) => {
+                    *door_pos = new_pos;
                     *switch_pos = new_pos;
                 }
                 Some(Stage::PlaceSwitch) | None => *switch_pos = new_pos,
@@ -48,10 +61,19 @@ impl PlaceEntity {
 
     pub fn set_orientation(&mut self, new_orientation: Orientation) {
         match &mut self.entity {
-            EditorEntity::Ninja { orientation, .. } => *orientation = new_orientation.into(),
+            EditorEntity::Ninja { orientation, .. } |
+            EditorEntity::Floorguard { orientation, .. } => *orientation = new_orientation.into(),
+            EditorEntity::OneWay { orientation, .. } |
+            EditorEntity::LaunchPad { orientation, .. } |
+            EditorEntity::BounceBlock { orientation, .. } => *orientation = new_orientation,
+            EditorEntity::RegularDoor { orientation, .. } |
+            EditorEntity::LockedDoor { orientation, .. } |
+            EditorEntity::TrapDoor { orientation, .. } => if let Ok(new_orientation) = new_orientation.try_into() {
+                *orientation = new_orientation;
+            },
             EditorEntity::Mine { .. } |
+            EditorEntity::ToggleMine { .. } |
             EditorEntity::Exit { .. } => {}
-            EditorEntity::OneWay { orientation, .. } => *orientation = new_orientation,
         }
     }
 
@@ -60,12 +82,17 @@ impl PlaceEntity {
             self.stage = Some(Stage::PlaceSwitch);
             return None;
         }
-        // TODO: allow stacking certain entities
         let command = match self.entity {
-            entity @ EditorEntity::Ninja { .. } |
-            entity @ EditorEntity::Mine { .. } | // TODO: handle placing mine on top of toggle mine -- or should that go in EditorState?
-            entity @ EditorEntity::OneWay { .. } |
-            entity @ EditorEntity::Exit { .. } => {
+            entity @ EditorEntity::BounceBlock { .. } => {
+                // stackable entities
+                let old_count = *entities.get(&entity).unwrap_or(&0);
+                Some(Command::SetEntityCount(SetEntityCount {
+                    entity,
+                    old_count,
+                    new_count: old_count + 1,
+                }))
+            }
+            entity => {
                 Some(Command::SetEntityCount(SetEntityCount {
                     entity,
                     old_count: *entities.get(&entity).unwrap_or(&0),
@@ -74,6 +101,8 @@ impl PlaceEntity {
             }
         };
         if let Some(Stage::PlaceSwitch) = self.stage {
+            // place the door where the switch used to be in preparation for
+            // placing the next instance of the entity.
             self.stage = Some(Stage::PlaceDoor);
             if let Some(switch_pos) = self.entity.switch_pos() {
                 self.set_pos(switch_pos.to_world_pos());

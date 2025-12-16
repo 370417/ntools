@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floorchaser::Floorchaser, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump}, grid::{COLS, Grid, GridPos, ROWS}, ninja::Ninja, orientation::{Orientation, OrientationExt}, segment::Segment, tile::{Tile, Tiles}};
+use crate::{entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floorchaser::Floorchaser, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump}, grid::{COLS, Grid, GridPos, ROWS}, ninja::Ninja, orientation::{Orientation, OrientationCardinal, OrientationExt}, segment::Segment, tile::{Tile, Tiles}};
 
 /// Represents a parsed attract file.
 /// An attract file is what gets shown in the game's main menu: a replay of a failed attempt at a level.
@@ -134,6 +134,7 @@ impl Attract {
             // not need orientation.
             let orientation = Orientation::try_from(map_data[i + 3]);
             let orientation_ext = OrientationExt::from(map_data[i + 3]);
+            let orientation_cardinal = OrientationCardinal::try_from(map_data[i + 3]);
             let _mode = map_data[i + 4];
 
             let pos = DVec2::new(x as f64, y as f64);
@@ -150,13 +151,13 @@ impl Attract {
                 // Exit switch
                 4 => exit_switches.push(6.0 * pos),
                 // Regular door
-                5 => entities.doors.regular.push(RegularDoor::new(6.0 * pos, orientation?)),
+                5 => entities.doors.regular.push(RegularDoor::new(6.0 * pos, orientation_cardinal?)),
                 // O door
-                6 => locked_doors.push((6.0 * pos, orientation?)),
+                6 => locked_doors.push((6.0 * pos, orientation_cardinal?)),
                 // O switch
                 7 => locked_switches.push(6.0 * pos),
                 // C door
-                8 => trap_doors.push((6.0 * pos, orientation?)),
+                8 => trap_doors.push((6.0 * pos, orientation_cardinal?)),
                 // C switch
                 9 => trap_switches.push(6.0 * pos),
                 // Launch pad
@@ -174,7 +175,7 @@ impl Attract {
                 // Floor chaser
                 16 => entities.floorchasers.push(Floorchaser::new(6.0 * pos, orientation_ext)),
                 // Bounce block
-                17 => entities.bounce_blocks.push(BounceBlock::new(6.0 * pos)),
+                17 => entities.bounce_blocks.push(BounceBlock::new(6.0 * pos, orientation?)),
                 // Rocket
                 18 => {}
                 // Gauss

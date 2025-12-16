@@ -1,6 +1,6 @@
 use glam::{DVec2, FloatExt};
 
-use crate::{collision_util::overlap_circle_vs_circle, entity::boost_pad::ease_out_quad, grid::Grid, ninja::{self, Ninja}, orientation::Orientation, segment::Segment, tile::{TILE_HALF_SIZE, TILE_SIZE}};
+use crate::{collision_util::overlap_circle_vs_circle, entity::boost_pad::ease_out_quad, grid::Grid, ninja::{self, Ninja}, orientation::OrientationCardinal, segment::Segment, tile::{TILE_HALF_SIZE, TILE_SIZE}};
 
 // nclone (and presumably n++ itself?) has a cool semaphore-like system where
 // they keep track of the number of closed doors to tell if a segment has a closed door or not.
@@ -31,7 +31,7 @@ pub enum DoorType {
 #[derive(Clone)]
 pub struct LockedDoor {
     pub pos: DVec2,
-    pub orientation: Orientation,
+    pub orientation: OrientationCardinal,
     pub switch_pos: DVec2,
     pub door_open_frame: Option<u32>,
 }
@@ -39,7 +39,7 @@ pub struct LockedDoor {
 #[derive(Clone)]
 pub struct TrapDoor {
     pub pos: DVec2,
-    pub orientation: Orientation,
+    pub orientation: OrientationCardinal,
     pub switch_pos: DVec2,
     pub door_close_frame: Option<u32>,
 }
@@ -47,7 +47,7 @@ pub struct TrapDoor {
 #[derive(Clone)]
 pub struct RegularDoor {
     pub pos: DVec2,
-    pub orientation: Orientation,
+    pub orientation: OrientationCardinal,
     pub door_open_frame: Option<u32>,
     pub frames_since_state_change: u32,
 }
@@ -101,12 +101,12 @@ impl Doors {
 }
 
 impl LockedDoor {
-    pub fn new(pos: DVec2, mut orientation: Orientation, switch_pos: DVec2) -> LockedDoor {
+    pub fn new(pos: DVec2, mut orientation: OrientationCardinal, switch_pos: DVec2) -> LockedDoor {
         if pos.x % TILE_SIZE == 0.0 && pos.y % TILE_SIZE != 0.0 {
-            orientation = Orientation::S;
+            orientation = OrientationCardinal::S;
         }
         if pos.x % TILE_SIZE != 0.0 && pos.y % TILE_SIZE == 0.0 {
-            orientation = Orientation::E;
+            orientation = OrientationCardinal::E;
         }
         LockedDoor {
             pos,
@@ -145,12 +145,12 @@ impl LockedDoor {
 }
 
 impl TrapDoor {
-    pub fn new(pos: DVec2, mut orientation: Orientation, switch_pos: DVec2) -> TrapDoor {
+    pub fn new(pos: DVec2, mut orientation: OrientationCardinal, switch_pos: DVec2) -> TrapDoor {
         if pos.x % TILE_SIZE == 0.0 && pos.y % TILE_SIZE != 0.0 {
-            orientation = Orientation::S;
+            orientation = OrientationCardinal::S;
         }
         if pos.x % TILE_SIZE != 0.0 && pos.y % TILE_SIZE == 0.0 {
-            orientation = Orientation::E;
+            orientation = OrientationCardinal::E;
         }
         TrapDoor {
             pos,
@@ -189,12 +189,12 @@ impl TrapDoor {
 }
 
 impl RegularDoor {
-    pub fn new(pos: DVec2, mut orientation: Orientation) -> RegularDoor {
+    pub fn new(pos: DVec2, mut orientation: OrientationCardinal) -> RegularDoor {
         if pos.x % TILE_SIZE == 0.0 && pos.y % TILE_SIZE != 0.0 {
-            orientation = Orientation::S;
+            orientation = OrientationCardinal::S;
         }
         if pos.x % TILE_SIZE != 0.0 && pos.y % TILE_SIZE == 0.0 {
-            orientation = Orientation::E;
+            orientation = OrientationCardinal::E;
         }
         RegularDoor {
             pos,

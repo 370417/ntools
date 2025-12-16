@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use glam::DVec2;
 
-use crate::{attract::Attract, editor::editor_entity::{EditorEntity, EntityPos}, grid::GridPos, orientation::OrientationExt, tile::{Tile, Tiles}};
+use crate::{attract::Attract, editor::editor_entity::{EditorEntity, EntityPos}, entity::mine::MineState, grid::GridPos, orientation::OrientationExt, tile::{Tile, Tiles}};
 
 /// State that is affected by undo and redo
 pub struct EditorState {
@@ -61,8 +61,10 @@ impl EditorState {
             *count = count.saturating_add(1);
         }
         for mine in &attract.entities.mines {
-            let count: &mut u16 = entities.entry(EditorEntity::Mine {
-                pos: EntityPos::from_world_pos(mine.pos),
+            let count: &mut u16 = entities.entry(if mine.state == MineState::Toggled {
+                EditorEntity::Mine { pos: EntityPos::from_world_pos(mine.pos) }
+            } else {
+                EditorEntity::ToggleMine { pos: EntityPos::from_world_pos(mine.pos) }
             }).or_default();
             *count = count.saturating_add(1);
         }
@@ -73,10 +75,54 @@ impl EditorState {
             }).or_default();
             *count = count.saturating_add(1);
         }
+        for regular_door in &attract.entities.doors.regular {
+            let count: &mut u16 = entities.entry(EditorEntity::RegularDoor {
+                pos: EntityPos::from_world_pos(regular_door.pos),
+                orientation: regular_door.orientation,
+            }).or_default();
+            *count = count.saturating_add(1);
+        }
+        for locked_door in &attract.entities.doors.locked {
+            let count: &mut u16 = entities.entry(EditorEntity::LockedDoor {
+                door_pos: EntityPos::from_world_pos(locked_door.pos),
+                orientation: locked_door.orientation,
+                switch_pos: EntityPos::from_world_pos(locked_door.switch_pos),
+            }).or_default();
+            *count = count.saturating_add(1);
+        }
+        for trap_door in &attract.entities.doors.trap {
+            let count: &mut u16 = entities.entry(EditorEntity::TrapDoor {
+                door_pos: EntityPos::from_world_pos(trap_door.pos),
+                orientation: trap_door.orientation,
+                switch_pos: EntityPos::from_world_pos(trap_door.switch_pos),
+            }).or_default();
+            *count = count.saturating_add(1);
+        }
+        for launch_pad in &attract.entities.launch_pads {
+            let count: &mut u16 = entities.entry(EditorEntity::LaunchPad {
+                pos: EntityPos::from_world_pos(launch_pad.pos),
+                orientation: launch_pad.orientation,
+            }).or_default();
+            *count = count.saturating_add(1);
+        }
         for one_way in &attract.entities.one_ways {
             let count: &mut u16 = entities.entry(EditorEntity::OneWay {
                 pos: EntityPos::from_world_pos(one_way.pos),
                 orientation: one_way.orientation,
+            }).or_default();
+            *count = count.saturating_add(1);
+        }
+        for floorguard in &attract.entities.floorchasers {
+            let count: &mut u16 = entities.entry(EditorEntity::Floorguard {
+                pos: EntityPos::from_world_pos(floorguard.pos),
+                orientation: floorguard.orientation,
+            }).or_default();
+            *count = count.saturating_add(1);
+        }
+        for bounce_block in &attract.entities.bounce_blocks {
+            let count: &mut u16 = entities.entry(EditorEntity::BounceBlock {
+                pos: EntityPos::from_world_pos(bounce_block.pos),
+                orientation: bounce_block.orientation,
             }).or_default();
             *count = count.saturating_add(1);
         }

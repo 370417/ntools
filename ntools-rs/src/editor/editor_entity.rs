@@ -1,7 +1,7 @@
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{editor::place_entity::Stage, orientation::{Orientation, OrientationExt}};
+use crate::{editor::place_entity::Stage, orientation::{Orientation, OrientationCardinal, OrientationExt}};
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum EditorEntity {
@@ -12,14 +12,43 @@ pub enum EditorEntity {
     Mine {
         pos: EntityPos,
     },
+    ToggleMine {
+        pos: EntityPos,
+    },
     Exit {
         exit_pos: EntityPos,
         switch_pos: EntityPos,
     },
+    RegularDoor {
+        pos: EntityPos,
+        orientation: OrientationCardinal,
+    },
+    LockedDoor {
+        door_pos: EntityPos,
+        orientation: OrientationCardinal,
+        switch_pos: EntityPos,
+    },
+    TrapDoor {
+        door_pos: EntityPos,
+        orientation: OrientationCardinal,
+        switch_pos: EntityPos,
+    },
+    LaunchPad {
+        pos: EntityPos,
+        orientation: Orientation,
+    },
     OneWay {
         pos: EntityPos,
         orientation: Orientation,
-    }
+    },
+    Floorguard {
+        pos: EntityPos,
+        orientation: OrientationExt,
+    },
+    BounceBlock {
+        pos: EntityPos,
+        orientation: Orientation,
+    },
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -56,24 +85,40 @@ impl EditorEntity {
         match self {
             &EditorEntity::Ninja { pos, .. } |
             &EditorEntity::Mine { pos } |
+            &EditorEntity::ToggleMine { pos } |
+            &EditorEntity::RegularDoor { pos, .. } |
+            &EditorEntity::BounceBlock { pos, .. } |
+            &EditorEntity::LaunchPad { pos, .. } |
+            &EditorEntity::Floorguard { pos, .. } |
             &EditorEntity::OneWay { pos, .. } => pos,
             &EditorEntity::Exit { exit_pos, .. } => exit_pos,
+            &EditorEntity::LockedDoor { door_pos, .. } |
+            &EditorEntity::TrapDoor { door_pos, .. } => door_pos,
         }
     }
 
     pub fn switch_pos(&self) -> Option<EntityPos> {
         match self {
             &EditorEntity::Exit { switch_pos, .. } => Some(switch_pos),
+            &EditorEntity::LockedDoor { switch_pos, .. } |
+            &EditorEntity::TrapDoor { switch_pos, .. } => Some(switch_pos),
             _ => None,
         }
     }
 
     pub fn rotation_deg(&self) -> f64 {
         match self {
-            EditorEntity::Ninja { orientation, .. } => orientation.rotation_deg(),
+            EditorEntity::Ninja { orientation, .. } |
+            EditorEntity::Floorguard { orientation, .. } => orientation.rotation_deg(),
+            EditorEntity::OneWay { orientation, .. } |
+            EditorEntity::LaunchPad { orientation, .. } |
+            EditorEntity::BounceBlock { orientation, .. } => orientation.rotation_deg(),
+            EditorEntity::RegularDoor { orientation, .. } |
+            EditorEntity::LockedDoor { orientation, .. } |
+            EditorEntity::TrapDoor { orientation, .. } => orientation.rotation_deg(),
             EditorEntity::Mine { .. } |
+            EditorEntity::ToggleMine { .. } |
             EditorEntity::Exit { .. } => 0.0,
-            EditorEntity::OneWay { orientation, .. } => orientation.rotation_deg(),
         }
     }
 
@@ -82,7 +127,14 @@ impl EditorEntity {
             EditorEntity::Ninja { .. } => 0,
             EditorEntity::Mine { .. } => 1,
             EditorEntity::Exit { .. } => 3,
+            EditorEntity::RegularDoor { .. } => 5,
+            EditorEntity::LockedDoor { .. } => 6,
+            EditorEntity::TrapDoor { .. } => 8,
+            EditorEntity::LaunchPad { .. } => 10,
             EditorEntity::OneWay { .. } => 11,
+            EditorEntity::Floorguard { .. } => 16,
+            EditorEntity::BounceBlock { .. } => 17,
+            EditorEntity::ToggleMine { .. } => 21,
         }
     }
 }

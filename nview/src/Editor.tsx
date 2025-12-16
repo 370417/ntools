@@ -1,10 +1,18 @@
-import { createSignal, For, onCleanup, Show, type Accessor, type Setter } from "solid-js";
+import { createSignal, For, onCleanup, Show, type Accessor, type AccessorArray, type Setter } from "solid-js";
 import { Editor, ExportedEntity } from "./assets/ntools_rs";
 import { Ninja, type NinjaData } from "./entities/Ninja";
 import { ExitDoors, type ExitDoorData } from "./entities/ExitDoor";
 import { ExitSwitches, type ExitSwitchData } from "./entities/ExitSwitch";
 import { OneWayDefs, OneWays, type OneWayData } from "./entities/OneWay";
-import { MINE_TOGGLED, MineDefs, Mines, type MineData } from "./entities/Mine";
+import { MINE_TOGGLED, MINE_UNTOGGLED, MineDefs, Mines, type MineData } from "./entities/Mine";
+import { RegularDoors, type RegularDoorData } from "./entities/RegularDoor";
+import { LockedDoors, type LockedDoorData } from "./entities/LockedDoor";
+import type { LockedSwitchData } from "./entities/LockedSwitch";
+import { TrapDoors, type TrapDoorData } from "./entities/TrapDoor";
+import type { TrapSwitchData } from "./entities/TrapSwitch";
+import { LaunchPads, type LaunchPadData } from "./entities/LaunchPad";
+import { Floorguards, type FloorguardData } from "./entities/Floorguard";
+import { BounceBlockDefs, BounceBlocks, type BounceBlockData } from "./entities/BounceBlock";
 
 const COLS = 42;
 const ROWS = 23;
@@ -30,8 +38,19 @@ const MODE_PEN_TOOL = 8;
 
 const ENTITY_NINJA = 0;
 const ENTITY_MINE = 1;
+const ENTITY_GOLD = 2;
 const ENTITY_EXIT = 3;
+const ENTITY_REGULAR_DOOR = 5;
+const ENTITY_LOCKED_DOOR = 6;
+const ENTITY_TRAP_DOOR = 8;
+const ENTITY_LAUNCH_PAD = 10;
 const ENTITY_ONE_WAY = 11;
+const ENTITY_FLOOR_GUARD = 16;
+const ENTITY_BOUNCE_BLOCK = 17;
+const ENTITY_THWUMP = 20;
+const ENTITY_TOGGLE_MINE = 21;
+const ENTITY_BOOST_PAD = 24;
+const ENTITY_SHOVE_THWUMP = 28;
 
 const BONES_STANDING = new Float32Array([-0.039, -0.0249, 0.1127, -0.1738, 0.1115, -0.1512, -0.0846, 0.0749, 0.1072, -0.0423, 0.0263, -0.1452, -0.0358, -0.075, -0.377, 0.4686, 0.4643, -0.0225, -0.0453, -0.5054, -0.4724, 0.1962, 0.2293, -0.1812, -0.2266, -0.2224]);
 const BONES_FALLING = new Float32Array([0.018, 0.0, 0.4156, 0.0988, 0.3581, -0.3242, -0.0708, 0.0845, 0.2924, 0.3212, 0.1853, -0.1927, -0.0236, -0.06, -0.3602, 0.3086, 0.1278, -0.3238, -0.2018, -0.4976, -0.4488, 0.0656, -0.024, -0.2729, -0.3268, -0.2042]);
@@ -54,8 +73,24 @@ type EntitiesProps = {
     setExitDoors: Setter<ExitDoorData[]>,
     exitSwitches: Accessor<ExitSwitchData[]>,
     setExitSwitches: Setter<ExitSwitchData[]>,
+    regularDoors: Accessor<RegularDoorData[]>,
+    setRegularDoors: Setter<RegularDoorData[]>,
+    lockedDoors: Accessor<LockedDoorData[]>,
+    setLockedDoors: Setter<LockedDoorData[]>,
+    lockedSwitches: Accessor<LockedSwitchData[]>,
+    setLockedSwitches: Setter<LockedSwitchData[]>,
+    trapDoors: Accessor<TrapDoorData[]>,
+    setTrapDoors: Setter<TrapDoorData[]>,
+    trapSwitches: Accessor<TrapSwitchData[]>,
+    setTrapSwitches: Setter<TrapSwitchData[]>,
+    launchPads: Accessor<LaunchPadData[]>,
+    setLaunchPads: Setter<LaunchPadData[]>,
     oneWays: Accessor<OneWayData[]>,
     setOneWays: Setter<OneWayData[]>,
+    floorguards: Accessor<FloorguardData[]>,
+    setFloorguards: Setter<FloorguardData[]>,
+    bounceBlocks: Accessor<BounceBlockData[]>,
+    setBounceBlocks: Setter<BounceBlockData[]>,
 };
 
 function createEntities(): EntitiesProps {
@@ -63,13 +98,29 @@ function createEntities(): EntitiesProps {
     const [mines, setMines] = createSignal<MineData[]>([]);
     const [exitDoors, setExitDoors] = createSignal<ExitDoorData[]>([]);
     const [exitSwitches, setExitSwitches] = createSignal<ExitSwitchData[]>([]);
+    const [regularDoors, setRegularDoors] = createSignal<RegularDoorData[]>([]);
+    const [lockedDoors, setLockedDoors] = createSignal<LockedDoorData[]>([]);
+    const [lockedSwitches, setLockedSwitches] = createSignal<LockedSwitchData[]>([]);
+    const [trapDoors, setTrapDoors] = createSignal<TrapDoorData[]>([]);
+    const [trapSwitches, setTrapSwitches] = createSignal<TrapSwitchData[]>([]);
+    const [launchPads, setLaunchPads] = createSignal<LaunchPadData[]>([]);
     const [oneWays, setOneWays] = createSignal<OneWayData[]>([]);
+    const [floorguards, setFloorguards] = createSignal<FloorguardData[]>([]);
+    const [bounceBlocks, setBounceBlocks] = createSignal<BounceBlockData[]>([]);
     return {
         ninjas, setNinjas,
         mines, setMines,
         exitDoors, setExitDoors,
         exitSwitches, setExitSwitches,
+        regularDoors, setRegularDoors,
+        lockedDoors, setLockedDoors,
+        lockedSwitches, setLockedSwitches,
+        trapDoors, setTrapDoors,
+        trapSwitches, setTrapSwitches,
+        launchPads, setLaunchPads,
         oneWays, setOneWays,
+        floorguards, setFloorguards,
+        bounceBlocks, setBounceBlocks,
     };
 }
 
@@ -78,49 +129,77 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
     const mines: MineData[] = [];
     const exitDoors: ExitDoorData[] = [];
     const exitSwitches: ExitSwitchData[] = [];
+    const regularDoors: RegularDoorData[] = [];
+    const lockedDoors: LockedDoorData[] = [];
+    const lockedSwitches: LockedSwitchData[] = [];
+    const trapDoors: TrapDoorData[] = [];
+    const trapSwitches: TrapSwitchData[] = [];
+    const launchPads: LaunchPadData[] = [];
     const oneWays: OneWayData[] = [];
+    const floorguards: FloorguardData[] = [];
+    const bounceBlocks: BounceBlockData[] = [];
 
     for (const entity of exportedEntities) {
         // Make sure to create new objects instead of reusing entity
         // because it is an object that comes from wasm.
+        const entityCopy = {
+            x: entity.x,
+            y: entity.y,
+            deg: entity.deg,
+            animProgress: 0,
+        };
+        const entitySwitch = {
+            x: entity.switch_x,
+            y: entity.switch_y,
+            animProgress: 0,
+            wasTouched: false,
+        };
+        const line = {
+            x1: entity.x,
+            y1: entity.y,
+            x2: entity.switch_x,
+            y2: entity.switch_y,
+        };
         if (entity.type_int === ENTITY_NINJA) {
-            ninjas.push({
-                x: entity.x,
-                y: entity.y,
-                deg: entity.deg,
-            });
+            ninjas.push(entityCopy);
         } else if (entity.type_int === ENTITY_MINE) {
             mines.push({
+                ...entityCopy,
                 type: MINE_TOGGLED,
-                x: entity.x,
-                y: entity.y,
+            });
+        } else if (entity.type_int === ENTITY_TOGGLE_MINE) {
+            mines.push({
+                ...entityCopy,
+                type: MINE_UNTOGGLED,
             });
         } else if (entity.type_int === ENTITY_EXIT) {
-            exitDoors.push({
-                // Note: spread operator won't work here
-                x: entity.x,
-                y: entity.y,
-                animProgress: 0,
-            });
+            exitDoors.push(entityCopy);
             if (!Number.isNaN(entity.switch_x)) {
-                exitSwitches.push({
-                    x: entity.switch_x,
-                    y: entity.switch_y,
-                    animProgress: 0,
-                });
-                lines.push({
-                    x1: entity.x,
-                    y1: entity.y,
-                    x2: entity.switch_x,
-                    y2: entity.switch_y,
-                });
+                exitSwitches.push(entitySwitch);
+                lines.push(line);
             }
+        } else if (entity.type_int === ENTITY_REGULAR_DOOR) {
+            regularDoors.push(entityCopy);
+        } else if (entity.type_int === ENTITY_LOCKED_DOOR) {
+            lockedDoors.push(entityCopy);
+            if (!Number.isNaN(entity.switch_x)) {
+                lockedSwitches.push(entitySwitch);
+                lines.push(line);
+            }
+        } else if (entity.type_int === ENTITY_TRAP_DOOR) {
+            trapDoors.push(entityCopy);
+            if (!Number.isNaN(entity.switch_x)) {
+                trapSwitches.push(entitySwitch);
+                lines.push(line);
+            }
+        } else if (entity.type_int === ENTITY_LAUNCH_PAD) {
+            launchPads.push(entityCopy);
         } else if (entity.type_int === ENTITY_ONE_WAY) {
-            oneWays.push({
-                x: entity.x,
-                y: entity.y,
-                deg: entity.deg,
-            });
+            oneWays.push(entityCopy);
+        } else if (entity.type_int === ENTITY_FLOOR_GUARD) {
+            floorguards.push(entityCopy);
+        } else if (entity.type_int === ENTITY_BOUNCE_BLOCK) {
+            bounceBlocks.push(entityCopy);
         }
         // Do I need this?
         entity.free();
@@ -130,7 +209,15 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
     entities.setMines(mines);
     entities.setExitDoors(exitDoors);
     entities.setExitSwitches(exitSwitches);
+    entities.setRegularDoors(regularDoors);
+    entities.setLockedDoors(lockedDoors);
+    entities.setLockedSwitches(lockedSwitches);
+    entities.setTrapDoors(trapDoors);
+    entities.setTrapSwitches(trapSwitches);
+    entities.setLaunchPads(launchPads);
     entities.setOneWays(oneWays);
+    entities.setFloorguards(floorguards);
+    entities.setBounceBlocks(bounceBlocks);
 }
 
 function Entities({ entities }: { entities: EntitiesProps }) {
@@ -139,6 +226,12 @@ function Entities({ entities }: { entities: EntitiesProps }) {
         <OneWays oneWays={[entities.oneWays, () => {}]} />
         <Mines mines={[entities.mines, () => {}]} />
         <ExitSwitches exitSwitches={[entities.exitSwitches, () => {}]} />
+        <LaunchPads launchPads={[entities.launchPads, () => {}]} />
+        <Floorguards floorguards={[entities.floorguards, () => {}]} />
+        <RegularDoors regularDoors={[entities.regularDoors, () => {}]} />
+        <LockedDoors lockedDoors={[entities.lockedDoors, () => {}]} />
+        <TrapDoors trapDoors={[entities.trapDoors, () => {}]} />
+        <BounceBlocks bounceBlocks={[entities.bounceBlocks, () => {}]} />
         <For each={entities.ninjas()}>
             {ninja => <Ninja class="ninja" ninja={() => ninja} bones={() => BONES_STANDING} />}
         </For>
@@ -330,6 +423,7 @@ export function EditorApp({ editor, pastNinjas }: { editor: Editor, pastNinjas: 
                 </clipPath>
                 <MineDefs />
                 <OneWayDefs />
+                <BounceBlockDefs />
                 <path id="tilemode-crosshair" stroke-width="1.5" fill="none" d={tilemodeCrosshairPath} />
                 <path id="crosshair" stroke-width="1.5" fill="none" d={crosshairPath} />
                 <filter id="outline" filterUnits="userSpaceOnUse" x="0" y="0" width="1056" height="600">

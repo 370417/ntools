@@ -4,7 +4,7 @@ use futures_channel::oneshot::{self, Receiver};
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{attract::Attract, editor::{editor_entity::{EditorEntity, EntityPos, ExportedEntity}, editor_state::{Command, EditorState}, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::{PlaceEntity, Stage}, select_tiles::SelectTiles}, entity::{Entities, exit::Exit, mine::Mine, one_way::OneWay}, grid::{COLS, GridPos, ROWS}, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationCardinal}, replay::Replay, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
+use crate::{attract::Attract, editor::{editor_entity::{EditorEntity, EntityPos, ExportedEntity}, editor_state::{Command, EditorState}, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::{PlaceEntity, Stage}, select_tiles::SelectTiles}, entity::{Entities, bounce_block::BounceBlock, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floorchaser::Floorchaser, launch_pad::LaunchPad, mine::Mine, one_way::OneWay}, grid::{COLS, GridPos, ROWS}, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationCardinal}, replay::Replay, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
 
 pub mod editor_entity;
 pub mod editor_state;
@@ -95,11 +95,32 @@ impl Editor {
                     EditorEntity::Mine { pos } => {
                         entities.mines.push(Mine::new_toggled(pos.to_world_pos()));
                     }
+                    EditorEntity::ToggleMine { pos } => {
+                        entities.mines.push(Mine::new_untoggled(pos.to_world_pos()));
+                    }
                     EditorEntity::Exit { exit_pos, switch_pos } => {
                         entities.exits.push(Exit::new(exit_pos.to_world_pos(), switch_pos.to_world_pos()));
                     }
+                    EditorEntity::RegularDoor { pos, orientation } => {
+                        entities.doors.regular.push(RegularDoor::new(pos.to_world_pos(), *orientation));
+                    }
+                    EditorEntity::LockedDoor { door_pos, orientation, switch_pos } => {
+                        entities.doors.locked.push(LockedDoor::new(door_pos.to_world_pos(), *orientation, switch_pos.to_world_pos()));
+                    }
+                    EditorEntity::TrapDoor { door_pos, orientation, switch_pos } => {
+                        entities.doors.trap.push(TrapDoor::new(door_pos.to_world_pos(), *orientation, switch_pos.to_world_pos()));
+                    }
+                    EditorEntity::LaunchPad { pos, orientation } => {
+                        entities.launch_pads.push(LaunchPad::new(pos.to_world_pos(), *orientation));
+                    }
                     EditorEntity::OneWay { pos, orientation } => {
                         entities.one_ways.push(OneWay::new(pos.to_world_pos(), *orientation));
+                    }
+                    EditorEntity::Floorguard { pos, orientation } => {
+                        entities.floorchasers.push(Floorchaser::new(pos.to_world_pos(), *orientation));
+                    }
+                    EditorEntity::BounceBlock { pos, orientation } => {
+                        entities.bounce_blocks.push(BounceBlock::new(pos.to_world_pos(), *orientation));
                     }
                 }
             }

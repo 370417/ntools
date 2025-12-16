@@ -241,6 +241,20 @@ impl From<Orientation> for OrientationExt {
     }
 }
 
+impl TryFrom<Orientation> for OrientationCardinal {
+    type Error = ();
+
+    fn try_from(value: Orientation) -> Result<Self, Self::Error> {
+        match value {
+            Orientation::E => Ok(Self::E),
+            Orientation::S => Ok(Self::S),
+            Orientation::W => Ok(Self::W),
+            Orientation::N => Ok(Self::N),
+            _ => Err(()),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -31,14 +31,14 @@ pub enum Corners {
 }
 
 impl BounceBlock {
-    pub fn new(origin: DVec2) -> BounceBlock {
+    pub fn new(origin: DVec2, orientation: Orientation) -> BounceBlock {
         BounceBlock {
             pos: origin,
             pos_old: origin,
             origin,
             speed: DVec2::ZERO,
             grid_pos: GridPos::from_world_pos(origin),
-            orientation: Orientation::E,
+            orientation,
             corners: Corners::Square,
         }
     }
