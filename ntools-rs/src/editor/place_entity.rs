@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use glam::DVec2;
 
-use crate::{editor::{editor_entity::{EditorEntity, EntityPos}, editor_state::{Command, SetEntityCount}}, orientation::Orientation};
+use crate::{editor::{editor_entity::{EditorEntity, EntityPos}, editor_state::{Command, SetEntityCount}}, orientation::{Orientation, OrientationCardinal}};
 
 pub struct PlaceEntity {
     pub entity: EditorEntity,
@@ -19,7 +19,17 @@ pub enum Stage {
 
 impl PlaceEntity {
     pub fn crosshair(&self, cursor_pos: DVec2, fine_grid: bool) -> DVec2 {
-        Self::round_to_grid(cursor_pos, fine_grid)
+        match self.entity {
+            EditorEntity::Floorguard { .. } => Self::round_to_grid_floorguard(cursor_pos, fine_grid),
+            EditorEntity::RegularDoor { .. } => Self::round_to_grid_door(cursor_pos, fine_grid),
+            EditorEntity::LockedDoor { .. } |
+            EditorEntity::TrapDoor { .. } => if let Some(Stage::PlaceDoor) = self.stage {
+                Self::round_to_grid_door(cursor_pos, fine_grid)
+            } else {
+                Self::round_to_grid(cursor_pos, fine_grid)
+            },
+            _ => Self::round_to_grid(cursor_pos, fine_grid)
+        }
     }
 
     pub fn round_to_grid(cursor_pos: DVec2, fine_grid: bool) -> DVec2 {
@@ -27,6 +37,64 @@ impl PlaceEntity {
             (cursor_pos / 6.0).round() * 6.0
         } else {
             (cursor_pos / 12.0).round() * 12.0
+        }
+    }
+
+    /// The coarse grid for floorguards is shifted vertically by a quarter tile
+    /// so that they can easily be placed flush with the ground.
+    pub fn round_to_grid_floorguard(cursor_pos: DVec2, fine_grid: bool) -> DVec2 {
+        if fine_grid {
+            (cursor_pos / 6.0).round() * 6.0
+        } else {
+            ((cursor_pos - DVec2::new(0.0, 6.0)) / 12.0).round() * 12.0 + DVec2::new(0.0, 6.0)
+        }
+    }
+
+    pub fn round_to_grid_door(cursor_pos: DVec2, fine_grid: bool) -> DVec2 {
+        let cursor_pos = cursor_pos.max(DVec2::ZERO); // Make sure pos is non-negative
+
+        let horiz_dist_to_midline = ((cursor_pos.x % 24.0) - 12.0).abs();
+        let vert_dist_to_midline = ((cursor_pos.y % 24.0) - 12.0).abs();
+
+        if horiz_dist_to_midline < vert_dist_to_midline {
+            let x = ((cursor_pos.x - 12.0) / 24.0).round() * 24.0 + 12.0;
+            let y = if fine_grid {
+                (cursor_pos.y / 6.0).round() * 6.0
+            } else {
+                (cursor_pos.y / 12.0).round() * 12.0
+            };
+            DVec2::new(x, y)
+        } else {
+            let y = ((cursor_pos.y - 12.0) / 24.0).round() * 24.0 + 12.0;
+            let x = if fine_grid {
+                (cursor_pos.x / 6.0).round() * 6.0
+            } else {
+                (cursor_pos.x / 12.0).round() * 12.0
+            };
+            DVec2::new(x, y)
+        }
+    }
+
+    pub fn set_door_orientation_from_pos(&mut self) {
+        match (&mut self.entity, self.stage) {
+            (EditorEntity::RegularDoor { pos, orientation }, _) => {
+                *orientation = Self::door_orientation_from_pos(pos.to_world_pos(), *orientation);
+            }
+            (EditorEntity::LockedDoor { door_pos, orientation, .. }, Some(Stage::PlaceDoor)) |
+            (EditorEntity::TrapDoor { door_pos, orientation, .. }, Some(Stage::PlaceDoor)) => {
+                *orientation = Self::door_orientation_from_pos(door_pos.to_world_pos(), *orientation);
+            }
+            _ => {}
+        }
+    }
+
+    pub fn door_orientation_from_pos(cursor_pos: DVec2, old_orientation: OrientationCardinal) -> OrientationCardinal {
+        if cursor_pos.x % 24.0 != 12.0 {
+            OrientationCardinal::S
+        } else if cursor_pos.y % 24.0 != 12.0 {
+            OrientationCardinal::E
+        } else {
+            old_orientation
         }
     }
 
@@ -66,11 +134,9 @@ impl PlaceEntity {
             EditorEntity::OneWay { orientation, .. } |
             EditorEntity::LaunchPad { orientation, .. } |
             EditorEntity::BounceBlock { orientation, .. } => *orientation = new_orientation,
-            EditorEntity::RegularDoor { orientation, .. } |
-            EditorEntity::LockedDoor { orientation, .. } |
-            EditorEntity::TrapDoor { orientation, .. } => if let Ok(new_orientation) = new_orientation.try_into() {
-                *orientation = new_orientation;
-            },
+            EditorEntity::RegularDoor { .. } |
+            EditorEntity::LockedDoor { .. } |
+            EditorEntity::TrapDoor { .. } |
             EditorEntity::Mine { .. } |
             EditorEntity::ToggleMine { .. } |
             EditorEntity::Exit { .. } => {}

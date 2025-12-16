@@ -269,6 +269,9 @@ export function EditorApp({ editor, pastNinjas }: { editor: Editor, pastNinjas: 
         else if (event.code === 'Digit8') change = true, editor.press_8(event.shiftKey);
 
         else if (event.code === 'Digit9') change = true, editor.press_9();
+        else if (event.code === 'Digit0') change = true, editor.press_0();
+        else if (event.code === 'Minus') change = true, editor.press_dash();
+        else if (event.code === 'Equal') change = true, editor.press_equals();
 
         else if (event.code === 'KeyZ' && (event.ctrlKey || event.metaKey) && event.shiftKey) change = true, editor.redo();
         else if (event.code === 'KeyZ' && (event.ctrlKey || event.metaKey)) change = true, editor.undo();

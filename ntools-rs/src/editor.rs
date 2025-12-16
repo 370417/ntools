@@ -227,6 +227,7 @@ impl Editor {
                 self.cursor_pos = new_cursor_pos;
                 let new_crosshair = place_entity.crosshair(self.cursor_pos, self.entity_fine_grid);
                 place_entity.set_pos(new_crosshair);
+                place_entity.set_door_orientation_from_pos();
                 new_crosshair != old_crosshair
             }
             EditorMode::SelectTiles(select_tiles) => {
@@ -653,10 +654,11 @@ impl Editor {
 
     #[wasm_bindgen]
     pub fn press_i(&mut self) {
+        let rounded_pos = PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid);
         self.mode = EditorMode::PlaceEntity(PlaceEntity {
             entity: EditorEntity::RegularDoor {
-                pos: EntityPos::from_world_pos(PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid)),
-                orientation: self.entity_orientation_cardinal,
+                pos: EntityPos::from_world_pos(rounded_pos),
+                orientation: PlaceEntity::door_orientation_from_pos(rounded_pos, self.entity_orientation_cardinal),
             },
             stage: None,
         });
@@ -664,11 +666,12 @@ impl Editor {
 
     #[wasm_bindgen]
     pub fn press_o(&mut self) {
+        let rounded_pos = PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid);
         self.mode = EditorMode::PlaceEntity(PlaceEntity {
             entity: EditorEntity::LockedDoor {
-                door_pos: EntityPos::from_world_pos(PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid)),
-                switch_pos: EntityPos::from_world_pos(PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid)),
-                orientation: self.entity_orientation_cardinal,
+                door_pos: EntityPos::from_world_pos(rounded_pos),
+                switch_pos: EntityPos::from_world_pos(rounded_pos),
+                orientation: PlaceEntity::door_orientation_from_pos(rounded_pos, self.entity_orientation_cardinal),
             },
             stage: Some(Stage::PlaceDoor),
         });
@@ -676,11 +679,12 @@ impl Editor {
 
     #[wasm_bindgen]
     pub fn press_p(&mut self) {
+        let rounded_pos = PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid);
         self.mode = EditorMode::PlaceEntity(PlaceEntity {
             entity: EditorEntity::TrapDoor {
-                door_pos: EntityPos::from_world_pos(PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid)),
-                switch_pos: EntityPos::from_world_pos(PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid)),
-                orientation: self.entity_orientation_cardinal,
+                door_pos: EntityPos::from_world_pos(rounded_pos),
+                switch_pos: EntityPos::from_world_pos(rounded_pos),
+                orientation: PlaceEntity::door_orientation_from_pos(rounded_pos, self.entity_orientation_cardinal),
             },
             stage: Some(Stage::PlaceDoor),
         });
@@ -732,7 +736,7 @@ impl Editor {
     pub fn press_n(&mut self) {
         self.mode = EditorMode::PlaceEntity(PlaceEntity {
             entity: EditorEntity::Floorguard {
-                pos: EntityPos::from_world_pos(PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid)),
+                pos: EntityPos::from_world_pos(PlaceEntity::round_to_grid_floorguard(self.cursor_pos, self.entity_fine_grid)),
                 orientation: self.entity_orientation.into(),
             },
             stage: None,
