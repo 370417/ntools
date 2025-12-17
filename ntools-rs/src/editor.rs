@@ -281,6 +281,9 @@ impl Editor {
             }
             EditorMode::SelectTiles(select_tiles) => {
                 select_tiles.select_floodfill(self.cursor_pos, self.state.tiles(), shift);
+                if select_tiles.is_empty() {
+                    self.mode = EditorMode::PaintTiles;
+                }
             }
             _ => {}
         }
