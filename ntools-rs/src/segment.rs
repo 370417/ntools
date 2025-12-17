@@ -76,7 +76,7 @@ impl Segment {
     }
 
     /// Find the closest point on the segment from the given position.
-    /// is_back_facing is false if the position is facing the segment's outter edge.
+    /// is_back_facing is false if the position is facing the segment's outer edge.
     pub fn get_closest_point(&self, pos: DVec2) -> ClosestPoint {
         match self {
             Segment::Linear { start, end, .. } => {

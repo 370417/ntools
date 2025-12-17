@@ -433,6 +433,7 @@ export function EditorApp({ editor, pastNinjas }: { editor: Editor, pastNinjas: 
                 render();
             }
         }}
+        ondblclick={() => { editor.double_click(); render() }}
         onmouseup={() => { editor.cursor_up(); render() }}
         oncontextmenu={event => { if (editor.press_escape()) { render(); event.preventDefault(); } }} >
             <defs>

@@ -272,6 +272,16 @@ impl Editor {
     }
 
     #[wasm_bindgen]
+    pub fn double_click(&mut self) {
+        match &mut self.mode {
+            EditorMode::SelectTiles(select_tiles) => {
+                select_tiles.select_floodfill(self.cursor_pos, self.state.tiles());
+            }
+            _ => {}
+        }
+    }
+
+    #[wasm_bindgen]
     pub fn tile_crosshair_col(&self) -> usize {
         self.tile_crosshair().x
     }

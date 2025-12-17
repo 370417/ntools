@@ -1,7 +1,7 @@
 use float_ord::FloatOrd;
 use glam::DVec2;
 
-use crate::{editor::editor_state::{Command, EditorState, PaintTile}, grid::{is_pos_in_bounds, GridPos, COLS, ROWS}, tile::{Tile, Tiles, TILE_HALF_SIZE, TILE_SIZE}};
+use crate::{editor::editor_state::{Command, EditorState, PaintTile}, grid::{COLS, GridPos, ROWS, is_pos_in_bounds}, tile::{HorizontalEdge, TILE_HALF_SIZE, TILE_SIZE, Tile, Tiles, VerticalEdge}};
 
 pub struct PenTool {
     pub start: PenToolStart,
@@ -197,15 +197,15 @@ pub fn create_command_tiles(start: DVec2, end: DVec2, is_clockwise: bool, tiles:
 
             let (edge_to_make_closed, edge_to_make_open, cell_to_make_closed, cell_to_make_open) = if left_side_closed ^ !is_clockwise {
                 (
-                    tiles.get(left_grid_pos).map(tile_right_edge),
-                    tiles.get(right_grid_pos).map(tile_left_edge),
+                    tiles.get(left_grid_pos).map(Tile::right_edge),
+                    tiles.get(right_grid_pos).map(Tile::left_edge),
                     left_grid_pos,
                     right_grid_pos,
                 )
             } else {
                 (
-                    tiles.get(right_grid_pos).map(tile_left_edge),
-                    tiles.get(left_grid_pos).map(tile_right_edge),
+                    tiles.get(right_grid_pos).map(Tile::left_edge),
+                    tiles.get(left_grid_pos).map(Tile::right_edge),
                     right_grid_pos,
                     left_grid_pos,
                 )
@@ -252,15 +252,15 @@ pub fn create_command_tiles(start: DVec2, end: DVec2, is_clockwise: bool, tiles:
 
             let (edge_to_make_closed, edge_to_make_open, cell_to_make_closed, cell_to_make_open) = if left_side_closed ^ !is_clockwise {
                 (
-                    tiles.get(left_grid_pos).map(tile_right_edge),
-                    tiles.get(right_grid_pos).map(tile_left_edge),
+                    tiles.get(left_grid_pos).map(Tile::right_edge),
+                    tiles.get(right_grid_pos).map(Tile::left_edge),
                     left_grid_pos,
                     right_grid_pos,
                 )
             } else {
                 (
-                    tiles.get(right_grid_pos).map(tile_left_edge),
-                    tiles.get(left_grid_pos).map(tile_right_edge),
+                    tiles.get(right_grid_pos).map(Tile::left_edge),
+                    tiles.get(left_grid_pos).map(Tile::right_edge),
                     right_grid_pos,
                     left_grid_pos,
                 )
@@ -312,15 +312,15 @@ pub fn create_command_tiles(start: DVec2, end: DVec2, is_clockwise: bool, tiles:
 
             let (edge_to_make_closed, edge_to_make_open, cell_to_make_closed, cell_to_make_open) = if left_side_closed ^ !is_clockwise {
                 (
-                    tiles.get(left_grid_pos).map(tile_right_edge),
-                    tiles.get(right_grid_pos).map(tile_left_edge),
+                    tiles.get(left_grid_pos).map(Tile::right_edge),
+                    tiles.get(right_grid_pos).map(Tile::left_edge),
                     left_grid_pos,
                     right_grid_pos,
                 )
             } else {
                 (
-                    tiles.get(right_grid_pos).map(tile_left_edge),
-                    tiles.get(left_grid_pos).map(tile_right_edge),
+                    tiles.get(right_grid_pos).map(Tile::left_edge),
+                    tiles.get(left_grid_pos).map(Tile::right_edge),
                     right_grid_pos,
                     left_grid_pos,
                 )
@@ -376,15 +376,15 @@ pub fn create_command_tiles(start: DVec2, end: DVec2, is_clockwise: bool, tiles:
 
             let (edge_to_make_closed, edge_to_make_open, cell_to_make_closed, cell_to_make_open) = if lower_side_closed ^ !is_clockwise {
                 (
-                    tiles.get(lower_grid_pos).map(tile_top_edge),
-                    tiles.get(upper_grid_pos).map(tile_bottom_edge),
+                    tiles.get(lower_grid_pos).map(Tile::top_edge),
+                    tiles.get(upper_grid_pos).map(Tile::bottom_edge),
                     lower_grid_pos,
                     upper_grid_pos,
                 )
             } else {
                 (
-                    tiles.get(upper_grid_pos).map(tile_bottom_edge),
-                    tiles.get(lower_grid_pos).map(tile_top_edge),
+                    tiles.get(upper_grid_pos).map(Tile::bottom_edge),
+                    tiles.get(lower_grid_pos).map(Tile::top_edge),
                     upper_grid_pos,
                     lower_grid_pos,
                 )
@@ -431,15 +431,15 @@ pub fn create_command_tiles(start: DVec2, end: DVec2, is_clockwise: bool, tiles:
 
             let (edge_to_make_closed, edge_to_make_open, cell_to_make_closed, cell_to_make_open) = if lower_side_closed ^ !is_clockwise {
                 (
-                    tiles.get(lower_grid_pos).map(tile_top_edge),
-                    tiles.get(upper_grid_pos).map(tile_bottom_edge),
+                    tiles.get(lower_grid_pos).map(Tile::top_edge),
+                    tiles.get(upper_grid_pos).map(Tile::bottom_edge),
                     lower_grid_pos,
                     upper_grid_pos,
                 )
             } else {
                 (
-                    tiles.get(upper_grid_pos).map(tile_bottom_edge),
-                    tiles.get(lower_grid_pos).map(tile_top_edge),
+                    tiles.get(upper_grid_pos).map(Tile::bottom_edge),
+                    tiles.get(lower_grid_pos).map(Tile::top_edge),
                     upper_grid_pos,
                     lower_grid_pos,
                 )
@@ -491,15 +491,15 @@ pub fn create_command_tiles(start: DVec2, end: DVec2, is_clockwise: bool, tiles:
 
             let (edge_to_make_closed, edge_to_make_open, cell_to_make_closed, cell_to_make_open) = if lower_side_closed ^ !is_clockwise {
                 (
-                    tiles.get(lower_grid_pos).map(tile_top_edge),
-                    tiles.get(upper_grid_pos).map(tile_bottom_edge),
+                    tiles.get(lower_grid_pos).map(Tile::top_edge),
+                    tiles.get(upper_grid_pos).map(Tile::bottom_edge),
                     lower_grid_pos,
                     upper_grid_pos,
                 )
             } else {
                 (
-                    tiles.get(upper_grid_pos).map(tile_bottom_edge),
-                    tiles.get(lower_grid_pos).map(tile_top_edge),
+                    tiles.get(upper_grid_pos).map(Tile::bottom_edge),
+                    tiles.get(lower_grid_pos).map(Tile::top_edge),
                     upper_grid_pos,
                     lower_grid_pos,
                 )
@@ -597,177 +597,5 @@ fn tile_from_intercept(local_start: DVec2, local_end: DVec2) -> Tile {
         ((12.0, 0.0), (-12.0, 12.0)) => Tile::Tile7S,
         ((-12.0, -12.0), (12.0, 0.0)) => Tile::Tile7W,
         _ => Tile::TileD,
-    }
-}
-
-#[derive(PartialEq, Eq)]
-enum VerticalEdge {
-    Open,
-    Closed,
-    LowerHalfOpen,
-    UpperHalfOpen,
-}
-
-#[derive(PartialEq, Eq)]
-enum HorizontalEdge {
-    Open,
-    Closed,
-    LeftHalfOpen,
-    RightHalfOpen,
-}
-
-fn tile_left_edge(tile: Tile) -> VerticalEdge {
-    match tile {
-        Tile::TileE => VerticalEdge::Closed,
-        Tile::TileD => VerticalEdge::Open,
-        Tile::Tile1Q => VerticalEdge::Open,
-        Tile::Tile1W => VerticalEdge::Closed,
-        Tile::Tile1S => VerticalEdge::Closed,
-        Tile::Tile1A => VerticalEdge::Open,
-        Tile::Tile2Q => VerticalEdge::Open,
-        Tile::Tile2W => VerticalEdge::Closed,
-        Tile::Tile2S => VerticalEdge::Closed,
-        Tile::Tile2A => VerticalEdge::Open,
-        Tile::Tile3Q => VerticalEdge::Open,
-        Tile::Tile3W => VerticalEdge::UpperHalfOpen,
-        Tile::Tile3S => VerticalEdge::LowerHalfOpen,
-        Tile::Tile3A => VerticalEdge::Open,
-        Tile::Tile4Q => VerticalEdge::Open,
-        Tile::Tile4W => VerticalEdge::Closed,
-        Tile::Tile4S => VerticalEdge::Closed,
-        Tile::Tile4A => VerticalEdge::Open,
-        Tile::Tile5Q => VerticalEdge::Closed,
-        Tile::Tile5W => VerticalEdge::LowerHalfOpen,
-        Tile::Tile5S => VerticalEdge::Open,
-        Tile::Tile5A => VerticalEdge::UpperHalfOpen,
-        Tile::Tile6Q => VerticalEdge::Open,
-        Tile::Tile6W => VerticalEdge::Closed,
-        Tile::Tile6S => VerticalEdge::Closed,
-        Tile::Tile6A => VerticalEdge::Open,
-        Tile::Tile7Q => VerticalEdge::UpperHalfOpen,
-        Tile::Tile7W => VerticalEdge::Closed,
-        Tile::Tile7S => VerticalEdge::Closed,
-        Tile::Tile7A => VerticalEdge::LowerHalfOpen,
-        Tile::Tile8Q => VerticalEdge::Open,
-        Tile::Tile8W => VerticalEdge::Closed,
-        Tile::Tile8S => VerticalEdge::Closed,
-        Tile::Tile8A => VerticalEdge::Open,
-    }
-}
-
-fn tile_right_edge(tile: Tile) -> VerticalEdge {
-    match tile {
-        Tile::TileE => VerticalEdge::Closed,
-        Tile::TileD => VerticalEdge::Open,
-        Tile::Tile1Q => VerticalEdge::Closed,
-        Tile::Tile1W => VerticalEdge::Open,
-        Tile::Tile1S => VerticalEdge::Open,
-        Tile::Tile1A => VerticalEdge::Closed,
-        Tile::Tile2Q => VerticalEdge::Closed,
-        Tile::Tile2W => VerticalEdge::Open,
-        Tile::Tile2S => VerticalEdge::Open,
-        Tile::Tile2A => VerticalEdge::Closed,
-        Tile::Tile3Q => VerticalEdge::UpperHalfOpen,
-        Tile::Tile3W => VerticalEdge::Open,
-        Tile::Tile3S => VerticalEdge::Open,
-        Tile::Tile3A => VerticalEdge::LowerHalfOpen,
-        Tile::Tile4Q => VerticalEdge::Closed,
-        Tile::Tile4W => VerticalEdge::Open,
-        Tile::Tile4S => VerticalEdge::Open,
-        Tile::Tile4A => VerticalEdge::Closed,
-        Tile::Tile5Q => VerticalEdge::Open,
-        Tile::Tile5W => VerticalEdge::LowerHalfOpen,
-        Tile::Tile5S => VerticalEdge::Closed,
-        Tile::Tile5A => VerticalEdge::UpperHalfOpen,
-        Tile::Tile6Q => VerticalEdge::Closed,
-        Tile::Tile6W => VerticalEdge::Open,
-        Tile::Tile6S => VerticalEdge::Open,
-        Tile::Tile6A => VerticalEdge::Closed,
-        Tile::Tile7Q => VerticalEdge::Closed,
-        Tile::Tile7W => VerticalEdge::UpperHalfOpen,
-        Tile::Tile7S => VerticalEdge::LowerHalfOpen,
-        Tile::Tile7A => VerticalEdge::Closed,
-        Tile::Tile8Q => VerticalEdge::Closed,
-        Tile::Tile8W => VerticalEdge::Open,
-        Tile::Tile8S => VerticalEdge::Open,
-        Tile::Tile8A => VerticalEdge::Closed,
-    }
-}
-
-fn tile_top_edge(tile: Tile) -> HorizontalEdge {
-    match tile {
-        Tile::TileE => HorizontalEdge::Closed,
-        Tile::TileD => HorizontalEdge::Open,
-        Tile::Tile1Q => HorizontalEdge::Open,
-        Tile::Tile1W => HorizontalEdge::Open,
-        Tile::Tile1S => HorizontalEdge::Closed,
-        Tile::Tile1A => HorizontalEdge::Closed,
-        Tile::Tile2Q => HorizontalEdge::Open,
-        Tile::Tile2W => HorizontalEdge::Open,
-        Tile::Tile2S => HorizontalEdge::RightHalfOpen,
-        Tile::Tile2A => HorizontalEdge::LeftHalfOpen,
-        Tile::Tile3Q => HorizontalEdge::Open,
-        Tile::Tile3W => HorizontalEdge::Open,
-        Tile::Tile3S => HorizontalEdge::Closed,
-        Tile::Tile3A => HorizontalEdge::Closed,
-        Tile::Tile4Q => HorizontalEdge::Open,
-        Tile::Tile4W => HorizontalEdge::Open,
-        Tile::Tile4S => HorizontalEdge::Closed,
-        Tile::Tile4A => HorizontalEdge::Closed,
-        Tile::Tile5Q => HorizontalEdge::RightHalfOpen,
-        Tile::Tile5W => HorizontalEdge::Closed,
-        Tile::Tile5S => HorizontalEdge::LeftHalfOpen,
-        Tile::Tile5A => HorizontalEdge::Open,
-        Tile::Tile6Q => HorizontalEdge::LeftHalfOpen,
-        Tile::Tile6W => HorizontalEdge::RightHalfOpen,
-        Tile::Tile6S => HorizontalEdge::Closed,
-        Tile::Tile6A => HorizontalEdge::Closed,
-        Tile::Tile7Q => HorizontalEdge::Open,
-        Tile::Tile7W => HorizontalEdge::Open,
-        Tile::Tile7S => HorizontalEdge::Closed,
-        Tile::Tile7A => HorizontalEdge::Closed,
-        Tile::Tile8Q => HorizontalEdge::Open,
-        Tile::Tile8W => HorizontalEdge::Open,
-        Tile::Tile8S => HorizontalEdge::Closed,
-        Tile::Tile8A => HorizontalEdge::Closed,
-    }
-}
-
-fn tile_bottom_edge(tile: Tile) -> HorizontalEdge {
-    match tile {
-        Tile::TileE => HorizontalEdge::Closed,
-        Tile::TileD => HorizontalEdge::Open,
-        Tile::Tile1Q => HorizontalEdge::Closed,
-        Tile::Tile1W => HorizontalEdge::Closed,
-        Tile::Tile1S => HorizontalEdge::Open,
-        Tile::Tile1A => HorizontalEdge::Open,
-        Tile::Tile2Q => HorizontalEdge::LeftHalfOpen,
-        Tile::Tile2W => HorizontalEdge::RightHalfOpen,
-        Tile::Tile2S => HorizontalEdge::Open,
-        Tile::Tile2A => HorizontalEdge::Open,
-        Tile::Tile3Q => HorizontalEdge::Closed,
-        Tile::Tile3W => HorizontalEdge::Closed,
-        Tile::Tile3S => HorizontalEdge::Open,
-        Tile::Tile3A => HorizontalEdge::Open,
-        Tile::Tile4Q => HorizontalEdge::Closed,
-        Tile::Tile4W => HorizontalEdge::Closed,
-        Tile::Tile4S => HorizontalEdge::Open,
-        Tile::Tile4A => HorizontalEdge::Open,
-        Tile::Tile5Q => HorizontalEdge::RightHalfOpen,
-        Tile::Tile5W => HorizontalEdge::Open,
-        Tile::Tile5S => HorizontalEdge::LeftHalfOpen,
-        Tile::Tile5A => HorizontalEdge::Closed,
-        Tile::Tile6Q => HorizontalEdge::Closed,
-        Tile::Tile6W => HorizontalEdge::Closed,
-        Tile::Tile6S => HorizontalEdge::RightHalfOpen,
-        Tile::Tile6A => HorizontalEdge::LeftHalfOpen,
-        Tile::Tile7Q => HorizontalEdge::Closed,
-        Tile::Tile7W => HorizontalEdge::Closed,
-        Tile::Tile7S => HorizontalEdge::Open,
-        Tile::Tile7A => HorizontalEdge::Open,
-        Tile::Tile8Q => HorizontalEdge::Closed,
-        Tile::Tile8W => HorizontalEdge::Closed,
-        Tile::Tile8S => HorizontalEdge::Open,
-        Tile::Tile8A => HorizontalEdge::Open,
     }
 }
