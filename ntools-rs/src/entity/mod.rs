@@ -150,9 +150,9 @@ pub fn move_entities<T: Mob + Entity>(entities: &mut [T], entity_grid: &mut Grid
 }
 
 pub fn move_entity<T: Mob + Entity>(i: usize, entity: &mut T, entity_grid: &mut Grid<EntityIndex>, segments: &Grid<Segment>, doors: &Doors) {
-    let old_grid_pos = entity.grid_pos();
+    let old_grid_pos = entity.grid_pos().clamp();
     entity.move_entity(segments, doors);
-    let new_grid_pos = GridPos::from_world_pos(entity.pos());
+    let new_grid_pos = GridPos::from_world_pos(entity.pos()).clamp();
     if old_grid_pos != new_grid_pos {
         let entity_index = (entity.entity_type(), i);
         let existing_entry = entity_grid[old_grid_pos].iter().enumerate().find(|(_, x)| {
