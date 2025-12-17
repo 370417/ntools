@@ -1,4 +1,4 @@
-import { createSignal, For, onCleanup, Show, type Accessor, type AccessorArray, type Setter } from "solid-js";
+import { createSignal, For, onCleanup, Show, type Accessor, type Setter } from "solid-js";
 import { Editor, ExportedEntity } from "./assets/ntools_rs";
 import { Ninja, type NinjaData } from "./entities/Ninja";
 import { ExitDoors, type ExitDoorData } from "./entities/ExitDoor";
@@ -13,6 +13,7 @@ import { TrapSwitchDefs, TrapSwitches, type TrapSwitchData } from "./entities/Tr
 import { LaunchPads, type LaunchPadData } from "./entities/LaunchPad";
 import { Floorguards, type FloorguardData } from "./entities/Floorguard";
 import { BounceBlockDefs, BounceBlocks, type BounceBlockData } from "./entities/BounceBlock";
+import type { GlobalEventState } from "./App";
 
 const COLS = 42;
 const ROWS = 23;
@@ -243,7 +244,9 @@ function Entities({ entities }: { entities: EntitiesProps }) {
     </>;
 }
 
-export function EditorApp({ editor, pastNinjas }: { editor: Editor, pastNinjas: Accessor<{ x: number, y: number }[]> }) {
+export function EditorApp(props: { editor: Editor, pastNinjas: Accessor<{ x: number, y: number }[]>, globalEventState: GlobalEventState }) {
+    const { editor, pastNinjas } = props;
+
     const [tilePath, setTilePath] = createSignal('');
     const [selectedTilePath, setSelectedTilePath] = createSignal('');
     const [showHalfGrid, setShowHalfGrid] = createSignal(true);
@@ -425,6 +428,10 @@ export function EditorApp({ editor, pastNinjas }: { editor: Editor, pastNinjas: 
                 (event.clientY - top) / height * 600,
                 event.shiftKey,
             );
+            props.globalEventState.setMouseGamePos({
+                x: (event.clientX - left) / width * 1056,
+                y: (event.clientY - top) / height * 600,
+            });
             if (cursorMoved) render();
         }}
         onmousedown={event => {

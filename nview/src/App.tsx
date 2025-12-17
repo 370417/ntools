@@ -1,7 +1,17 @@
-import { createSignal, Show } from 'solid-js';
+import { createSignal, Show, type Accessor, type Setter } from 'solid-js';
 import { Editor, Replay } from './assets/ntools_rs';
 import { EditorApp } from './Editor.tsx';
 import { ReplayApp } from './Replay.tsx';
+
+export type GlobalEventState = {
+    isJump1Pressed: Accessor<boolean>,
+    isJump2Pressed: Accessor<boolean>,
+    isRightPressed: Accessor<boolean>,
+    isLeftPressed: Accessor<boolean>,
+    isSuicidePressed: Accessor<boolean>,
+    mouseGamePos: Accessor<{ x: number, y: number }>,
+    setMouseGamePos: Setter<{ x: number, y: number }>,
+};
 
 export function App() {
     const editor = Editor.new();
@@ -20,6 +30,27 @@ export function App() {
         }
         setPastNinjas(pastNinjas);
     }
+
+    // manage input state here so that keys pressed in the editor get registered
+    // correctly when transitioning to gameplay
+    const [isJump1Pressed, setIsJump1Pressed] = createSignal(false);
+    const [isJump2Pressed, setIsJump2Pressed] = createSignal(false);
+    const [isRightPressed, setIsRightPressed] = createSignal(false);
+    const [isLeftPressed, setIsLeftPressed] = createSignal(false);
+    const [isSuicidePressed, setIsSuicidePressed] = createSignal(false);
+    // units are in game units, not pixels
+    // same as svg units
+    const [mouseGamePos, setMouseGamePos] = createSignal({ x: 36, y: 36 });
+
+    const globalEventState: GlobalEventState = {
+        isJump1Pressed,
+        isJump2Pressed,
+        isRightPressed,
+        isLeftPressed,
+        isSuicidePressed,
+        mouseGamePos,
+        setMouseGamePos,
+    };
 
     if (location.hostname === 'localhost') {
         fetch('http://localhost:8080').then(response => {
@@ -43,14 +74,28 @@ export function App() {
             }
             event.preventDefault();
         }
+
+        else if (event.code === 'KeyZ') setIsJump1Pressed(true);
+        else if (event.code === 'ArrowUp') setIsJump2Pressed(true);
+        else if (event.code === 'ArrowRight') setIsRightPressed(true);
+        else if (event.code === 'ArrowLeft') setIsLeftPressed(true);
+        else if (event.code === 'KeyV') setIsSuicidePressed(true);
+    });
+
+    document.addEventListener('keyup', event => {
+        if (event.code === 'KeyZ') setIsJump1Pressed(false);
+        else if (event.code === 'ArrowUp') setIsJump2Pressed(false);
+        else if (event.code === 'ArrowRight') setIsRightPressed(false);
+        else if (event.code === 'ArrowLeft') setIsLeftPressed(false);
+        else if (event.code === 'KeyV') setIsSuicidePressed(false);
     });
 
     return <>
         <Show when={!replay()}>
-            <EditorApp editor={editor} pastNinjas={pastNinjas} />
+            <EditorApp editor={editor} pastNinjas={pastNinjas} globalEventState={globalEventState} />
         </Show>
         <Show when={!!replay()} keyed>
-            <ReplayApp replay={replay()!} />
+            <ReplayApp replay={replay()!} globalEventState={globalEventState} />
         </Show>
     </>;
 }

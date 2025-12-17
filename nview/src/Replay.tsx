@@ -16,6 +16,7 @@ import { RegularDoors, updateRegularDoors, type RegularDoorData } from './entiti
 import { ShoveThwumps, updateShoveThwumps, type ShoveThwumpData } from './entities/ShoveThwump';
 import { ExitDoors, updateExitDoors, type ExitDoorData } from './entities/ExitDoor';
 import { ExitSwitches, updateExitSwitches, type ExitSwitchData } from './entities/ExitSwitch';
+import type { GlobalEventState } from './App';
 
 type BoostPad = {
     x: number;
@@ -35,7 +36,7 @@ const boostPadLong = 6;
 const boostPadMid = 1;
 const boostPadShort = -4;
 
-export function ReplayApp(props: { replay: Replay }) {
+export function ReplayApp(props: { replay: Replay, globalEventState: GlobalEventState }) {
     const replay = props.replay;
 
     const [recording, setRecording] = createSignal(true);
@@ -47,45 +48,19 @@ export function ReplayApp(props: { replay: Replay }) {
     const [progress, setProgress] = createSignal(0);
     const [previewProgress, setPreviewProgress] = createSignal<number | undefined>(undefined);
 
-    const [isJump1Pressed, setIsJump1Pressed] = createSignal(false);
-    const [isJump2Pressed, setIsJump2Pressed] = createSignal(false);
-    const [isRightPressed, setIsRightPressed] = createSignal(false);
-    const [isLeftPressed, setIsLeftPressed] = createSignal(false);
-    const [isSuicidePressed, setIsSuicidePressed] = createSignal(false);
-
-    // units are in game units, not pixels
-    // same as svg units
-    const [mouseGamePos, setMouseGamePos] = createSignal({ x: 0, y: 0 });
-
     const keydownListener = (event: KeyboardEvent) => {
-        if (event.code === 'KeyZ') setIsJump1Pressed(true);
-        else if (event.code === 'ArrowUp') setIsJump2Pressed(true);
-        else if (event.code === 'ArrowRight') setIsRightPressed(true);
-        else if (event.code === 'ArrowLeft') setIsLeftPressed(true);
-        else if (event.code === 'KeyV') setIsSuicidePressed(true);
-
-        else if (event.code === 'Enter') {
-            replay.place_ninja(mouseGamePos().x, mouseGamePos().y);
+        if (event.code === 'Enter') {
+            replay.place_ninja(props.globalEventState.mouseGamePos().x, props.globalEventState.mouseGamePos().y);
             if (!isPlaying()) {
                 renderFrame(1);
             }
         }
     };
 
-    const keyupListener = (event: KeyboardEvent) => {
-        if (event.code === 'KeyZ') setIsJump1Pressed(false);
-        else if (event.code === 'ArrowUp') setIsJump2Pressed(false);
-        else if (event.code === 'ArrowRight') setIsRightPressed(false);
-        else if (event.code === 'ArrowLeft') setIsLeftPressed(false);
-        else if (event.code === 'KeyV') setIsSuicidePressed(false);
-    };
-
     document.addEventListener('keydown', keydownListener);
-    document.addEventListener('keyup', keyupListener);
 
     onCleanup(() => {
         document.removeEventListener('keydown', keydownListener);
-        document.removeEventListener('keyup', keyupListener);
     });
 
     let stats: any = undefined;
@@ -139,6 +114,7 @@ export function ReplayApp(props: { replay: Replay }) {
 
                 while (accumulator >= msPerTick) {
                     if (recording()) {
+                        let { isJump1Pressed, isJump2Pressed, isRightPressed, isLeftPressed, isSuicidePressed } = props.globalEventState;
                         $replay.set_input(isJump1Pressed() || isJump2Pressed(), isRightPressed(), isLeftPressed(), isSuicidePressed());
                     }
                     $replay.tick();
@@ -226,7 +202,7 @@ export function ReplayApp(props: { replay: Replay }) {
         <>
             <svg viewBox="0 0 1056 600" onmousemove={function(this: SVGElement, event) {
                 const { left, top, width, height } = this.getBoundingClientRect();
-                setMouseGamePos({
+                props.globalEventState.setMouseGamePos({
                     x: (event.clientX - left) / width * 1056,
                     y: (event.clientY - top) / height * 600,
                 });
