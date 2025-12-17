@@ -124,7 +124,7 @@ function createEntities(): EntitiesProps {
     };
 }
 
-function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities: ExportedEntity[]) {
+function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities: ExportedEntity[], isPreview: boolean) {
     const ninjas: NinjaData[] = [];
     const mines: MineData[] = [];
     const exitDoors: ExitDoorData[] = [];
@@ -187,7 +187,10 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
                 lines.push(line);
             }
         } else if (entity.type_int === ENTITY_TRAP_DOOR) {
-            trapDoors.push(entityCopy);
+            trapDoors.push({
+                ...entityCopy,
+                animProgress: isPreview ? 1 : -1,
+            });
             if (!Number.isNaN(entity.switch_x)) {
                 trapSwitches.push(entitySwitch);
                 lines.push(line);
@@ -368,8 +371,8 @@ export function EditorApp({ editor, pastNinjas }: { editor: Editor, pastNinjas: 
 
         const lines: Line[] = [];
 
-        updateEntities(entities, lines, editor.entities());
-        updateEntities(previewEntities, lines, editor.preview_entities());
+        updateEntities(entities, lines, editor.entities(), false);
+        updateEntities(previewEntities, lines, editor.preview_entities(), true);
 
         setDoorSwitchLines(lines);
     }
