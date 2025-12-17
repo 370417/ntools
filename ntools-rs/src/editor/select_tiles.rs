@@ -89,8 +89,28 @@ impl SelectTiles {
         }).collect())
     }
 
-    pub fn select_floodfill(&mut self, cursor_pos: DVec2, tiles: &Tiles) {
-        self.selected_tiles = floodfill(tiles, cursor_pos);
+    pub fn new_floodfill(cursor_pos: DVec2, tiles: &Tiles) -> SelectTiles {
+        let mut select_tiles = SelectTiles {
+            selected_tiles: HashSet::new(),
+            active_selection: None,
+        };
+        select_tiles.select_floodfill(cursor_pos, tiles, false);
+        select_tiles
+    }
+
+    pub fn select_floodfill(&mut self, cursor_pos: DVec2, tiles: &Tiles, preserve_existing_selection: bool) {
+        if preserve_existing_selection {
+            let is_positive = !self.selected_tiles.contains(&GridPos::from_world_pos(cursor_pos));
+            for pos in floodfill(tiles, cursor_pos) {
+                if is_positive {
+                    self.selected_tiles.insert(pos);
+                } else {
+                    self.selected_tiles.remove(&pos);
+                }
+            }
+        } else {
+            self.selected_tiles = floodfill(tiles, cursor_pos);
+        }
         self.active_selection = None;
     }
 }

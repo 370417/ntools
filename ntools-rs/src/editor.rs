@@ -274,10 +274,13 @@ impl Editor {
     }
 
     #[wasm_bindgen]
-    pub fn double_click(&mut self) {
+    pub fn double_click(&mut self, shift: bool) {
         match &mut self.mode {
+            mode @ EditorMode::PaintTiles => {
+                *mode = EditorMode::SelectTiles(SelectTiles::new_floodfill(self.cursor_pos, self.state.tiles()));
+            }
             EditorMode::SelectTiles(select_tiles) => {
-                select_tiles.select_floodfill(self.cursor_pos, self.state.tiles());
+                select_tiles.select_floodfill(self.cursor_pos, self.state.tiles(), shift);
             }
             _ => {}
         }
