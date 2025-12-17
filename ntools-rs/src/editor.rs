@@ -56,7 +56,7 @@ impl Editor {
     pub fn new() -> Editor {
         Editor {
             state: EditorState::new(),
-            mode: EditorMode::PenTool(PenTool::new()),
+            mode: EditorMode::PaintTiles,
             cursor_pos: DVec2::new(TILE_SIZE, TILE_SIZE),
             selected_tile_category: TileCategory::Tile1,
             pressed_tile_variants: Vec::new(),
@@ -80,6 +80,8 @@ impl Editor {
 
     #[wasm_bindgen]
     pub fn to_replay(&mut self) -> Result<Replay, String> {
+        self.mode = EditorMode::PaintTiles;
+
         let ninjas = self.state.entities().iter().filter_map(|(entity, _)| {
             match entity {
                 EditorEntity::Ninja { pos, orientation } => Some(Ninja::new(pos.to_world_pos(), *orientation)),
