@@ -111,6 +111,15 @@ impl Entities {
         }
         grid
     }
+
+    fn increment_frame_counters(&mut self) {
+        for boost_pad in &mut self.boost_pads {
+            boost_pad.frames_since_last_touch = boost_pad.frames_since_last_touch.saturating_add(1);
+        }
+        for regular_door in &mut self.doors.regular {
+            regular_door.frames_since_state_change = regular_door.frames_since_state_change.saturating_add(1);
+        }
+    }
 }
 
 impl GridEntityType {

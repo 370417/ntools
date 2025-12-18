@@ -274,7 +274,7 @@ impl Ninja {
                     if wall_normal.is_none() { wall_normal = new_wall_normal }
                 }
                 GridEntityType::LaunchPad => {
-                    if let Some(boost) = entities.launch_pads[i].logical_collision(self, frame) {
+                    if let Some(boost) = entities.launch_pads[i].logical_collision(self) {
                         // If collision with launch pad, update speed and position.
                         let boost = 2.0 / 3.0 * boost;
                         self.pos += boost;
@@ -294,21 +294,21 @@ impl Ninja {
                 }
                 GridEntityType::LockedSwitch => {
                     let locked_door = &mut entities.doors.locked[i];
-                    let state_changed = locked_door.switch_logical_collision(self, frame);
+                    let state_changed = locked_door.switch_logical_collision(self);
                     if state_changed {
                         on_door_state_change(locked_door.pos, &mut entities.thwumps, &mut entities.floorchasers);
                     }
                 }
                 GridEntityType::TrapSwitch => {
                     let trap_door = &mut entities.doors.trap[i];
-                    let state_changed = trap_door.switch_logical_collision(self, frame);
+                    let state_changed = trap_door.switch_logical_collision(self);
                     if state_changed {
                         on_door_state_change(trap_door.pos, &mut entities.thwumps, &mut entities.floorchasers);
                     }
                 }
                 GridEntityType::RegularDoor => {
                     let regular_door = &mut entities.doors.regular[i];
-                    let state_changed = regular_door.logical_collision(self, frame);
+                    let state_changed = regular_door.logical_collision(self);
                     if state_changed {
                         on_door_state_change(regular_door.pos, &mut entities.thwumps, &mut entities.floorchasers);
                     }

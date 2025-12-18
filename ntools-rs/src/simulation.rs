@@ -25,10 +25,9 @@ pub struct KeyFrame {
     bounce_blocks: Vec<BounceBlock>,
     exit_open_frames: Vec<Option<u32>>,
     thwumps: Vec<Thwump>,
-    launch_pad_touch_frames: Vec<Option<u32>>,
     floorchasers: Vec<Floorchaser>,
-    locked_door_open_frames: Vec<Option<u32>>,
-    trap_door_close_frames: Vec<Option<u32>>,
+    locked_door_frames_since_open: Vec<Option<u32>>,
+    trap_door_frames_since_close: Vec<Option<u32>>,
     regular_doors: Vec<RegularDoor>,
     shove_thwumps: Vec<ShoveThwump>,
 }
@@ -91,10 +90,12 @@ impl Simulation {
 
         // Make all thinkable entities think
         for door in &mut self.entities.doors.regular {
-            if door.think(self.frame) {
+            if door.think() {
                 on_door_state_change(door.pos, &mut self.entities.thwumps, &mut self.entities.floorchasers);
             }
         }
+        self.entities.doors.increment_frames_for_animation();
+        for launch_pad in &mut self.entities.launch_pads { launch_pad.increment_frames_for_animation() }
         for mine in &mut self.entities.mines { mine.think(&self.ninja) }
         for thwump in &mut self.entities.thwumps { thwump.think(&self.ninja, segments, &self.entities.doors) }
         for floorchaser in &mut self.entities.floorchasers { floorchaser.think(&self.ninja, segments, &self.entities.doors) }
@@ -123,10 +124,9 @@ impl KeyFrame {
             bounce_blocks: sim.entities.bounce_blocks.clone(),
             exit_open_frames: sim.entities.exits.iter().map(|exit| exit.door_open_frame).collect(),
             thwumps: sim.entities.thwumps.clone(),
-            launch_pad_touch_frames: sim.entities.launch_pads.iter().map(|launch_pad| launch_pad.last_touch_frame).collect(),
             floorchasers: sim.entities.floorchasers.clone(),
-            locked_door_open_frames: sim.entities.doors.locked.iter().map(|locked_door| locked_door.door_open_frame).collect(),
-            trap_door_close_frames: sim.entities.doors.trap.iter().map(|trap_door| trap_door.door_close_frame).collect(),
+            locked_door_frames_since_open: sim.entities.doors.locked.iter().map(|locked_door| locked_door.frames_since_open).collect(),
+            trap_door_frames_since_close: sim.entities.doors.trap.iter().map(|trap_door| trap_door.frames_since_close).collect(),
             regular_doors: sim.entities.doors.regular.clone(),
             shove_thwumps: sim.entities.shove_thwumps.clone(),
         }
@@ -143,23 +143,19 @@ impl KeyFrame {
         self.bounce_blocks.clone_into(&mut sim.entities.bounce_blocks);
 
         for (i, exit_open_frame) in self.exit_open_frames.iter().enumerate() {
-            sim.entities.exits[i].door_open_frame = *exit_open_frame;
+            sim.entities.exits[i].door_open_frame = exit_open_frame.filter(|&frame| frame <= self.frame);
         }
 
         self.thwumps.clone_into(&mut sim.entities.thwumps);
 
-        for (i, launch_pad_touch_frame) in self.launch_pad_touch_frames.iter().enumerate() {
-            sim.entities.launch_pads[i].last_touch_frame = *launch_pad_touch_frame;
-        }
-
         self.floorchasers.clone_into(&mut sim.entities.floorchasers);
 
-        for (i, locked_door_open_frame) in self.locked_door_open_frames.iter().enumerate() {
-            sim.entities.doors.locked[i].door_open_frame = *locked_door_open_frame;
+        for (i, &frames_since_open) in self.locked_door_frames_since_open.iter().enumerate() {
+            sim.entities.doors.locked[i].frames_since_open = frames_since_open;
         }
 
-        for (i, trap_door_close_frame) in self.trap_door_close_frames.iter().enumerate() {
-            sim.entities.doors.trap[i].door_close_frame = *trap_door_close_frame;
+        for (i, &frames_since_close) in self.trap_door_frames_since_close.iter().enumerate() {
+            sim.entities.doors.trap[i].frames_since_close = frames_since_close;
         }
 
         self.regular_doors.clone_into(&mut sim.entities.doors.regular);

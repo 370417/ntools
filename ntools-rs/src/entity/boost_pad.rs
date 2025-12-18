@@ -12,7 +12,7 @@ pub struct BoostPad {
     /// Rotation in radians needed to align boost pad with ninja velocity.
     /// This is stays fixed once the ninja has touched the boost pad.
     initial_rotation: f64,
-    frames_since_last_touch: u32,
+    pub frames_since_last_touch: u32,
 }
 
 impl BoostPad {
@@ -57,8 +57,6 @@ impl BoostPad {
         };
         if self.is_touching_ninja {
             self.frames_since_last_touch = 0;
-        } else {
-            self.frames_since_last_touch = self.frames_since_last_touch.saturating_add(1);
         }
     }
 

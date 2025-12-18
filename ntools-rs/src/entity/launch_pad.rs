@@ -9,7 +9,7 @@ const BOOST: f64 = 36.0 / 7.0;
 pub struct LaunchPad {
     pub pos: DVec2,
     pub orientation: Orientation,
-    pub last_touch_frame: Option<u32>,
+    pub frames_since_last_touch: u32,
 }
 
 impl LaunchPad {
@@ -17,17 +17,17 @@ impl LaunchPad {
         LaunchPad {
             pos,
             orientation,
-            last_touch_frame: None,
+            frames_since_last_touch: 999,
         }
     }
 
     /// If the ninja is colliding with the launch pad (semi circle hitbox), return boost.
-    pub fn logical_collision(&mut self, ninja: &Ninja, frame: u32) -> Option<DVec2> {
+    pub fn logical_collision(&mut self, ninja: &Ninja) -> Option<DVec2> {
         if ninja.is_valid_target() {
             if overlap_circle_vs_circle(self.pos, RADIUS, ninja.pos, ninja::RADIUS) {
                 let self_normal = self.orientation.vec2();
                 if (self.pos - ninja.pos + ninja::RADIUS * self_normal).dot(self_normal) >= -0.1 {
-                    self.last_touch_frame = Some(frame);
+                    self.frames_since_last_touch = 0;
                     let yboost_scale = if ninja.grav_get_vert(self_normal) < 0.0 {
                         1.0 - ninja.grav_get_vert(self_normal)
                     } else {
@@ -41,5 +41,9 @@ impl LaunchPad {
             }
         }
         None
+    }
+
+    pub fn increment_frames_for_animation(&mut self) {
+        self.frames_since_last_touch = self.frames_since_last_touch.saturating_add(1);
     }
 }
