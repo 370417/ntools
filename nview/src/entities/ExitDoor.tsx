@@ -25,7 +25,7 @@ export function updateExitDoors([exitDoors, setExitDoors]: Signal<ExitDoorData[]
         const newExitDoor = {
             x: replay.exit_door_x(i),
             y: replay.exit_door_y(i),
-            animProgress: 0,//replay.exit_door_anim_progress(i, partialFrame),
+            animProgress: replay.exit_anim_progress(i, partialFrame),
         };
         if (oldExitDoor && equals(oldExitDoor, newExitDoor)) {
             newExitDoors.push(oldExitDoor);
@@ -49,9 +49,31 @@ const exitDoorCorner = 2.5;
 
 export function ExitDoor(props: { exitDoor: Accessor<ExitDoorData> }) {
     return <g transform={transform(props.exitDoor)}>
-        <path class="exit-door" d={`M 0 0 v ${-exitDoorRadius} h ${-exitDoorRadius + exitDoorCorner} l ${-exitDoorCorner} ${exitDoorCorner} v ${2 * (exitDoorRadius - exitDoorCorner)} l ${exitDoorCorner} ${exitDoorCorner} h ${exitDoorRadius - exitDoorCorner} z`} />
-        <path class="exit-door" d={`M 0 0 v ${-exitDoorRadius} h ${exitDoorRadius - exitDoorCorner} l ${exitDoorCorner} ${exitDoorCorner} v ${2 * (exitDoorRadius - exitDoorCorner)} l ${-exitDoorCorner} ${exitDoorCorner} h ${-exitDoorRadius + exitDoorCorner} z`} />
-        <path class="exit-door-stroke" stroke-width="3" fill="none" stroke-linecap="round" d={`M 0 0 m 0 ${(1 - 0) * exitDoorRadius} v ${(0) * exitDoorRadius} h ${-exitDoorRadius + exitDoorCorner} l ${-exitDoorCorner} ${-exitDoorCorner} v ${(1 - 0) * (-exitDoorRadius + exitDoorCorner)}`} />
-        <path class="exit-door-stroke" stroke-width="3" fill="none" stroke-linecap="round" d={`M 0 0 m 0 ${(1 - 0) * exitDoorRadius} v ${(0) * exitDoorRadius} h ${exitDoorRadius - exitDoorCorner} l ${exitDoorCorner} ${-exitDoorCorner} v ${(1 - 0) * (-exitDoorRadius + exitDoorCorner)}`} />
+        <rect fill="url(#exit-gradient)" x={-12 + 4 * (1 - props.exitDoor().animProgress)} y={-11.5} width={24 - 8 * (1 - props.exitDoor().animProgress)} height={23.5} />
+        <path class="exit-door" d={`M ${-12 * props.exitDoor().animProgress} 0 v ${-exitDoorRadius} h ${-exitDoorRadius + exitDoorCorner} l ${-exitDoorCorner} ${exitDoorCorner} v ${2 * (exitDoorRadius - exitDoorCorner)} l ${exitDoorCorner} ${exitDoorCorner} h ${exitDoorRadius - exitDoorCorner} z`} />
+        <path class="exit-door" d={`M ${12 * props.exitDoor().animProgress} 0 v ${-exitDoorRadius} h ${exitDoorRadius - exitDoorCorner} l ${exitDoorCorner} ${exitDoorCorner} v ${2 * (exitDoorRadius - exitDoorCorner)} l ${-exitDoorCorner} ${exitDoorCorner} h ${-exitDoorRadius + exitDoorCorner} z`} />
+        <path class="exit-door-stroke" stroke-width="3" fill="none" stroke-linecap="round" d={`M ${-12 * props.exitDoor().animProgress} 0 m 0 ${(1 - props.exitDoor().animProgress) * exitDoorRadius} v ${props.exitDoor().animProgress * exitDoorRadius} h ${-exitDoorRadius + exitDoorCorner + props.exitDoor().animProgress} l ${-exitDoorCorner} ${-exitDoorCorner} v ${(1 - props.exitDoor().animProgress) * (-exitDoorRadius + exitDoorCorner)}`} />
+        <path class="exit-door-stroke" stroke-width="3" fill="none" stroke-linecap="round" d={`M ${12 * props.exitDoor().animProgress} 0 m 0 ${(1 - props.exitDoor().animProgress) * exitDoorRadius} v ${props.exitDoor().animProgress * exitDoorRadius} h ${exitDoorRadius - exitDoorCorner - props.exitDoor().animProgress} l ${exitDoorCorner} ${-exitDoorCorner} v ${(1 - props.exitDoor().animProgress) * (-exitDoorRadius + exitDoorCorner)}`} />
     </g>;
+}
+
+export function ExitDoorGradient() {
+    return <linearGradient id="exit-gradient" x1="0" x2="0" y1="1" y2="0">
+        <stop offset="0%" stop-color="var(--open-exit-lower)" />
+        <stop offset="16%" stop-color="var(--open-exit-lower)" />
+        <stop offset="16%" stop-color="var(--open-exit-upper)" />
+        <stop offset="19%" stop-color="var(--open-exit-upper)" />
+        <stop offset="19%" stop-color="var(--open-exit-lower)" />
+        <stop offset="30%" stop-color="var(--open-exit-lower)" />
+        <stop offset="30%" stop-color="var(--open-exit-upper)" />
+        <stop offset="37%" stop-color="var(--open-exit-upper)" />
+        <stop offset="37%" stop-color="var(--open-exit-lower)" />
+        <stop offset="44%" stop-color="var(--open-exit-lower)" />
+        <stop offset="44%" stop-color="var(--open-exit-upper)" />
+        <stop offset="60%" stop-color="var(--open-exit-upper)" />
+        <stop offset="60%" stop-color="var(--open-exit-lower)" />
+        <stop offset="65%" stop-color="var(--open-exit-lower)" />
+        <stop offset="65%" stop-color="var(--open-exit-upper)" />
+        <stop offset="100%" stop-color="var(--open-exit-upper)" />
+    </linearGradient>;
 }

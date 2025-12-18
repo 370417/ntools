@@ -18,14 +18,14 @@ function transform(exitSwitch: Accessor<ExitSwitchData>): string {
 
 export function updateExitSwitches([exitSwitches, setExitSwitches]: Signal<ExitSwitchData[]>, replay: Replay, partialFrame: number) {
     const oldExitSwitches = exitSwitches();
-    const newExitSwitchesLen = replay.exit_switches_len();
+    const newExitSwitchesLen = replay.exit_doors_len();
     const newExitSwitches: ExitSwitchData[] = [];
     for (let i = 0; i < newExitSwitchesLen; i++) {
         const oldExitSwitch = oldExitSwitches.at(i);
         const newExitSwitch = {
             x: replay.exit_switch_x(i),
             y: replay.exit_switch_y(i),
-            animProgress: 0,//replay.exit_switch_anim_progress(i, partialFrame),
+            animProgress: replay.exit_anim_progress(i, partialFrame),
         };
         if (oldExitSwitch && equals(oldExitSwitch, newExitSwitch)) {
             newExitSwitches.push(oldExitSwitch);

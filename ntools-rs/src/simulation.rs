@@ -23,7 +23,7 @@ pub struct KeyFrame {
     // We could save some memory by not storing bounce block origin because
     // it is constant across frames. For now we just store the entire bounce block.
     bounce_blocks: Vec<BounceBlock>,
-    exit_open_frames: Vec<Option<u32>>,
+    exit_frames_since_open: Vec<Option<u32>>,
     thwumps: Vec<Thwump>,
     floorchasers: Vec<Floorchaser>,
     locked_door_frames_since_open: Vec<Option<u32>>,
@@ -95,6 +95,7 @@ impl Simulation {
             }
         }
         self.entities.doors.increment_frames_for_animation();
+        for exit in &mut self.entities.exits { exit.increment_frames_for_animation() }
         for launch_pad in &mut self.entities.launch_pads { launch_pad.increment_frames_for_animation() }
         for mine in &mut self.entities.mines { mine.think(&self.ninja) }
         for thwump in &mut self.entities.thwumps { thwump.think(&self.ninja, segments, &self.entities.doors) }
@@ -122,7 +123,7 @@ impl KeyFrame {
             ninja: sim.ninja.clone(),
             mine_state_diffs: mine_diffs(initial_mines, &sim.entities.mines),
             bounce_blocks: sim.entities.bounce_blocks.clone(),
-            exit_open_frames: sim.entities.exits.iter().map(|exit| exit.door_open_frame).collect(),
+            exit_frames_since_open: sim.entities.exits.iter().map(|exit| exit.frames_since_door_open).collect(),
             thwumps: sim.entities.thwumps.clone(),
             floorchasers: sim.entities.floorchasers.clone(),
             locked_door_frames_since_open: sim.entities.doors.locked.iter().map(|locked_door| locked_door.frames_since_open).collect(),
@@ -142,8 +143,8 @@ impl KeyFrame {
 
         self.bounce_blocks.clone_into(&mut sim.entities.bounce_blocks);
 
-        for (i, exit_open_frame) in self.exit_open_frames.iter().enumerate() {
-            sim.entities.exits[i].door_open_frame = exit_open_frame.filter(|&frame| frame <= self.frame);
+        for (i, &frames_since_door_open) in self.exit_frames_since_open.iter().enumerate() {
+            sim.entities.exits[i].frames_since_door_open = frames_since_door_open;
         }
 
         self.thwumps.clone_into(&mut sim.entities.thwumps);

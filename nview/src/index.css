@@ -29,6 +29,8 @@ body {
 
     --exit-panel: #B9C3B2;
     --exit-border: #323323;
+    --open-exit-upper: #EDDC54;
+    --open-exit-lower: #DF9B43;
     --exit-switch-border: #323323;
     --exit-switch-background: #8C9487;
     --exit-switch-border-collected: #C2CEB1;

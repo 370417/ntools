@@ -263,7 +263,7 @@ impl Ninja {
                     entities.exits[i].door_logical_collision(self);
                 }
                 GridEntityType::ExitSwitch => {
-                    entities.exits[i].switch_logical_collision(self.pos, frame);
+                    entities.exits[i].switch_logical_collision(self.pos);
                 }
                 GridEntityType::Thwump => {
                     let new_wall_normal = entities.thwumps[i].logical_collision(self);

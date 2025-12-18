@@ -188,7 +188,7 @@ impl TrapDoor {
     /// is different than the door still being open)
     /// door closing -> return 0 to 1
     /// door closed -> return 1
-    pub fn eased_animation_progress(&self, frame: u32, partial_frame: f64) -> f64 {
+    pub fn eased_animation_progress(&self, partial_frame: f64) -> f64 {
         match self.frames_since_close {
             None => -1.0,
             Some(frames_since_close) => {

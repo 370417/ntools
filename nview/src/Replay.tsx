@@ -14,7 +14,7 @@ import { TrapSwitchDefs, TrapSwitches, updateTrapSwitches, type TrapSwitchData }
 import { TrapDoors, updateTrapDoors, type TrapDoorData } from './entities/TrapDoor';
 import { RegularDoors, updateRegularDoors, type RegularDoorData } from './entities/RegularDoor';
 import { ShoveThwumps, updateShoveThwumps, type ShoveThwumpData } from './entities/ShoveThwump';
-import { ExitDoors, updateExitDoors, type ExitDoorData } from './entities/ExitDoor';
+import { ExitDoorGradient, ExitDoors, updateExitDoors, type ExitDoorData } from './entities/ExitDoor';
 import { ExitSwitches, updateExitSwitches, type ExitSwitchData } from './entities/ExitSwitch';
 import type { GlobalEventState } from './App';
 
@@ -226,6 +226,7 @@ export function ReplayApp(props: { replay: Replay, globalEventState: GlobalEvent
                     <g id="thwump">
                         <path stroke="black" fill="none" d={`M 8.5 8.5 H -8.5 V -8.5 H 8.5`} />
                     </g>
+                    <ExitDoorGradient />
                 </defs>
                 <ExitDoors exitDoors={exitDoors} />
                 <OneWays oneWays={oneWays} />

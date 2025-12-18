@@ -315,8 +315,8 @@ impl Replay {
     }
 
     #[wasm_bindgen]
-    pub fn exit_switches_len(&self) -> usize {
-        self.current_sim.entities.exits.len()
+    pub fn exit_anim_progress(&self, i: usize, partial_frame: f64) -> f64 {
+        self.current_sim.entities.exits[i].eased_animation_progress(partial_frame)
     }
 
     #[wasm_bindgen]
@@ -446,7 +446,7 @@ impl Replay {
 
     #[wasm_bindgen]
     pub fn trap_door_anim_progress(&self, i: usize, partial_frame: f64) -> f64 {
-        self.current_sim.entities.doors.trap[i].eased_animation_progress(self.current_sim.frame, partial_frame)
+        self.current_sim.entities.doors.trap[i].eased_animation_progress(partial_frame)
     }
 
     #[wasm_bindgen]
