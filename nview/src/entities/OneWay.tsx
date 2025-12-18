@@ -46,12 +46,11 @@ export function OneWays(props: { oneWays: Signal<OneWayData[]> }) {
 
 const oneWayHalfWidth = 12;
 const oneWayHalfWidthSmall = 9;
-const oneWayLineSpacing = 2;
 const thickness = 1;
 
 export function OneWayDefs() {
     return <g id="one-way">
-        <rect class="long" x={-thickness} y={-oneWayHalfWidth} width={thickness} height={2 * oneWayHalfWidth} />
-        <rect class="short" x={-2 * thickness - oneWayLineSpacing} y={-oneWayHalfWidthSmall} width={thickness} height={2 * oneWayHalfWidthSmall} />
+        <line stroke="var(--oneway-long)" x1={-thickness / 2} y1={-oneWayHalfWidth} x2={-thickness / 2} y2={oneWayHalfWidth} />
+        <line stroke="var(--oneway-short)" x1={-3 - thickness / 2} y1={-oneWayHalfWidthSmall} x2={-3 - thickness / 2} y2={oneWayHalfWidthSmall} />
     </g>
 }
