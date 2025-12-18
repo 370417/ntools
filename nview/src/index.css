@@ -140,20 +140,6 @@ svg {
     stroke: var(--launch-pad-short);
 }
 
-.exit-door {
-    fill: var(--exit-panel);
-    stroke: var(--exit-border);
-}
-
-.exit-door-stroke {
-    stroke: var(--exit-border);
-}
-
-.exit-switch {
-    fill: var(--exit-switch-background);
-    stroke: var(--exit-switch-border);
-}
-
 .locked-door .bar {
     stroke: var(--locked-door-bar);
 }

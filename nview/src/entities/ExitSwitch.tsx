@@ -47,9 +47,21 @@ export function ExitSwitches(props: { exitSwitches: Signal<ExitSwitchData[]> }) 
 const exitSwitchHalfWidth = 7;
 const exitSwitchHalfHeight = 4.5;
 const exitSwitchCorner = 2;
+const exitSwitchCenterSize = 2;
 
 export function ExitSwitch(props: { exitSwitch: Accessor<ExitSwitchData> }) {
     return <g transform={transform(props.exitSwitch)}>
-        <path class="exit-switch" d={`M 0 0 m ${-exitSwitchHalfWidth + exitSwitchCorner} ${-exitSwitchHalfHeight} h ${2 * (exitSwitchHalfWidth - exitSwitchCorner)} l ${exitSwitchCorner} ${exitSwitchCorner} v ${2 * (exitSwitchHalfHeight - exitSwitchCorner)} l ${-exitSwitchCorner} ${exitSwitchCorner} h ${2 * (-exitSwitchHalfWidth + exitSwitchCorner)} l ${-exitSwitchCorner} ${-exitSwitchCorner} v ${2 * (-exitSwitchHalfHeight + exitSwitchCorner)} l ${exitSwitchCorner} ${-exitSwitchCorner}`} />
+        <path
+            fill={`var(--exit-switch-background${props.exitSwitch().animProgress > 0 ? '-collected' : ''})`}
+            stroke={`var(--exit-switch-border${props.exitSwitch().animProgress > 0 ? '-collected' : ''})`}
+            d={`M 0 0 m ${-exitSwitchHalfWidth + exitSwitchCorner} ${-exitSwitchHalfHeight} h ${2 * (exitSwitchHalfWidth - exitSwitchCorner)} l ${exitSwitchCorner} ${exitSwitchCorner} v ${2 * (exitSwitchHalfHeight - exitSwitchCorner)} l ${-exitSwitchCorner} ${exitSwitchCorner} h ${2 * (-exitSwitchHalfWidth + exitSwitchCorner)} l ${-exitSwitchCorner} ${-exitSwitchCorner} v ${2 * (-exitSwitchHalfHeight + exitSwitchCorner)} l ${exitSwitchCorner} ${-exitSwitchCorner}`} />
+        <path
+            stroke="var(--exit-switch-center)"
+            fill="none"
+            d={`M ${-2 * props.exitSwitch().animProgress} ${-exitSwitchCenterSize} h ${-exitSwitchCenterSize} v ${2 * exitSwitchCenterSize} h ${exitSwitchCenterSize}`} />
+        <path
+            stroke="var(--exit-switch-center)"
+            fill="none"
+            d={`M ${2 * props.exitSwitch().animProgress} ${-exitSwitchCenterSize} h ${exitSwitchCenterSize} v ${2 * exitSwitchCenterSize} h ${-exitSwitchCenterSize}`} />
     </g>;
 }
