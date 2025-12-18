@@ -61,6 +61,10 @@ export function App() {
     }
 
     document.addEventListener('keydown', event => {
+        if (event.ctrlKey || event.metaKey) {
+            return;
+        }
+
         if (event.code === 'Tab') {
             const $replay = replay();
             if ($replay) {
@@ -88,6 +92,14 @@ export function App() {
         else if (event.code === 'ArrowRight') setIsRightPressed(false);
         else if (event.code === 'ArrowLeft') setIsLeftPressed(false);
         else if (event.code === 'KeyV') setIsSuicidePressed(false);
+    });
+
+    document.addEventListener('blur', () => {
+        setIsJump1Pressed(false);
+        setIsJump2Pressed(false);
+        setIsRightPressed(false);
+        setIsLeftPressed(false);
+        setIsSuicidePressed(false);
     });
 
     return <>
