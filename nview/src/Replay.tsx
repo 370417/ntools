@@ -18,12 +18,7 @@ import { ExitDoorGradient, ExitDoors, updateExitDoors, type ExitDoorData } from 
 import { ExitSwitches, updateExitSwitches, type ExitSwitchData } from './entities/ExitSwitch';
 import type { GlobalEventState } from './App';
 import { BoostPadDefs, BoostPads, updateBoostPads, type BoostPadData } from './entities/BoostPad';
-
-type Thwump = {
-    x: number;
-    y: number;
-    deg: number;
-};
+import { ThwumpDefs, Thwumps, updateThwumps, type ThwumpData } from './entities/Thwump';
 
 export function ReplayApp(props: { replay: Replay, globalEventState: GlobalEventState }) {
     const replay = props.replay;
@@ -69,7 +64,7 @@ export function ReplayApp(props: { replay: Replay, globalEventState: GlobalEvent
     const bounceBlocks = createSignal<BounceBlockData[]>([]);
     const oneWays = createSignal<OneWayData[]>([]);
     const boostPads = createSignal<BoostPadData[]>([]);
-    const [thwumps, setThwumps] = createSignal<Thwump[]>([]);
+    const thwumps = createSignal<ThwumpData[]>([]);
     const launchPads = createSignal<LaunchPadData[]>([]);
     const floorguards = createSignal<FloorguardData[]>([]);
     const lockedDoors = createSignal<LockedDoorData[]>([]);
@@ -150,18 +145,7 @@ export function ReplayApp(props: { replay: Replay, globalEventState: GlobalEvent
         updateBounceBlocks(bounceBlocks, replay, partialFrame);
         updateOneWays(oneWays, replay);
         updateBoostPads(boostPads, replay, partialFrame);
-
-        const thwumpsArr: Thwump[] = [];
-        const thwumpsLen = replay.thwumps_len();
-        for (let i = 0; i < thwumpsLen; i++) {
-            thwumpsArr.push({
-                x: replay.thwump_x(i, partialFrame),
-                y: replay.thwump_y(i, partialFrame),
-                deg: replay.thwump_deg(i),
-            });
-        }
-        setThwumps(thwumpsArr);
-
+        updateThwumps(thwumps, replay, partialFrame);
         updateLaunchPads(launchPads, replay);
         updateFloorguards(floorguards, replay, partialFrame);
         updateLockedDoors(lockedDoors, replay, partialFrame);
@@ -195,9 +179,7 @@ export function ReplayApp(props: { replay: Replay, globalEventState: GlobalEvent
                     <LockedSwitchDefs />
                     <TrapSwitchDefs />
                     <BoostPadDefs />
-                    <g id="thwump">
-                        <path stroke="black" fill="none" d={`M 8.5 8.5 H -8.5 V -8.5 H 8.5`} />
-                    </g>
+                    <ThwumpDefs />
                     <ExitDoorGradient />
                 </defs>
                 <ExitDoors exitDoors={exitDoors} />
@@ -211,9 +193,7 @@ export function ReplayApp(props: { replay: Replay, globalEventState: GlobalEvent
                 <RegularDoors regularDoors={regularDoors} />
                 <LockedDoors lockedDoors={lockedDoors} />
                 <TrapDoors trapDoors={trapDoors} />
-                <Index each={thwumps()}>
-                    {thwump => <use href="#thwump" x={thwump().x} y={thwump().y} transform={`rotate(${thwump().deg},${thwump().x},${thwump().y})`} />}
-                </Index>
+                <Thwumps thwumps={thwumps} />
                 <BounceBlocks bounceBlocks={bounceBlocks} />
                 <BoostPads boostPads={boostPads} />
                 <ShoveThwumps shoveThwumps={shoveThwumps} />

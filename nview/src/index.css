@@ -54,6 +54,10 @@ body {
     --trap-switch-border-collected: #798076;
     --trap-switch-background-collected: #8C9487;
 
+    --thwump-border: #4D4D4D;
+    --thwump-interior: #798076;
+    --thwump-ray: #48C1C8;
+
     --shove-thwump-armor: #000000;
     --shove-thwump-ray: #48C1C8;
     --shove-thwump-center: #4F564D;
