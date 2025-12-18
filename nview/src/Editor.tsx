@@ -14,6 +14,7 @@ import { LaunchPads, type LaunchPadData } from "./entities/LaunchPad";
 import { Floorguards, type FloorguardData } from "./entities/Floorguard";
 import { BounceBlockDefs, BounceBlocks, type BounceBlockData } from "./entities/BounceBlock";
 import type { GlobalEventState } from "./App";
+import { BoostPadDefs, BoostPads, type BoostPadData } from "./entities/BoostPad";
 
 const COLS = 42;
 const ROWS = 23;
@@ -92,6 +93,8 @@ type EntitiesProps = {
     setFloorguards: Setter<FloorguardData[]>,
     bounceBlocks: Accessor<BounceBlockData[]>,
     setBounceBlocks: Setter<BounceBlockData[]>,
+    boostPads: Accessor<BoostPadData[]>,
+    setBoostPads: Setter<BoostPadData[]>,
 };
 
 function createEntities(): EntitiesProps {
@@ -108,6 +111,7 @@ function createEntities(): EntitiesProps {
     const [oneWays, setOneWays] = createSignal<OneWayData[]>([]);
     const [floorguards, setFloorguards] = createSignal<FloorguardData[]>([]);
     const [bounceBlocks, setBounceBlocks] = createSignal<BounceBlockData[]>([]);
+    const [boostPads, setBoostPads] = createSignal<BoostPadData[]>([]);
     return {
         ninjas, setNinjas,
         mines, setMines,
@@ -122,6 +126,7 @@ function createEntities(): EntitiesProps {
         oneWays, setOneWays,
         floorguards, setFloorguards,
         bounceBlocks, setBounceBlocks,
+        boostPads, setBoostPads,
     };
 }
 
@@ -139,6 +144,7 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
     const oneWays: OneWayData[] = [];
     const floorguards: FloorguardData[] = [];
     const bounceBlocks: BounceBlockData[] = [];
+    const boostPads: BoostPadData[] = [];
 
     for (const entity of exportedEntities) {
         // Make sure to create new objects instead of reusing entity
@@ -204,6 +210,11 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
             floorguards.push(entityCopy);
         } else if (entity.type_int === ENTITY_BOUNCE_BLOCK) {
             bounceBlocks.push(entityCopy);
+        } else if (entity.type_int === ENTITY_BOOST_PAD) {
+            boostPads.push({
+                ...entityCopy,
+                animProgress: 1,
+            });
         }
         // Do I need this?
         entity.free();
@@ -222,6 +233,7 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
     entities.setOneWays(oneWays);
     entities.setFloorguards(floorguards);
     entities.setBounceBlocks(bounceBlocks);
+    entities.setBoostPads(boostPads);
 }
 
 function Entities({ entities }: { entities: EntitiesProps }) {
@@ -238,6 +250,7 @@ function Entities({ entities }: { entities: EntitiesProps }) {
         <LockedDoors lockedDoors={[entities.lockedDoors, () => {}]} />
         <TrapDoors trapDoors={[entities.trapDoors, () => {}]} />
         <BounceBlocks bounceBlocks={[entities.bounceBlocks, () => {}]} />
+        <BoostPads boostPads={[entities.boostPads, () => {}]} />
         <For each={entities.ninjas()}>
             {ninja => <Ninja class="ninja" ninja={() => ninja} bones={() => BONES_STANDING} />}
         </For>
@@ -455,6 +468,7 @@ export function EditorApp(props: { editor: Editor, pastNinjas: Accessor<{ x: num
                 <BounceBlockDefs />
                 <LockedSwitchDefs />
                 <TrapSwitchDefs />
+                <BoostPadDefs />
                 <path id="tilemode-crosshair" stroke-width="1.5" fill="none" d={tilemodeCrosshairPath} />
                 <path id="crosshair" stroke-width="1.5" fill="none" d={crosshairPath} />
                 <filter id="outline" filterUnits="userSpaceOnUse" x="0" y="0" width="1056" height="600">

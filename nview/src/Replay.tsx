@@ -17,24 +17,13 @@ import { ShoveThwumps, updateShoveThwumps, type ShoveThwumpData } from './entiti
 import { ExitDoorGradient, ExitDoors, updateExitDoors, type ExitDoorData } from './entities/ExitDoor';
 import { ExitSwitches, updateExitSwitches, type ExitSwitchData } from './entities/ExitSwitch';
 import type { GlobalEventState } from './App';
-
-type BoostPad = {
-    x: number;
-    y: number;
-    deg: number;
-    anim: number;
-};
+import { BoostPadDefs, BoostPads, updateBoostPads, type BoostPadData } from './entities/BoostPad';
 
 type Thwump = {
     x: number;
     y: number;
     deg: number;
 };
-
-// BoostPad
-const boostPadLong = 6;
-const boostPadMid = 1;
-const boostPadShort = -4;
 
 export function ReplayApp(props: { replay: Replay, globalEventState: GlobalEventState }) {
     const replay = props.replay;
@@ -79,7 +68,7 @@ export function ReplayApp(props: { replay: Replay, globalEventState: GlobalEvent
     const mines = createSignal<MineData[]>([]);
     const bounceBlocks = createSignal<BounceBlockData[]>([]);
     const oneWays = createSignal<OneWayData[]>([]);
-    const [boostPads, setBoostPads] = createSignal<BoostPad[]>([]);
+    const boostPads = createSignal<BoostPadData[]>([]);
     const [thwumps, setThwumps] = createSignal<Thwump[]>([]);
     const launchPads = createSignal<LaunchPadData[]>([]);
     const floorguards = createSignal<FloorguardData[]>([]);
@@ -160,18 +149,7 @@ export function ReplayApp(props: { replay: Replay, globalEventState: GlobalEvent
         updateMines(mines, replay);
         updateBounceBlocks(bounceBlocks, replay, partialFrame);
         updateOneWays(oneWays, replay);
-
-        const boostPadsArr: BoostPad[] = [];
-        const boostPadsLen = replay.boost_pads_len();
-        for (let i = 0; i < boostPadsLen; i++) {
-            boostPadsArr.push({
-                x: replay.boost_pad_x(i),
-                y: replay.boost_pad_y(i),
-                deg: replay.boost_pad_rotation(i, partialFrame),
-                anim: replay.boost_pad_anim_progress(i, partialFrame),
-            });
-        }
-        setBoostPads(boostPadsArr);
+        updateBoostPads(boostPads, replay, partialFrame);
 
         const thwumpsArr: Thwump[] = [];
         const thwumpsLen = replay.thwumps_len();
@@ -216,13 +194,7 @@ export function ReplayApp(props: { replay: Replay, globalEventState: GlobalEvent
                     <OneWayDefs />
                     <LockedSwitchDefs />
                     <TrapSwitchDefs />
-                    <g id="boostpad" stroke-width="1.25">
-                        <line x1={boostPadLong} y1={boostPadShort} x2={-boostPadShort} y2={-boostPadLong} />
-                        <line x1={boostPadLong} y1={boostPadMid} x2={-boostPadMid} y2={-boostPadLong} />
-                        <line x1={boostPadLong} y1={boostPadLong} x2={-boostPadLong} y2={-boostPadLong} />
-                        <line x1={boostPadMid} y1={boostPadLong} x2={-boostPadLong} y2={-boostPadMid} />
-                        <line x1={boostPadShort} y1={boostPadLong} x2={-boostPadLong} y2={-boostPadShort} />
-                    </g>
+                    <BoostPadDefs />
                     <g id="thwump">
                         <path stroke="black" fill="none" d={`M 8.5 8.5 H -8.5 V -8.5 H 8.5`} />
                     </g>
@@ -243,9 +215,7 @@ export function ReplayApp(props: { replay: Replay, globalEventState: GlobalEvent
                     {thwump => <use href="#thwump" x={thwump().x} y={thwump().y} transform={`rotate(${thwump().deg},${thwump().x},${thwump().y})`} />}
                 </Index>
                 <BounceBlocks bounceBlocks={bounceBlocks} />
-                <Index each={boostPads()}>
-                    {boostPad => <use href="#boostpad" x={boostPad().x} y={boostPad().y} stroke={`color-mix(in srgb-linear, var(--boost-pad) ${boostPad().anim * 100}%, var(--boost-pad-wooshing))`} transform={`rotate(${boostPad().deg},${boostPad().x},${boostPad().y})`} />}
-                </Index>
+                <BoostPads boostPads={boostPads} />
                 <ShoveThwumps shoveThwumps={shoveThwumps} />
                 <Ninja class="ninja preview" ninja={ninjaPreview} bones={ninjaPreviewBones} />
                 <Ninja class="ninja" ninja={ninja} bones={ninjaBones} />

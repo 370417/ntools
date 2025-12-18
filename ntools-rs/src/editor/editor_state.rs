@@ -126,6 +126,12 @@ impl EditorState {
             }).or_default();
             *count = count.saturating_add(1);
         }
+        for boost_pad in &attract.entities.boost_pads {
+            let count: &mut u16 = entities.entry(EditorEntity::BoostPad {
+                pos: EntityPos::from_world_pos(boost_pad.pos),
+            }).or_default();
+            *count = count.saturating_add(1);
+        }
         EditorState {
             history: Vec::new(),
             future: Vec::new(),

@@ -59,18 +59,18 @@ const toggleThickness = 2 * 24 / 44;
 export function MineDefs() {
     return <>
         <g id="toggled">
-            <line stroke-linecap="round" stroke-width={spokeWidth} x1={-spokeRadius} y1={0} x2={spokeRadius} y2={0} />
-            <line stroke-linecap="round" stroke-width={spokeWidth} x1={0} y1={-spokeRadius} x2={0} y2={spokeRadius} />
-            <line stroke-linecap="round" stroke-width={spokeWidth} x1={-spokeDiag} y1={-spokeDiag} x2={spokeDiag} y2={spokeDiag} />
-            <line stroke-linecap="round" stroke-width={spokeWidth} x1={-spokeDiag} y1={spokeDiag} x2={spokeDiag} y2={-spokeDiag} />
-            <circle id="mineOuter" r={mineOuterRadius} />
-            <circle id="mineInner" r={mineInnerRadius} />
+            <line stroke-linecap="round" stroke-width={spokeWidth} stroke="var(--mine-exterior)" x1={-spokeRadius} y1={0} x2={spokeRadius} y2={0} />
+            <line stroke-linecap="round" stroke-width={spokeWidth} stroke="var(--mine-exterior)" x1={0} y1={-spokeRadius} x2={0} y2={spokeRadius} />
+            <line stroke-linecap="round" stroke-width={spokeWidth} stroke="var(--mine-exterior)" x1={-spokeDiag} y1={-spokeDiag} x2={spokeDiag} y2={spokeDiag} />
+            <line stroke-linecap="round" stroke-width={spokeWidth} stroke="var(--mine-exterior)" x1={-spokeDiag} y1={spokeDiag} x2={spokeDiag} y2={-spokeDiag} />
+            <circle fill="var(--mine-exterior)" r={mineOuterRadius} />
+            <circle fill="var(--mine-interior)" r={mineInnerRadius} />
         </g>
         <g id="untoggled">
-            <circle r={toggleRadius} stroke-width={toggleThickness} fill="none" />
+            <circle r={toggleRadius} stroke-width={toggleThickness} stroke="var(--toggle-mine)" fill="none" />
         </g>
         <g id="toggling">
-            <circle r={toggleRadius} stroke-width={toggleThickness} fill="none" />
+            <circle r={toggleRadius} stroke-width={toggleThickness} stroke="var(--toggling-mine)" fill="none" />
         </g>
     </>;
 }

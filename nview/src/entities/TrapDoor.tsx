@@ -70,13 +70,11 @@ export function TrapDoor(props: { trapDoor: Accessor<TrapDoorData> }) {
         return 0 + (hh - 0) * t;
     }
 
-    return <g class="trap-door" transform={transform(props.trapDoor)}>
+    return <g transform={transform(props.trapDoor)}>
         <Show when={props.trapDoor().animProgress >= 0}>
-            <line class="bar" stroke-width={2 * hw} x1={-barOuterX()} y1="0" x2={barOuterX()} y2="0" />
-        </Show>
-        <Show when={props.trapDoor().animProgress >= 0}>
-            <line class="center" stroke-width={4 * hw} stroke-linecap="round" x1={centerOuterX()} y1="0" x2={centerInnerX()} y2="0" />
-            <line class="center" stroke-width={4 * hw} stroke-linecap="round" x1={-centerOuterX()} y1="0" x2={-centerInnerX()} y2="0" />
+            <line stroke="var(--trap-door-bar)" stroke-width={2 * hw} x1={-barOuterX()} y1="0" x2={barOuterX()} y2="0" />
+            <line stroke="var(--trap-door-center)" stroke-width={4 * hw} stroke-linecap="round" x1={centerOuterX()} y1="0" x2={centerInnerX()} y2="0" />
+            <line stroke="var(--trap-door-center)" stroke-width={4 * hw} stroke-linecap="round" x1={-centerOuterX()} y1="0" x2={-centerInnerX()} y2="0" />
         </Show>
     </g>;
 }

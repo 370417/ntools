@@ -57,6 +57,8 @@ impl BoostPad {
         };
         if self.is_touching_ninja {
             self.frames_since_last_touch = 0;
+        } else {
+            self.frames_since_last_touch = self.frames_since_last_touch.saturating_add(1);
         }
     }
 

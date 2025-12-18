@@ -108,6 +108,7 @@ impl PlaceEntity {
             EditorEntity::BounceBlock { pos, .. } |
             EditorEntity::LaunchPad { pos, .. } |
             EditorEntity::Floorguard { pos, .. } |
+            EditorEntity::BoostPad { pos } |
             EditorEntity::OneWay { pos, .. } => *pos = new_pos,
             EditorEntity::Exit { exit_pos, switch_pos } => match self.stage {
                 Some(Stage::PlaceDoor) => {
@@ -139,6 +140,7 @@ impl PlaceEntity {
             EditorEntity::TrapDoor { .. } |
             EditorEntity::Mine { .. } |
             EditorEntity::ToggleMine { .. } |
+            EditorEntity::BoostPad { .. } |
             EditorEntity::Exit { .. } => {}
         }
     }

@@ -4,7 +4,7 @@ use futures_channel::oneshot::{self, Receiver};
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{attract::Attract, editor::{editor_entity::{EditorEntity, EntityPos, ExportedEntity}, editor_state::{Command, EditorState}, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::{PlaceEntity, Stage}, select_tiles::SelectTiles}, entity::{Entities, bounce_block::BounceBlock, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floorchaser::Floorchaser, launch_pad::LaunchPad, mine::Mine, one_way::OneWay}, grid::{COLS, GridPos, ROWS}, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationCardinal}, replay::Replay, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
+use crate::{attract::Attract, editor::{editor_entity::{EditorEntity, EntityPos, ExportedEntity}, editor_state::{Command, EditorState}, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::{PlaceEntity, Stage}, select_tiles::SelectTiles}, entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floorchaser::Floorchaser, launch_pad::LaunchPad, mine::Mine, one_way::OneWay}, grid::{COLS, GridPos, ROWS}, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationCardinal}, replay::Replay, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
 
 pub mod editor_entity;
 pub mod editor_state;
@@ -123,6 +123,9 @@ impl Editor {
                     }
                     EditorEntity::BounceBlock { pos, orientation } => {
                         entities.bounce_blocks.push(BounceBlock::new(pos.to_world_pos(), *orientation));
+                    }
+                    EditorEntity::BoostPad { pos } => {
+                        entities.boost_pads.push(BoostPad::new(pos.to_world_pos()));
                     }
                 }
             }
@@ -809,7 +812,12 @@ impl Editor {
 
     #[wasm_bindgen]
     pub fn press_num_3(&mut self) {
-        // boost pad
+        self.mode = EditorMode::PlaceEntity(PlaceEntity {
+            entity: EditorEntity::BoostPad {
+                pos: EntityPos::from_world_pos(PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid)),
+            },
+            stage: None,
+        });
     }
 
     #[wasm_bindgen]

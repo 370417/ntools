@@ -49,7 +49,7 @@ const exitDoorCorner = 2.5;
 
 export function ExitDoor(props: { exitDoor: Accessor<ExitDoorData> }) {
     return <g transform={transform(props.exitDoor)}>
-        <rect fill="url(#exit-gradient)" x={-12 + 4 * (1 - props.exitDoor().animProgress)} y={-11.5} width={24 - 8 * (1 - props.exitDoor().animProgress)} height={23.5} />
+        <rect fill="url(#exit-gradient)" x={-12 + 4 * (1 - props.exitDoor().animProgress)} y={-11} width={24 - 8 * (1 - props.exitDoor().animProgress)} height={23} />
         <path class="exit-door" d={`M ${-12 * props.exitDoor().animProgress} 0 v ${-exitDoorRadius} h ${-exitDoorRadius + exitDoorCorner} l ${-exitDoorCorner} ${exitDoorCorner} v ${2 * (exitDoorRadius - exitDoorCorner)} l ${exitDoorCorner} ${exitDoorCorner} h ${exitDoorRadius - exitDoorCorner} z`} />
         <path class="exit-door" d={`M ${12 * props.exitDoor().animProgress} 0 v ${-exitDoorRadius} h ${exitDoorRadius - exitDoorCorner} l ${exitDoorCorner} ${exitDoorCorner} v ${2 * (exitDoorRadius - exitDoorCorner)} l ${-exitDoorCorner} ${exitDoorCorner} h ${-exitDoorRadius + exitDoorCorner} z`} />
         <path class="exit-door-stroke" stroke-width="3" fill="none" stroke-linecap="round" d={`M ${-12 * props.exitDoor().animProgress} 0 m 0 ${(1 - props.exitDoor().animProgress) * exitDoorRadius} v ${props.exitDoor().animProgress * exitDoorRadius} h ${-exitDoorRadius + exitDoorCorner + props.exitDoor().animProgress} l ${-exitDoorCorner} ${-exitDoorCorner} v ${(1 - props.exitDoor().animProgress) * (-exitDoorRadius + exitDoorCorner)}`} />

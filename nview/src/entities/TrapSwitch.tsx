@@ -49,12 +49,12 @@ const halfSize = 1.5;
 export function TrapSwitchDefs() {
     return <>
         <g id="trap-switch">
-            <rect x={-halfSize} y={-halfSize} width={2 * halfSize} height={2 * halfSize} />
+            <rect fill="var(--trap-switch-background)" stroke="var(--trap-switch-border)" x={-halfSize} y={-halfSize} width={2 * halfSize} height={2 * halfSize} />
         </g>
         <g id="trap-switch-touched">
-            <rect x={-halfSize} y={-halfSize} width={2 * halfSize} height={2 * halfSize} />
-            <line x1={-halfSize} y1={-halfSize} x2={halfSize} y2={-halfSize} />
-            <line x1={-halfSize} y1={halfSize} x2={halfSize} y2={halfSize} />
+            <rect fill="var(--trap-switch-background-collected)" x={-halfSize} y={-halfSize} width={2 * halfSize} height={2 * halfSize} />
+            <line stroke="var(--trap-switch-border-collected)" x1={-halfSize} y1={-halfSize} x2={halfSize} y2={-halfSize} />
+            <line stroke="var(--trap-switch-border-collected)" x1={-halfSize} y1={halfSize} x2={halfSize} y2={halfSize} />
         </g>
     </>;
 }

@@ -49,6 +49,9 @@ pub enum EditorEntity {
         pos: EntityPos,
         orientation: Orientation,
     },
+    BoostPad {
+        pos: EntityPos,
+    },
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -90,6 +93,7 @@ impl EditorEntity {
             &EditorEntity::BounceBlock { pos, .. } |
             &EditorEntity::LaunchPad { pos, .. } |
             &EditorEntity::Floorguard { pos, .. } |
+            &EditorEntity::BoostPad { pos } |
             &EditorEntity::OneWay { pos, .. } => pos,
             &EditorEntity::Exit { exit_pos, .. } => exit_pos,
             &EditorEntity::LockedDoor { door_pos, .. } |
@@ -118,6 +122,7 @@ impl EditorEntity {
             EditorEntity::TrapDoor { orientation, .. } => orientation.rotation_deg(),
             EditorEntity::Mine { .. } |
             EditorEntity::ToggleMine { .. } |
+            EditorEntity::BoostPad { .. } |
             EditorEntity::Exit { .. } => 0.0,
         }
     }
@@ -135,6 +140,7 @@ impl EditorEntity {
             EditorEntity::Floorguard { .. } => 16,
             EditorEntity::BounceBlock { .. } => 17,
             EditorEntity::ToggleMine { .. } => 21,
+            EditorEntity::BoostPad { .. } => 24,
         }
     }
 }

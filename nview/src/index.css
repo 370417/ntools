@@ -112,26 +112,6 @@ svg {
     opacity: 0.5;
 }
 
-#toggled line {
-    stroke: var(--mine-exterior);
-}
-
-#mineOuter {
-    fill: var(--mine-exterior);
-}
-
-#mineInner {
-    fill: var(--mine-interior);
-}
-
-#untoggled {
-    stroke: var(--toggle-mine);
-}
-
-#toggling {
-    stroke: var(--toggling-mine);
-}
-
 #bounceblockFill {
     fill: var(--bounceblock-interior);
 }
@@ -194,27 +174,6 @@ svg {
 
 #locked-switch-touched line {
     stroke: var(--locked-switch-button-collected);
-}
-
-.trap-door .bar {
-    stroke: var(--trap-door-bar);
-}
-
-.trap-door .center {
-    stroke: var(--trap-door-center);
-}
-
-#trap-switch rect {
-    fill: var(--trap-switch-background);
-    stroke: var(--trap-switch-border);
-}
-
-#trap-switch-touched rect {
-    fill: var(--trap-switch-background-collected);
-}
-
-#trap-switch-touched line {
-    stroke: var(--trap-switch-border-collected);
 }
 
 .regular-door .bar {

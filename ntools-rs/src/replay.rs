@@ -290,7 +290,7 @@ impl Replay {
     }
 
     #[wasm_bindgen]
-    pub fn boost_pad_rotation(&self, i: usize, partial_frame: f64) -> f64 {
+    pub fn boost_pad_deg(&self, i: usize, partial_frame: f64) -> f64 {
         self.current_sim.entities.boost_pads[i].rotation(partial_frame).to_degrees()
     }
 
