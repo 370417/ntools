@@ -4,10 +4,11 @@ use futures_channel::oneshot::{self, Receiver};
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{attract::Attract, editor::{editor_entity::{EditorEntity, EntityPos, ExportedEntity}, editor_state::{Command, EditorState}, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::{PlaceEntity, Stage}, select_tiles::SelectTiles}, entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floorchaser::Floorchaser, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, thwump::Thwump}, grid::{COLS, GridPos, ROWS}, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationCardinal}, replay::Replay, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
+use crate::{attract::Attract, editor::{editor_entity::{EditorEntity, EntityPos, ExportedEntity}, editor_state::{Command, EditorState}, move_selection::MoveSelection, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::{PlaceEntity, Stage}, select_tiles::SelectTiles}, entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floorchaser::Floorchaser, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, thwump::Thwump}, grid::{COLS, GridPos, ROWS}, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationCardinal}, replay::Replay, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
 
 pub mod editor_entity;
 pub mod editor_state;
+pub mod move_selection;
 pub mod pen_tool;
 pub mod place_entity;
 pub mod select_tiles;
@@ -42,7 +43,7 @@ pub enum EditorMode {
     PaintTiles,
     TilePalette,
     SelectTiles(SelectTiles),
-    MoveSelection,
+    MoveSelection(MoveSelection),
     PlaceEntity(PlaceEntity),
     SelectEntities,
     ModifyEntity,
@@ -165,7 +166,7 @@ impl Editor {
             EditorMode::PaintTiles => 0,
             EditorMode::TilePalette => 1,
             EditorMode::SelectTiles(_) => 2,
-            EditorMode::MoveSelection => 3,
+            EditorMode::MoveSelection(_) => 3,
             EditorMode::PlaceEntity(_) => 4,
             EditorMode::SelectEntities => 5,
             EditorMode::ModifyEntity => 6,
@@ -191,17 +192,23 @@ impl Editor {
 
     #[wasm_bindgen]
     pub fn selected_tiles_path(&self) -> String {
-        if let EditorMode::PenTool(pen_tool) = &self.mode {
-            if !pen_tool.is_none() {
-                let start = pen_tool.start(self.state.latest());
-                let end = pen_tool.crosshair(self.cursor_pos, self.state.latest(), self.pen_tool_fine_grid);
-                if start != end {
-                    let command = create_command(start, end, self.pen_tool_is_clockwise, None, self.state.tiles());
-                    let mut tiles = Tiles::default();
-                    EditorState::execute_command(&mut tiles, &mut Default::default(), &command);
-                    return extract_path(&tiles.segments_borderless(), false);
+        match &self.mode {
+            EditorMode::PenTool(pen_tool) => {
+                if !pen_tool.is_none() {
+                    let start = pen_tool.start(self.state.latest());
+                    let end = pen_tool.crosshair(self.cursor_pos, self.state.latest(), self.pen_tool_fine_grid);
+                    if start != end {
+                        let command = create_command(start, end, self.pen_tool_is_clockwise, None, self.state.tiles());
+                        let mut tiles = Tiles::default();
+                        EditorState::execute_command(&mut tiles, &mut Default::default(), &command);
+                        return extract_path(&tiles.segments_borderless(), false);
+                    }
                 }
             }
+            EditorMode::MoveSelection(move_selection) => {
+                return move_selection.selected_tiles_path(self.cursor_pos);
+            }
+            _ => {}
         }
         "".into()
     }
@@ -248,6 +255,10 @@ impl Editor {
                 } else {
                     false
                 }
+            }
+            EditorMode::MoveSelection(_) => {
+                self.cursor_pos = new_cursor_pos;
+                true
             }
             _ => false
         }
@@ -324,6 +335,7 @@ impl Editor {
     pub fn preview_entities(&self) -> Box<[ExportedEntity]> {
         match &self.mode {
             EditorMode::PlaceEntity(place_entity) => Box::new([place_entity.entity.export().with_switch(place_entity.stage)]),
+            EditorMode::MoveSelection(move_selection) => move_selection.preview_entities(self.cursor_pos).map(|entity| entity.export()).collect(),
             _ => Box::new([]),
         }
     }
@@ -333,6 +345,9 @@ impl Editor {
         match &self.mode {
             EditorMode::SelectTiles(select_tiles) => {
                 select_tiles.selection_preview().iter().flat_map(|pos| [pos.x, pos.y]).collect()
+            }
+            EditorMode::MoveSelection(move_selection) => {
+                move_selection.selection(self.cursor_pos).flat_map(|pos| [pos.x, pos.y]).collect()
             }
             _ => Box::new([]),
         }
@@ -556,10 +571,20 @@ impl Editor {
 
     #[wasm_bindgen]
     pub fn press_s(&mut self, shift: bool) {
-        match self.mode {
+        match &mut self.mode {
             EditorMode::PaintTiles => {
                 self.pressed_tile_variants.push(TileVariant::S);
                 self.paint_tile(PaintTileArgs { amend: false, shift });
+            }
+            EditorMode::PlaceEntity(place_entity) => {
+                self.entity_orientation = match self.pressed_orientation {
+                    Some(Orientation::SW) => Orientation::SSW,
+                    Some(Orientation::SE) => Orientation::SSE,
+                    _ => Orientation::S,
+                };
+                self.entity_orientation_cardinal = OrientationCardinal::S;
+                self.pressed_orientation = Some(Orientation::S);
+                place_entity.set_orientation(self.entity_orientation);
             }
             _ => {}
         }
@@ -637,14 +662,7 @@ impl Editor {
                 self.pen_tool_is_clockwise = !self.pen_tool_is_clockwise;
             }
             EditorMode::PlaceEntity(place_entity) => {
-                self.entity_orientation = match self.pressed_orientation {
-                    Some(Orientation::SW) => Orientation::SSW,
-                    Some(Orientation::SE) => Orientation::SSE,
-                    _ => Orientation::S,
-                };
-                self.entity_orientation_cardinal = OrientationCardinal::S;
-                self.pressed_orientation = Some(Orientation::S);
-                place_entity.set_orientation(self.entity_orientation);
+                place_entity.press_x();
             }
             _ => {}
         }
@@ -661,6 +679,12 @@ impl Editor {
                 };
                 self.pressed_orientation = Some(Orientation::SE);
                 place_entity.set_orientation(self.entity_orientation);
+            }
+            EditorMode::SelectTiles(select_tiles) => {
+                let selection = &select_tiles.selection_preview();
+                if !selection.is_empty() {
+                    self.mode = EditorMode::MoveSelection(MoveSelection::new(self.cursor_pos, selection, self.state.tiles(), self.state.entities()));
+                }
             }
             _ => {}
         }

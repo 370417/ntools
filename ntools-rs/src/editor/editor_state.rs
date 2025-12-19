@@ -11,8 +11,10 @@ pub struct EditorState {
     /// Commands that were undone, stored so that the most recently undone command is last
     future: Vec<Command>,
     tiles: Tiles,
-    entities: BTreeMap<EditorEntity, u16>,
+    entities: EditorEntities,
 }
+
+pub type EditorEntities = BTreeMap<EditorEntity, u16>;
 
 #[derive(Clone)]
 pub enum Command {
@@ -151,7 +153,7 @@ impl EditorState {
         &self.tiles
     }
 
-    pub fn entities(&self) -> &BTreeMap<EditorEntity, u16> {
+    pub fn entities(&self) -> &EditorEntities {
         &self.entities
     }
 
@@ -216,7 +218,7 @@ impl EditorState {
         }
     }
 
-    pub fn execute_command(tiles: &mut Tiles, entities: &mut BTreeMap<EditorEntity, u16>, command: &Command) {
+    pub fn execute_command(tiles: &mut Tiles, entities: &mut EditorEntities, command: &Command) {
         match command {
             Command::PaintTile(paint_tile) => {
                 tiles[paint_tile.grid_pos] = paint_tile.new;

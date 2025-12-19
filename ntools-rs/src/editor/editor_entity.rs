@@ -1,7 +1,7 @@
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{editor::place_entity::Stage, orientation::{Orientation, OrientationCardinal, OrientationExt}};
+use crate::{editor::place_entity::Stage, grid::GridPos, orientation::{Orientation, OrientationCardinal, OrientationExt}};
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum EditorEntity {
@@ -106,11 +106,38 @@ impl EditorEntity {
         }
     }
 
+    pub fn pos_mut(&mut self) -> &mut EntityPos {
+        match self {
+            EditorEntity::Ninja { pos, .. } |
+            EditorEntity::Mine { pos } |
+            EditorEntity::ToggleMine { pos } |
+            EditorEntity::RegularDoor { pos, .. } |
+            EditorEntity::BounceBlock { pos, .. } |
+            EditorEntity::LaunchPad { pos, .. } |
+            EditorEntity::Floorguard { pos, .. } |
+            EditorEntity::BoostPad { pos } |
+            EditorEntity::Thwump { pos, .. } |
+            EditorEntity::OneWay { pos, .. } => pos,
+            EditorEntity::Exit { exit_pos, .. } => exit_pos,
+            EditorEntity::LockedDoor { door_pos, .. } |
+            EditorEntity::TrapDoor { door_pos, .. } => door_pos,
+        }
+    }
+
     pub fn switch_pos(&self) -> Option<EntityPos> {
         match self {
             &EditorEntity::Exit { switch_pos, .. } => Some(switch_pos),
             &EditorEntity::LockedDoor { switch_pos, .. } |
             &EditorEntity::TrapDoor { switch_pos, .. } => Some(switch_pos),
+            _ => None,
+        }
+    }
+
+    pub fn switch_pos_mut(&mut self) -> Option<&mut EntityPos> {
+        match self {
+            EditorEntity::Exit { switch_pos, .. } => Some(switch_pos),
+            EditorEntity::LockedDoor { switch_pos, .. } |
+            EditorEntity::TrapDoor { switch_pos, .. } => Some(switch_pos),
             _ => None,
         }
     }
@@ -160,6 +187,39 @@ impl EntityPos {
 
     pub fn to_world_pos(self) -> DVec2 {
         DVec2::new(self.x as f64, self.y as f64) * 6.0
+    }
+
+    pub fn grid_positions(self) -> [GridPos; 4] {
+        [
+            Self {
+                x: self.x,
+                y: self.y,
+            }.to_grid_pos(),
+            Self {
+                x: self.x - 1,
+                y: self.y,
+            }.to_grid_pos(),
+            Self {
+                x: self.x,
+                y: self.y - 1,
+            }.to_grid_pos(),
+            Self {
+                x: self.x - 1,
+                y: self.y - 1,
+            }.to_grid_pos(),
+        ]
+    }
+
+    fn to_grid_pos(self) -> GridPos {
+        GridPos {
+            x: self.x.max(0) as usize / 4,
+            y: self.y.max(0) as usize / 4,
+        }
+    }
+
+    pub fn mut_add(&mut self, delta: DVec2) {
+        self.x += (delta.x / 6.0).round() as i32;
+        self.y += (delta.y / 6.0).round() as i32;
     }
 }
 

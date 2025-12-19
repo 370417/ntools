@@ -1,8 +1,6 @@
-use std::collections::BTreeMap;
-
 use glam::DVec2;
 
-use crate::{editor::{editor_entity::{EditorEntity, EntityPos}, editor_state::{Command, SetEntityCount}}, orientation::{Orientation, OrientationCardinal}};
+use crate::{editor::{editor_entity::{EditorEntity, EntityPos}, editor_state::{Command, EditorEntities, SetEntityCount}}, orientation::{Orientation, OrientationCardinal}};
 
 pub struct PlaceEntity {
     pub entity: EditorEntity,
@@ -147,7 +145,7 @@ impl PlaceEntity {
         }
     }
 
-    pub fn cursor_click(&mut self, entities: &BTreeMap<EditorEntity, u16>) -> Option<Command> {
+    pub fn cursor_click(&mut self, entities: &EditorEntities) -> Option<Command> {
         if let Some(Stage::PlaceDoor) = self.stage {
             self.stage = Some(Stage::PlaceSwitch);
             return None;
@@ -179,5 +177,13 @@ impl PlaceEntity {
             }
         }
         command
+    }
+
+    pub fn press_x(&mut self) {
+        match self.entity {
+            EditorEntity::Mine { pos } => self.entity = EditorEntity::ToggleMine { pos },
+            EditorEntity::ToggleMine { pos } => self.entity = EditorEntity::Mine { pos },
+            _ => {}
+        }
     }
 }

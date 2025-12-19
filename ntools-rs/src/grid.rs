@@ -2,7 +2,7 @@ use std::ops::{Index, IndexMut};
 
 use glam::DVec2;
 
-use crate::{entity::EntityIndex, tile::TILE_SIZE};
+use crate::{entity::EntityIndex, tile::{TILE_HALF_SIZE, TILE_SIZE}};
 
 pub const COLS: usize = 42;
 pub const ROWS: usize = 23;
@@ -112,6 +112,10 @@ impl GridPos {
 
     pub fn to_world_pos(self) -> DVec2 {
         DVec2::new(self.x as f64 * TILE_SIZE, self.y as f64 * TILE_SIZE)
+    }
+
+    pub fn center(self) -> DVec2 {
+        self.to_world_pos() + DVec2::splat(TILE_HALF_SIZE)
     }
 
     pub fn min(self, other: GridPos) -> GridPos {
