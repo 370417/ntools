@@ -86,7 +86,7 @@ impl SelectTiles {
                 old: state.tiles()[grid_pos],
                 new: tile,
             }
-        }).collect())
+        }).filter(|paint_tile| paint_tile.old != paint_tile.new).collect())
     }
 
     pub fn new_floodfill(cursor_pos: DVec2, tiles: &Tiles) -> SelectTiles {
