@@ -504,15 +504,15 @@ export function EditorApp(props: { editor: Editor, pastNinjas: Accessor<{ x: num
             {regularGridYs.map(y => <line class="regular-grid" x1="24" x2={24 * 43} y1={y} y2={y} />)}
             <Entities entities={entities} />
             <path id="tiles" stroke-width="2" clip-path="url(#tiles-clip)" clip-rule="evenodd" d={tilePath()} fill-rule="evenodd" />
-            <path id="selected-tiles" d={selectedTilePath()} fill-rule="evenodd" />
             <g filter="url(#outline)">
                 <Entities entities={previewEntities} />
             </g>
+            <path id="selected-tiles" d={selectedTilePath()} fill-rule="evenodd" />
             <For each={doorSwitchLines()}>
                 {line => <line class="door-switch-line" x1={line.x1} y1={line.y1} x2={line.x2} y2={line.y2} />}
             </For>
             <g>
-                <path stroke="magenta" fill="none" d={selectedTileOutlinePath()} />
+                <path stroke="var(--editor-crosshair)" stroke-width="2" fill="none" d={selectedTileOutlinePath()} />
             </g>
             <Show when={mode() === MODE_PAINT_TILES}>
                 <use href="#tilemode-crosshair" x={tilemodeCrosshairPos().col * 24 + 12} y={tilemodeCrosshairPos().row * 24 + 12} />

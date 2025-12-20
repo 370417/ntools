@@ -359,9 +359,8 @@ impl Editor {
     #[wasm_bindgen]
     pub fn selected_tile_outline_path(&self) -> String {
         match &self.mode {
-            EditorMode::SelectTiles(select_tiles) => {
-                select_tiles.selected_tile_outline_path()
-            }
+            EditorMode::SelectTiles(select_tiles) => select_tiles.selected_tile_outline_path(),
+            EditorMode::MoveSelection(move_selection) => move_selection.selected_tile_outline_path(self.cursor_pos),
             _ => String::new(),
         }
     }

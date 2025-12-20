@@ -315,10 +315,11 @@ pub fn selection_outline_path(selection: HashSet<GridPos>) -> String {
         segments.remove(&start);
         path.push(format!("M {} {} L {} {}", start.x, start.y, end.x, end.y));
         let mut end = end;
-        while let Some(&next_end) = segments.get(&end) {
+        while let Some(next_end) = segments.remove(&end) {
             path.push(format!("L {} {}", next_end.x, next_end.y));
             end = next_end;
         }
+        path.push("Z".into());
     }
 
     path.join(" ")

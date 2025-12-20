@@ -2,14 +2,14 @@ use std::collections::HashSet;
 
 use glam::DVec2;
 
-use crate::{editor::{editor_entity::{EditorEntity, EntityPos}, editor_state::EditorEntities}, grid::{GridPos, is_pos_in_bounds}, segment::extract_path, tile::{TILE_SIZE, Tile, Tiles}};
+use crate::{editor::{editor_entity::{EditorEntity, EntityPos}, editor_state::EditorEntities, select_tiles::selection_outline_path}, grid::{GridPos, is_pos_in_bounds}, segment::extract_path, tile::{TILE_SIZE, Tile, Tiles}};
 
 pub struct MoveSelection {
     /// Center of selection used for rotation.
     /// This value does not change when the mouse moves.
     center: DVec2,
-    /// Store tiles with their centers
-    tiles: Vec<(DVec2, Tile)>,
+    /// Store tiles with their positions
+    tiles: Vec<(GridPos, Tile)>,
     /// Store entities with their counts
     entities: Vec<(EditorEntity, u16, SelectionType)>,
     original_cursor_pos: DVec2,
@@ -28,7 +28,7 @@ impl MoveSelection {
         let max_pos = selected_tiles.iter().cloned().reduce(GridPos::max).unwrap().center();
         MoveSelection {
             center: (min_pos + max_pos) / 2.0,
-            tiles: selected_tiles.iter().map(|&pos| (pos.center(), tiles[pos])).collect(),
+            tiles: selected_tiles.iter().map(|&pos| (pos, tiles[pos])).collect(),
             entities: entities.iter().filter_map(|(&entity, &count)| {
                 let pos_selected = is_pos_selected(entity.pos(), selected_tiles);
                 let switch_selected = entity.switch_pos().is_some_and(|switch_pos| is_pos_selected(switch_pos, selected_tiles));
@@ -44,13 +44,13 @@ impl MoveSelection {
     }
 
     pub fn selection(&self, cursor_pos: DVec2) -> impl Iterator<Item = GridPos> {
-        self.tiles.iter().map(move |(pos, _)| GridPos::from_world_pos(*pos + cursor_pos - self.original_cursor_pos)).filter(|pos| pos.in_bounds())
+        self.tiles.iter().map(move |(pos, _)| GridPos::from_world_pos(pos.center() + cursor_pos - self.original_cursor_pos)).filter(|pos| pos.in_bounds())
     }
 
     pub fn selected_tiles_path(&self, cursor_pos: DVec2) -> String {
         let mut tiles = Tiles::default();
-        for (tile_center, tile) in &self.tiles {
-            let grid_pos = GridPos::from_world_pos(tile_center + cursor_pos - self.original_cursor_pos);
+        for (grid_pos, tile) in &self.tiles {
+            let grid_pos = GridPos::from_world_pos(grid_pos.center() + cursor_pos - self.original_cursor_pos);
             if grid_pos.in_bounds() {
                 tiles[grid_pos] = *tile;
             }
@@ -83,6 +83,13 @@ impl MoveSelection {
                 None
             }
         })
+    }
+
+    pub fn selected_tile_outline_path(&self, cursor_pos: DVec2) -> String {
+        selection_outline_path(self.tiles.iter()
+            .map(|(pos, _)| GridPos::from_world_pos(pos.center() + cursor_pos - self.original_cursor_pos))
+            .filter(|pos| pos.in_bounds())
+            .collect())
     }
 }
 
