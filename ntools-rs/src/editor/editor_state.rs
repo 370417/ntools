@@ -141,6 +141,13 @@ impl EditorState {
             }).or_default();
             *count = count.saturating_add(1);
         }
+        for shove_thwump in &attract.entities.shove_thwumps {
+            let count: &mut u16 = entities.entry(EditorEntity::ShoveThwump {
+                pos: EntityPos::from_world_pos(shove_thwump.pos),
+                orientation: shove_thwump.orientation,
+            }).or_default();
+            *count = count.saturating_add(1);
+        }
         EditorState {
             history: Vec::new(),
             future: Vec::new(),

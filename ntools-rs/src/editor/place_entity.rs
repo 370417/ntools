@@ -108,6 +108,7 @@ impl PlaceEntity {
             EditorEntity::Floorguard { pos, .. } |
             EditorEntity::BoostPad { pos } |
             EditorEntity::Thwump { pos, .. } |
+            EditorEntity::ShoveThwump { pos, .. } |
             EditorEntity::OneWay { pos, .. } => *pos = new_pos,
             EditorEntity::Exit { exit_pos, switch_pos } => match self.stage {
                 Some(Stage::PlaceDoor) => {
@@ -134,6 +135,7 @@ impl PlaceEntity {
             EditorEntity::OneWay { orientation, .. } |
             EditorEntity::LaunchPad { orientation, .. } |
             EditorEntity::Thwump { orientation, .. } |
+            EditorEntity::ShoveThwump { orientation, .. } |
             EditorEntity::BounceBlock { orientation, .. } => *orientation = new_orientation,
             EditorEntity::RegularDoor { .. } |
             EditorEntity::LockedDoor { .. } |

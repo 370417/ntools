@@ -4,7 +4,7 @@ use futures_channel::oneshot::{self, Receiver};
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{attract::Attract, editor::{editor_entity::{EditorEntity, EntityPos, ExportedEntity}, editor_state::{Command, EditorState}, move_selection::MoveSelection, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::{PlaceEntity, Stage}, select_tiles::SelectTiles}, entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floorchaser::Floorchaser, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, thwump::Thwump}, grid::{COLS, GridPos, ROWS}, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationCardinal}, replay::Replay, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
+use crate::{attract::Attract, editor::{editor_entity::{EditorEntity, EntityPos, ExportedEntity}, editor_state::{Command, EditorState}, move_selection::MoveSelection, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::{PlaceEntity, Stage}, select_tiles::SelectTiles}, entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floorchaser::Floorchaser, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump}, grid::{COLS, GridPos, ROWS}, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationCardinal}, replay::Replay, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
 
 pub mod editor_entity;
 pub mod editor_state;
@@ -131,6 +131,9 @@ impl Editor {
                     EditorEntity::BoostPad { pos } => {
                         entities.boost_pads.push(BoostPad::new(pos.to_world_pos()));
                     }
+                    EditorEntity::ShoveThwump { pos, orientation } => {
+                        entities.shove_thwumps.push(ShoveThwump::new(pos.to_world_pos(), *orientation));
+                    }
                 }
             }
         }
@@ -210,7 +213,7 @@ impl Editor {
             }
             _ => {}
         }
-        "".into()
+        String::new()
     }
 
     /// Return true if the cursor has moved enough to move to a different grid location
@@ -424,7 +427,7 @@ impl Editor {
     }
 
     #[wasm_bindgen]
-    pub fn press_tilde(&mut self) {
+    pub fn press_backtick(&mut self) {
         match self.mode {
             EditorMode::PenTool(_) => {}
             _ => self.mode = EditorMode::PenTool(PenTool::new()),
@@ -875,7 +878,13 @@ impl Editor {
 
     #[wasm_bindgen]
     pub fn press_num_7(&mut self) {
-        // shove thwump
+        self.mode = EditorMode::PlaceEntity(PlaceEntity {
+            entity: EditorEntity::ShoveThwump {
+                pos: EntityPos::from_world_pos(PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid)),
+                orientation: self.entity_orientation,
+            },
+            stage: None,
+        });
     }
 
     #[wasm_bindgen]

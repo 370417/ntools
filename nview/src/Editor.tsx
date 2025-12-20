@@ -16,6 +16,7 @@ import { BounceBlockDefs, BounceBlocks, type BounceBlockData } from "./entities/
 import type { GlobalEventState } from "./App";
 import { BoostPadDefs, BoostPads, type BoostPadData } from "./entities/BoostPad";
 import { ThwumpDefs, Thwumps, type ThwumpData } from "./entities/Thwump";
+import { ShoveThwumps, type ShoveThwumpData } from "./entities/ShoveThwump";
 
 const COLS = 42;
 const ROWS = 23;
@@ -98,6 +99,8 @@ type EntitiesProps = {
     setThwumps: Setter<ThwumpData[]>,
     boostPads: Accessor<BoostPadData[]>,
     setBoostPads: Setter<BoostPadData[]>,
+    shoveThwumps: Accessor<ShoveThwumpData[]>,
+    setShoveThwumps: Setter<ShoveThwumpData[]>,
 };
 
 function createEntities(): EntitiesProps {
@@ -116,6 +119,7 @@ function createEntities(): EntitiesProps {
     const [bounceBlocks, setBounceBlocks] = createSignal<BounceBlockData[]>([]);
     const [thwumps, setThwumps] = createSignal<ThwumpData[]>([]);
     const [boostPads, setBoostPads] = createSignal<BoostPadData[]>([]);
+    const [shoveThwumps, setShoveThwumps] = createSignal<ShoveThwumpData[]>([]);
     return {
         ninjas, setNinjas,
         mines, setMines,
@@ -132,6 +136,7 @@ function createEntities(): EntitiesProps {
         bounceBlocks, setBounceBlocks,
         thwumps, setThwumps,
         boostPads, setBoostPads,
+        shoveThwumps, setShoveThwumps,
     };
 }
 
@@ -151,6 +156,7 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
     const bounceBlocks: BounceBlockData[] = [];
     const thwumps: ThwumpData[] = [];
     const boostPads: BoostPadData[] = [];
+    const shoveThwumps: ShoveThwumpData[] = [];
 
     for (const entity of exportedEntities) {
         // Make sure to create new objects instead of reusing entity
@@ -223,6 +229,11 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
                 ...entityCopy,
                 animProgress: 1,
             });
+        } else if (entity.type_int === ENTITY_SHOVE_THWUMP) {
+            shoveThwumps.push({
+                ...entityCopy,
+                touch: 16,
+            });
         }
         // Do I need this?
         entity.free();
@@ -243,6 +254,7 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
     entities.setBounceBlocks(bounceBlocks);
     entities.setThwumps(thwumps);
     entities.setBoostPads(boostPads);
+    entities.setShoveThwumps(shoveThwumps);
 }
 
 function Entities({ entities }: { entities: EntitiesProps }) {
@@ -261,6 +273,7 @@ function Entities({ entities }: { entities: EntitiesProps }) {
         <Thwumps thwumps={[entities.thwumps, () => {}]} />
         <BounceBlocks bounceBlocks={[entities.bounceBlocks, () => {}]} />
         <BoostPads boostPads={[entities.boostPads, () => {}]} />
+        <ShoveThwumps shoveThwumps={[entities.shoveThwumps, () => {}]} />
         <For each={entities.ninjas()}>
             {ninja => <Ninja class="ninja" ninja={() => ninja} bones={() => BONES_STANDING} />}
         </For>
@@ -288,7 +301,7 @@ export function EditorApp(props: { editor: Editor, pastNinjas: Accessor<{ x: num
     const keydownListener = (event: KeyboardEvent) => {
         let change = false;
 
-        if (event.code ==='Backquote') change = true, editor.press_tilde();
+        if (event.code ==='Backquote') change = true, editor.press_backtick();
         else if (event.code === 'Digit1') change = true, editor.press_1(event.shiftKey);
         else if (event.code === 'Digit2') change = true, editor.press_2(event.shiftKey);
         else if (event.code === 'Digit3') change = true, editor.press_3(event.shiftKey);
