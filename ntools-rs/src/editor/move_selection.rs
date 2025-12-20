@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use glam::DVec2;
 
-use crate::{editor::{editor_entity::{EditorEntity, EntityPos}, editor_state::EditorEntities}, grid::GridPos, segment::extract_path, tile::{TILE_SIZE, Tile, Tiles}};
+use crate::{editor::{editor_entity::{EditorEntity, EntityPos}, editor_state::EditorEntities}, grid::{GridPos, is_pos_in_bounds}, segment::extract_path, tile::{TILE_SIZE, Tile, Tiles}};
 
 pub struct MoveSelection {
     /// Center of selection used for rotation.
@@ -59,7 +59,7 @@ impl MoveSelection {
     }
 
     pub fn preview_entities(&self, cursor_pos: DVec2) -> impl Iterator<Item = EditorEntity> {
-        self.entities.iter().map(move |(entity, _count, sel_type)| {
+        self.entities.iter().filter_map(move |(entity, _count, sel_type)| {
             let mut entity = *entity;
             let pos_delta = cursor_pos - self.original_cursor_pos;
             let pos_delta = TILE_SIZE * (pos_delta / TILE_SIZE).round();
@@ -75,7 +75,13 @@ impl MoveSelection {
                     }
                 }
             }
-            entity
+            if is_pos_in_bounds(entity.pos().to_world_pos()) &&
+                entity.switch_pos().is_none_or(|switch_pos| is_pos_in_bounds(switch_pos.to_world_pos()))
+            {
+                Some(entity)
+            } else {
+                None
+            }
         })
     }
 }

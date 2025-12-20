@@ -1,8 +1,8 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use glam::DVec2;
 
-use crate::{editor::editor_state::{Command, EditorState, PaintTile}, grid::GridPos, tile::{HorizontalEdge, Tile, Tiles, VerticalEdge}};
+use crate::{editor::editor_state::{Command, EditorState, PaintTile}, grid::GridPos, tile::{HorizontalEdge, TILE_SIZE, Tile, Tiles, VerticalEdge}};
 
 pub struct SelectTiles {
     selected_tiles: HashSet<GridPos>,
@@ -113,6 +113,10 @@ impl SelectTiles {
         }
         self.active_selection = None;
     }
+
+    pub fn selected_tile_pos_path(&self) -> String {
+        selection_path(self.selection_preview())
+    }
 }
 
 impl RectSelection {
@@ -195,6 +199,142 @@ impl HorizontalEdge {
             (_, Self::Closed) |
             (Self::Closed, _) => fill_mode == FillMode::Tiles,
             (a, b) => a == &b,
+        }
+    }
+}
+
+fn selection_path(selection: HashSet<GridPos>) -> String {
+    let padding = 2.0_f64;
+
+    let mut segments = HashMap::<SegmentPoint, SegmentPoint>::new();
+
+    for grid_pos in &selection {
+        let left = grid_pos.plus((-1, 0));
+        let right = grid_pos.plus((1, 0));
+        let top = grid_pos.plus((0, -1));
+        let bottom = grid_pos.plus((0, 1));
+        let top_left = grid_pos.plus((-1, -1));
+        let top_right = grid_pos.plus((1, -1));
+        let bottom_left = grid_pos.plus((-1, 1));
+        let bottom_right = grid_pos.plus((1, 1));
+
+        let is_left_open = !selection.contains(&left);
+        let is_right_open = !selection.contains(&right);
+        let is_top_open = !selection.contains(&top);
+        let is_bottom_open = !selection.contains(&bottom);
+        let is_top_left_open = !selection.contains(&top_left);
+        let is_top_right_open = !selection.contains(&top_right);
+        let is_bottom_left_open = !selection.contains(&bottom_left);
+        let is_bottom_right_open = !selection.contains(&bottom_right);
+
+        let top_left_pos = grid_pos.to_world_pos();
+        let top_right_pos = top_left_pos + DVec2::new(TILE_SIZE, 0.0);
+        let bottom_left_pos = top_left_pos + DVec2::new(0.0, TILE_SIZE);
+        let bottom_right_pos = top_right_pos + DVec2::new(0.0, TILE_SIZE);
+
+        if is_left_open {
+            let mut start = bottom_left_pos - DVec2::new(padding, 0.0);
+            let mut end = top_left_pos - DVec2::new(padding, 0.0);
+            if !is_bottom_left_open {
+                // shorten segment to fit interior corner
+                start.y -= padding;
+            } else if is_bottom_open {
+                // lengthen segment to fit exterior corner
+                start.y += padding;
+            }
+            if !is_top_left_open {
+                // shorten segment to fit interior corner
+                end.y += padding;
+            } else if is_top_open {
+                // lengthen segment to fit exterior corner
+                end.y -= padding;
+            }
+            segments.insert(start.into(), end.into());
+        }
+        if is_top_open {
+            let mut start = top_left_pos - DVec2::new(0.0, padding);
+            let mut end = top_right_pos - DVec2::new(0.0, padding);
+            if !is_top_left_open {
+                // shorten segment to fit interior corner
+                start.x += padding;
+            } else if is_left_open {
+                // lengthen segment to fit exterior corner
+                start.x -= padding;
+            }
+            if !is_top_right_open {
+                // shorten segment to fit interior corner
+                end.x -= padding;
+            } else if is_right_open {
+                // lengthen segment to fit exterior corner
+                end.x += padding;
+            }
+            segments.insert(start.into(), end.into());
+        }
+        if is_right_open {
+            let mut start = top_right_pos + DVec2::new(padding, 0.0);
+            let mut end = bottom_right_pos + DVec2::new(padding, 0.0);
+            if !is_top_right_open {
+                // shorten segment to fit interior corner
+                start.y += padding;
+            } else if is_top_open {
+                // lengthen segment to fit exterior corner
+                start.y -= padding;
+            }
+            if !is_bottom_right_open {
+                // shorten segment to fit interior corner
+                end.y -= padding;
+            } else if is_bottom_open {
+                // lengthen segment to fit exterior corner
+                end.y += padding;
+            }
+            segments.insert(start.into(), end.into());
+        }
+        if is_bottom_open {
+            let mut start = bottom_right_pos + DVec2::new(0.0, padding);
+            let mut end = bottom_left_pos + DVec2::new(0.0, padding);
+            if !is_bottom_right_open {
+                // shorten segment to fit interior corner
+                start.x -= padding;
+            } else if is_right_open {
+                // lengthen segment to fit exterior corner
+                start.x += padding;
+            }
+            if !is_bottom_left_open {
+                // shorten segment to fit interior corner
+                end.x += padding;
+            } else if is_left_open {
+                // lengthen segment to fit exterior corner
+                end.x -= padding;
+            }
+            segments.insert(start.into(), end.into());
+        }
+    }
+
+    let mut path = Vec::new();
+    while let Some((&start, &end)) = segments.iter().next() {
+        segments.remove(&start);
+        path.push(format!("M {} {} L {} {}", start.x, start.y, end.x, end.y));
+        let mut end = end;
+        while let Some(&next_end) = segments.get(&end) {
+            path.push(format!("L {} {}", next_end.x, next_end.y));
+            end = next_end;
+        }
+    }
+
+    path.join(" ")
+}
+
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+struct SegmentPoint {
+    x: i32,
+    y: i32,
+}
+
+impl From<DVec2> for SegmentPoint {
+    fn from(value: DVec2) -> Self {
+        Self {
+            x: value.x as i32,
+            y: value.y as i32,
         }
     }
 }

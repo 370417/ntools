@@ -101,8 +101,8 @@ impl GridPos {
 
     pub fn plus(self, (x, y): (i32, i32)) -> GridPos {
         GridPos {
-            x: (self.x as i32 + x) as usize,
-            y: (self.y as i32 + y) as usize,
+            x: (self.x as i32 + x).max(0) as usize,
+            y: (self.y as i32 + y).max(0) as usize,
         }
     }
 

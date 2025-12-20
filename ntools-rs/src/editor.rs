@@ -354,6 +354,16 @@ impl Editor {
     }
 
     #[wasm_bindgen]
+    pub fn selected_tile_pos_path(&self) -> String {
+        match &self.mode {
+            EditorMode::SelectTiles(select_tiles) => {
+                select_tiles.selected_tile_pos_path()
+            }
+            _ => String::new(),
+        }
+    }
+
+    #[wasm_bindgen]
     pub fn show_half_grid(&self) -> bool {
         match self.mode {
             EditorMode::PenTool(_) => self.pen_tool_fine_grid,
