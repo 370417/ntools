@@ -74,12 +74,12 @@ impl <T: Clone> Clone for Grid<T> {
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct GridPos {
-    pub x: usize,
-    pub y: usize,
+    pub x: u8,
+    pub y: u8,
 }
 
 impl GridPos {
-    pub fn new(x: usize, y: usize) -> GridPos {
+    pub fn new(x: u8, y: u8) -> GridPos {
         GridPos { x, y }
     }
 
@@ -87,27 +87,27 @@ impl GridPos {
         let x = if pos.x < 0.0 { 0.0 } else { pos.x };
         let y = if pos.y < 0.0 { 0.0 } else { pos.y };
         GridPos {
-            x: (x / TILE_SIZE).floor() as usize,
-            y: (y / TILE_SIZE).floor() as usize,
+            x: (x / TILE_SIZE).floor() as u8,
+            y: (y / TILE_SIZE).floor() as u8,
         }
     }
 
     pub fn clamp(self) -> GridPos {
         GridPos {
-            x: self.x.clamp(1, COLS),
-            y: self.y.clamp(1, ROWS)
+            x: self.x.clamp(1, COLS as u8),
+            y: self.y.clamp(1, ROWS as u8)
         }
     }
 
     pub fn plus(self, (x, y): (i32, i32)) -> GridPos {
         GridPos {
-            x: (self.x as i32 + x).max(0) as usize,
-            y: (self.y as i32 + y).max(0) as usize,
+            x: (self.x as i32 + x).max(0) as u8,
+            y: (self.y as i32 + y).max(0) as u8,
         }
     }
 
     pub fn in_bounds(self) -> bool {
-        self.x > 0 && self.y > 0 && self.x <= COLS && self.y <= ROWS
+        self.x > 0 && self.y > 0 && self.x <= COLS as u8 && self.y <= ROWS as u8
     }
 
     pub fn to_world_pos(self) -> DVec2 {
@@ -146,14 +146,14 @@ impl <T> Index<GridPos> for Grid<T> {
     type Output = Vec<T>;
 
     fn index(&self, index: GridPos) -> &Self::Output {
-        let i = (index.y - 1) * COLS + (index.x - 1);
+        let i = (index.y as usize - 1) * COLS + (index.x as usize - 1);
         &self.cells[i]
     }
 }
 
 impl <T> IndexMut<GridPos> for Grid<T> {
     fn index_mut(&mut self, index: GridPos) -> &mut Self::Output {
-        let i = (index.y - 1) * COLS + (index.x - 1);
+        let i = (index.y as usize - 1) * COLS + (index.x as usize - 1);
         &mut self.cells[i]
     }
 }

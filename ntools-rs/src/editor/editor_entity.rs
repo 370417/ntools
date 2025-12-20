@@ -220,8 +220,8 @@ impl EntityPos {
 
     fn to_grid_pos(self) -> GridPos {
         GridPos {
-            x: self.x.max(0) as usize / 4,
-            y: self.y.max(0) as usize / 4,
+            x: (self.x.max(0) as usize / 4) as u8,
+            y: (self.y.max(0) as usize / 4) as u8,
         }
     }
 

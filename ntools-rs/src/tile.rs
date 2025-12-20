@@ -987,7 +987,7 @@ impl Tiles {
         for row in 0..ROWS {
             for col in 0..COLS {
                 let i = row * COLS + col;
-                let pos = GridPos::new(col + 1, row + 1);
+                let pos = GridPos::new(col as u8 + 1, row as u8 + 1);
                 let tile = self.tiles[i];
                 tile.add_outer_segments_to_grid(pos, &mut grid);
             }
@@ -995,7 +995,7 @@ impl Tiles {
         for row in 0..ROWS {
             for col in 0..COLS {
                 let i = row * COLS + col;
-                let pos = GridPos::new(col + 1, row + 1);
+                let pos = GridPos::new(col as u8 + 1, row as u8 + 1);
                 let tile = self.tiles[i];
                 tile.add_inner_segments_to_grid(pos, &mut grid);
             }
@@ -1015,7 +1015,7 @@ impl Tiles {
         for row in 0..ROWS {
             for col in 0..COLS {
                 let i = row * COLS + col;
-                let pos = GridPos::new(col + 1, row + 1);
+                let pos = GridPos::new(col as u8 + 1, row as u8 + 1);
                 let tile = self.tiles[i];
                 tile.add_outer_segments_to_grid_borderless(pos, &mut grid);
             }
@@ -1023,7 +1023,7 @@ impl Tiles {
         for row in 0..ROWS {
             for col in 0..COLS {
                 let i = row * COLS + col;
-                let pos = GridPos::new(col + 1, row + 1);
+                let pos = GridPos::new(col as u8 + 1, row as u8 + 1);
                 let tile = self.tiles[i];
                 tile.add_inner_segments_to_grid(pos, &mut grid);
             }
@@ -1033,12 +1033,12 @@ impl Tiles {
     }
 
     pub fn in_bounds(&self, grid_pos: GridPos) -> bool {
-        grid_pos.x >= self.left && grid_pos.x < self.left + self.width && grid_pos.y >= self.top && grid_pos.y < self.top + self.height
+        grid_pos.x as usize >= self.left && (grid_pos.x as usize) < self.left + self.width && grid_pos.y as usize >= self.top && (grid_pos.y as usize) < self.top + self.height
     }
 
     pub fn get(&self, grid_pos: GridPos) -> Option<Tile> {
         if self.in_bounds(grid_pos) {
-            let i = (grid_pos.y - self.top) * self.width + (grid_pos.x - self.left);
+            let i = (grid_pos.y as usize - self.top) * self.width + (grid_pos.x as usize - self.left);
             Some(self.tiles[i])
         } else {
             None
@@ -1062,14 +1062,14 @@ impl Index<GridPos> for Tiles {
     type Output = Tile;
 
     fn index(&self, index: GridPos) -> &Self::Output {
-        let i = (index.y - self.top) * self.width + (index.x - self.left);
+        let i = (index.y as usize - self.top) * self.width + (index.x as usize - self.left);
         &self.tiles[i]
     }
 }
 
 impl IndexMut<GridPos> for Tiles {
     fn index_mut(&mut self, index: GridPos) -> &mut Self::Output {
-        let i = (index.y - self.top) * self.width + (index.x - self.left);
+        let i = (index.y as usize - self.top) * self.width + (index.x as usize - self.left);
         &mut self.tiles[i]
     }
 }

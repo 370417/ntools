@@ -310,12 +310,12 @@ impl Editor {
     }
 
     #[wasm_bindgen]
-    pub fn tile_crosshair_col(&self) -> usize {
+    pub fn tile_crosshair_col(&self) -> u8 {
         self.tile_crosshair().x
     }
 
     #[wasm_bindgen]
-    pub fn tile_crosshair_row(&self) -> usize {
+    pub fn tile_crosshair_row(&self) -> u8 {
         self.tile_crosshair().y
     }
 
@@ -339,19 +339,6 @@ impl Editor {
         match &self.mode {
             EditorMode::PlaceEntity(place_entity) => Box::new([place_entity.entity.export().with_switch(place_entity.stage)]),
             EditorMode::MoveSelection(move_selection) => move_selection.preview_entities(self.cursor_pos).map(|entity| entity.export()).collect(),
-            _ => Box::new([]),
-        }
-    }
-
-    #[wasm_bindgen]
-    pub fn selected_tile_positions(&self) -> Box<[usize]> {
-        match &self.mode {
-            EditorMode::SelectTiles(select_tiles) => {
-                select_tiles.selection_preview().iter().flat_map(|pos| [pos.x, pos.y]).collect()
-            }
-            EditorMode::MoveSelection(move_selection) => {
-                move_selection.selection(self.cursor_pos).flat_map(|pos| [pos.x, pos.y]).collect()
-            }
             _ => Box::new([]),
         }
     }

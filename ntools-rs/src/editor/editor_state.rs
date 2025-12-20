@@ -211,6 +211,11 @@ impl EditorState {
         }
     }
 
+    /// Enforce invariant: mines and toggle mines cannot overlap
+    fn fix_command(&self, command: &mut Command) {
+        todo!()
+    }
+
     pub fn undo(&mut self) {
         if let Some(command) = self.history.pop() {
             self.execute_reverse_command(&command);
