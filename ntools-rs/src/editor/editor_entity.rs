@@ -92,22 +92,22 @@ impl EditorEntity {
         }
     }
 
-    pub fn pos(&self) -> EntityPos {
+    pub fn pos(self) -> EntityPos {
         match self {
-            &EditorEntity::Ninja { pos, .. } |
-            &EditorEntity::Mine { pos } |
-            &EditorEntity::ToggleMine { pos } |
-            &EditorEntity::RegularDoor { pos, .. } |
-            &EditorEntity::BounceBlock { pos, .. } |
-            &EditorEntity::LaunchPad { pos, .. } |
-            &EditorEntity::Floorguard { pos, .. } |
-            &EditorEntity::BoostPad { pos } |
-            &EditorEntity::Thwump { pos, .. } |
-            &EditorEntity::ShoveThwump { pos, .. } |
-            &EditorEntity::OneWay { pos, .. } => pos,
-            &EditorEntity::Exit { exit_pos, .. } => exit_pos,
-            &EditorEntity::LockedDoor { door_pos, .. } |
-            &EditorEntity::TrapDoor { door_pos, .. } => door_pos,
+            EditorEntity::Ninja { pos, .. } |
+            EditorEntity::Mine { pos } |
+            EditorEntity::ToggleMine { pos } |
+            EditorEntity::RegularDoor { pos, .. } |
+            EditorEntity::BounceBlock { pos, .. } |
+            EditorEntity::LaunchPad { pos, .. } |
+            EditorEntity::Floorguard { pos, .. } |
+            EditorEntity::BoostPad { pos } |
+            EditorEntity::Thwump { pos, .. } |
+            EditorEntity::ShoveThwump { pos, .. } |
+            EditorEntity::OneWay { pos, .. } => pos,
+            EditorEntity::Exit { exit_pos, .. } => exit_pos,
+            EditorEntity::LockedDoor { door_pos, .. } |
+            EditorEntity::TrapDoor { door_pos, .. } => door_pos,
         }
     }
 
@@ -130,11 +130,11 @@ impl EditorEntity {
         }
     }
 
-    pub fn switch_pos(&self) -> Option<EntityPos> {
+    pub fn switch_pos(self) -> Option<EntityPos> {
         match self {
-            &EditorEntity::Exit { switch_pos, .. } => Some(switch_pos),
-            &EditorEntity::LockedDoor { switch_pos, .. } |
-            &EditorEntity::TrapDoor { switch_pos, .. } => Some(switch_pos),
+            EditorEntity::Exit { switch_pos, .. } => Some(switch_pos),
+            EditorEntity::LockedDoor { switch_pos, .. } |
+            EditorEntity::TrapDoor { switch_pos, .. } => Some(switch_pos),
             _ => None,
         }
     }
@@ -148,7 +148,7 @@ impl EditorEntity {
         }
     }
 
-    pub fn rotation_deg(&self) -> f64 {
+    pub fn rotation_deg(self) -> f64 {
         match self {
             EditorEntity::Ninja { orientation, .. } |
             EditorEntity::Floorguard { orientation, .. } => orientation.rotation_deg(),
@@ -167,7 +167,7 @@ impl EditorEntity {
         }
     }
 
-    pub fn type_int(&self) -> u32 {
+    pub fn type_int(self) -> u32 {
         match self {
             EditorEntity::Ninja { .. } => 0,
             EditorEntity::Mine { .. } => 1,
@@ -183,6 +183,15 @@ impl EditorEntity {
             EditorEntity::ToggleMine { .. } => 21,
             EditorEntity::BoostPad { .. } => 24,
             EditorEntity::ShoveThwump { .. } => 28,
+        }
+    }
+
+    /// If self is a mine variant, returns the opposite type of mine
+    pub fn opposite_mine(self) -> Option<EditorEntity> {
+        match self {
+            EditorEntity::Mine { pos } => Some(EditorEntity::ToggleMine { pos }),
+            EditorEntity::ToggleMine { pos } => Some(EditorEntity::Mine { pos }),
+            _ => None,
         }
     }
 }

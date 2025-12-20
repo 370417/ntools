@@ -27,6 +27,7 @@ pub enum Command {
         end: DVec2,
     },
     SetEntityCount(SetEntityCount),
+    SetTilesAndEntities(Vec<PaintTile>, Vec<SetEntityCount>),
 }
 
 #[derive(Clone)]
@@ -181,7 +182,8 @@ impl EditorState {
     }
 
     /// Execute a command and add it to the history
-    pub fn apply(&mut self, command: Command) {
+    pub fn apply(&mut self, mut command: Command) {
+        self.fix_command(&mut command);
         if command.is_noop() {
             return;
         }
@@ -199,7 +201,8 @@ impl EditorState {
 
     /// Execute a command and combine it with the latest history entry
     /// if possible
-    pub fn amend(&mut self, command: Command) {
+    pub fn amend(&mut self, mut command: Command) {
+        self.fix_command(&mut command);
         if command.is_noop() {
             return;
         }
@@ -213,7 +216,41 @@ impl EditorState {
 
     /// Enforce invariant: mines and toggle mines cannot overlap
     fn fix_command(&self, command: &mut Command) {
-        todo!()
+        match command {
+            Command::SetEntityCount(set_entity_count) => {
+                let entity = set_entity_count.entity;
+                if let Some(opposite_mine) = entity.opposite_mine() {
+                    if let Some(opposite_count) = self.entities.get(&opposite_mine) {
+                        *command = Command::SetTilesAndEntities(Vec::new(), vec![
+                            set_entity_count.clone(),
+                            SetEntityCount {
+                                entity: opposite_mine,
+                                old_count: *opposite_count,
+                                new_count: 0,
+                            },
+                        ]);
+                    }
+                }
+            }
+            Command::SetTilesAndEntities(_, set_entity_counts) => {
+                let mut additional_commands = Vec::new();
+                for set_entity_count in set_entity_counts.iter() {
+                    if let Some(opposite_mine) = set_entity_count.entity.opposite_mine() {
+                        if let Some(opposite_count) = self.entities.get(&opposite_mine) {
+                            additional_commands.push(SetEntityCount {
+                                entity: opposite_mine,
+                                old_count: *opposite_count,
+                                new_count: 0,
+                            });
+                        }
+                    }
+                }
+                set_entity_counts.append(&mut additional_commands);
+            }
+            Command::PaintTile(_) |
+            Command::PaintTiles(_) |
+            Command::PenTool { .. } => {}
+        }
     }
 
     pub fn undo(&mut self) {
@@ -248,6 +285,18 @@ impl EditorState {
                     entities.insert(set_entity_count.entity, set_entity_count.new_count);
                 }
             }
+            Command::SetTilesAndEntities(paint_tiles, set_entity_counts) => {
+                for paint_tile in paint_tiles {
+                    tiles[paint_tile.grid_pos] = paint_tile.new;
+                }
+                for set_entity_count in set_entity_counts {
+                    if set_entity_count.new_count == 0 {
+                        entities.remove(&set_entity_count.entity);
+                    } else {
+                        entities.insert(set_entity_count.entity, set_entity_count.new_count);
+                    }
+                }
+            }
         }
     }
 
@@ -267,6 +316,18 @@ impl EditorState {
                     self.entities.remove(&set_entity_count.entity);
                 } else {
                     self.entities.insert(set_entity_count.entity, set_entity_count.old_count);
+                }
+            }
+            Command::SetTilesAndEntities(paint_tiles, set_entity_counts) => {
+                for paint_tile in paint_tiles {
+                    self.tiles[paint_tile.grid_pos] = paint_tile.old;
+                }
+                for set_entity_count in set_entity_counts {
+                    if set_entity_count.old_count == 0 {
+                        self.entities.remove(&set_entity_count.entity);
+                    } else {
+                        self.entities.insert(set_entity_count.entity, set_entity_count.old_count);
+                    }
                 }
             }
         }
@@ -301,6 +362,9 @@ impl Command {
             // as no-ops because we want to preserve the history of cursor movement.
             Command::PenTool { .. } => false,
             Command::SetEntityCount(set_entity_count) => set_entity_count.old_count == set_entity_count.new_count,
+            Command::SetTilesAndEntities(paint_tiles, set_entity_counts) => {
+                paint_tiles.iter().all(|p| p.old == p.new) && set_entity_counts.iter().all(|sec| sec.old_count == sec.new_count)
+            }
         }
     }
 }
