@@ -663,6 +663,14 @@ impl Editor {
             EditorMode::PlaceEntity(place_entity) => {
                 place_entity.press_x();
             }
+            EditorMode::SelectTiles(select_tiles) => {
+                let selection = &select_tiles.selection_preview();
+                if !selection.is_empty() {
+                    let move_selection = MoveSelection::new(self.cursor_pos, selection, self.state.tiles(), self.state.entities());
+                    self.state.apply(move_selection.command_cut(self.state.tiles()));
+                    self.mode = EditorMode::MoveSelection(move_selection);
+                }
+            }
             _ => {}
         }
     }

@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use glam::DVec2;
 
-use crate::{editor::{editor_entity::{EditorEntity, EntityPos}, editor_state::EditorEntities, select_tiles::selection_outline_path}, grid::{GridPos, is_pos_in_bounds}, segment::extract_path, tile::{TILE_SIZE, Tile, Tiles}};
+use crate::{editor::{editor_entity::{EditorEntity, EntityPos}, editor_state::{Command, EditorEntities, PaintTile, SetEntityCount}, select_tiles::selection_outline_path}, grid::{GridPos, is_pos_in_bounds}, segment::extract_path, tile::{TILE_SIZE, Tile, Tiles}};
 
 pub struct MoveSelection {
     /// Center of selection used for rotation.
@@ -41,10 +41,6 @@ impl MoveSelection {
             }).collect(),
             original_cursor_pos,
         }
-    }
-
-    pub fn selection(&self, cursor_pos: DVec2) -> impl Iterator<Item = GridPos> {
-        self.tiles.iter().map(move |(pos, _)| GridPos::from_world_pos(pos.center() + cursor_pos - self.original_cursor_pos)).filter(|pos| pos.in_bounds())
     }
 
     pub fn selected_tiles_path(&self, cursor_pos: DVec2) -> String {
@@ -90,6 +86,27 @@ impl MoveSelection {
             .map(|(pos, _)| GridPos::from_world_pos(pos.center() + cursor_pos - self.original_cursor_pos))
             .filter(|pos| pos.in_bounds())
             .collect())
+    }
+
+    /// Create a command that deletes all tiles and entities in the current selection.
+    pub fn command_cut(&self, tiles: &Tiles) -> Command {
+        let paint_tiles = self.tiles.iter().map(|&(grid_pos, tile)| {
+            PaintTile {
+                grid_pos,
+                old: tile,
+                new: Tile::TileD,
+            }
+        }).collect();
+
+        let set_entities = self.entities.iter().map(|&(entity, count, _)| {
+            SetEntityCount {
+                entity,
+                old_count: count,
+                new_count: 0,
+            }
+        }).collect();
+
+        Command::SetTilesAndEntities(paint_tiles, set_entities)
     }
 }
 
