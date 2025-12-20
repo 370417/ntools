@@ -276,6 +276,10 @@ impl Editor {
             },
             EditorMode::PaintTiles => self.mode = EditorMode::SelectTiles(SelectTiles::new(self.cursor_pos)),
             EditorMode::SelectTiles(select_tiles) => select_tiles.start_selection(self.cursor_pos, shift),
+            EditorMode::MoveSelection(move_selection) => {
+                let command = move_selection.command_paste(self.cursor_pos, self.state.tiles(), self.state.entities());
+                self.state.apply(command);
+            }
             _ => {}
         }
     }
@@ -403,7 +407,8 @@ impl Editor {
                     return true;
                 }
             }
-            EditorMode::SelectTiles(_) => {
+            EditorMode::SelectTiles(_) |
+            EditorMode::MoveSelection(_) => {
                 self.mode = EditorMode::PaintTiles;
                 return true;
             }
@@ -667,7 +672,7 @@ impl Editor {
                 let selection = &select_tiles.selection_preview();
                 if !selection.is_empty() {
                     let move_selection = MoveSelection::new(self.cursor_pos, selection, self.state.tiles(), self.state.entities());
-                    self.state.apply(move_selection.command_cut(self.state.tiles()));
+                    self.state.apply(move_selection.command_cut());
                     self.mode = EditorMode::MoveSelection(move_selection);
                 }
             }

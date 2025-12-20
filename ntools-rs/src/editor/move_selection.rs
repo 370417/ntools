@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use glam::DVec2;
 
-use crate::{editor::{editor_entity::{EditorEntity, EntityPos}, editor_state::{Command, EditorEntities, PaintTile, SetEntityCount}, select_tiles::selection_outline_path}, grid::{GridPos, is_pos_in_bounds}, segment::extract_path, tile::{TILE_SIZE, Tile, Tiles}};
+use crate::{editor::{editor_entity::{EditorEntity, EntityPos}, editor_state::{Command, EditorEntities, PaintTile, SetEntityCount}, select_tiles::selection_outline_path}, entity::Entities, grid::{GridPos, is_pos_in_bounds}, segment::extract_path, tile::{TILE_SIZE, Tile, Tiles}};
 
 pub struct MoveSelection {
     /// Center of selection used for rotation.
@@ -45,17 +45,29 @@ impl MoveSelection {
 
     pub fn selected_tiles_path(&self, cursor_pos: DVec2) -> String {
         let mut tiles = Tiles::default();
-        for (grid_pos, tile) in &self.tiles {
-            let grid_pos = GridPos::from_world_pos(grid_pos.center() + cursor_pos - self.original_cursor_pos);
-            if grid_pos.in_bounds() {
-                tiles[grid_pos] = *tile;
-            }
+        for (grid_pos, tile) in self.selected_tiles(cursor_pos) {
+            tiles[grid_pos] = tile;
         }
         extract_path(&tiles.segments_borderless(), false)
     }
 
+    fn selected_tiles(&self, cursor_pos: DVec2) -> impl Iterator<Item = (GridPos, Tile)> {
+        self.tiles.iter().filter_map(move |(grid_pos, tile)| {
+            let grid_pos = GridPos::from_world_pos(grid_pos.center() + cursor_pos - self.original_cursor_pos);
+            if grid_pos.in_bounds() {
+                Some((grid_pos, *tile))
+            } else {
+                None
+            }
+        })
+    }
+
     pub fn preview_entities(&self, cursor_pos: DVec2) -> impl Iterator<Item = EditorEntity> {
-        self.entities.iter().filter_map(move |(entity, _count, sel_type)| {
+        self.selected_entities(cursor_pos).map(|(entity, _count)| entity)
+    }
+
+    fn selected_entities(&self, cursor_pos: DVec2) -> impl Iterator<Item = (EditorEntity, u16)> {
+        self.entities.iter().filter_map(move |(entity, count, sel_type)| {
             let mut entity = *entity;
             let pos_delta = cursor_pos - self.original_cursor_pos;
             let pos_delta = TILE_SIZE * (pos_delta / TILE_SIZE).round();
@@ -74,7 +86,7 @@ impl MoveSelection {
             if is_pos_in_bounds(entity.pos().to_world_pos()) &&
                 entity.switch_pos().is_none_or(|switch_pos| is_pos_in_bounds(switch_pos.to_world_pos()))
             {
-                Some(entity)
+                Some((entity, *count))
             } else {
                 None
             }
@@ -89,7 +101,7 @@ impl MoveSelection {
     }
 
     /// Create a command that deletes all tiles and entities in the current selection.
-    pub fn command_cut(&self, tiles: &Tiles) -> Command {
+    pub fn command_cut(&self) -> Command {
         let paint_tiles = self.tiles.iter().map(|&(grid_pos, tile)| {
             PaintTile {
                 grid_pos,
@@ -103,6 +115,26 @@ impl MoveSelection {
                 entity,
                 old_count: count,
                 new_count: 0,
+            }
+        }).collect();
+
+        Command::SetTilesAndEntities(paint_tiles, set_entities)
+    }
+
+    pub fn command_paste(&self, cursor_pos: DVec2, tiles: &Tiles, entities: &EditorEntities) -> Command {
+        let paint_tiles = self.selected_tiles(cursor_pos).map(|(grid_pos, tile)| {
+            PaintTile {
+                grid_pos,
+                old: tiles[grid_pos],
+                new: tile,
+            }
+        }).collect();
+
+        let set_entities = self.selected_entities(cursor_pos).map(|(entity, count)| {
+            SetEntityCount {
+                entity,
+                old_count: *entities.get(&entity).unwrap_or(&0),
+                new_count: count,
             }
         }).collect();
 
