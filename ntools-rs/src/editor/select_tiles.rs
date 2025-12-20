@@ -114,8 +114,8 @@ impl SelectTiles {
         self.active_selection = None;
     }
 
-    pub fn selected_tile_pos_path(&self) -> String {
-        selection_path(self.selection_preview())
+    pub fn selected_tile_outline_path(&self) -> String {
+        selection_outline_path(self.selection_preview())
     }
 }
 
@@ -203,7 +203,7 @@ impl HorizontalEdge {
     }
 }
 
-fn selection_path(selection: HashSet<GridPos>) -> String {
+pub fn selection_outline_path(selection: HashSet<GridPos>) -> String {
     let padding = 2.0_f64;
 
     let mut segments = HashMap::<SegmentPoint, SegmentPoint>::new();

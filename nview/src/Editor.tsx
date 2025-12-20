@@ -290,8 +290,7 @@ export function EditorApp(props: { editor: Editor, pastNinjas: Accessor<{ x: num
     const [mode, setMode] = createSignal(MODE_PAINT_TILES);
     const [tilemodeCrosshairPos, setTilemodeCrosshairPos] = createSignal({ row: 1, col: 1 });
     const [crosshairPos, setCrosshairPos] = createSignal({ x: 24, y: 24 });
-    const [selectedTilePositions, setSelectedTilePositions] = createSignal<{ x: number, y: number }[]>([]);
-    const [selectedTilePosPath, setSelectedTilePosPath] = createSignal('');
+    const [selectedTileOutlinePath, setSelectedTileOutlinePath] = createSignal('');
 
     const entities = createEntities();
     const previewEntities = createEntities();
@@ -399,16 +398,6 @@ export function EditorApp(props: { editor: Editor, pastNinjas: Accessor<{ x: num
             y: editor.crosshair_y(),
         });
 
-        const selectedTilePositionsRaw = editor.selected_tile_positions();
-        const selectedTilePositions: { x: number, y: number }[] = [];
-        for (let i = 1; i < selectedTilePositionsRaw.length; i += 2) {
-            selectedTilePositions.push({
-                x: selectedTilePositionsRaw[i - 1],
-                y: selectedTilePositionsRaw[i],
-            });
-        }
-        setSelectedTilePositions(selectedTilePositions);
-
         const lines: Line[] = [];
 
         updateEntities(entities, lines, editor.entities(), false);
@@ -416,7 +405,7 @@ export function EditorApp(props: { editor: Editor, pastNinjas: Accessor<{ x: num
 
         setDoorSwitchLines(lines);
 
-        setSelectedTilePosPath(editor.selected_tile_pos_path());
+        setSelectedTileOutlinePath(editor.selected_tile_outline_path());
     }
 
     const regularGridXs = [];
@@ -449,15 +438,6 @@ export function EditorApp(props: { editor: Editor, pastNinjas: Accessor<{ x: num
     }
 
     render();
-
-    // Path that covers all the positions in selectedTilePositions with extra
-    // padding around the edges equal to selectionPadding.
-    // function selectedTilePosPath(): string {
-    //     const size = 24 + 2 * selectionPadding;
-    //     return selectedTilePositions().map(({ x, y }) => {
-    //         return `M ${24 * x - selectionPadding} ${24 * y - selectionPadding} h ${size} v ${size} h ${-size} v ${-size}`
-    //     }).join(' ');
-    // }
 
     return <>
         <svg viewBox="0 0 1056 600" onmousemove={function(this: SVGElement, event) {
@@ -532,7 +512,7 @@ export function EditorApp(props: { editor: Editor, pastNinjas: Accessor<{ x: num
                 {line => <line class="door-switch-line" x1={line.x1} y1={line.y1} x2={line.x2} y2={line.y2} />}
             </For>
             <g>
-                <path stroke="magenta" fill="none" d={selectedTilePosPath()} />
+                <path stroke="magenta" fill="none" d={selectedTileOutlinePath()} />
             </g>
             <Show when={mode() === MODE_PAINT_TILES}>
                 <use href="#tilemode-crosshair" x={tilemodeCrosshairPos().col * 24 + 12} y={tilemodeCrosshairPos().row * 24 + 12} />
