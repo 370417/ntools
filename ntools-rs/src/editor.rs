@@ -654,7 +654,7 @@ impl Editor {
                     Some(Orientation::W) => Orientation::WSW,
                     _ => Orientation::SW,
                 };
-                self.pressed_orientation = Some(Orientation::SE);
+                self.pressed_orientation = Some(Orientation::SW);
                 place_entity.set_orientation(self.entity_orientation);
             }
             _ => {}
@@ -923,6 +923,9 @@ impl Editor {
         // Releasing keys should still clean up pressed state even in other modes
         // because the user could switch modes while holding down a key.
         self.pressed_tile_variants.retain(|variant| *variant != TileVariant::S);
+        if let Some(Orientation::S) = self.pressed_orientation {
+            self.pressed_orientation = None;
+        }
     }
 
     #[wasm_bindgen]
@@ -950,15 +953,6 @@ impl Editor {
         // Releasing keys should still clean up pressed state even in other modes
         // because the user could switch modes while holding down a key.
         if let Some(Orientation::SW) = self.pressed_orientation {
-            self.pressed_orientation = None;
-        }
-    }
-
-    #[wasm_bindgen]
-    pub fn release_x(&mut self) {
-        // Releasing keys should still clean up pressed state even in other modes
-        // because the user could switch modes while holding down a key.
-        if let Some(Orientation::S) = self.pressed_orientation {
             self.pressed_orientation = None;
         }
     }

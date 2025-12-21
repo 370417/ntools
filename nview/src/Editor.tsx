@@ -363,7 +363,6 @@ export function EditorApp(props: { editor: Editor, pastNinjas: Accessor<{ x: num
         else if (event.code === 'KeyE') change = true, editor.release_e();
         else if (event.code === 'KeyD') change = true, editor.release_d();
         else if (event.code === 'KeyZ') change = true, editor.release_z();
-        else if (event.code === 'KeyX') change = true, editor.release_x();
         else if (event.code === 'KeyC') change = true, editor.release_c();
 
         if (change) {
