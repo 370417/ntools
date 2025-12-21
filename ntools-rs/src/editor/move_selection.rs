@@ -2,12 +2,18 @@ use std::collections::HashSet;
 
 use glam::DVec2;
 
-use crate::{editor::{editor_entity::{EditorEntity, EntityPos}, editor_state::{Command, EditorEntities, PaintTile, SetEntityCount}, select_tiles::selection_outline_path}, entity::Entities, grid::{GridPos, is_pos_in_bounds}, segment::extract_path, tile::{TILE_SIZE, Tile, Tiles}};
+use crate::{editor::{editor_entity::{EditorEntity, EntityPos}, editor_state::{Command, EditorEntities, PaintTile, SetEntityCount}, select_tiles::selection_outline_path}, grid::{GridPos, is_pos_in_bounds}, segment::extract_path, tile::{TILE_SIZE, Tile, Tiles}};
 
 pub struct MoveSelection {
     /// Center of selection used for rotation.
     /// This value does not change when the mouse moves.
-    center: DVec2,
+    /// This value must be the center or corner of a grid pos.
+    /// It's important that this value stays fixed so that consecutive rotations
+    /// don't cause the selection's position to drift.
+    /// We don't use this center for flipping because flipping never needs to change
+    /// the location of the selection, whereas rotation sometimes does (only when
+    /// the width and height of the selection are not both odd or both even).
+    center_of_rotation: DVec2,
     /// Store tiles with their positions
     tiles: Vec<(GridPos, Tile)>,
     /// Store entities with their counts
@@ -24,10 +30,17 @@ enum SelectionType {
 impl MoveSelection {
     pub fn new(original_cursor_pos: DVec2, selected_tiles: &HashSet<GridPos>, tiles: &Tiles, entities: &EditorEntities) -> MoveSelection {
         assert!(!selected_tiles.is_empty());
-        let min_pos = selected_tiles.iter().cloned().reduce(GridPos::min).unwrap().center();
-        let max_pos = selected_tiles.iter().cloned().reduce(GridPos::max).unwrap().center();
+        let min_pos = selected_tiles.iter().cloned().reduce(GridPos::min).unwrap();
+        let max_pos = selected_tiles.iter().cloned().reduce(GridPos::max).unwrap();
+        let width = max_pos.x - min_pos.x;
+        let height = max_pos.y - min_pos.y;
+        let center = if width % 2 != height % 2 {
+            GridPos::from_world_pos((min_pos.center() + max_pos.center()) / 2.0).center()
+        } else {
+            (min_pos.center() + max_pos.center()) / 2.0
+        };
         MoveSelection {
-            center: (min_pos + max_pos) / 2.0,
+            center_of_rotation: center,
             tiles: selected_tiles.iter().map(|&pos| (pos, tiles[pos])).collect(),
             entities: entities.iter().filter_map(|(&entity, &count)| {
                 let pos_selected = is_pos_selected(entity.pos(), selected_tiles);
@@ -139,6 +152,20 @@ impl MoveSelection {
         }).collect();
 
         Command::SetTilesAndEntities(paint_tiles, set_entities)
+    }
+
+    pub fn rotate_cw(&mut self) {
+        for (grid_pos, tile) in &mut self.tiles {
+            *grid_pos = grid_pos.rotate_cw(self.center_of_rotation);
+            *tile = tile.rotate_cw();
+        }
+    }
+
+    pub fn rotate_ccw(&mut self) {
+        for (grid_pos, tile) in &mut self.tiles {
+            *grid_pos = grid_pos.rotate_ccw(self.center_of_rotation);
+            *tile = tile.rotate_ccw();
+        }
     }
 }
 

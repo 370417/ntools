@@ -91,6 +91,48 @@ impl Orientation {
             _ => false,
         }
     }
+
+    pub fn rotate_cw(self) -> Self {
+        match self {
+            Self::E => Self::S,
+            Self::SE => Self::SW,
+            Self::S => Self::W,
+            Self::SW => Self::NW,
+            Self::W => Self::N,
+            Self::NW => Self::NE,
+            Self::N => Self::E,
+            Self::NE => Self::SE,
+            Self::ESE => Self::SSW,
+            Self::SSE => Self::WSW,
+            Self::SSW => Self::WNW,
+            Self::WSW => Self::NNW,
+            Self::WNW => Self::NNE,
+            Self::NNW => Self::ENE,
+            Self::NNE => Self::ESE,
+            Self::ENE => Self::SSE,
+        }
+    }
+
+    pub fn rotate_ccw(self) -> Self {
+        match self {
+            Self::S => Self::E,
+            Self::SW => Self::SE,
+            Self::W => Self::S,
+            Self::NW => Self::SW,
+            Self::N => Self::W,
+            Self::NE => Self::NW,
+            Self::E => Self::N,
+            Self::SE => Self::NE,
+            Self::SSW => Self::ESE,
+            Self::WSW => Self::SSE,
+            Self::WNW => Self::SSW,
+            Self::NNW => Self::WSW,
+            Self::NNE => Self::WNW,
+            Self::ENE => Self::NNW,
+            Self::ESE => Self::NNE,
+            Self::SSE => Self::ENE,
+        }
+    }
 }
 
 impl OrientationExt {
@@ -130,6 +172,48 @@ impl OrientationExt {
             _ => false,
         }
     }
+
+    pub fn rotate_cw(self) -> Self {
+        match self {
+            Self::E => Self::S,
+            Self::SE => Self::SW,
+            Self::S => Self::W,
+            Self::SW => Self::NW,
+            Self::W => Self::N,
+            Self::NW => Self::NE,
+            Self::N => Self::E,
+            Self::NE => Self::SE,
+            Self::ESE => Self::SSW,
+            Self::SSE => Self::WSW,
+            Self::SSW => Self::WNW,
+            Self::WSW => Self::NNW,
+            Self::WNW => Self::NNE,
+            Self::NNW => Self::ENE,
+            Self::NNE => Self::ESE,
+            Self::ENE => Self::SSE,
+        }
+    }
+
+    pub fn rotate_ccw(self) -> Self {
+        match self {
+            Self::S => Self::E,
+            Self::SW => Self::SE,
+            Self::W => Self::S,
+            Self::NW => Self::SW,
+            Self::N => Self::W,
+            Self::NE => Self::NW,
+            Self::E => Self::N,
+            Self::SE => Self::NE,
+            Self::SSW => Self::ESE,
+            Self::WSW => Self::SSE,
+            Self::WNW => Self::SSW,
+            Self::NNW => Self::WSW,
+            Self::NNE => Self::WNW,
+            Self::ENE => Self::NNW,
+            Self::ESE => Self::NNE,
+            Self::SSE => Self::ENE,
+        }
+    }
 }
 
 impl OrientationCardinal {
@@ -145,13 +229,6 @@ impl OrientationCardinal {
 
     pub fn rotation_deg(&self) -> f64 {
         self.vec2().to_angle().to_degrees()
-    }
-
-    pub fn is_orthogonal(&self) -> bool {
-        match self {
-            Self::W | Self::S | Self::E | Self::N => true,
-            _ => false,
-        }
     }
 }
 

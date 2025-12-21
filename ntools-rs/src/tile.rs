@@ -429,6 +429,84 @@ impl Tile {
         }
     }
 
+    pub fn rotate_cw(self) -> Tile {
+        match self {
+            Tile::TileE => Tile::TileE,
+            Tile::TileD => Tile::TileD,
+            Tile::Tile1Q => Tile::Tile1W,
+            Tile::Tile1W => Tile::Tile1S,
+            Tile::Tile1S => Tile::Tile1A,
+            Tile::Tile1A => Tile::Tile1Q,
+            Tile::Tile2Q => Tile::Tile3W,
+            Tile::Tile2W => Tile::Tile3S,
+            Tile::Tile2S => Tile::Tile3A,
+            Tile::Tile2A => Tile::Tile3Q,
+            Tile::Tile3Q => Tile::Tile2W,
+            Tile::Tile3W => Tile::Tile2S,
+            Tile::Tile3S => Tile::Tile2A,
+            Tile::Tile3A => Tile::Tile2Q,
+            Tile::Tile4Q => Tile::Tile4W,
+            Tile::Tile4W => Tile::Tile4S,
+            Tile::Tile4S => Tile::Tile4A,
+            Tile::Tile4A => Tile::Tile4Q,
+            Tile::Tile5Q => Tile::Tile5W,
+            Tile::Tile5W => Tile::Tile5S,
+            Tile::Tile5S => Tile::Tile5A,
+            Tile::Tile5A => Tile::Tile5Q,
+            Tile::Tile6Q => Tile::Tile7W,
+            Tile::Tile6W => Tile::Tile7S,
+            Tile::Tile6S => Tile::Tile7A,
+            Tile::Tile6A => Tile::Tile7Q,
+            Tile::Tile7Q => Tile::Tile6W,
+            Tile::Tile7W => Tile::Tile6S,
+            Tile::Tile7S => Tile::Tile6A,
+            Tile::Tile7A => Tile::Tile6Q,
+            Tile::Tile8Q => Tile::Tile8W,
+            Tile::Tile8W => Tile::Tile8S,
+            Tile::Tile8S => Tile::Tile8A,
+            Tile::Tile8A => Tile::Tile8Q,
+        }
+    }
+
+    pub fn rotate_ccw(self) -> Tile {
+        match self {
+            Tile::TileE => Tile::TileE,
+            Tile::TileD => Tile::TileD,
+            Tile::Tile1W => Tile::Tile1Q,
+            Tile::Tile1S => Tile::Tile1W,
+            Tile::Tile1A => Tile::Tile1S,
+            Tile::Tile1Q => Tile::Tile1A,
+            Tile::Tile3W => Tile::Tile2Q,
+            Tile::Tile3S => Tile::Tile2W,
+            Tile::Tile3A => Tile::Tile2S,
+            Tile::Tile3Q => Tile::Tile2A,
+            Tile::Tile2W => Tile::Tile3Q,
+            Tile::Tile2S => Tile::Tile3W,
+            Tile::Tile2A => Tile::Tile3S,
+            Tile::Tile2Q => Tile::Tile3A,
+            Tile::Tile4W => Tile::Tile4Q,
+            Tile::Tile4S => Tile::Tile4W,
+            Tile::Tile4A => Tile::Tile4S,
+            Tile::Tile4Q => Tile::Tile4A,
+            Tile::Tile5W => Tile::Tile5Q,
+            Tile::Tile5S => Tile::Tile5W,
+            Tile::Tile5A => Tile::Tile5S,
+            Tile::Tile5Q => Tile::Tile5A,
+            Tile::Tile7W => Tile::Tile6Q,
+            Tile::Tile7S => Tile::Tile6W,
+            Tile::Tile7A => Tile::Tile6S,
+            Tile::Tile7Q => Tile::Tile6A,
+            Tile::Tile6W => Tile::Tile7Q,
+            Tile::Tile6S => Tile::Tile7W,
+            Tile::Tile6A => Tile::Tile7S,
+            Tile::Tile6Q => Tile::Tile7A,
+            Tile::Tile8W => Tile::Tile8Q,
+            Tile::Tile8S => Tile::Tile8W,
+            Tile::Tile8A => Tile::Tile8S,
+            Tile::Tile8Q => Tile::Tile8A,
+        }
+    }
+
     /// Returns the outer segment of a tile in a certain direction.
     /// An outer segment is a horizontal or vertical segment that can be
     /// flush with an adjacent tile.

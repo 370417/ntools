@@ -140,6 +140,16 @@ impl GridPos {
             (min.x..=max.x).map(move |x| GridPos { x, y })
         })
     }
+
+    pub fn rotate_cw(self, center: DVec2) -> GridPos {
+        let self_rel_center = self.center() - center;
+        GridPos::from_world_pos(center + self_rel_center.perp())
+    }
+
+    pub fn rotate_ccw(self, center: DVec2) -> GridPos {
+        let self_rel_center = self.center() - center;
+        GridPos::from_world_pos(center - self_rel_center.perp())
+    }
 }
 
 impl <T> Index<GridPos> for Grid<T> {

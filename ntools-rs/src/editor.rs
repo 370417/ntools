@@ -527,6 +527,7 @@ impl Editor {
                 self.pressed_orientation = Some(Orientation::NW);
                 place_entity.set_orientation(self.entity_orientation);
             }
+            EditorMode::MoveSelection(move_selection) => move_selection.rotate_ccw(),
             _ => {}
         }
     }
@@ -548,6 +549,7 @@ impl Editor {
                 self.pressed_orientation = Some(Orientation::N);
                 place_entity.set_orientation(self.entity_orientation);
             }
+            EditorMode::MoveSelection(move_selection) => move_selection.rotate_cw(),
             _ => {}
         }
     }
