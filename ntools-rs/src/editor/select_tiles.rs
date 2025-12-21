@@ -79,11 +79,11 @@ impl SelectTiles {
         self.selected_tiles.is_empty()
     }
 
-    pub fn command_fill_selection(&self, state: &EditorState, tile: Tile) -> Command {
+    pub fn command_fill_selection(&self, tiles: &Tiles, tile: Tile) -> Command {
         Command::PaintTiles(self.selection_preview().iter().map(|&grid_pos| {
             PaintTile {
                 grid_pos,
-                old: state.tiles()[grid_pos],
+                old: tiles[grid_pos],
                 new: tile,
             }
         }).collect())

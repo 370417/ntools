@@ -615,7 +615,11 @@ impl Editor {
                 place_entity.set_orientation(self.entity_orientation);
             }
             EditorMode::SelectTiles(select_tiles) => {
-                let command = select_tiles.command_fill_selection(&mut self.state, Tile::TileE);
+                let command = select_tiles.command_fill_selection(self.state.tiles(), Tile::TileE);
+                self.state.apply(command);
+            }
+            EditorMode::MoveSelection(move_selection) => {
+                let command = move_selection.command_fill_selection(self.cursor_pos, self.state.tiles(), Tile::TileE);
                 self.state.apply(command);
             }
             _ => {}
@@ -640,7 +644,11 @@ impl Editor {
                 place_entity.set_orientation(self.entity_orientation);
             }
             EditorMode::SelectTiles(select_tiles) => {
-                let command = select_tiles.command_fill_selection(&mut self.state, Tile::TileD);
+                let command = select_tiles.command_fill_selection(self.state.tiles(), Tile::TileD);
+                self.state.apply(command);
+            }
+            EditorMode::MoveSelection(move_selection) => {
+                let command = move_selection.command_fill_selection(self.cursor_pos, self.state.tiles(), Tile::TileD);
                 self.state.apply(command);
             }
             _ => {}

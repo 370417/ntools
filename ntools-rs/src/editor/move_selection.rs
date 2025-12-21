@@ -234,6 +234,16 @@ impl MoveSelection {
             }
         }
     }
+
+    pub fn command_fill_selection(&self, cursor_pos: DVec2, tiles: &Tiles, tile: Tile) -> Command {
+        Command::PaintTiles(self.selected_tiles(cursor_pos).map(|(grid_pos, _)| {
+            PaintTile {
+                grid_pos,
+                old: tiles[grid_pos],
+                new: tile,
+            }
+        }).collect())
+    }
 }
 
 fn is_pos_selected(pos: EntityPos, selected_tiles: &HashSet<GridPos>) -> bool {
