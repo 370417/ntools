@@ -21,6 +21,7 @@ pub struct MoveSelection {
     original_cursor_pos: DVec2,
 }
 
+#[derive(PartialEq, Eq)]
 enum SelectionType {
     Pos,
     Switch,
@@ -159,12 +160,24 @@ impl MoveSelection {
             *grid_pos = grid_pos.rotate_cw(self.center_of_rotation);
             *tile = tile.rotate_cw();
         }
+        for (entity, _, selection_type) in &mut self.entities {
+            if *selection_type != SelectionType::Switch {
+                entity.pos_mut().rotate_cw_mut(self.center_of_rotation);
+                entity.rotate_cw();
+            }
+        }
     }
 
     pub fn rotate_ccw(&mut self) {
         for (grid_pos, tile) in &mut self.tiles {
             *grid_pos = grid_pos.rotate_ccw(self.center_of_rotation);
             *tile = tile.rotate_ccw();
+        }
+        for (entity, _, selection_type) in &mut self.entities {
+            if *selection_type != SelectionType::Switch {
+                entity.pos_mut().rotate_ccw_mut(self.center_of_rotation);
+                entity.rotate_ccw();
+            }
         }
     }
 }

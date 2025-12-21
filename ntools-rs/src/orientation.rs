@@ -92,6 +92,14 @@ impl Orientation {
         }
     }
 
+    pub fn rotate_cw_mut(&mut self) {
+        *self = self.rotate_cw();
+    }
+
+    pub fn rotate_ccw_mut(&mut self) {
+        *self = self.rotate_ccw();
+    }
+
     pub fn rotate_cw(self) -> Self {
         match self {
             Self::E => Self::S,
@@ -173,6 +181,14 @@ impl OrientationExt {
         }
     }
 
+    pub fn rotate_cw_mut(&mut self) {
+        *self = self.rotate_cw();
+    }
+
+    pub fn rotate_ccw_mut(&mut self) {
+        *self = self.rotate_ccw();
+    }
+
     pub fn rotate_cw(self) -> Self {
         match self {
             Self::E => Self::S,
@@ -229,6 +245,32 @@ impl OrientationCardinal {
 
     pub fn rotation_deg(&self) -> f64 {
         self.vec2().to_angle().to_degrees()
+    }
+
+    pub fn rotate_cw_mut(&mut self) {
+        *self = self.rotate_cw();
+    }
+
+    pub fn rotate_ccw_mut(&mut self) {
+        *self = self.rotate_ccw();
+    }
+
+    pub fn rotate_cw(self) -> Self {
+        match self {
+            Self::E => Self::S,
+            Self::S => Self::W,
+            Self::W => Self::N,
+            Self::N => Self::E,
+        }
+    }
+
+    pub fn rotate_ccw(self) -> Self {
+        match self {
+            Self::S => Self::E,
+            Self::W => Self::S,
+            Self::N => Self::W,
+            Self::E => Self::N,
+        }
     }
 }
 
