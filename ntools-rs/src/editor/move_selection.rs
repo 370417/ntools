@@ -165,6 +165,11 @@ impl MoveSelection {
                 entity.pos_mut().rotate_cw_mut(self.center_of_rotation);
                 entity.rotate_cw();
             }
+            if *selection_type != SelectionType::Pos {
+                if let Some(switch_pos) = entity.switch_pos_mut() {
+                    switch_pos.rotate_cw_mut(self.center_of_rotation);
+                }
+            }
         }
     }
 
@@ -177,6 +182,11 @@ impl MoveSelection {
             if *selection_type != SelectionType::Switch {
                 entity.pos_mut().rotate_ccw_mut(self.center_of_rotation);
                 entity.rotate_ccw();
+            }
+            if *selection_type != SelectionType::Pos {
+                if let Some(switch_pos) = entity.switch_pos_mut() {
+                    switch_pos.rotate_ccw_mut(self.center_of_rotation);
+                }
             }
         }
     }
