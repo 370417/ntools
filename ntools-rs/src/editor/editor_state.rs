@@ -184,6 +184,7 @@ impl EditorState {
     /// Execute a command and add it to the history
     pub fn apply(&mut self, mut command: Command) {
         self.fix_command(&mut command);
+        command.remove_redundant();
         if command.is_noop() {
             return;
         }
@@ -203,6 +204,7 @@ impl EditorState {
     /// if possible
     pub fn amend(&mut self, mut command: Command) {
         self.fix_command(&mut command);
+        command.remove_redundant();
         if command.is_noop() {
             return;
         }
@@ -364,6 +366,19 @@ impl Command {
             Command::SetEntityCount(set_entity_count) => set_entity_count.old_count == set_entity_count.new_count,
             Command::SetTilesAndEntities(paint_tiles, set_entity_counts) => {
                 paint_tiles.iter().all(|p| p.old == p.new) && set_entity_counts.iter().all(|sec| sec.old_count == sec.new_count)
+            }
+        }
+    }
+
+    fn remove_redundant(&mut self) {
+        match self {
+            Command::PaintTile(_) => {}
+            Command::PaintTiles(paint_tiles) => paint_tiles.retain(|paint_tile| paint_tile.old != paint_tile.new),
+            Command::PenTool { tiles, .. } => tiles.retain(|paint_tile| paint_tile.old != paint_tile.new),
+            Command::SetEntityCount(_) => {}
+            Command::SetTilesAndEntities(paint_tiles, set_entity_counts) => {
+                paint_tiles.retain(|paint_tile| paint_tile.old != paint_tile.new);
+                set_entity_counts.retain(|set_entity_count| set_entity_count.old_count != set_entity_count.new_count);
             }
         }
     }
