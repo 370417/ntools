@@ -190,6 +190,50 @@ impl MoveSelection {
             }
         }
     }
+
+    fn center_of_flip(&self) -> DVec2 {
+        let min_pos = self.tiles.iter().map(|(pos, _)| *pos).reduce(GridPos::min).unwrap();
+        let max_pos = self.tiles.iter().map(|(pos, _)| *pos).reduce(GridPos::max).unwrap();
+        (min_pos.center() + max_pos.center()) / 2.0
+    }
+
+    pub fn flip_across_x_axis(&mut self) {
+        let center = self.center_of_flip();
+        for (grid_pos, tile) in &mut self.tiles {
+            *grid_pos = grid_pos.flip_across_x_axis(center);
+            *tile = tile.flip_across_x_axis();
+        }
+        for (entity, _, selection_type) in &mut self.entities {
+            if *selection_type != SelectionType::Switch {
+                entity.pos_mut().flip_across_x_axis_mut(center);
+                entity.flip_across_x_axis();
+            }
+            if *selection_type != SelectionType::Pos {
+                if let Some(switch_pos) = entity.switch_pos_mut() {
+                    switch_pos.flip_across_x_axis_mut(center);
+                }
+            }
+        }
+    }
+
+    pub fn flip_across_y_axis(&mut self) {
+        let center = self.center_of_flip();
+        for (grid_pos, tile) in &mut self.tiles {
+            *grid_pos = grid_pos.flip_across_y_axis(center);
+            *tile = tile.flip_across_y_axis();
+        }
+        for (entity, _, selection_type) in &mut self.entities {
+            if *selection_type != SelectionType::Switch {
+                entity.pos_mut().flip_across_y_axis_mut(center);
+                entity.flip_across_y_axis();
+            }
+            if *selection_type != SelectionType::Pos {
+                if let Some(switch_pos) = entity.switch_pos_mut() {
+                    switch_pos.flip_across_y_axis_mut(center);
+                }
+            }
+        }
+    }
 }
 
 fn is_pos_selected(pos: EntityPos, selected_tiles: &HashSet<GridPos>) -> bool {

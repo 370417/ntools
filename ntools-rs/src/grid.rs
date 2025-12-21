@@ -150,6 +150,18 @@ impl GridPos {
         let self_rel_center = self.center() - center;
         GridPos::from_world_pos(center - self_rel_center.perp())
     }
+
+    pub fn flip_across_x_axis(self, center: DVec2) -> GridPos {
+        let mut self_rel_center = self.center() - center;
+        self_rel_center.y = -self_rel_center.y;
+        GridPos::from_world_pos(center + self_rel_center)
+    }
+
+    pub fn flip_across_y_axis(self, center: DVec2) -> GridPos {
+        let mut self_rel_center = self.center() - center;
+        self_rel_center.x = -self_rel_center.x;
+        GridPos::from_world_pos(center + self_rel_center)
+    }
 }
 
 impl <T> Index<GridPos> for Grid<T> {

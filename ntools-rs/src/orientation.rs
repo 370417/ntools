@@ -141,6 +141,56 @@ impl Orientation {
             Self::SSE => Self::ENE,
         }
     }
+
+    pub fn flip_across_x_axis_mut(&mut self) {
+        *self = self.flip_across_x_axis();
+    }
+
+    pub fn flip_across_y_axis_mut(&mut self) {
+        *self = self.flip_across_y_axis();
+    }
+
+    pub fn flip_across_x_axis(self) -> Self {
+        match self {
+            Self::E => Self::E,
+            Self::SE => Self::NE,
+            Self::S => Self::N,
+            Self::SW => Self::NW,
+            Self::W => Self::W,
+            Self::NW => Self::SW,
+            Self::N => Self::S,
+            Self::NE => Self::SE,
+            Self::ESE => Self::ENE,
+            Self::SSE => Self::NNE,
+            Self::SSW => Self::NNW,
+            Self::WSW => Self::WNW,
+            Self::WNW => Self::WSW,
+            Self::NNW => Self::SSW,
+            Self::NNE => Self::SSE,
+            Self::ENE => Self::ESE,
+        }
+    }
+
+    pub fn flip_across_y_axis(self) -> Self {
+        match self {
+            Self::E => Self::W,
+            Self::SE => Self::SW,
+            Self::S => Self::S,
+            Self::SW => Self::SE,
+            Self::W => Self::E,
+            Self::NW => Self::NE,
+            Self::N => Self::N,
+            Self::NE => Self::NW,
+            Self::ESE => Self::WSW,
+            Self::SSE => Self::SSW,
+            Self::SSW => Self::SSE,
+            Self::WSW => Self::ESE,
+            Self::WNW => Self::ENE,
+            Self::NNW => Self::NNE,
+            Self::NNE => Self::NNW,
+            Self::ENE => Self::WNW,
+        }
+    }
 }
 
 impl OrientationExt {
@@ -230,6 +280,56 @@ impl OrientationExt {
             Self::SSE => Self::ENE,
         }
     }
+
+    pub fn flip_across_x_axis_mut(&mut self) {
+        *self = self.flip_across_x_axis();
+    }
+
+    pub fn flip_across_y_axis_mut(&mut self) {
+        *self = self.flip_across_y_axis();
+    }
+
+    pub fn flip_across_x_axis(self) -> Self {
+        match self {
+            Self::E => Self::E,
+            Self::SE => Self::NE,
+            Self::S => Self::N,
+            Self::SW => Self::NW,
+            Self::W => Self::W,
+            Self::NW => Self::SW,
+            Self::N => Self::S,
+            Self::NE => Self::SE,
+            Self::ESE => Self::ENE,
+            Self::SSE => Self::NNE,
+            Self::SSW => Self::NNW,
+            Self::WSW => Self::WNW,
+            Self::WNW => Self::WSW,
+            Self::NNW => Self::SSW,
+            Self::NNE => Self::SSE,
+            Self::ENE => Self::ESE,
+        }
+    }
+
+    pub fn flip_across_y_axis(self) -> Self {
+        match self {
+            Self::E => Self::W,
+            Self::SE => Self::SW,
+            Self::S => Self::S,
+            Self::SW => Self::SE,
+            Self::W => Self::E,
+            Self::NW => Self::NE,
+            Self::N => Self::N,
+            Self::NE => Self::NW,
+            Self::ESE => Self::WSW,
+            Self::SSE => Self::SSW,
+            Self::SSW => Self::SSE,
+            Self::WSW => Self::ESE,
+            Self::WNW => Self::ENE,
+            Self::NNW => Self::NNE,
+            Self::NNE => Self::NNW,
+            Self::ENE => Self::WNW,
+        }
+    }
 }
 
 impl OrientationCardinal {
@@ -270,6 +370,32 @@ impl OrientationCardinal {
             Self::W => Self::S,
             Self::N => Self::W,
             Self::E => Self::N,
+        }
+    }
+
+    pub fn flip_across_x_axis_mut(&mut self) {
+        *self = self.flip_across_x_axis();
+    }
+
+    pub fn flip_across_y_axis_mut(&mut self) {
+        *self = self.flip_across_y_axis();
+    }
+
+    pub fn flip_across_x_axis(self) -> Self {
+        match self {
+            Self::E => Self::E,
+            Self::S => Self::N,
+            Self::W => Self::W,
+            Self::N => Self::S,
+        }
+    }
+
+    pub fn flip_across_y_axis(self) -> Self {
+        match self {
+            Self::E => Self::W,
+            Self::S => Self::S,
+            Self::W => Self::E,
+            Self::N => Self::N,
         }
     }
 }

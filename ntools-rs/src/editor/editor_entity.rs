@@ -186,6 +186,44 @@ impl EditorEntity {
         }
     }
 
+    pub fn flip_across_x_axis(&mut self) {
+        match self {
+            EditorEntity::Ninja { orientation, .. } |
+            EditorEntity::Floorguard { orientation, .. } => orientation.flip_across_x_axis_mut(),
+            EditorEntity::OneWay { orientation, .. } |
+            EditorEntity::LaunchPad { orientation, .. } |
+            EditorEntity::Thwump { orientation, .. } |
+            EditorEntity::ShoveThwump { orientation, .. } |
+            EditorEntity::BounceBlock { orientation, .. } => orientation.flip_across_x_axis_mut(),
+            EditorEntity::RegularDoor { orientation, .. } |
+            EditorEntity::LockedDoor { orientation, .. } |
+            EditorEntity::TrapDoor { orientation, .. } => orientation.flip_across_x_axis_mut(),
+            EditorEntity::Mine { .. } |
+            EditorEntity::ToggleMine { .. } |
+            EditorEntity::BoostPad { .. } |
+            EditorEntity::Exit { .. } => {}
+        }
+    }
+
+    pub fn flip_across_y_axis(&mut self) {
+        match self {
+            EditorEntity::Ninja { orientation, .. } |
+            EditorEntity::Floorguard { orientation, .. } => orientation.flip_across_y_axis_mut(),
+            EditorEntity::OneWay { orientation, .. } |
+            EditorEntity::LaunchPad { orientation, .. } |
+            EditorEntity::Thwump { orientation, .. } |
+            EditorEntity::ShoveThwump { orientation, .. } |
+            EditorEntity::BounceBlock { orientation, .. } => orientation.flip_across_y_axis_mut(),
+            EditorEntity::RegularDoor { orientation, .. } |
+            EditorEntity::LockedDoor { orientation, .. } |
+            EditorEntity::TrapDoor { orientation, .. } => orientation.flip_across_y_axis_mut(),
+            EditorEntity::Mine { .. } |
+            EditorEntity::ToggleMine { .. } |
+            EditorEntity::BoostPad { .. } |
+            EditorEntity::Exit { .. } => {}
+        }
+    }
+
     pub fn rotation_deg(self) -> f64 {
         match self {
             EditorEntity::Ninja { orientation, .. } |
@@ -293,6 +331,26 @@ impl EntityPos {
     pub fn rotate_ccw(self, center: DVec2) -> EntityPos {
         let self_rel_center = self.to_world_pos() - center;
         EntityPos::from_world_pos(center - self_rel_center.perp())
+    }
+
+    pub fn flip_across_x_axis_mut(&mut self, center: DVec2) {
+        *self = self.flip_across_x_axis(center);
+    }
+
+    pub fn flip_across_y_axis_mut(&mut self, center: DVec2) {
+        *self = self.flip_across_y_axis(center);
+    }
+
+    pub fn flip_across_x_axis(self, center: DVec2) -> EntityPos {
+        let mut self_rel_center = self.to_world_pos() - center;
+        self_rel_center.y = -self_rel_center.y;
+        EntityPos::from_world_pos(center + self_rel_center)
+    }
+
+    pub fn flip_across_y_axis(self, center: DVec2) -> EntityPos {
+        let mut self_rel_center = self.to_world_pos() - center;
+        self_rel_center.x = -self_rel_center.x;
+        EntityPos::from_world_pos(center + self_rel_center)
     }
 }
 
