@@ -55,6 +55,14 @@ pub enum OrientationCardinal {
     N = 6,
 }
 
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum OrientationBinary {
+    /// Vertical
+    V = 0,
+    /// Horizontal
+    H = 2,
+}
+
 impl Orientation {
     /// Orientation represented by unit vector.
     pub fn vec2(&self) -> DVec2 {
@@ -400,6 +408,50 @@ impl OrientationCardinal {
     }
 }
 
+impl OrientationBinary {
+    /// Orientation represented by unit vector.
+    pub fn vec2(&self) -> DVec2 {
+        match self {
+            Self::V => DVec2::new(0.0, 1.0),
+            Self::H => DVec2::new(1.0, 0.0),
+        }
+    }
+
+    pub fn rotation_deg(&self) -> f64 {
+        self.vec2().to_angle().to_degrees()
+    }
+
+    pub fn rotate_cw_mut(&mut self) {
+        *self = self.rotate_cw();
+    }
+
+    pub fn rotate_ccw_mut(&mut self) {
+        *self = self.rotate_ccw();
+    }
+
+    pub fn rotate_cw(self) -> Self {
+        match self {
+            Self::V => Self::H,
+            Self::H => Self::V,
+        }
+    }
+
+    pub fn rotate_ccw(self) -> Self {
+        match self {
+            Self::V => Self::H,
+            Self::H => Self::V,
+        }
+    }
+
+    pub fn flip_across_x_axis_mut(&mut self) {
+        // no-op
+    }
+
+    pub fn flip_across_y_axis_mut(&mut self) {
+        // no-op
+    }
+}
+
 impl TryFrom<u8> for Orientation {
     type Error = String;
 
@@ -459,6 +511,16 @@ impl TryFrom<u8> for OrientationCardinal {
             4 => Ok(Self::W),
             6 => Ok(Self::N),
             _ => Err("Invalid orientation".into())
+        }
+    }
+}
+
+impl From<u8> for OrientationBinary {
+    fn from(value: u8) -> Self {
+        if value % 4 == 0 {
+            Self::V
+        } else {
+            Self::H
         }
     }
 }

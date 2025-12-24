@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{editor::{editor_entity::{EditorEntity, EntityPos}, editor_state::{Command, EditorEntities, SetEntityCount}}, orientation::{Orientation, OrientationCardinal}};
+use crate::{editor::{editor_entity::{EditorEntity, EntityPos}, editor_state::{Command, EditorEntities, SetEntityCount}}, orientation::{Orientation, OrientationBinary}};
 
 pub struct PlaceEntity {
     pub entity: EditorEntity,
@@ -86,11 +86,11 @@ impl PlaceEntity {
         }
     }
 
-    pub fn door_orientation_from_pos(cursor_pos: DVec2, old_orientation: OrientationCardinal) -> OrientationCardinal {
+    pub fn door_orientation_from_pos(cursor_pos: DVec2, old_orientation: OrientationBinary) -> OrientationBinary {
         if cursor_pos.x % 24.0 != 12.0 {
-            OrientationCardinal::S
+            OrientationBinary::V
         } else if cursor_pos.y % 24.0 != 12.0 {
-            OrientationCardinal::E
+            OrientationBinary::H
         } else {
             old_orientation
         }

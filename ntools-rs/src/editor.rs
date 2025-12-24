@@ -4,7 +4,7 @@ use futures_channel::oneshot::{self, Receiver};
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{attract::Attract, editor::{editor_entity::{EditorEntity, EntityPos, ExportedEntity}, editor_state::{Command, EditorState}, move_selection::MoveSelection, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::{PlaceEntity, Stage}, select_tiles::SelectTiles}, entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floorchaser::Floorchaser, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump}, grid::{COLS, GridPos, ROWS}, map_file::MapFile, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationCardinal}, replay::Replay, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
+use crate::{attract::Attract, editor::{editor_entity::{EditorEntity, EntityPos, ExportedEntity}, editor_state::{Command, EditorState}, move_selection::MoveSelection, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::{PlaceEntity, Stage}, select_tiles::SelectTiles}, entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floorchaser::Floorchaser, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump}, grid::{COLS, GridPos, ROWS}, map_file::MapFile, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationBinary, OrientationCardinal}, replay::Replay, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
 
 pub mod editor_entity;
 pub mod editor_state;
@@ -30,6 +30,7 @@ pub struct Editor {
     entity_fine_grid: bool,
     entity_orientation: Orientation,
     entity_orientation_cardinal: OrientationCardinal,
+    entity_orientation_binary: OrientationBinary,
     /// Keep track of the orientation key that is currently pressed
     /// to allow for inputing secondary diagonals by pressing two orientation
     /// keys at once.
@@ -66,6 +67,7 @@ impl Editor {
             entity_fine_grid: false,
             entity_orientation: Orientation::N,
             entity_orientation_cardinal: OrientationCardinal::N,
+            entity_orientation_binary: OrientationBinary::V,
             pressed_orientation: None,
             past_ninjas: Vec::new(),
             receiver: None,
@@ -553,6 +555,7 @@ impl Editor {
                     _ => Orientation::N,
                 };
                 self.entity_orientation_cardinal = OrientationCardinal::N;
+                self.entity_orientation_binary = OrientationBinary::V;
                 self.pressed_orientation = Some(Orientation::N);
                 place_entity.set_orientation(self.entity_orientation);
             }
@@ -576,6 +579,7 @@ impl Editor {
                 };
                 self.entity_orientation_cardinal = OrientationCardinal::W;
                 self.pressed_orientation = Some(Orientation::W);
+                self.entity_orientation_binary = OrientationBinary::H;
                 place_entity.set_orientation(self.entity_orientation);
             }
             EditorMode::MoveSelection(move_selection) => move_selection.flip_across_y_axis(),
@@ -598,6 +602,7 @@ impl Editor {
                 };
                 self.entity_orientation_cardinal = OrientationCardinal::S;
                 self.pressed_orientation = Some(Orientation::S);
+                self.entity_orientation_binary = OrientationBinary::V;
                 place_entity.set_orientation(self.entity_orientation);
             }
             EditorMode::MoveSelection(move_selection) => move_selection.flip_across_x_axis(),
@@ -648,6 +653,7 @@ impl Editor {
                 };
                 self.entity_orientation_cardinal = OrientationCardinal::E;
                 self.pressed_orientation = Some(Orientation::E);
+                self.entity_orientation_binary = OrientationBinary::H;
                 place_entity.set_orientation(self.entity_orientation);
             }
             EditorMode::SelectTiles(select_tiles) => {
@@ -737,7 +743,7 @@ impl Editor {
         self.mode = EditorMode::PlaceEntity(PlaceEntity {
             entity: EditorEntity::RegularDoor {
                 pos: EntityPos::from_world_pos(rounded_pos),
-                orientation: PlaceEntity::door_orientation_from_pos(rounded_pos, self.entity_orientation_cardinal),
+                orientation: PlaceEntity::door_orientation_from_pos(rounded_pos, self.entity_orientation_binary),
             },
             stage: None,
         });
@@ -750,7 +756,7 @@ impl Editor {
             entity: EditorEntity::LockedDoor {
                 door_pos: EntityPos::from_world_pos(rounded_pos),
                 switch_pos: EntityPos::from_world_pos(rounded_pos),
-                orientation: PlaceEntity::door_orientation_from_pos(rounded_pos, self.entity_orientation_cardinal),
+                orientation: PlaceEntity::door_orientation_from_pos(rounded_pos, self.entity_orientation_binary),
             },
             stage: Some(Stage::PlaceDoor),
         });
@@ -763,7 +769,7 @@ impl Editor {
             entity: EditorEntity::TrapDoor {
                 door_pos: EntityPos::from_world_pos(rounded_pos),
                 switch_pos: EntityPos::from_world_pos(rounded_pos),
-                orientation: PlaceEntity::door_orientation_from_pos(rounded_pos, self.entity_orientation_cardinal),
+                orientation: PlaceEntity::door_orientation_from_pos(rounded_pos, self.entity_orientation_binary),
             },
             stage: Some(Stage::PlaceDoor),
         });

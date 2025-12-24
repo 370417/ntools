@@ -1,7 +1,7 @@
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{editor::place_entity::Stage, grid::GridPos, orientation::{Orientation, OrientationCardinal, OrientationExt}};
+use crate::{editor::place_entity::Stage, grid::GridPos, orientation::{Orientation, OrientationBinary, OrientationExt}};
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum EditorEntity {
@@ -21,16 +21,16 @@ pub enum EditorEntity {
     },
     RegularDoor {
         pos: EntityPos,
-        orientation: OrientationCardinal,
+        orientation: OrientationBinary,
     },
     LockedDoor {
         door_pos: EntityPos,
-        orientation: OrientationCardinal,
+        orientation: OrientationBinary,
         switch_pos: EntityPos,
     },
     TrapDoor {
         door_pos: EntityPos,
-        orientation: OrientationCardinal,
+        orientation: OrientationBinary,
         switch_pos: EntityPos,
     },
     LaunchPad {

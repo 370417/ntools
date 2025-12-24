@@ -2,7 +2,7 @@ use std::{collections::{BTreeMap, VecDeque}, io::{Cursor, Read}};
 
 use byte_slice_cast::AsSliceOf;
 
-use crate::{editor::{editor_entity::{EditorEntity, EntityPos}, editor_state::EditorEntities}, orientation::{Orientation, OrientationCardinal, OrientationExt}, tile::Tiles};
+use crate::{editor::{editor_entity::{EditorEntity, EntityPos}, editor_state::EditorEntities}, orientation::{Orientation, OrientationBinary, OrientationCardinal, OrientationExt}, tile::Tiles};
 
 pub struct MapFile {
     pub game_mode: u32,
@@ -17,8 +17,8 @@ struct EntityDataParser<'a> {
     entity_counts_so_far: [u16; 40],
     entity_data: &'a [u8],
     exit_doors: VecDeque<EntityPos>,
-    locked_doors: VecDeque<(EntityPos, OrientationCardinal)>,
-    trap_doors: VecDeque<(EntityPos, OrientationCardinal)>,
+    locked_doors: VecDeque<(EntityPos, OrientationBinary)>,
+    trap_doors: VecDeque<(EntityPos, OrientationBinary)>,
 }
 
 impl MapFile {
@@ -114,7 +114,8 @@ impl <'a> Iterator for EntityDataParser<'a> {
             let pos = EntityPos::from_bytes(x, y);
             let orientation = Orientation::try_from(orientation_data).unwrap_or(Orientation::N);
             let orientation_ext = OrientationExt::from(orientation_data);
-            let orientation_cardinal = OrientationCardinal::try_from(orientation_data).unwrap_or(OrientationCardinal::N);
+            let _orientation_cardinal = OrientationCardinal::try_from(orientation_data).unwrap_or(OrientationCardinal::N);
+            let orientation_binary = OrientationBinary::from(orientation_data);
 
             if entity_id == 6 || entity_id == 8 {
                 println!("id {entity_id} orientation {orientation_data}");
@@ -126,10 +127,10 @@ impl <'a> Iterator for EntityDataParser<'a> {
                 2 => {} // gold
                 3 => self.exit_doors.push_back(pos),
                 4 => return self.exit_doors.pop_front().map(|exit_pos| EditorEntity::Exit { exit_pos, switch_pos: pos }),
-                5 => return Some(EditorEntity::RegularDoor { pos, orientation: orientation_cardinal }),
-                6 => self.locked_doors.push_back((pos, orientation_cardinal)),
+                5 => return Some(EditorEntity::RegularDoor { pos, orientation: orientation_binary }),
+                6 => self.locked_doors.push_back((pos, orientation_binary)),
                 7 => return self.locked_doors.pop_front().map(|(door_pos, orientation)| EditorEntity::LockedDoor { door_pos, orientation, switch_pos: pos }),
-                8 => self.trap_doors.push_back((pos, orientation_cardinal)),
+                8 => self.trap_doors.push_back((pos, orientation_binary)),
                 9 => return self.trap_doors.pop_front().map(|(door_pos, orientation)| EditorEntity::TrapDoor { door_pos, orientation, switch_pos: pos }),
                 10 => return Some(EditorEntity::LaunchPad { pos, orientation }),
                 11 => return Some(EditorEntity::OneWay { pos, orientation }),
