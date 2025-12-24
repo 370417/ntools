@@ -17,6 +17,7 @@ import type { GlobalEventState } from "./App";
 import { BoostPadDefs, BoostPads, type BoostPadData } from "./entities/BoostPad";
 import { ThwumpDefs, Thwumps, type ThwumpData } from "./entities/Thwump";
 import { ShoveThwumps, type ShoveThwumpData } from "./entities/ShoveThwump";
+import { EditorFooter } from "./EditorFooter";
 
 const COLS = 42;
 const ROWS = 23;
@@ -300,6 +301,18 @@ export function EditorApp(props: { editor: Editor, pastNinjas: Accessor<{ x: num
     const keydownListener = (event: KeyboardEvent) => {
         let change = false;
 
+        if (event.ctrlKey || event.metaKey) {
+            if (event.code === 'KeyZ' && (event.ctrlKey || event.metaKey) && event.shiftKey) change = true, editor.redo();
+            else if (event.code === 'KeyZ' && (event.ctrlKey || event.metaKey)) change = true, editor.undo();
+            else if (event.code === 'KeyY' && (event.ctrlKey || event.metaKey)) change = true, editor.redo();
+
+            if (change) {
+                render();
+                event.preventDefault();
+            }
+            return;
+        }
+
         if (event.code ==='Backquote') change = true, editor.press_backtick();
         else if (event.code === 'Digit1') change = true, editor.press_1(event.shiftKey);
         else if (event.code === 'Digit2') change = true, editor.press_2(event.shiftKey);
@@ -314,10 +327,6 @@ export function EditorApp(props: { editor: Editor, pastNinjas: Accessor<{ x: num
         else if (event.code === 'Digit0') change = true, editor.press_0();
         else if (event.code === 'Minus') change = true, editor.press_dash();
         else if (event.code === 'Equal') change = true, editor.press_equals();
-
-        else if (event.code === 'KeyZ' && (event.ctrlKey || event.metaKey) && event.shiftKey) change = true, editor.redo();
-        else if (event.code === 'KeyZ' && (event.ctrlKey || event.metaKey)) change = true, editor.undo();
-        else if (event.code === 'KeyY' && (event.ctrlKey || event.metaKey)) change = true, editor.redo();
 
         else if (event.code === 'KeyQ') change = true, editor.press_q(event.shiftKey);
         else if (event.code === 'KeyW') change = true, editor.press_w(event.shiftKey);
@@ -521,5 +530,6 @@ export function EditorApp(props: { editor: Editor, pastNinjas: Accessor<{ x: num
             </Show>
             <polyline stroke="black" fill="none" points={pastNinjas().map(({ x, y }) => `${x},${y}`).join(' ')} />
         </svg>
+        <EditorFooter editor={editor} render={render} />
     </>;
 }

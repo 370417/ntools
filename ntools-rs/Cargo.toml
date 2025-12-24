@@ -7,6 +7,8 @@ edition = "2024"
 crate-type = ["cdylib"]
 
 [dependencies]
+# safely convert byte slices into number slices
+byte-slice-cast = "1.2.3"
 # convenience crate for sorting floats
 float-ord = "0.3.2"
 # send data between two wasm objects without needing to pass it through js

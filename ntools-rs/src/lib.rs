@@ -4,6 +4,7 @@ mod collision_util;
 mod editor;
 mod entity;
 mod grid;
+mod map_file;
 mod ninja;
 mod orientation;
 mod replay;

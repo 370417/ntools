@@ -1134,6 +1134,19 @@ pub struct Tiles {
 }
 
 impl Tiles {
+    pub fn try_from_bytes(bytes: &[u8]) -> Result<Tiles, String> {
+        let mut tiles = Tiles::default();
+        for row in 0..ROWS {
+            for col in 0..COLS {
+                let i = row * COLS + col;
+                let pos = GridPos::new(col as u8 + 1, row as u8 + 1);
+                let tile = Tile::from_u8(bytes[i]).ok_or("Invalid tile")?;
+                tiles[pos] = tile;
+            }
+        }
+        Ok(tiles)
+    }
+
     pub fn segments(&self) -> Grid<Segment> {
         let mut grid = Grid::new();
 
