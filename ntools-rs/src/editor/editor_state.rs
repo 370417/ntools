@@ -63,6 +63,15 @@ impl EditorState {
         }
     }
 
+    pub fn to_map(&self) -> MapFile {
+        MapFile {
+            game_mode: 0,
+            level_name: "()".into(),
+            tiles: self.tiles.clone(),
+            entities: self.entities.clone(),
+        }
+    }
+
     pub fn from_attract(attract: Attract) -> EditorState {
         let mut entities = BTreeMap::new();
         for ninja in &attract.ninjas {

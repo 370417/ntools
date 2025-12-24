@@ -12,9 +12,6 @@ pub enum EditorEntity {
     Mine {
         pos: EntityPos,
     },
-    ToggleMine {
-        pos: EntityPos,
-    },
     Exit {
         exit_pos: EntityPos,
         switch_pos: EntityPos,
@@ -53,6 +50,9 @@ pub enum EditorEntity {
         pos: EntityPos,
         orientation: Orientation,
     },
+    ToggleMine {
+        pos: EntityPos,
+    },
     BoostPad {
         pos: EntityPos,
     },
@@ -64,8 +64,9 @@ pub enum EditorEntity {
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct EntityPos {
-    x: i32,
-    y: i32,
+    // list y before x so that the generated Ord implementation compares y before comparing x
+    pub y: i32,
+    pub x: i32,
 }
 
 #[wasm_bindgen]

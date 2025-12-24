@@ -1,6 +1,6 @@
 use std::{collections::{BTreeMap, VecDeque}, io::{Cursor, Read}};
 
-use byte_slice_cast::AsSliceOf;
+use byte_slice_cast::{AsByteSlice, AsSliceOf};
 
 use crate::{editor::{editor_entity::{EditorEntity, EntityPos}, editor_state::EditorEntities}, orientation::{Orientation, OrientationBinary, OrientationCardinal, OrientationExt}, tile::Tiles};
 
@@ -26,9 +26,9 @@ impl MapFile {
     pub fn from_bytes(bytes: &[u8]) -> Result<MapFile, String> {
         let mut cursor = Cursor::new(bytes);
 
-        let unknown1 = read_u32(&mut cursor).map_err(|_| "failed to read unknown1")?;
-        let file_len = read_u32(&mut cursor).map_err(|_| "failed to read file_len")?;
-        let unknown2 = read_u32(&mut cursor).map_err(|_| "failed to read unknown2")?;
+        let _unknown1 = read_u32(&mut cursor).map_err(|_| "failed to read unknown1")?;
+        let _file_len = read_u32(&mut cursor).map_err(|_| "failed to read file_len")?;
+        let _unknown2 = read_u32(&mut cursor).map_err(|_| "failed to read unknown2")?;
         let game_mode = read_u32(&mut cursor).map_err(|_| "failed to read game_mode")?;
 
         let mut unknown3 = [0_u8; 22];
@@ -51,23 +51,56 @@ impl MapFile {
         let mut entity_data = Vec::new();
         cursor.read_to_end(&mut entity_data).map_err(|_| "failed to read entity_data")?;
 
-        println!("unknown1 {unknown1}");
-        println!("file_len {file_len}");
-        println!("unknown2 {:X}", unknown2);
-        println!("game_mode {game_mode}");
-
-        println!("unknown3 {:02X?}", unknown3);
-
-        println!("level_name {}", level_name);
-
-        println!("unknown3 {:02X?}", zeros);
-
         Ok(MapFile {
             game_mode,
             level_name,
             tiles: Tiles::try_from_bytes(&tile_data)?,
             entities: editor_entities_from_bytes(entity_counts, &entity_data)?,
         })
+    }
+
+    pub fn to_bytes(&self) -> Vec<u8> {
+        let mut bytes = Vec::new();
+
+        // The first 32 bits in my local userlevels is always equal to 6.
+        // In an official map downloaded from outte, the first 32 bits were equal to 0.
+        let unknown1 = 0x6_u32;
+        bytes.extend(unknown1.to_le_bytes());
+
+        // We will calculate file len later.
+        let file_len = 0_u32;
+        bytes.extend(file_len.to_le_bytes());
+
+        // The second unknown chunk of bytes always seems to be all 1 bits
+        let unknown2 = 0xffffffff_u32;
+        bytes.extend(unknown2.to_le_bytes());
+
+        bytes.extend(self.game_mode.to_le_bytes());
+
+        // The third unknown chunk of bytes always seems to be this string of bytes
+        let unknown3 = [0x25, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+        bytes.extend(unknown3);
+
+        let mut level_name_buffer = [0; 128];
+        for (i, byte) in self.level_name.bytes().enumerate() {
+            if let Some(buffer_byte) = level_name_buffer.get_mut(i) {
+                *buffer_byte = byte;
+            }
+        }
+        bytes.extend(level_name_buffer);
+
+        bytes.extend([0_u8; 18]);
+
+        bytes.extend(self.tiles.to_bytes());
+
+        bytes.extend(calc_entity_counts(&self.entities).as_byte_slice());
+
+        bytes.extend(editor_entities_to_bytes(&self.entities));
+
+        let file_len = (bytes.len() as u32).to_le_bytes();
+        bytes[4..8].copy_from_slice(&file_len);
+
+        bytes
     }
 }
 
@@ -117,10 +150,6 @@ impl <'a> Iterator for EntityDataParser<'a> {
             let _orientation_cardinal = OrientationCardinal::try_from(orientation_data).unwrap_or(OrientationCardinal::N);
             let orientation_binary = OrientationBinary::from(orientation_data);
 
-            if entity_id == 6 || entity_id == 8 {
-                println!("id {entity_id} orientation {orientation_data}");
-            }
-
             match entity_id {
                 0 => return Some(EditorEntity::Ninja { pos, orientation: orientation_ext }),
                 1 => return Some(EditorEntity::Mine { pos }),
@@ -158,6 +187,38 @@ impl <'a> Iterator for EntityDataParser<'a> {
     }
 }
 
+fn calc_entity_counts(entities: &EditorEntities) -> [u16; 40] {
+    let mut entity_counts = [0_u16; 40];
+    for (&entity, &count) in entities.iter() {
+        match entity {
+            EditorEntity::Ninja { .. } => entity_counts[0] = entity_counts[0].saturating_add(count),
+            EditorEntity::Mine { .. } => entity_counts[1] = entity_counts[1].saturating_add(count),
+            EditorEntity::Exit { .. } => {
+                entity_counts[3] = entity_counts[3].saturating_add(count);
+                entity_counts[4] = entity_counts[4].saturating_add(count);
+            }
+            EditorEntity::RegularDoor { .. } => entity_counts[5] = entity_counts[5].saturating_add(count),
+            EditorEntity::LockedDoor { .. } => {
+                entity_counts[6] = entity_counts[6].saturating_add(count);
+                // entity_counts[7] = entity_counts[7].saturating_add(count);
+            }
+            EditorEntity::TrapDoor { .. } => {
+                entity_counts[8] = entity_counts[8].saturating_add(count);
+                // entity_counts[9] = entity_counts[9].saturating_add(count);
+            }
+            EditorEntity::LaunchPad { .. } => entity_counts[10] = entity_counts[10].saturating_add(count),
+            EditorEntity::OneWay { .. } => entity_counts[11] = entity_counts[11].saturating_add(count),
+            EditorEntity::Floorguard { .. } => entity_counts[16] = entity_counts[16].saturating_add(count),
+            EditorEntity::BounceBlock { .. } => entity_counts[17] = entity_counts[17].saturating_add(count),
+            EditorEntity::Thwump { .. } => entity_counts[20] = entity_counts[20].saturating_add(count),
+            EditorEntity::ToggleMine { .. } => entity_counts[21] = entity_counts[21].saturating_add(count),
+            EditorEntity::BoostPad { .. } => entity_counts[24] = entity_counts[24].saturating_add(count),
+            EditorEntity::ShoveThwump { .. } => entity_counts[28] = entity_counts[28].saturating_add(count),
+        }
+    }
+    entity_counts
+}
+
 fn read_u32(cursor: &mut Cursor<&[u8]>) -> Result<u32, std::io::Error> {
     let mut bytes = [0_u8; 4];
     cursor.read_exact(&mut bytes)?;
@@ -179,13 +240,57 @@ fn editor_entities_from_bytes(entity_counts: &[u16], entity_data: &[u8]) -> Resu
     Ok(entities)
 }
 
+fn editor_entities_to_bytes(entities: &EditorEntities) -> Vec<u8> {
+    let mut bytes = Vec::new();
+
+    for (&entity, &count) in entities.iter() {
+        for _ in 0..count {
+            match entity {
+                EditorEntity::Ninja { pos, orientation } => bytes.extend([0, pos.x as u8, pos.y as u8, orientation as u8, 0]),
+                EditorEntity::Mine { pos } => bytes.extend([1, pos.x as u8, pos.y as u8, 0, 0]),
+                EditorEntity::Exit { exit_pos, switch_pos } => {
+                    bytes.extend([3, exit_pos.x as u8, exit_pos.y as u8, 0, 0]);
+                    bytes.extend([4, switch_pos.x as u8, switch_pos.y as u8, 0, 0]);
+                }
+                EditorEntity::RegularDoor { pos, orientation } => bytes.extend([5, pos.x as u8, pos.y as u8, orientation as u8, 0]),
+                EditorEntity::LockedDoor { door_pos, orientation, switch_pos } => {
+                    bytes.extend([6, door_pos.x as u8, door_pos.y as u8, orientation as u8, 0]);
+                    bytes.extend([7, switch_pos.x as u8, switch_pos.y as u8, 0, 0]);
+                }
+                EditorEntity::TrapDoor { door_pos, orientation, switch_pos } => {
+                    bytes.extend([8, door_pos.x as u8, door_pos.y as u8, orientation as u8, 0]);
+                    bytes.extend([9, switch_pos.x as u8, switch_pos.y as u8, 0, 0]);
+                }
+                EditorEntity::LaunchPad { pos, orientation } => bytes.extend([10, pos.x as u8, pos.y as u8, orientation as u8, 0]),
+                EditorEntity::OneWay { pos, orientation } => bytes.extend([11, pos.x as u8, pos.y as u8, orientation as u8, 0]),
+                EditorEntity::Floorguard { pos, orientation } => bytes.extend([16, pos.x as u8, pos.y as u8, orientation as u8, 0]),
+                EditorEntity::BounceBlock { pos, orientation } => bytes.extend([17, pos.x as u8, pos.y as u8, orientation as u8, 0]),
+                EditorEntity::Thwump { pos, orientation } => bytes.extend([20, pos.x as u8, pos.y as u8, orientation as u8, 0]),
+                EditorEntity::ToggleMine { pos } => bytes.extend([21, pos.x as u8, pos.y as u8, 0, 0]),
+                EditorEntity::BoostPad { pos } => bytes.extend([24, pos.x as u8, pos.y as u8, 0, 0]),
+                EditorEntity::ShoveThwump { pos, orientation } => bytes.extend([28, pos.x as u8, pos.y as u8, orientation as u8, 0]),
+            }
+        }
+    }
+
+    bytes
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn test_parse_map_file() {
-        MapFile::from_bytes(include_bytes!("testfiles/test map")).unwrap();
+        let bytes = include_bytes!("testfiles/test map");
+        let map = MapFile::from_bytes(bytes).unwrap();
+        let new_bytes = map.to_bytes();
+        let new_bytes: &[u8] = &new_bytes;
+
+        assert_eq!(bytes.len(), new_bytes.len());
+        assert_eq!(&bytes[0..1230], &new_bytes[0..1230]);
+        // TODO: compare rest of file ignoring order
+
         // MapFile::from_bytes(include_bytes!("testfiles/MET-SL-X-19-03")).unwrap();
     }
 }

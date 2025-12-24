@@ -6,7 +6,7 @@ export function EditorFooter(props: { editor: Editor, render(): void }) {
     }}>
         <label>
             Import map
-            <input type="file" style={{ display: 'none' }} onchange={function(this: HTMLInputElement, _event) {
+            <input type="file" style={{ display: 'none' }} onchange={function(this: HTMLInputElement) {
                 const files = this.files;
                 if (files && files.length > 0) {
                     const fileReader = new FileReader();
@@ -22,8 +22,17 @@ export function EditorFooter(props: { editor: Editor, render(): void }) {
             />
         </label>
         {" | "}
-        Export map
-        |
+        <a href="#" download="Untitled" style={{ cursor: 'default' }} onclick={function(this: HTMLAnchorElement) {
+            const map = props.editor.export_map();
+            const blob = new Blob([map.buffer as ArrayBuffer], { type: 'application/octet-stream' });
+            const downloadUrl = URL.createObjectURL(blob);
+            this.href = downloadUrl;
+            // TODO: set this.download to level name
+            setTimeout(() => URL.revokeObjectURL(downloadUrl), 100);
+        }}>
+            Export map
+        </a>
+        {" | "}
         Always show trail <input type="checkbox" />
         |
         Bounce block/thwump/shwump corners

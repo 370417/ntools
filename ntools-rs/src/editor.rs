@@ -89,6 +89,11 @@ impl Editor {
     }
 
     #[wasm_bindgen]
+    pub fn export_map(&self) -> Box<[u8]> {
+        self.state.to_map().to_bytes().into()
+    }
+
+    #[wasm_bindgen]
     pub fn to_replay(&mut self) -> Result<Replay, String> {
         self.mode = EditorMode::PaintTiles;
 
