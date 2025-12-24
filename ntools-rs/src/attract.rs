@@ -45,7 +45,7 @@ impl Attract {
             len
         };
         let level_name = &padded_level_name[0..level_name_len];
-        let level_name = str::from_utf8(level_name).map_err(|_| "Level name is not valid utf8")?.to_owned();
+        let level_name = str::from_utf8(level_name).map_err(|_| "Level name is not valid utf8")?.trim_end_matches('\0').to_owned();
 
         if attract_bytes[166] != 0 {
             return Err("Attract input byte 166 should be 0".into());

@@ -16,6 +16,7 @@ pub mod select_tiles;
 #[wasm_bindgen]
 pub struct Editor {
     state: EditorState,
+    level_name: String,
     mode: EditorMode,
     cursor_pos: DVec2,
     selected_tile_category: TileCategory,
@@ -58,6 +59,7 @@ impl Editor {
     pub fn new() -> Editor {
         Editor {
             state: EditorState::new(),
+            level_name: "Untitled".into(),
             mode: EditorMode::PaintTiles,
             cursor_pos: DVec2::new(TILE_SIZE, TILE_SIZE),
             selected_tile_category: TileCategory::Tile1,
@@ -77,6 +79,7 @@ impl Editor {
     #[wasm_bindgen]
     pub fn load_attract(&mut self, attract_bytes: &[u8]) -> Result<(), String> {
         let attract = Attract::from_bytes(attract_bytes)?;
+        self.set_level_name(&attract.level_name);
         self.state = EditorState::from_attract(attract);
         Ok(())
     }
@@ -84,13 +87,24 @@ impl Editor {
     #[wasm_bindgen]
     pub fn load_map(&mut self, map_bytes: &[u8]) -> Result<(), String> {
         let map = MapFile::from_bytes(map_bytes)?;
+        self.set_level_name(&map.level_name);
         self.state = EditorState::from_map(map);
         Ok(())
     }
 
     #[wasm_bindgen]
     pub fn export_map(&self) -> Box<[u8]> {
-        self.state.to_map().to_bytes().into()
+        self.state.to_map(self.level_name.clone()).to_bytes().into()
+    }
+
+    #[wasm_bindgen]
+    pub fn get_level_name(&self) -> String {
+        self.level_name.clone()
+    }
+
+    #[wasm_bindgen]
+    pub fn set_level_name(&mut self, name: &str) {
+        self.level_name = name.chars().filter(|char| char.is_ascii()).collect();
     }
 
     #[wasm_bindgen]

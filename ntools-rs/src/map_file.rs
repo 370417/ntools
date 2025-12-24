@@ -36,7 +36,7 @@ impl MapFile {
 
         let mut level_name = [0_u8; 128];
         cursor.read_exact(&mut level_name).map_err(|_| "failed to read level name")?;
-        let level_name = String::from_utf8(level_name.into()).map_err(|_| "level name is not valid utf8")?;
+        let level_name = String::from_utf8(level_name.into()).map_err(|_| "level name is not valid utf8")?.trim_end_matches('\0').to_owned();
 
         let mut zeros = [0_u8; 18];
         cursor.read_exact(&mut zeros).map_err(|_| "failed to read zeros")?;

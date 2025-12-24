@@ -63,10 +63,10 @@ impl EditorState {
         }
     }
 
-    pub fn to_map(&self) -> MapFile {
+    pub fn to_map(&self, level_name: String) -> MapFile {
         MapFile {
             game_mode: 0,
-            level_name: "()".into(),
+            level_name,
             tiles: self.tiles.clone(),
             entities: self.entities.clone(),
         }

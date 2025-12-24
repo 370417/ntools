@@ -16,6 +16,7 @@ export type GlobalEventState = {
 export function App() {
     const editor = Editor.new();
     const [replay, setReplay] = createSignal<Replay>();
+    const [levelName, setLevelName] = createSignal('');
 
     // manage past ninja state here so that we can better control when it gets updated
     const [pastNinjas, setPastNinjas] = createSignal<{ x: number, y: number }[]>([]);
@@ -57,6 +58,7 @@ export function App() {
             return response.arrayBuffer();
         }).then(arrayBuffer => {
             editor.load_attract(new Uint8Array(arrayBuffer));
+            setLevelName(editor.get_level_name());
         });
     }
 
@@ -104,7 +106,7 @@ export function App() {
 
     return <>
         <Show when={!replay()}>
-            <EditorApp editor={editor} pastNinjas={pastNinjas} globalEventState={globalEventState} />
+            <EditorApp editor={editor} pastNinjas={pastNinjas} globalEventState={globalEventState} levelName={levelName} setLevelName={setLevelName} />
         </Show>
         <Show when={!!replay()} keyed>
             <ReplayApp replay={replay()!} globalEventState={globalEventState} />

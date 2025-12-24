@@ -281,7 +281,13 @@ function Entities({ entities }: { entities: EntitiesProps }) {
     </>;
 }
 
-export function EditorApp(props: { editor: Editor, pastNinjas: Accessor<{ x: number, y: number }[]>, globalEventState: GlobalEventState }) {
+export function EditorApp(props: {
+    editor: Editor,
+    pastNinjas: Accessor<{ x: number, y: number }[]>,
+    globalEventState: GlobalEventState,
+    levelName: Accessor<string>,
+    setLevelName: Setter<string>,
+}) {
     const { editor, pastNinjas } = props;
 
     const [tilePath, setTilePath] = createSignal('');
@@ -300,6 +306,10 @@ export function EditorApp(props: { editor: Editor, pastNinjas: Accessor<{ x: num
 
     const keydownListener = (event: KeyboardEvent) => {
         let change = false;
+
+        if (event.target instanceof HTMLInputElement) {
+            return;
+        }
 
         if (event.ctrlKey || event.metaKey) {
             if (event.code === 'KeyZ' && (event.ctrlKey || event.metaKey) && event.shiftKey) change = true, editor.redo();
@@ -530,6 +540,6 @@ export function EditorApp(props: { editor: Editor, pastNinjas: Accessor<{ x: num
             </Show>
             <polyline stroke="black" fill="none" points={pastNinjas().map(({ x, y }) => `${x},${y}`).join(' ')} />
         </svg>
-        <EditorFooter editor={editor} render={render} />
+        <EditorFooter editor={editor} render={render} levelName={props.levelName} setLevelName={props.setLevelName} />
     </>;
 }
