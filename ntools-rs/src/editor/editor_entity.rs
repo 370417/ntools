@@ -79,20 +79,6 @@ pub struct ExportedEntity {
 }
 
 impl EditorEntity {
-    pub fn try_from_data(id: u8, pos: EntityPos, orientation_byte: u8, _mode: u8) -> Option<EditorEntity> {
-        // Don't handle error parsing orientation right away because
-        // we want to ignore invalid orientations for objects that do
-        // not need orientation.
-        let orientation = Orientation::try_from(orientation_byte).ok();
-        let orientation_ext = OrientationExt::from(orientation_byte);
-        let orientation_cardinal = OrientationCardinal::try_from(orientation_byte).ok();
-
-        match id {
-            0 => Some(EditorEntity::Ninja { pos, orientation: orientation_ext }),
-            _ => None,
-        }
-    }
-
     pub fn export(&self) -> ExportedEntity {
         let pos = self.pos().to_world_pos();
         let switch_pos = self.switch_pos().map(EntityPos::to_world_pos).unwrap_or(DVec2::splat(f64::NAN));
