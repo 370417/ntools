@@ -2,7 +2,14 @@ import type { Accessor, Setter } from "solid-js";
 import type { Editor } from "./assets/ntools_rs";
 import { debouncedSaveMap } from "./localstorage";
 
-export function EditorFooter(props: { editor: Editor, render(save: boolean): void, levelName: Accessor<string>, setLevelName: Setter<string> }) {
+export function EditorFooter(props: {
+    editor: Editor,
+    render(save: boolean): void,
+    levelName: Accessor<string>,
+    setLevelName: Setter<string>,
+    roundCorners: Accessor<boolean>,
+    setRoundCorners: Setter<boolean>,
+}) {
     return <div style={{
         padding: '0 1.2em',
         color: 'var(--main-menu-text)',
@@ -46,9 +53,9 @@ export function EditorFooter(props: { editor: Editor, render(save: boolean): voi
         Always show trail <input type="checkbox" />
         |
         Bounce block/thwump/shwump corners
-        <select>
-            <option>square</option>
-            <option>rounded</option>
+        <select onchange={e => props.setRoundCorners(e.currentTarget.value == 'rounded')}>
+            <option selected={!props.roundCorners()}>square</option>
+            <option selected={props.roundCorners()}>rounded</option>
         </select>
         <input type="text" value={props.levelName()} style={{ float: 'right' }} oninput={e => {
             props.editor.set_level_name(e.currentTarget.value);

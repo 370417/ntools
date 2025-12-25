@@ -33,7 +33,7 @@ pub enum Corners {
 }
 
 impl Thwump {
-    pub fn new(pos: DVec2, orientation: Orientation) -> Thwump {
+    pub fn new(pos: DVec2, orientation: Orientation, round_corners: bool) -> Thwump {
         Thwump {
             pos,
             origin: pos,
@@ -41,7 +41,7 @@ impl Thwump {
             state: ThwumpState::Waiting,
             is_moving: false,
             detection_range: None,
-            corners: Corners::Square,
+            corners: if round_corners { Corners::Round } else { Corners::Square },
         }
     }
 

@@ -176,13 +176,13 @@ impl Attract {
                 // Floor chaser
                 16 => entities.floorchasers.push(Floorchaser::new(6.0 * pos, orientation_ext)),
                 // Bounce block
-                17 => entities.bounce_blocks.push(BounceBlock::new(6.0 * pos, orientation?)),
+                17 => entities.bounce_blocks.push(BounceBlock::new(6.0 * pos, orientation?, false)),
                 // Rocket
                 18 => {}
                 // Gauss
                 19 => {}
                 // Thwump
-                20 => entities.thwumps.push(Thwump::new(6.0 * pos, orientation?)),
+                20 => entities.thwumps.push(Thwump::new(6.0 * pos, orientation?, false)),
                 // Toggle mine
                 21 => entities.mines.push(Mine::new_untoggled(6.0 * pos)),
                 // Evil ninja
@@ -198,7 +198,7 @@ impl Attract {
                 // Bat
                 27 => {}
                 // Shove thwump
-                28 => entities.shove_thwumps.push(ShoveThwump::new(6.0 * pos, orientation?)),
+                28 => entities.shove_thwumps.push(ShoveThwump::new(6.0 * pos, orientation?, false)),
                 _ => return Err("Invalid object id".into()),
             }
         }

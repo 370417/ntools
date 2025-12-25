@@ -108,7 +108,7 @@ impl Editor {
     }
 
     #[wasm_bindgen]
-    pub fn to_replay(&mut self) -> Result<Replay, String> {
+    pub fn to_replay(&mut self, round_corners: bool) -> Result<Replay, String> {
         self.mode = EditorMode::PaintTiles;
 
         let ninjas = self.state.entities().iter().filter_map(|(entity, _)| {
@@ -151,16 +151,16 @@ impl Editor {
                         entities.floorchasers.push(Floorchaser::new(pos.to_world_pos(), *orientation));
                     }
                     EditorEntity::BounceBlock { pos, orientation } => {
-                        entities.bounce_blocks.push(BounceBlock::new(pos.to_world_pos(), *orientation));
+                        entities.bounce_blocks.push(BounceBlock::new(pos.to_world_pos(), *orientation, round_corners));
                     }
                     EditorEntity::Thwump { pos, orientation } => {
-                        entities.thwumps.push(Thwump::new(pos.to_world_pos(), *orientation));
+                        entities.thwumps.push(Thwump::new(pos.to_world_pos(), *orientation, round_corners));
                     }
                     EditorEntity::BoostPad { pos } => {
                         entities.boost_pads.push(BoostPad::new(pos.to_world_pos()));
                     }
                     EditorEntity::ShoveThwump { pos, orientation } => {
-                        entities.shove_thwumps.push(ShoveThwump::new(pos.to_world_pos(), *orientation));
+                        entities.shove_thwumps.push(ShoveThwump::new(pos.to_world_pos(), *orientation, round_corners));
                     }
                 }
             }

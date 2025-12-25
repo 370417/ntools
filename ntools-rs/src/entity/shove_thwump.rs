@@ -36,13 +36,13 @@ pub enum Corners {
 }
 
 impl ShoveThwump {
-    pub fn new(pos: DVec2, orientation: Orientation) -> ShoveThwump {
+    pub fn new(pos: DVec2, orientation: Orientation, round_corners: bool) -> ShoveThwump {
         ShoveThwump {
             pos,
             orientation,
             origin: pos,
             state: ShoveThwumpState::Waiting,
-            corners: Corners::Square,
+            corners: if round_corners { Corners::Round } else { Corners::Square },
         }
     }
 

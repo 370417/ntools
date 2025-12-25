@@ -31,7 +31,7 @@ pub enum Corners {
 }
 
 impl BounceBlock {
-    pub fn new(origin: DVec2, orientation: Orientation) -> BounceBlock {
+    pub fn new(origin: DVec2, orientation: Orientation, round_corners: bool) -> BounceBlock {
         BounceBlock {
             pos: origin,
             pos_old: origin,
@@ -39,7 +39,7 @@ impl BounceBlock {
             speed: DVec2::ZERO,
             grid_pos: GridPos::from_world_pos(origin),
             orientation,
-            corners: Corners::Square,
+            corners: if round_corners { Corners::Round } else { Corners::Square },
         }
     }
 

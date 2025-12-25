@@ -18,6 +18,7 @@ export function App() {
     const editor = Editor.new();
     const [replay, setReplay] = createSignal<Replay>();
     const [levelName, setLevelName] = createSignal('');
+    const [roundCorners, setRoundCorners] = createSignal(false);
 
     // manage past ninja state here so that we can better control when it gets updated
     const [pastNinjas, setPastNinjas] = createSignal<{ x: number, y: number }[]>([]);
@@ -80,7 +81,7 @@ export function App() {
                 $replay.free();
                 updatePastNinjas();
             } else {
-                setReplay(editor.to_replay());
+                setReplay(editor.to_replay(roundCorners()));
             }
             event.preventDefault();
         }
@@ -110,7 +111,15 @@ export function App() {
 
     return <>
         <Show when={!replay()}>
-            <EditorApp editor={editor} pastNinjas={pastNinjas} globalEventState={globalEventState} levelName={levelName} setLevelName={setLevelName} />
+            <EditorApp
+                editor={editor}
+                pastNinjas={pastNinjas}
+                globalEventState={globalEventState}
+                levelName={levelName}
+                setLevelName={setLevelName}
+                roundCorners={roundCorners}
+                setRoundCorners={setRoundCorners}
+            />
         </Show>
         <Show when={!!replay()} keyed>
             <ReplayApp replay={replay()!} globalEventState={globalEventState} />

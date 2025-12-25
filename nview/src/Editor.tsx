@@ -68,8 +68,6 @@ type Line = {
     y2: number;
 };
 
-const selectionPadding = 4;
-
 type EntitiesProps = {
     ninjas: Accessor<NinjaData[]>,
     setNinjas: Setter<NinjaData[]>,
@@ -288,6 +286,8 @@ export function EditorApp(props: {
     globalEventState: GlobalEventState,
     levelName: Accessor<string>,
     setLevelName: Setter<string>,
+    roundCorners: Accessor<boolean>,
+    setRoundCorners: Setter<boolean>,
 }) {
     const { editor, pastNinjas } = props;
 
@@ -545,6 +545,13 @@ export function EditorApp(props: {
             </Show>
             <polyline stroke="black" fill="none" points={pastNinjas().map(({ x, y }) => `${x},${y}`).join(' ')} />
         </svg>
-        <EditorFooter editor={editor} render={render} levelName={props.levelName} setLevelName={props.setLevelName} />
+        <EditorFooter
+            editor={editor}
+            render={render}
+            levelName={props.levelName}
+            setLevelName={props.setLevelName}
+            roundCorners={props.roundCorners}
+            setRoundCorners={props.setRoundCorners}
+        />
     </>;
 }
