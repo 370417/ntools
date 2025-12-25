@@ -2,6 +2,7 @@ import { createSignal, Show, type Accessor, type Setter } from 'solid-js';
 import { Editor, Replay } from './assets/ntools_rs';
 import { EditorApp } from './Editor.tsx';
 import { ReplayApp } from './Replay.tsx';
+import { loadMap } from './localstorage.ts';
 
 export type GlobalEventState = {
     isJump1Pressed: Accessor<boolean>,
@@ -53,14 +54,17 @@ export function App() {
         setMouseGamePos,
     };
 
-    if (location.hostname === 'localhost') {
-        fetch('http://localhost:8080').then(response => {
-            return response.arrayBuffer();
-        }).then(arrayBuffer => {
-            editor.load_attract(new Uint8Array(arrayBuffer));
-            setLevelName(editor.get_level_name());
-        });
-    }
+    // if (location.hostname === 'localhost') {
+    //     fetch('http://localhost:8080').then(response => {
+    //         return response.arrayBuffer();
+    //     }).then(arrayBuffer => {
+    //         editor.load_attract(new Uint8Array(arrayBuffer));
+    //         setLevelName(editor.get_level_name());
+    //     });
+    // }
+
+    loadMap(editor);
+    setLevelName(editor.get_level_name());
 
     document.addEventListener('keydown', event => {
         if (event.ctrlKey || event.metaKey) {

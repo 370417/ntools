@@ -18,6 +18,7 @@ import { BoostPadDefs, BoostPads, type BoostPadData } from "./entities/BoostPad"
 import { ThwumpDefs, Thwumps, type ThwumpData } from "./entities/Thwump";
 import { ShoveThwumps, type ShoveThwumpData } from "./entities/ShoveThwump";
 import { EditorFooter } from "./EditorFooter";
+import { debouncedSaveMap } from "./localstorage";
 
 const COLS = 42;
 const ROWS = 23;
@@ -317,7 +318,7 @@ export function EditorApp(props: {
             else if (event.code === 'KeyY' && (event.ctrlKey || event.metaKey)) change = true, editor.redo();
 
             if (change) {
-                render();
+                render(true);
                 event.preventDefault();
             }
             return;
@@ -368,7 +369,7 @@ export function EditorApp(props: {
         else if (event.code === 'Slash') change = true, editor.press_slash();
 
         if (change) {
-            render();
+            render(true);
             event.preventDefault();
         }
     };
@@ -385,7 +386,7 @@ export function EditorApp(props: {
         else if (event.code === 'KeyC') change = true, editor.release_c();
 
         if (change) {
-            render();
+            render(false);
             event.preventDefault();
         }
     };
@@ -398,7 +399,7 @@ export function EditorApp(props: {
         document.removeEventListener('keyup', keyupListener);
     });
 
-    function render() {
+    function render(save: boolean) {
         setMode(editor.mode());
 
         setTilePath(editor.tiles_path());
@@ -424,6 +425,10 @@ export function EditorApp(props: {
         setDoorSwitchLines(lines);
 
         setSelectedTileOutlinePath(editor.selected_tile_outline_path());
+
+        if (save) {
+            debouncedSaveMap(editor);
+        }
     }
 
     const regularGridXs = [];
@@ -455,7 +460,7 @@ export function EditorApp(props: {
         quarterTileGridYs.push(30 + 12 * i);
     }
 
-    render();
+    render(false);
 
     return <>
         <svg viewBox="0 0 1056 600" onmousemove={function(this: SVGElement, event) {
@@ -469,7 +474,7 @@ export function EditorApp(props: {
                 x: (event.clientX - left) / width * 1056,
                 y: (event.clientY - top) / height * 600,
             });
-            if (cursorMoved) render();
+            if (cursorMoved) render(false);
         }}
         onmousedown={event => {
             if (event.buttons & 2) {
@@ -477,12 +482,12 @@ export function EditorApp(props: {
             } else {
                 // primary click
                 editor.cursor_down(event.shiftKey);
-                render();
+                render(true);
             }
         }}
-        ondblclick={event => { editor.double_click(event.shiftKey); render() }}
-        onmouseup={() => { editor.cursor_up(); render() }}
-        oncontextmenu={event => { if (editor.press_escape()) { render(); event.preventDefault(); } }} >
+        ondblclick={event => { editor.double_click(event.shiftKey); render(false) }}
+        onmouseup={() => { editor.cursor_up(); render(false) }}
+        oncontextmenu={event => { if (editor.press_escape()) { render(false); event.preventDefault(); } }} >
             <defs>
                 <clipPath id="tiles-clip">
                     <use href="#tiles" />

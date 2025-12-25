@@ -1,7 +1,8 @@
 import type { Accessor, Setter } from "solid-js";
 import type { Editor } from "./assets/ntools_rs";
+import { debouncedSaveMap } from "./localstorage";
 
-export function EditorFooter(props: { editor: Editor, render(): void, levelName: Accessor<string>, setLevelName: Setter<string> }) {
+export function EditorFooter(props: { editor: Editor, render(save: boolean): void, levelName: Accessor<string>, setLevelName: Setter<string> }) {
     return <div style={{
         padding: '0 1.2em',
         color: 'var(--main-menu-text)',
@@ -19,7 +20,7 @@ export function EditorFooter(props: { editor: Editor, render(): void, levelName:
                     fileReader.onloadend = () => {
                         if (fileReader.result instanceof ArrayBuffer) {
                             props.editor.load_map(new Uint8Array(fileReader.result));
-                            props.render();
+                            props.render(true);
                             props.setLevelName(props.editor.get_level_name());
                         }
                     };
@@ -52,6 +53,6 @@ export function EditorFooter(props: { editor: Editor, render(): void, levelName:
         <input type="text" value={props.levelName()} style={{ float: 'right' }} oninput={e => {
             props.editor.set_level_name(e.currentTarget.value);
             props.setLevelName(props.editor.get_level_name());
-        }} />
+        }} onchange={() => debouncedSaveMap(props.editor)} />
     </div>;
 }
