@@ -1,11 +1,11 @@
 use glam::DVec2;
 
-use crate::{editor::{editor_entity::{EditorEntity, EntityPos, ExportedEntity}, editor_state::EditorEntities}, tile::TILE_SIZE};
+use crate::{editor::{editor_entity::{EditorEntity, EntityId, EntityPos, ExportedEntity}, editor_state::EditorEntities}, tile::TILE_SIZE};
 
 pub struct SelectEntity {
     selected_entities: Vec<(EditorEntity, SelectionType)>,
     /// Used for disambiguating which entitity is selected when multiple are in the same position
-    selected_entity_id: u32,
+    selected_entity_id: EntityId,
     /// Used for disambiguating which entitity is selected when multiple are in the same position
     /// and multiple of them have the same entity id
     selected_entity_index: usize,
@@ -21,7 +21,7 @@ impl SelectEntity {
     pub fn new(crosshair_pos: DVec2, entities: &EditorEntities) -> SelectEntity {
         let mut select_entity = SelectEntity {
             selected_entities: Vec::new(),
-            selected_entity_id: 0,
+            selected_entity_id: EntityId::Ninja,
             selected_entity_index: 0,
         };
         select_entity.set_selection(crosshair_pos, entities);
@@ -63,7 +63,7 @@ impl SelectEntity {
 
     pub fn get_selection(&self) -> Option<(EditorEntity, SelectionType)> {
         self.selected_entities.iter().filter(|(entity, _)| {
-            entity.type_int() >= self.selected_entity_id
+            entity.id() >= self.selected_entity_id
         }).skip(self.selected_entity_index).cloned().next()
     }
 

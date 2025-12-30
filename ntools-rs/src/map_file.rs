@@ -2,7 +2,7 @@ use std::{collections::{BTreeMap, VecDeque}, io::{Cursor, Read}};
 
 use byte_slice_cast::{AsByteSlice, AsSliceOf};
 
-use crate::{editor::{editor_entity::{EditorEntity, EntityPos}, editor_state::EditorEntities}, orientation::{Orientation, OrientationBinary, OrientationCardinal, OrientationExt}, tile::Tiles};
+use crate::{editor::{editor_entity::{EditorEntity, EntityId, EntityPos}, editor_state::EditorEntities}, orientation::{Orientation, OrientationBinary, OrientationCardinal, OrientationExt}, tile::Tiles};
 
 pub struct MapFile {
     pub game_mode: u32,
@@ -123,7 +123,7 @@ impl <'a> Iterator for EntityDataParser<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         while self.i + 4 < self.entity_data.len() {
-            let entity_id = self.entity_data[self.i] as usize;
+            let entity_id = self.entity_data[self.i];
             let x = self.entity_data[self.i + 1];
             let y = self.entity_data[self.i + 2];
             let orientation_data = self.entity_data[self.i + 3];
@@ -131,10 +131,10 @@ impl <'a> Iterator for EntityDataParser<'a> {
 
             self.i += 5;
 
-            if let Some(entity_count_so_far) = self.entity_counts_so_far.get_mut(entity_id) {
+            if let Some(entity_count_so_far) = self.entity_counts_so_far.get_mut(entity_id as usize) {
                 // It seems like entity_counts is 0 for door switches, so we skip this check if
                 // entity is an exit switch, locked door switch, or trap door switch.
-                if entity_id != 4 && entity_id != 7 && entity_id != 9 && *entity_count_so_far >= self.entity_counts[entity_id] {
+                if entity_id != 4 && entity_id != 7 && entity_id != 9 && *entity_count_so_far >= self.entity_counts[entity_id as usize] {
                     // skip extra entities
                     return None;
                 }
@@ -150,37 +150,36 @@ impl <'a> Iterator for EntityDataParser<'a> {
             let _orientation_cardinal = OrientationCardinal::try_from(orientation_data).unwrap_or(OrientationCardinal::N);
             let orientation_binary = OrientationBinary::from(orientation_data);
 
-            match entity_id {
-                0 => return Some(EditorEntity::Ninja { pos, orientation: orientation_ext }),
-                1 => return Some(EditorEntity::Mine { pos }),
-                2 => {} // gold
-                3 => self.exit_doors.push_back(pos),
-                4 => return self.exit_doors.pop_front().map(|exit_pos| EditorEntity::Exit { exit_pos, switch_pos: pos }),
-                5 => return Some(EditorEntity::RegularDoor { pos, orientation: orientation_binary }),
-                6 => self.locked_doors.push_back((pos, orientation_binary)),
-                7 => return self.locked_doors.pop_front().map(|(door_pos, orientation)| EditorEntity::LockedDoor { door_pos, orientation, switch_pos: pos }),
-                8 => self.trap_doors.push_back((pos, orientation_binary)),
-                9 => return self.trap_doors.pop_front().map(|(door_pos, orientation)| EditorEntity::TrapDoor { door_pos, orientation, switch_pos: pos }),
-                10 => return Some(EditorEntity::LaunchPad { pos, orientation }),
-                11 => return Some(EditorEntity::OneWay { pos, orientation }),
-                12 => {} // chainsaw drone
-                13 => {} // laser drone
-                14 => {} // zap drone
-                15 => {} // chase drone
-                16 => return Some(EditorEntity::Floorguard { pos, orientation: orientation_ext }),
-                17 => return Some(EditorEntity::BounceBlock { pos, orientation }),
-                18 => {} // rocket turret
-                19 => {} // gauss turret
-                20 => return Some(EditorEntity::Thwump { pos, orientation }),
-                21 => return Some(EditorEntity::ToggleMine { pos }),
-                22 => {} // evil ninja
-                23 => {} // laser turret
-                24 => return Some(EditorEntity::BoostPad { pos }),
-                25 => {} // death ball
-                26 => {} // mini drone
-                27 => {} // bat
-                28 => return Some(EditorEntity::ShoveThwump { pos, orientation }),
-                _ => {}
+            match EntityId::try_from(entity_id).ok()? {
+                EntityId::Ninja => return Some(EditorEntity::Ninja { pos, orientation: orientation_ext }),
+                EntityId::Mine => return Some(EditorEntity::Mine { pos }),
+                EntityId::Gold => {}
+                EntityId::ExitDoor => self.exit_doors.push_back(pos),
+                EntityId::ExitSwitch => return self.exit_doors.pop_front().map(|exit_pos| EditorEntity::Exit { exit_pos, switch_pos: pos }),
+                EntityId::RegularDoor => return Some(EditorEntity::RegularDoor { pos, orientation: orientation_binary }),
+                EntityId::LockedDoor => self.locked_doors.push_back((pos, orientation_binary)),
+                EntityId::LockedSwitch => return self.locked_doors.pop_front().map(|(door_pos, orientation)| EditorEntity::LockedDoor { door_pos, orientation, switch_pos: pos }),
+                EntityId::TrapDoor => self.trap_doors.push_back((pos, orientation_binary)),
+                EntityId::TrapSwitch => return self.trap_doors.pop_front().map(|(door_pos, orientation)| EditorEntity::TrapDoor { door_pos, orientation, switch_pos: pos }),
+                EntityId::LaunchPad => return Some(EditorEntity::LaunchPad { pos, orientation }),
+                EntityId::OneWay => return Some(EditorEntity::OneWay { pos, orientation }),
+                EntityId::ChainsawDrone => {}
+                EntityId::LaserDrone => {}
+                EntityId::ZapDrone => {}
+                EntityId::ChaseDrone => {}
+                EntityId::FloorGuard => return Some(EditorEntity::FloorGuard { pos, orientation: orientation_ext }),
+                EntityId::BounceBlock => return Some(EditorEntity::BounceBlock { pos, orientation }),
+                EntityId::RocketTurret => {}
+                EntityId::GaussTurret => {}
+                EntityId::Thwump => return Some(EditorEntity::Thwump { pos, orientation }),
+                EntityId::ToggleMine => return Some(EditorEntity::ToggleMine { pos }),
+                EntityId::EvilNinja => {}
+                EntityId::LaserTurret => {}
+                EntityId::BoostPad => return Some(EditorEntity::BoostPad { pos }),
+                EntityId::DeathBall => {}
+                EntityId::MiniDrone => {}
+                EntityId::Bat => {}
+                EntityId::ShoveThwump => return Some(EditorEntity::ShoveThwump { pos, orientation }),
             }
         }
         None
@@ -208,7 +207,7 @@ fn calc_entity_counts(entities: &EditorEntities) -> [u16; 40] {
             }
             EditorEntity::LaunchPad { .. } => entity_counts[10] = entity_counts[10].saturating_add(count),
             EditorEntity::OneWay { .. } => entity_counts[11] = entity_counts[11].saturating_add(count),
-            EditorEntity::Floorguard { .. } => entity_counts[16] = entity_counts[16].saturating_add(count),
+            EditorEntity::FloorGuard { .. } => entity_counts[16] = entity_counts[16].saturating_add(count),
             EditorEntity::BounceBlock { .. } => entity_counts[17] = entity_counts[17].saturating_add(count),
             EditorEntity::Thwump { .. } => entity_counts[20] = entity_counts[20].saturating_add(count),
             EditorEntity::ToggleMine { .. } => entity_counts[21] = entity_counts[21].saturating_add(count),
@@ -263,7 +262,7 @@ fn editor_entities_to_bytes(entities: &EditorEntities) -> Vec<u8> {
                 }
                 EditorEntity::LaunchPad { pos, orientation } => bytes.extend([10, pos.x as u8, pos.y as u8, orientation as u8, 0]),
                 EditorEntity::OneWay { pos, orientation } => bytes.extend([11, pos.x as u8, pos.y as u8, orientation as u8, 0]),
-                EditorEntity::Floorguard { pos, orientation } => bytes.extend([16, pos.x as u8, pos.y as u8, orientation as u8, 0]),
+                EditorEntity::FloorGuard { pos, orientation } => bytes.extend([16, pos.x as u8, pos.y as u8, orientation as u8, 0]),
                 EditorEntity::BounceBlock { pos, orientation } => bytes.extend([17, pos.x as u8, pos.y as u8, orientation as u8, 0]),
                 EditorEntity::Thwump { pos, orientation } => bytes.extend([20, pos.x as u8, pos.y as u8, orientation as u8, 0]),
                 EditorEntity::ToggleMine { pos } => bytes.extend([21, pos.x as u8, pos.y as u8, 0, 0]),

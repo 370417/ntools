@@ -38,7 +38,7 @@ pub enum EditorEntity {
         pos: EntityPos,
         orientation: Orientation,
     },
-    Floorguard {
+    FloorGuard {
         pos: EntityPos,
         orientation: OrientationExt,
     },
@@ -59,6 +59,78 @@ pub enum EditorEntity {
     ShoveThwump {
         pos: EntityPos,
         orientation: Orientation,
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum EntityId {
+    Ninja = 0,
+    Mine = 1,
+    Gold = 2,
+    ExitDoor = 3,
+    ExitSwitch = 4,
+    RegularDoor = 5,
+    LockedDoor = 6,
+    LockedSwitch = 7,
+    TrapDoor = 8,
+    TrapSwitch = 9,
+    LaunchPad = 10,
+    OneWay = 11,
+    ChainsawDrone = 12,
+    LaserDrone = 13,
+    ZapDrone = 14,
+    ChaseDrone = 15,
+    FloorGuard = 16,
+    BounceBlock = 17,
+    RocketTurret = 18,
+    GaussTurret = 19,
+    Thwump = 20,
+    ToggleMine = 21,
+    EvilNinja = 22,
+    LaserTurret = 23,
+    BoostPad = 24,
+    DeathBall = 25,
+    MiniDrone = 26,
+    Bat = 27,
+    ShoveThwump = 28,
+}
+
+impl TryFrom<u8> for EntityId {
+    type Error = ();
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(Self::Ninja),
+            1 => Ok(Self::Mine),
+            2 => Ok(Self::Gold),
+            3 => Ok(Self::ExitDoor),
+            4 => Ok(Self::ExitSwitch),
+            5 => Ok(Self::RegularDoor),
+            6 => Ok(Self::LockedDoor),
+            7 => Ok(Self::LockedSwitch),
+            8 => Ok(Self::TrapDoor),
+            9 => Ok(Self::TrapSwitch),
+            10 => Ok(Self::LaunchPad),
+            11 => Ok(Self::OneWay),
+            12 => Ok(Self::ChainsawDrone),
+            13 => Ok(Self::LaserDrone),
+            14 => Ok(Self::ZapDrone),
+            15 => Ok(Self::ChaseDrone),
+            16 => Ok(Self::FloorGuard),
+            17 => Ok(Self::BounceBlock),
+            18 => Ok(Self::RocketTurret),
+            19 => Ok(Self::GaussTurret),
+            20 => Ok(Self::Thwump),
+            21 => Ok(Self::ToggleMine),
+            22 => Ok(Self::EvilNinja),
+            23 => Ok(Self::LaserTurret),
+            24 => Ok(Self::BoostPad),
+            25 => Ok(Self::DeathBall),
+            26 => Ok(Self::MiniDrone),
+            27 => Ok(Self::Bat),
+            28 => Ok(Self::ShoveThwump),
+            _ => Err(()),
+        }
     }
 }
 
@@ -84,7 +156,7 @@ impl EditorEntity {
         let pos = self.pos().to_world_pos();
         let switch_pos = self.switch_pos().map(EntityPos::to_world_pos).unwrap_or(DVec2::splat(f64::NAN));
         ExportedEntity {
-            type_int: self.type_int(),
+            type_int: self.id() as u32,
             x: pos.x,
             y: pos.y,
             deg: self.rotation_deg(),
@@ -101,7 +173,7 @@ impl EditorEntity {
             EditorEntity::RegularDoor { pos, .. } |
             EditorEntity::BounceBlock { pos, .. } |
             EditorEntity::LaunchPad { pos, .. } |
-            EditorEntity::Floorguard { pos, .. } |
+            EditorEntity::FloorGuard { pos, .. } |
             EditorEntity::BoostPad { pos } |
             EditorEntity::Thwump { pos, .. } |
             EditorEntity::ShoveThwump { pos, .. } |
@@ -120,7 +192,7 @@ impl EditorEntity {
             EditorEntity::RegularDoor { pos, .. } |
             EditorEntity::BounceBlock { pos, .. } |
             EditorEntity::LaunchPad { pos, .. } |
-            EditorEntity::Floorguard { pos, .. } |
+            EditorEntity::FloorGuard { pos, .. } |
             EditorEntity::BoostPad { pos } |
             EditorEntity::Thwump { pos, .. } |
             EditorEntity::ShoveThwump { pos, .. } |
@@ -152,7 +224,7 @@ impl EditorEntity {
     pub fn rotate_cw(&mut self) {
         match self {
             EditorEntity::Ninja { orientation, .. } |
-            EditorEntity::Floorguard { orientation, .. } => orientation.rotate_cw_mut(),
+            EditorEntity::FloorGuard { orientation, .. } => orientation.rotate_cw_mut(),
             EditorEntity::OneWay { orientation, .. } |
             EditorEntity::LaunchPad { orientation, .. } |
             EditorEntity::Thwump { orientation, .. } |
@@ -171,7 +243,7 @@ impl EditorEntity {
     pub fn rotate_ccw(&mut self) {
         match self {
             EditorEntity::Ninja { orientation, .. } |
-            EditorEntity::Floorguard { orientation, .. } => orientation.rotate_ccw_mut(),
+            EditorEntity::FloorGuard { orientation, .. } => orientation.rotate_ccw_mut(),
             EditorEntity::OneWay { orientation, .. } |
             EditorEntity::LaunchPad { orientation, .. } |
             EditorEntity::Thwump { orientation, .. } |
@@ -190,7 +262,7 @@ impl EditorEntity {
     pub fn flip_across_x_axis(&mut self) {
         match self {
             EditorEntity::Ninja { orientation, .. } |
-            EditorEntity::Floorguard { orientation, .. } => orientation.flip_across_x_axis_mut(),
+            EditorEntity::FloorGuard { orientation, .. } => orientation.flip_across_x_axis_mut(),
             EditorEntity::OneWay { orientation, .. } |
             EditorEntity::LaunchPad { orientation, .. } |
             EditorEntity::Thwump { orientation, .. } |
@@ -209,7 +281,7 @@ impl EditorEntity {
     pub fn flip_across_y_axis(&mut self) {
         match self {
             EditorEntity::Ninja { orientation, .. } |
-            EditorEntity::Floorguard { orientation, .. } => orientation.flip_across_y_axis_mut(),
+            EditorEntity::FloorGuard { orientation, .. } => orientation.flip_across_y_axis_mut(),
             EditorEntity::OneWay { orientation, .. } |
             EditorEntity::LaunchPad { orientation, .. } |
             EditorEntity::Thwump { orientation, .. } |
@@ -228,7 +300,7 @@ impl EditorEntity {
     pub fn rotation_deg(self) -> f64 {
         match self {
             EditorEntity::Ninja { orientation, .. } |
-            EditorEntity::Floorguard { orientation, .. } => orientation.rotation_deg(),
+            EditorEntity::FloorGuard { orientation, .. } => orientation.rotation_deg(),
             EditorEntity::OneWay { orientation, .. } |
             EditorEntity::LaunchPad { orientation, .. } |
             EditorEntity::Thwump { orientation, .. } |
@@ -244,22 +316,22 @@ impl EditorEntity {
         }
     }
 
-    pub fn type_int(self) -> u32 {
+    pub fn id(self) -> EntityId {
         match self {
-            EditorEntity::Ninja { .. } => 0,
-            EditorEntity::Mine { .. } => 1,
-            EditorEntity::Exit { .. } => 3,
-            EditorEntity::RegularDoor { .. } => 5,
-            EditorEntity::LockedDoor { .. } => 6,
-            EditorEntity::TrapDoor { .. } => 8,
-            EditorEntity::LaunchPad { .. } => 10,
-            EditorEntity::OneWay { .. } => 11,
-            EditorEntity::Floorguard { .. } => 16,
-            EditorEntity::BounceBlock { .. } => 17,
-            EditorEntity::Thwump { .. } => 20,
-            EditorEntity::ToggleMine { .. } => 21,
-            EditorEntity::BoostPad { .. } => 24,
-            EditorEntity::ShoveThwump { .. } => 28,
+            EditorEntity::Ninja { .. } => EntityId::Ninja,
+            EditorEntity::Mine { .. } => EntityId::Mine,
+            EditorEntity::Exit { .. } => EntityId::ExitDoor,
+            EditorEntity::RegularDoor { .. } => EntityId::RegularDoor,
+            EditorEntity::LockedDoor { .. } => EntityId::LockedDoor,
+            EditorEntity::TrapDoor { .. } => EntityId::TrapDoor,
+            EditorEntity::LaunchPad { .. } => EntityId::LaunchPad,
+            EditorEntity::OneWay { .. } => EntityId::OneWay,
+            EditorEntity::FloorGuard { .. } => EntityId::FloorGuard,
+            EditorEntity::BounceBlock { .. } => EntityId::BounceBlock,
+            EditorEntity::Thwump { .. } => EntityId::Thwump,
+            EditorEntity::ToggleMine { .. } => EntityId::ToggleMine,
+            EditorEntity::BoostPad { .. } => EntityId::BoostPad,
+            EditorEntity::ShoveThwump { .. } => EntityId::ShoveThwump,
         }
     }
 

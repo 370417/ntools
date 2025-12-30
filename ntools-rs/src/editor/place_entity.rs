@@ -18,7 +18,7 @@ pub enum Stage {
 impl PlaceEntity {
     pub fn crosshair(&self, cursor_pos: DVec2, fine_grid: bool) -> DVec2 {
         match self.entity {
-            EditorEntity::Floorguard { .. } => Self::round_to_grid_floorguard(cursor_pos, fine_grid),
+            EditorEntity::FloorGuard { .. } => Self::round_to_grid_floorguard(cursor_pos, fine_grid),
             EditorEntity::RegularDoor { .. } => Self::round_to_grid_door(cursor_pos, fine_grid),
             EditorEntity::LockedDoor { .. } |
             EditorEntity::TrapDoor { .. } => if let Some(Stage::PlaceDoor) = self.stage {
@@ -105,7 +105,7 @@ impl PlaceEntity {
             EditorEntity::RegularDoor { pos, .. } |
             EditorEntity::BounceBlock { pos, .. } |
             EditorEntity::LaunchPad { pos, .. } |
-            EditorEntity::Floorguard { pos, .. } |
+            EditorEntity::FloorGuard { pos, .. } |
             EditorEntity::BoostPad { pos } |
             EditorEntity::Thwump { pos, .. } |
             EditorEntity::ShoveThwump { pos, .. } |
@@ -131,7 +131,7 @@ impl PlaceEntity {
     pub fn set_orientation(&mut self, new_orientation: Orientation) {
         match &mut self.entity {
             EditorEntity::Ninja { orientation, .. } |
-            EditorEntity::Floorguard { orientation, .. } => *orientation = new_orientation.into(),
+            EditorEntity::FloorGuard { orientation, .. } => *orientation = new_orientation.into(),
             EditorEntity::OneWay { orientation, .. } |
             EditorEntity::LaunchPad { orientation, .. } |
             EditorEntity::Thwump { orientation, .. } |

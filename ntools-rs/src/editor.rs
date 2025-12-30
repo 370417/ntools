@@ -150,7 +150,7 @@ impl Editor {
                     EditorEntity::OneWay { pos, orientation } => {
                         entities.one_ways.push(OneWay::new(pos.to_world_pos(), *orientation));
                     }
-                    EditorEntity::Floorguard { pos, orientation } => {
+                    EditorEntity::FloorGuard { pos, orientation } => {
                         entities.floorchasers.push(Floorchaser::new(pos.to_world_pos(), *orientation));
                     }
                     EditorEntity::BounceBlock { pos, orientation } => {
@@ -866,7 +866,7 @@ impl Editor {
     #[wasm_bindgen]
     pub fn press_n(&mut self) {
         self.mode = EditorMode::PlaceEntity(PlaceEntity {
-            entity: EditorEntity::Floorguard {
+            entity: EditorEntity::FloorGuard {
                 pos: EntityPos::from_world_pos(PlaceEntity::round_to_grid_floorguard(self.cursor_pos, self.entity_fine_grid)),
                 orientation: self.entity_orientation.into(),
             },
