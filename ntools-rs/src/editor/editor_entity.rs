@@ -1,7 +1,7 @@
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{editor::place_entity::Stage, grid::GridPos, orientation::{Orientation, OrientationBinary, OrientationExt}};
+use crate::{editor::{place_entity::Stage, select_entity::SelectionType}, grid::GridPos, orientation::{Orientation, OrientationBinary, OrientationExt}};
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum EditorEntity {
@@ -361,13 +361,25 @@ impl EntityPos {
 
 impl ExportedEntity {
     /// Remove switch position if stage isn't Stage::PlaceSwitch
-    pub fn with_switch(mut self, stage: Option<Stage>) -> Self {
+    pub fn with_stage(mut self, stage: Option<Stage>) -> Self {
         if let Some(Stage::PlaceSwitch) = stage {
             self
         } else {
             self.switch_x = f64::NAN;
             self.switch_y = f64::NAN;
             self
+        }
+    }
+
+    /// Remove switch position if selection type isn't SelectionType::Switch
+    pub fn with_selection_type(mut self, selection_type: SelectionType) -> Self {
+        match selection_type {
+            SelectionType::Switch => self,
+            SelectionType::NotSwitch => {
+                self.switch_x = f64::NAN;
+                self.switch_y = f64::NAN;
+                self
+            }
         }
     }
 }

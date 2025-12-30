@@ -4,13 +4,14 @@ use futures_channel::oneshot::{self, Receiver};
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{attract::Attract, editor::{editor_entity::{EditorEntity, EntityPos, ExportedEntity}, editor_state::{Command, EditorState}, move_selection::MoveSelection, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::{PlaceEntity, Stage}, select_tiles::SelectTiles}, entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floorchaser::Floorchaser, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump}, grid::{COLS, GridPos, ROWS}, map_file::MapFile, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationBinary, OrientationCardinal}, replay::Replay, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
+use crate::{attract::Attract, editor::{editor_entity::{EditorEntity, EntityPos, ExportedEntity}, editor_state::{Command, EditorState}, move_selection::MoveSelection, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::{PlaceEntity, Stage}, select_entity::SelectEntity, select_tiles::SelectTiles}, entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floorchaser::Floorchaser, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump}, grid::{COLS, GridPos, ROWS}, map_file::MapFile, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationBinary, OrientationCardinal}, replay::Replay, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
 
 pub mod editor_entity;
 pub mod editor_state;
 pub mod move_selection;
 pub mod pen_tool;
 pub mod place_entity;
+pub mod select_entity;
 pub mod select_tiles;
 
 #[wasm_bindgen]
@@ -20,6 +21,7 @@ pub struct Editor {
     mode: EditorMode,
     cursor_pos: DVec2,
     selected_tile_category: TileCategory,
+    selected_entity_type: u8,
     /// Stack of tile variants for the tile type that
     /// is currently being painted.
     /// This is a stack because multiple keys can be pressed at once.
@@ -47,7 +49,7 @@ pub enum EditorMode {
     SelectTiles(SelectTiles),
     MoveSelection(MoveSelection),
     PlaceEntity(PlaceEntity),
-    SelectEntities,
+    SelectEntity(SelectEntity),
     ModifyEntity,
     EntityPalette,
     PenTool(PenTool),
@@ -63,6 +65,7 @@ impl Editor {
             mode: EditorMode::PaintTiles,
             cursor_pos: DVec2::new(TILE_SIZE, TILE_SIZE),
             selected_tile_category: TileCategory::Tile1,
+            selected_entity_type: 0,
             pressed_tile_variants: Vec::new(),
             pen_tool_is_clockwise: true,
             pen_tool_fine_grid: true,
@@ -199,7 +202,7 @@ impl Editor {
             EditorMode::SelectTiles(_) => 2,
             EditorMode::MoveSelection(_) => 3,
             EditorMode::PlaceEntity(_) => 4,
-            EditorMode::SelectEntities => 5,
+            EditorMode::SelectEntity(_) => 5,
             EditorMode::ModifyEntity => 6,
             EditorMode::EntityPalette => 7,
             EditorMode::PenTool(_) => 8,
@@ -291,6 +294,16 @@ impl Editor {
                 self.cursor_pos = new_cursor_pos;
                 true
             }
+            EditorMode::SelectEntity(select_entity) => {
+                self.cursor_pos = new_cursor_pos;
+                let new_crosshair = PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid);
+                if new_crosshair != old_crosshair {
+                    select_entity.set_selection(new_crosshair, self.state.entities());
+                    true
+                } else {
+                    false
+                }
+            }
             _ => false
         }
     }
@@ -369,8 +382,9 @@ impl Editor {
     #[wasm_bindgen]
     pub fn preview_entities(&self) -> Box<[ExportedEntity]> {
         match &self.mode {
-            EditorMode::PlaceEntity(place_entity) => Box::new([place_entity.entity.export().with_switch(place_entity.stage)]),
+            EditorMode::PlaceEntity(place_entity) => Box::new([place_entity.entity.export().with_stage(place_entity.stage)]),
             EditorMode::MoveSelection(move_selection) => move_selection.preview_entities(self.cursor_pos).map(|entity| entity.export()).collect(),
+            EditorMode::SelectEntity(select_entity) => select_entity.get_selection_exported().into_iter().collect(),
             _ => Box::new([]),
         }
     }
@@ -817,6 +831,19 @@ impl Editor {
     }
 
     #[wasm_bindgen]
+    pub fn press_f(&mut self) {
+        if let EditorMode::SelectEntity(_) = self.mode {
+            self.mode = EditorMode::PlaceEntity(PlaceEntity {
+                entity: todo!(),
+                stage: None,
+            });
+        } else {
+            let crosshair_pos = PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid);
+            self.mode = EditorMode::SelectEntity(SelectEntity::new(crosshair_pos, self.state.entities()));
+        }
+    }
+
+    #[wasm_bindgen]
     pub fn press_h(&mut self) {
         // zap drone
     }
@@ -872,7 +899,7 @@ impl Editor {
     pub fn press_slash(&mut self) {
         match self.mode {
             EditorMode::PenTool(_) => self.pen_tool_fine_grid = !self.pen_tool_fine_grid,
-            EditorMode::PlaceEntity(_) | EditorMode::ModifyEntity | EditorMode::SelectEntities => {
+            EditorMode::PlaceEntity(_) | EditorMode::ModifyEntity | EditorMode::SelectEntity(_) => {
                 self.entity_fine_grid = !self.entity_fine_grid;
             }
             _ => {}
@@ -1058,6 +1085,7 @@ impl Editor {
         match &self.mode {
             EditorMode::PenTool(pen_tool) => pen_tool.crosshair(self.cursor_pos, self.state.latest(), self.pen_tool_fine_grid),
             EditorMode::PlaceEntity(place_entity) => place_entity.crosshair(self.cursor_pos, self.entity_fine_grid),
+            EditorMode::SelectEntity(_) => PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid),
             _ => DVec2::new(TILE_SIZE, TILE_SIZE),
         }
     }

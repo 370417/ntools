@@ -50,7 +50,7 @@ export function EditorFooter(props: {
             Export map
         </a>
         {" | "}
-        Always show trail <input type="checkbox" />
+        Show trail <input type="checkbox" />
         |
         Bounce block/thwump/shwump corners
         <select onchange={e => props.setRoundCorners(e.currentTarget.value == 'rounded')}>
