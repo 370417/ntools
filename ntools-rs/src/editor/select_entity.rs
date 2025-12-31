@@ -21,17 +21,17 @@ pub enum SelectionType {
 }
 
 impl SelectEntity {
-    pub fn new(crosshair_pos: DVec2, entities: &EditorEntities) -> SelectEntity {
+    pub fn new(crosshair_pos: DVec2, entities: &EditorEntities, fine_grid: bool) -> SelectEntity {
         let mut select_entity = SelectEntity {
             selected_entities: Vec::new(),
             selected_entity_id: EntityId::Ninja,
             selected_entity_offset: 0,
         };
-        select_entity.set_selection(crosshair_pos, entities);
+        select_entity.set_selection(crosshair_pos, entities, fine_grid);
         select_entity
     }
 
-    pub fn set_selection(&mut self, crosshair_pos: DVec2, entities: &EditorEntities) {
+    pub fn set_selection(&mut self, crosshair_pos: DVec2, entities: &EditorEntities, fine_grid: bool) {
         // loop through all entities to get the closest ones to the cursor
         let mut min_dist_squared = TILE_SIZE * TILE_SIZE + 0.1;
         let mut best_pos = None;
@@ -42,6 +42,12 @@ impl SelectEntity {
         }
 
         for &entity in entities.keys() {
+            if !fine_grid {
+                if entity.pos().x % 2 != 0 || entity.pos().y % 2 != 0 {
+                    continue;
+                }
+            }
+
             if Some(entity.pos()) == best_pos {
                 best_entities.push((entity, SelectionType::NotSwitch));
             } else if dist_squared(entity.pos(), crosshair_pos) < min_dist_squared {
