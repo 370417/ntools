@@ -14,6 +14,8 @@ pub struct SelectEntity {
     selected_entity_offset: usize,
 }
 
+// TODO: show stack count in the ui (for stacked gold or bounce blocks) if greater than one
+
 #[derive(Clone, Copy)]
 pub enum SelectionType {
     Switch,
