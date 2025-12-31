@@ -6,7 +6,7 @@ import { LaunchPads, updateLaunchPads, type LaunchPadData } from './entities/Lau
 import { MineDefs, Mines, updateMines, type MineData } from './entities/Mine';
 import { OneWayDefs, OneWays, updateOneWays, type OneWayData } from './entities/OneWay';
 import { BounceBlockDefs, BounceBlocks, updateBounceBlocks, type BounceBlockData } from './entities/BounceBlock';
-import { Floorguards, updateFloorguards, type FloorguardData } from './entities/Floorguard';
+import { Floorguards, updateFloorguards, type FloorguardData } from './entities/FloorGuard';
 import { Ninja } from './entities/Ninja';
 import { LockedDoors, updateLockedDoors, type LockedDoorData } from './entities/LockedDoor';
 import { LockedSwitchDefs, LockedSwitches, updateLockedSwitches, type LockedSwitchData } from './entities/LockedSwitch';

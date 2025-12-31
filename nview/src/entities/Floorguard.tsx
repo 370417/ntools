@@ -1,46 +1,46 @@
 import { Index, type Accessor, type Signal } from "solid-js";
 import type { Replay } from "../assets/ntools_rs";
 
-export type FloorguardData = {
+export type FloorGuardData = {
     x: number;
     y: number;
     deg: number;
 };
 
-function equals(a: FloorguardData, b: FloorguardData): boolean {
+function equals(a: FloorGuardData, b: FloorGuardData): boolean {
     return a.x == b.x && a.y == b.y && a.deg == b.deg;
 }
 
-function transform(floorguard: Accessor<FloorguardData>): string {
-    const { x, y, deg } = floorguard();
+function transform(floorGuard: Accessor<FloorGuardData>): string {
+    const { x, y, deg } = floorGuard();
     return `translate(${x},${y}) rotate(${deg},0,0)`;
 }
 
-export function updateFloorguards([floorguards, setFloorguards]: Signal<FloorguardData[]>, replay: Replay, partialFrame: number) {
-    const oldFloorguards = floorguards();
-    const newFloorguardsLen = replay.floorguards_len();
-    const newFloorguards: FloorguardData[] = [];
-    for (let i = 0; i < newFloorguardsLen; i++) {
-        const oldFloorguard = oldFloorguards.at(i);
-        const newFloorguard = {
-            x: replay.floorguard_x(i, partialFrame),
-            y: replay.floorguard_y(i, partialFrame),
-            deg: replay.floorguard_deg(i),
+export function updateFloorGuards([floorGuards, setFloorGuards]: Signal<FloorGuardData[]>, replay: Replay, partialFrame: number) {
+    const oldFloorGuards = floorGuards();
+    const newFloorGuardsLen = replay.floor_guards_len();
+    const newFloorGuards: FloorGuardData[] = [];
+    for (let i = 0; i < newFloorGuardsLen; i++) {
+        const oldFloorGuard = oldFloorGuards.at(i);
+        const newFloorGuard = {
+            x: replay.floor_guard_x(i, partialFrame),
+            y: replay.floor_guard_y(i, partialFrame),
+            deg: replay.floor_guard_deg(i),
         };
-        if (oldFloorguard && equals(oldFloorguard, newFloorguard)) {
-            newFloorguards.push(oldFloorguard);
+        if (oldFloorGuard && equals(oldFloorGuard, newFloorGuard)) {
+            newFloorGuards.push(oldFloorGuard);
         } else {
-            newFloorguards.push(newFloorguard);
+            newFloorGuards.push(newFloorGuard);
         }
     }
-    setFloorguards(newFloorguards);
+    setFloorGuards(newFloorGuards);
 }
 
-export function Floorguards(props: { floorguards: Signal<FloorguardData[]> }) {
-    const [floorguards] = props.floorguards;
+export function FloorGuards(props: { floorGuards: Signal<FloorGuardData[]> }) {
+    const [floorGuards] = props.floorGuards;
 
-    return <Index each={floorguards()}>
-        {floorguard => <Floorguard floorguard={floorguard} />}
+    return <Index each={floorGuards()}>
+        {floorGuard => <FloorGuard floorGuard={floorGuard} />}
     </Index>;
 }
 
@@ -57,8 +57,8 @@ const hul = 1.5;
 
 const path = `M ${-hw} ${hh} V ${-hh + bevel} L ${-hw + bevel} ${-hh} H ${hw - bevel} L ${hw} ${-hh + bevel} V ${hh} H ${hw - leg} l ${-hul} ${-hul} H ${-hw + leg + hul} l ${-hul} ${hul} Z`;
 
-export function Floorguard(props: { floorguard: Accessor<FloorguardData> }) {
-    return <g class="floorguard" transform={transform(props.floorguard)}>
+export function FloorGuard(props: { floorGuard: Accessor<FloorGuardData> }) {
+    return <g transform={transform(props.floorGuard)}>
         <path d={path} />
     </g>;
 }

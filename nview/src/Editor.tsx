@@ -11,7 +11,7 @@ import { LockedSwitchDefs, LockedSwitches, type LockedSwitchData } from "./entit
 import { TrapDoors, type TrapDoorData } from "./entities/TrapDoor";
 import { TrapSwitchDefs, TrapSwitches, type TrapSwitchData } from "./entities/TrapSwitch";
 import { LaunchPads, type LaunchPadData } from "./entities/LaunchPad";
-import { Floorguards, type FloorguardData } from "./entities/Floorguard";
+import { FloorGuards, type FloorGuardData } from "./entities/FloorGuard";
 import { BounceBlockDefs, BounceBlocks, type BounceBlockData } from "./entities/BounceBlock";
 import type { GlobalEventState } from "./App";
 import { BoostPadDefs, BoostPads, type BoostPadData } from "./entities/BoostPad";
@@ -91,8 +91,8 @@ type EntitiesProps = {
     setLaunchPads: Setter<LaunchPadData[]>,
     oneWays: Accessor<OneWayData[]>,
     setOneWays: Setter<OneWayData[]>,
-    floorguards: Accessor<FloorguardData[]>,
-    setFloorguards: Setter<FloorguardData[]>,
+    floorGuards: Accessor<FloorGuardData[]>,
+    setFloorGuards: Setter<FloorGuardData[]>,
     bounceBlocks: Accessor<BounceBlockData[]>,
     setBounceBlocks: Setter<BounceBlockData[]>,
     thwumps: Accessor<ThwumpData[]>,
@@ -115,7 +115,7 @@ function createEntities(): EntitiesProps {
     const [trapSwitches, setTrapSwitches] = createSignal<TrapSwitchData[]>([]);
     const [launchPads, setLaunchPads] = createSignal<LaunchPadData[]>([]);
     const [oneWays, setOneWays] = createSignal<OneWayData[]>([]);
-    const [floorguards, setFloorguards] = createSignal<FloorguardData[]>([]);
+    const [floorGuards, setFloorGuards] = createSignal<FloorGuardData[]>([]);
     const [bounceBlocks, setBounceBlocks] = createSignal<BounceBlockData[]>([]);
     const [thwumps, setThwumps] = createSignal<ThwumpData[]>([]);
     const [boostPads, setBoostPads] = createSignal<BoostPadData[]>([]);
@@ -132,7 +132,7 @@ function createEntities(): EntitiesProps {
         trapSwitches, setTrapSwitches,
         launchPads, setLaunchPads,
         oneWays, setOneWays,
-        floorguards, setFloorguards,
+        floorGuards, setFloorGuards,
         bounceBlocks, setBounceBlocks,
         thwumps, setThwumps,
         boostPads, setBoostPads,
@@ -152,7 +152,7 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
     const trapSwitches: TrapSwitchData[] = [];
     const launchPads: LaunchPadData[] = [];
     const oneWays: OneWayData[] = [];
-    const floorguards: FloorguardData[] = [];
+    const floorGuards: FloorGuardData[] = [];
     const bounceBlocks: BounceBlockData[] = [];
     const thwumps: ThwumpData[] = [];
     const boostPads: BoostPadData[] = [];
@@ -219,7 +219,7 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
         } else if (entity.type_int === ENTITY_ONE_WAY) {
             oneWays.push(entityCopy);
         } else if (entity.type_int === ENTITY_FLOOR_GUARD) {
-            floorguards.push(entityCopy);
+            floorGuards.push(entityCopy);
         } else if (entity.type_int === ENTITY_BOUNCE_BLOCK) {
             bounceBlocks.push(entityCopy);
         } else if (entity.type_int === ENTITY_THWUMP) {
@@ -250,7 +250,7 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
     entities.setTrapSwitches(trapSwitches);
     entities.setLaunchPads(launchPads);
     entities.setOneWays(oneWays);
-    entities.setFloorguards(floorguards);
+    entities.setFloorGuards(floorGuards);
     entities.setBounceBlocks(bounceBlocks);
     entities.setThwumps(thwumps);
     entities.setBoostPads(boostPads);
@@ -266,7 +266,7 @@ function Entities({ entities }: { entities: EntitiesProps }) {
         <TrapSwitches trapSwitches={[entities.trapSwitches, () => {}]} />
         <ExitSwitches exitSwitches={[entities.exitSwitches, () => {}]} />
         <LaunchPads launchPads={[entities.launchPads, () => {}]} />
-        <Floorguards floorguards={[entities.floorguards, () => {}]} />
+        <FloorGuards floorGuards={[entities.floorGuards, () => {}]} />
         <RegularDoors regularDoors={[entities.regularDoors, () => {}]} />
         <LockedDoors lockedDoors={[entities.lockedDoors, () => {}]} />
         <TrapDoors trapDoors={[entities.trapDoors, () => {}]} />

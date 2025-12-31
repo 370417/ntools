@@ -370,22 +370,22 @@ impl Replay {
     }
 
     #[wasm_bindgen]
-    pub fn floorguards_len(&self) -> usize {
+    pub fn floor_guards_len(&self) -> usize {
         self.current_sim.entities.floor_guards.len()
     }
 
     #[wasm_bindgen]
-    pub fn floorguard_x(&self, i: usize, partial_frame: f64) -> f64 {
+    pub fn floor_guard_x(&self, i: usize, partial_frame: f64) -> f64 {
         self.current_sim.entities.floor_guards[i].x(partial_frame)
     }
 
     #[wasm_bindgen]
-    pub fn floorguard_y(&self, i: usize, partial_frame: f64) -> f64 {
+    pub fn floor_guard_y(&self, i: usize, partial_frame: f64) -> f64 {
         self.current_sim.entities.floor_guards[i].y(partial_frame)
     }
 
     #[wasm_bindgen]
-    pub fn floorguard_deg(&self, i: usize) -> f64 {
+    pub fn floor_guard_deg(&self, i: usize) -> f64 {
         self.current_sim.entities.floor_guards[i].orientation.rotation_deg()
     }
 
