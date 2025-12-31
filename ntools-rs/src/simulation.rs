@@ -1,4 +1,4 @@
-use crate::{entity::{Entities, EntityIndex, GridEntityType, bounce_block::BounceBlock, door::RegularDoor, floorchaser::Floorchaser, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, on_door_state_change, shove_thwump::ShoveThwump, thwump::Thwump}, grid::Grid, ninja::{Ninja, NinjaState}, segment::Segment};
+use crate::{entity::{Entities, EntityIndex, GridEntityType, bounce_block::BounceBlock, door::RegularDoor, floor_guard::FloorGuard, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, on_door_state_change, shove_thwump::ShoveThwump, thwump::Thwump}, grid::Grid, ninja::{Ninja, NinjaState}, segment::Segment};
 
 #[derive(Clone)]
 pub struct Simulation {
@@ -25,7 +25,7 @@ pub struct KeyFrame {
     bounce_blocks: Vec<BounceBlock>,
     exit_frames_since_open: Vec<Option<u32>>,
     thwumps: Vec<Thwump>,
-    floorchasers: Vec<Floorchaser>,
+    floor_guards: Vec<FloorGuard>,
     locked_door_frames_since_open: Vec<Option<u32>>,
     trap_door_frames_since_close: Vec<Option<u32>>,
     regular_doors: Vec<RegularDoor>,
@@ -80,7 +80,7 @@ impl Simulation {
         // Move all movable entities
         move_entities(&mut self.entities.bounce_blocks, &mut self.entity_grid, segments, &self.entities.doors);
         move_entities(&mut self.entities.thwumps, &mut self.entity_grid, segments, &self.entities.doors);
-        move_entities(&mut self.entities.floorchasers, &mut self.entity_grid, segments, &self.entities.doors);
+        move_entities(&mut self.entities.floor_guards, &mut self.entity_grid, segments, &self.entities.doors);
         // Apparently boost pad logic is called as a move method.
         // I'd expect it to go in logical_collision, but in case the order matters,
         // I'll leave it here.
@@ -91,7 +91,7 @@ impl Simulation {
         // Make all thinkable entities think
         for door in &mut self.entities.doors.regular {
             if door.think() {
-                on_door_state_change(door.pos, &mut self.entities.thwumps, &mut self.entities.floorchasers);
+                on_door_state_change(door.pos, &mut self.entities.thwumps, &mut self.entities.floor_guards);
             }
         }
         self.entities.doors.increment_frames_for_animation();
@@ -99,7 +99,7 @@ impl Simulation {
         for launch_pad in &mut self.entities.launch_pads { launch_pad.increment_frames_for_animation() }
         for mine in &mut self.entities.mines { mine.think(&self.ninja) }
         for thwump in &mut self.entities.thwumps { thwump.think(&self.ninja, segments, &self.entities.doors) }
-        for floorchaser in &mut self.entities.floorchasers { floorchaser.think(&self.ninja, segments, &self.entities.doors) }
+        for floor_guard in &mut self.entities.floor_guards { floor_guard.think(&self.ninja, segments, &self.entities.doors) }
         for (i, shove_thwump) in self.entities.shove_thwumps.iter_mut().enumerate() {  shove_thwump.think(i, &mut self.entity_grid, segments, &self.entities.doors) }
 
         if self.ninja.state != NinjaState::Disabled {
@@ -109,7 +109,7 @@ impl Simulation {
                 self.ninja.collide_vs_objects(&mut collision_state, &mut self.entities, &self.entity_grid);
                 self.ninja.collide_vs_tiles(&mut collision_state, segments, &self.entities.doors);
             }
-            self.ninja.post_collision(&mut collision_state, &mut self.entities, &self.entity_grid, segments, self.frame);
+            self.ninja.post_collision(&mut collision_state, &mut self.entities, &self.entity_grid, segments);
             self.ninja.think(input.jump, hor_input);
             self.ninja.update_graphics(hor_input);
         }
@@ -125,7 +125,7 @@ impl KeyFrame {
             bounce_blocks: sim.entities.bounce_blocks.clone(),
             exit_frames_since_open: sim.entities.exits.iter().map(|exit| exit.frames_since_door_open).collect(),
             thwumps: sim.entities.thwumps.clone(),
-            floorchasers: sim.entities.floorchasers.clone(),
+            floor_guards: sim.entities.floor_guards.clone(),
             locked_door_frames_since_open: sim.entities.doors.locked.iter().map(|locked_door| locked_door.frames_since_open).collect(),
             trap_door_frames_since_close: sim.entities.doors.trap.iter().map(|trap_door| trap_door.frames_since_close).collect(),
             regular_doors: sim.entities.doors.regular.clone(),
@@ -149,7 +149,7 @@ impl KeyFrame {
 
         self.thwumps.clone_into(&mut sim.entities.thwumps);
 
-        self.floorchasers.clone_into(&mut sim.entities.floorchasers);
+        self.floor_guards.clone_into(&mut sim.entities.floor_guards);
 
         for (i, &frames_since_open) in self.locked_door_frames_since_open.iter().enumerate() {
             sim.entities.doors.locked[i].frames_since_open = frames_since_open;
@@ -171,8 +171,8 @@ impl KeyFrame {
         for (i, thwump) in sim.entities.thwumps.iter().enumerate() {
             sim.entity_grid[thwump.pos].push((GridEntityType::Thwump, i));
         }
-        for (i, floorchaser) in sim.entities.floorchasers.iter().enumerate() {
-            sim.entity_grid[floorchaser.pos].push((GridEntityType::Floorchaser, i));
+        for (i, floor_guard) in sim.entities.floor_guards.iter().enumerate() {
+            sim.entity_grid[floor_guard.pos].push((GridEntityType::FloorGuard, i));
         }
         for (i, shove_thwump) in sim.entities.shove_thwumps.iter().enumerate() {
             sim.entity_grid[shove_thwump.pos].push((GridEntityType::ShoveThwump, i));

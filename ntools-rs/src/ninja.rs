@@ -241,7 +241,7 @@ impl Ninja {
 
     /// Perform logical collisions with entities, check for airborne state,
     /// check for walled state, calculate floor normals, check for impact or crush death.
-    pub fn post_collision(&mut self, collision_state: &mut CollisionState, entities: &mut Entities, entity_grid: &Grid<EntityIndex>, segments: &Grid<Segment>, frame: u32) {
+    pub fn post_collision(&mut self, collision_state: &mut CollisionState, entities: &mut Entities, entity_grid: &Grid<EntityIndex>, segments: &Grid<Segment>) {
         // Perform LOGICAL collisions between the ninja and nearby entities.
         // Also check if the ninja can interact with the walls of entities when applicable.
         let mut wall_normal = None;
@@ -288,28 +288,28 @@ impl Ninja {
                         self.state = NinjaState::Falling;
                     }
                 }
-                GridEntityType::Floorchaser => {
-                    entities.floorchasers[i].logical_collision(self);
+                GridEntityType::FloorGuard => {
+                    entities.floor_guards[i].logical_collision(self);
                 }
                 GridEntityType::LockedSwitch => {
                     let locked_door = &mut entities.doors.locked[i];
                     let state_changed = locked_door.switch_logical_collision(self);
                     if state_changed {
-                        on_door_state_change(locked_door.pos, &mut entities.thwumps, &mut entities.floorchasers);
+                        on_door_state_change(locked_door.pos, &mut entities.thwumps, &mut entities.floor_guards);
                     }
                 }
                 GridEntityType::TrapSwitch => {
                     let trap_door = &mut entities.doors.trap[i];
                     let state_changed = trap_door.switch_logical_collision(self);
                     if state_changed {
-                        on_door_state_change(trap_door.pos, &mut entities.thwumps, &mut entities.floorchasers);
+                        on_door_state_change(trap_door.pos, &mut entities.thwumps, &mut entities.floor_guards);
                     }
                 }
                 GridEntityType::RegularDoor => {
                     let regular_door = &mut entities.doors.regular[i];
                     let state_changed = regular_door.logical_collision(self);
                     if state_changed {
-                        on_door_state_change(regular_door.pos, &mut entities.thwumps, &mut entities.floorchasers);
+                        on_door_state_change(regular_door.pos, &mut entities.thwumps, &mut entities.floor_guards);
                     }
                 }
             }

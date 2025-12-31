@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floorchaser::Floorchaser, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump}, grid::{COLS, Grid, GridPos, ROWS}, ninja::Ninja, orientation::{Orientation, OrientationBinary, OrientationCardinal, OrientationExt}, segment::Segment, tile::{Tile, Tiles}};
+use crate::{entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floor_guard::FloorGuard, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump}, grid::{COLS, Grid, GridPos, ROWS}, ninja::Ninja, orientation::{Orientation, OrientationBinary, OrientationCardinal, OrientationExt}, segment::Segment, tile::{Tile, Tiles}};
 
 /// Represents a parsed attract file.
 /// An attract file is what gets shown in the game's main menu: a replay of a failed attempt at a level.
@@ -171,10 +171,10 @@ impl Attract {
                 13 => {}
                 // Drone
                 14 => {}
-                // Chaser drone
+                // Chase drone
                 15 => {}
-                // Floor chaser
-                16 => entities.floorchasers.push(Floorchaser::new(6.0 * pos, orientation_ext)),
+                // Floor guard
+                16 => entities.floor_guards.push(FloorGuard::new(6.0 * pos, orientation_ext)),
                 // Bounce block
                 17 => entities.bounce_blocks.push(BounceBlock::new(6.0 * pos, orientation?, false)),
                 // Rocket

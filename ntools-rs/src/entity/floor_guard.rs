@@ -6,19 +6,19 @@ const RADIUS: f64 = 6.0;
 const SPEED: f64 = 3.428571428571428; // 24 / 7
 
 #[derive(Clone)]
-pub struct Floorchaser {
+pub struct FloorGuard {
     pub pos: DVec2,
     pub orientation: OrientationExt,
-    state: FloorchaserState,
+    state: FloorGuardState,
     // keep track of moving separate from state because the on first frame
-    // of ChasingLeft/Right, the floorchaser is not moving yet, so we don't
+    // of ChasingLeft/Right, the floor guard is not moving yet, so we don't
     // want to interpolate its position.
     is_moving: bool,
     detection_range: Option<DetectionRange>,
 }
 
 #[derive(Clone, PartialEq, Eq)]
-enum FloorchaserState {
+enum FloorGuardState {
     Waiting,
     ChasingLeft,
     ChasingRight,
@@ -30,12 +30,12 @@ struct DetectionRange {
     positive_x: f64,
 }
 
-impl Floorchaser {
-    pub fn new(pos: DVec2, orientation: OrientationExt) -> Floorchaser {
-        Floorchaser {
+impl FloorGuard {
+    pub fn new(pos: DVec2, orientation: OrientationExt) -> FloorGuard {
+        FloorGuard {
             pos,
             orientation,
-            state: FloorchaserState::Waiting,
+            state: FloorGuardState::Waiting,
             is_moving: false,
             detection_range: None,
         }
@@ -56,8 +56,8 @@ impl Floorchaser {
             return self.pos;
         }
         let old_pos = match self.state {
-            FloorchaserState::ChasingLeft => self.pos + SPEED * self.orientation.vec2().perp(),
-            FloorchaserState::ChasingRight => self.pos - SPEED * self.orientation.vec2().perp(),
+            FloorGuardState::ChasingLeft => self.pos + SPEED * self.orientation.vec2().perp(),
+            FloorGuardState::ChasingRight => self.pos - SPEED * self.orientation.vec2().perp(),
             _ => self.pos,
         };
         old_pos.lerp(self.pos, partial_frame)
@@ -69,13 +69,13 @@ impl Floorchaser {
         let basis_matrix = DMat2::from_cols(self.orientation.vec2(), self.orientation.vec2().perp());
         let basis_matrix_inverse = basis_matrix.inverse();
 
-        if self.detection_range.is_none() && self.state == FloorchaserState::Waiting {
+        if self.detection_range.is_none() && self.state == FloorGuardState::Waiting {
             // TODO: could optimize by iterating over less of the grid
             let segments_iter = segments.flat_iter().filter(|segment| segment.is_active(doors));
             let (negative_x, positive_x) = segments_in_fov(self.pos, basis_matrix_inverse, RADIUS - 1.0, segments_iter)
                 .flat_map(|(start, end)| {
-                    // In the basis, the y coordinates represent distance until a collision in the floorchaser's fov.
-                    // But oustside of the basis, these are actually x coordinates relative to the floorchaser,
+                    // In the basis, the y coordinates represent distance until a collision in the floor guard's fov.
+                    // But oustside of the basis, these are actually x coordinates relative to the floor guard,
                     // so after this line, we use the variable name x instead of y.
                     [start.y, end.y].into_iter()
                 })
@@ -89,10 +89,10 @@ impl Floorchaser {
                     (largest_negative, smallest_positive)
                 });
             self.detection_range = Some(DetectionRange { negative_x, positive_x });
-            self.state = FloorchaserState::Waiting;
+            self.state = FloorGuardState::Waiting;
         }
 
-        // Basis for calculating positions relative to the floorchaser (here y axis points up relative to floorchaser)
+        // Basis for calculating positions relative to the floor guard (here y axis points up relative to floor guard)
         let basis_matrix = DMat2::from_cols(self.orientation.vec2().perp(), self.orientation.vec2());
         let basis_matrix_inverse = basis_matrix.inverse();
 
@@ -100,11 +100,11 @@ impl Floorchaser {
             let ninja_pos_rel_floorguard = basis_matrix_inverse * (ninja.pos - self.pos);
             if ninja_pos_rel_floorguard.y >= RADIUS - TILE_SIZE && ninja_pos_rel_floorguard.y <= RADIUS {
                 match (&self.state, self.detection_range) {
-                    (FloorchaserState::Waiting, Some(detection_range)) => {
+                    (FloorGuardState::Waiting, Some(detection_range)) => {
                         if ninja_pos_rel_floorguard.x >= 0.0 && ninja_pos_rel_floorguard.x <= detection_range.positive_x {
-                            self.state = FloorchaserState::ChasingRight;
+                            self.state = FloorGuardState::ChasingRight;
                         } else if ninja_pos_rel_floorguard.x <= 0.0 && ninja_pos_rel_floorguard.x >= detection_range.negative_x {
-                            self.state = FloorchaserState::ChasingLeft;
+                            self.state = FloorGuardState::ChasingLeft;
                         }
                     }
                     _ => {}
@@ -134,15 +134,15 @@ impl Floorchaser {
         let door_pos_rel_self = basis_matrix_inverse * (door_pos - self.pos);
 
         if door_pos_rel_self.y.abs() <= TILE_SIZE {
-            // Only invalidate the detection range if the door is potentially in the floorchaser's range.
+            // Only invalidate the detection range if the door is potentially in the floor guard's range.
             self.detection_range = None;
         }
     }
 }
 
-impl Entity for Floorchaser {
+impl Entity for FloorGuard {
     fn entity_type(&self) -> GridEntityType {
-        GridEntityType::Floorchaser
+        GridEntityType::FloorGuard
     }
 
     fn pos(&self) -> DVec2 {
@@ -150,7 +150,7 @@ impl Entity for Floorchaser {
     }
 }
 
-impl Mob for Floorchaser {
+impl Mob for FloorGuard {
     fn grid_pos(&self) -> GridPos {
         GridPos::from_world_pos(self.pos)
     }
@@ -162,8 +162,8 @@ impl Mob for Floorchaser {
 
     fn move_entity(&mut self, segments: &Grid<Segment>, doors: &Doors) {
         let speed_dir = match self.state {
-            FloorchaserState::ChasingLeft => -self.orientation.vec2().perp(),
-            FloorchaserState::ChasingRight => self.orientation.vec2().perp(),
+            FloorGuardState::ChasingLeft => -self.orientation.vec2().perp(),
+            FloorGuardState::ChasingRight => self.orientation.vec2().perp(),
             _ => return,
         };
         let new_pos = self.pos + SPEED * speed_dir;
@@ -198,7 +198,7 @@ impl Mob for Floorchaser {
         if let Some(collision) = collision {
             self.pos = collision - (RADIUS + 0.01) * speed_dir;
             self.is_moving = false;
-            self.state = FloorchaserState::Waiting;
+            self.state = FloorGuardState::Waiting;
             return;
         }
 
@@ -213,7 +213,7 @@ impl Mob for Floorchaser {
         let segments_iter = segments.iter_rect_region(lower_front_corner, lower_front_corner, 7.0);
 
         let best_floor = floor_segments(lower_front_corner, basis_matrix_inverse, segments_iter).filter(|(start, end)| {
-            // filter out floor segements that are in fully in front of floorchaser
+            // filter out floor segements that are in fully in front of floor guard
             start.x <= 0.0 || end.x <= 0.0
         }).reduce(|a, b| {
             // find the floor segment that is farthest in front
@@ -235,7 +235,7 @@ impl Mob for Floorchaser {
                 self.pos = max_pos - (RADIUS + 0.01) * speed_dir;
             }
             self.is_moving = false;
-            self.state = FloorchaserState::Waiting;
+            self.state = FloorGuardState::Waiting;
         } else {
             self.pos = new_pos;
             self.is_moving = true;

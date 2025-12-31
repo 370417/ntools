@@ -133,7 +133,7 @@ impl EditorState {
             }).or_default();
             *count = count.saturating_add(1);
         }
-        for floorguard in &attract.entities.floorchasers {
+        for floorguard in &attract.entities.floor_guards {
             let count: &mut u16 = entities.entry(EditorEntity::FloorGuard {
                 pos: EntityPos::from_world_pos(floorguard.pos),
                 orientation: floorguard.orientation,
