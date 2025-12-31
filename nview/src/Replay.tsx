@@ -6,7 +6,7 @@ import { LaunchPads, updateLaunchPads, type LaunchPadData } from './entities/Lau
 import { MineDefs, Mines, updateMines, type MineData } from './entities/Mine';
 import { OneWayDefs, OneWays, updateOneWays, type OneWayData } from './entities/OneWay';
 import { BounceBlockDefs, BounceBlocks, updateBounceBlocks, type BounceBlockData } from './entities/BounceBlock';
-import { Floorguards, updateFloorguards, type FloorguardData } from './entities/FloorGuard';
+import { FloorGuards, updateFloorGuards, type FloorGuardData } from './entities/FloorGuard';
 import { Ninja } from './entities/Ninja';
 import { LockedDoors, updateLockedDoors, type LockedDoorData } from './entities/LockedDoor';
 import { LockedSwitchDefs, LockedSwitches, updateLockedSwitches, type LockedSwitchData } from './entities/LockedSwitch';
@@ -66,7 +66,7 @@ export function ReplayApp(props: { replay: Replay, globalEventState: GlobalEvent
     const boostPads = createSignal<BoostPadData[]>([]);
     const thwumps = createSignal<ThwumpData[]>([]);
     const launchPads = createSignal<LaunchPadData[]>([]);
-    const floorguards = createSignal<FloorguardData[]>([]);
+    const floorGuards = createSignal<FloorGuardData[]>([]);
     const lockedDoors = createSignal<LockedDoorData[]>([]);
     const lockedSwitches = createSignal<LockedSwitchData[]>([]);
     const trapDoors = createSignal<TrapDoorData[]>([]);
@@ -147,7 +147,7 @@ export function ReplayApp(props: { replay: Replay, globalEventState: GlobalEvent
         updateBoostPads(boostPads, replay, partialFrame);
         updateThwumps(thwumps, replay, partialFrame);
         updateLaunchPads(launchPads, replay);
-        updateFloorguards(floorguards, replay, partialFrame);
+        updateFloorGuards(floorGuards, replay, partialFrame);
         updateLockedDoors(lockedDoors, replay, partialFrame);
         updateLockedSwitches(lockedSwitches, replay);
         updateTrapDoors(trapDoors, replay, partialFrame);
@@ -189,7 +189,7 @@ export function ReplayApp(props: { replay: Replay, globalEventState: GlobalEvent
                 <TrapSwitches trapSwitches={trapSwitches} />
                 <ExitSwitches exitSwitches={exitSwitches} />
                 <LaunchPads launchPads={launchPads} />
-                <Floorguards floorguards={floorguards} />
+                <FloorGuards floorGuards={floorGuards} />
                 <RegularDoors regularDoors={regularDoors} />
                 <LockedDoors lockedDoors={lockedDoors} />
                 <TrapDoors trapDoors={trapDoors} />

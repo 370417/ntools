@@ -403,6 +403,7 @@ impl Editor {
         match self.mode {
             EditorMode::PenTool(_) => self.pen_tool_fine_grid,
             EditorMode::PlaceEntity(_) => true,
+            EditorMode::SelectEntity(_) => true,
             _ => false,
         }
     }
@@ -411,6 +412,7 @@ impl Editor {
     pub fn show_quarter_grid(&self) -> bool {
         match self.mode {
             EditorMode::PlaceEntity(_) => self.entity_fine_grid,
+            EditorMode::SelectEntity(_) => self.entity_fine_grid,
             _ => false,
         }
     }
@@ -718,6 +720,9 @@ impl Editor {
                     self.state.apply(move_selection.command_cut());
                     self.mode = EditorMode::MoveSelection(move_selection);
                 }
+            }
+            EditorMode::SelectEntity(select_entity) => {
+                select_entity.increment_selection_index();
             }
             _ => {}
         }

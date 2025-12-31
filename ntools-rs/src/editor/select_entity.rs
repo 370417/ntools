@@ -4,11 +4,14 @@ use crate::{editor::{editor_entity::{EditorEntity, EntityId, EntityPos, Exported
 
 pub struct SelectEntity {
     selected_entities: Vec<(EditorEntity, SelectionType)>,
-    /// Used for disambiguating which entitity is selected when multiple are in the same position
+    /// Used for disambiguating which entitity is selected when multiple are in the same position.
     selected_entity_id: EntityId,
     /// Used for disambiguating which entitity is selected when multiple are in the same position
-    /// and multiple of them have the same entity id
-    selected_entity_index: usize,
+    /// and multiple of them have the same entity id.
+    /// We store selected_entity_id and selected_entity_offset separately instead of storing a simgle
+    /// selected_entity_index so that the selected entity id stays stable when the mouse moves
+    /// to a different clump of entities.
+    selected_entity_offset: usize,
 }
 
 #[derive(Clone, Copy)]
@@ -22,7 +25,7 @@ impl SelectEntity {
         let mut select_entity = SelectEntity {
             selected_entities: Vec::new(),
             selected_entity_id: EntityId::Ninja,
-            selected_entity_index: 0,
+            selected_entity_offset: 0,
         };
         select_entity.set_selection(crosshair_pos, entities);
         select_entity
@@ -61,15 +64,71 @@ impl SelectEntity {
         self.selected_entities = best_entities;
     }
 
+    fn get_selection_index(&self) -> usize {
+        let index = self.selected_entities.binary_search_by_key(&self.selected_entity_id, |(entity, _)| entity.id());
+        let mut index = match index {
+            Ok(index) => index,
+            Err(index) => if index > 0 && index == self.selected_entities.len() {
+                index - 1
+            } else {
+                index
+            },
+        };
+
+        // If there are multiple entities with the same id, binary_search_by_key
+        // isn't guaranteed to return the first one, so scan backwards for
+        // the first entity matching self.selected_entity_id.
+        while index > 0 {
+            if let Some((prev_entity, _)) = self.selected_entities.get(index - 1) {
+                if prev_entity.id() == self.selected_entity_id {
+                    index -= 1;
+                    continue;
+                }
+            }
+            break;
+        }
+
+        // Scan forward based on self.selected_entity_offset
+        let base_index = index;
+        while index - base_index < self.selected_entity_offset {
+            if let Some((next_entity, _)) = self.selected_entities.get(index + 1) {
+                if next_entity.id() == self.selected_entity_id {
+                    index += 1;
+                    continue;
+                }
+            }
+            break;
+        }
+
+        index
+    }
+
     pub fn get_selection(&self) -> Option<(EditorEntity, SelectionType)> {
-        self.selected_entities.iter().filter(|(entity, _)| {
-            entity.id() >= self.selected_entity_id
-        }).skip(self.selected_entity_index).cloned().next()
+        self.selected_entities.get(self.get_selection_index()).copied()
     }
 
     pub fn get_selection_exported(&self) -> Option<ExportedEntity> {
         self.get_selection().map(|(entity, selection_type)| {
             entity.export().with_selection_type(selection_type)
         })
+    }
+
+    pub fn increment_selection_index(&mut self) {
+        let i = self.get_selection_index();
+        if let Some((next_entity, _)) = self.selected_entities.get(i + 1) {
+            let curr_entity = self.selected_entities[i].0;
+            if next_entity.id() == curr_entity.id() {
+                self.selected_entity_id = next_entity.id();
+                self.selected_entity_offset += 1;
+            } else {
+                self.selected_entity_id = next_entity.id();
+                self.selected_entity_offset = 0;
+            }
+        } else {
+            self.selected_entity_id = self.selected_entities.first()
+                .map(|(first_entity, _)| first_entity.id())
+                .unwrap_or(EntityId::Ninja);
+            self.selected_entity_offset = 0;
+        }
     }
 }

@@ -156,7 +156,7 @@ impl PlaceEntity {
         }
     }
 
-    /// The coarse grid for floorguards is shifted vertically by a quarter tile
+    /// The coarse grid for floor guards is shifted vertically by a quarter tile
     /// so that they can easily be placed flush with the ground.
     pub fn round_to_grid_floorguard(cursor_pos: DVec2, fine_grid: bool) -> DVec2 {
         if fine_grid {
