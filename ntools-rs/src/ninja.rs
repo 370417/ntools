@@ -24,7 +24,7 @@ pub struct Ninja {
     pub pos: DVec2,
     pub pos_old: DVec2,
     pub speed: DVec2,
-    gravity_dir: DVec2,
+    pub orientation: OrientationExt,
     applied_gravity: f64,
     applied_drag: f64,
     pub state: NinjaState,
@@ -56,7 +56,7 @@ pub struct PastNinja {
     pub pos: DVec2,
     pub speed: DVec2,
     pub facing: f64,
-    pub anim_state: AnimState,
+    anim_state: AnimState,
     pub anim_frame: usize,
     pub run_cycle: usize,
     pub tilt: DVec2,
@@ -112,8 +112,7 @@ impl Ninja {
             pos,
             pos_old: pos,
             speed: DVec2::ZERO,
-            gravity_dir: -orientation.vec2(),
-            // gravity_dir: DVec2::new((4.0 / 5.0_f64).sqrt(), (1.0 / 5.0_f64).sqrt()),
+            orientation,
             applied_gravity: GRAVITY_FALL,
             applied_drag: DRAG_REGULAR,
             state: NinjaState::Standing,
@@ -342,7 +341,7 @@ impl Ninja {
         // Calculate the combined floor normalized normal vector if the ninja has touched any floor.
         if collision_state.floor_count > 0 {
             self.airborne = false;
-            self.floor_unit_normal = collision_state.floor_normal.normalize_or(-self.gravity_dir);
+            self.floor_unit_normal = collision_state.floor_normal.normalize_or(self.orientation.vec2());
             if self.state != NinjaState::Celebrating && airborne_old {
                 // Check if died from impact
                 let impact_vel = -self.floor_unit_normal.dot(collision_state.speed_old);
@@ -355,7 +354,7 @@ impl Ninja {
 
         // Calculate the combined ceiling normalized normal vector if the ninja has touched any ceiling.
         if collision_state.ceiling_count > 0 {
-            self.ceiling_unit_normal = collision_state.ceiling_normal.normalize_or(self.gravity_dir);
+            self.ceiling_unit_normal = collision_state.ceiling_normal.normalize_or(-self.orientation.vec2());
             if self.state != NinjaState::Celebrating {
                 // Check if died from impact
                 let impact_vel = -self.ceiling_unit_normal.dot(collision_state.speed_old);
@@ -648,7 +647,7 @@ impl Ninja {
         let anim_state_old = self.anim_state;
         if self.state == NinjaState::WallSliding {
             self.anim_state = AnimState::WallSliding;
-            self.tilt = -self.gravity_dir.perp();
+            self.tilt = self.orientation.vec2().perp();
             self.facing = -self.wall_normal.signum();
             self.anim_rate = self.grav_get_vert(self.speed);
         } else if !self.airborne && self.state != NinjaState::Jumping {
@@ -673,10 +672,10 @@ impl Ninja {
             self.anim_state = AnimState::Airborne;
             self.anim_rate = self.grav_get_vert(self.speed);
             if self.state == NinjaState::Jumping {
-                self.tilt = -self.gravity_dir.perp();
+                self.tilt = self.orientation.vec2().perp();
             } else {
                 let tilt_angle = self.tilt.to_angle();
-                let angle_diff = self.tilt.angle_to(-self.gravity_dir.perp());
+                let angle_diff = self.tilt.angle_to(self.orientation.vec2().perp());
                 let tilt_angle = tilt_angle + angle_diff * 0.1;
                 self.tilt = DVec2::from_angle(tilt_angle);
             }
@@ -814,25 +813,28 @@ impl Ninja {
         Xoroshiro64StarStar::seed_from_u64(SplitMix64::from_seed(seed).next_u64())
     }
 
+    fn basis_matrix(&self) -> DMat2 {
+        let gravity_dir = -self.orientation.vec2();
+        DMat2::from_cols(-gravity_dir.perp(), gravity_dir)
+    }
+
     /// Get the horizontal component relative to gravity of a vec
     pub fn grav_get_horiz(&self, vec: DVec2) -> f64 {
-        let basis_matrix = DMat2::from_cols(-self.gravity_dir.perp(), self.gravity_dir);
         // convert vec to the pov of gravity
-        let grav_vec = basis_matrix.inverse() * vec;
+        let grav_vec = self.basis_matrix().inverse() * vec;
         grav_vec.x
     }
 
     /// Get the vertical component relative to gravity of a vec
     pub fn grav_get_vert(&self, vec: DVec2) -> f64 {
-        let basis_matrix = DMat2::from_cols(-self.gravity_dir.perp(), self.gravity_dir);
         // convert vec to the pov of gravity
-        let grav_vec = basis_matrix.inverse() * vec;
+        let grav_vec = self.basis_matrix().inverse() * vec;
         grav_vec.y
     }
 
     /// Set the horizontal component relative to gravity of a vec to a value
     pub fn grav_set_horiz(&self, vec: DVec2, new_horiz: f64) -> DVec2 {
-        let basis_matrix = DMat2::from_cols(-self.gravity_dir.perp(), self.gravity_dir);
+        let basis_matrix = self.basis_matrix();
         // convert vec to the pov of gravity
         let mut grav_vec = basis_matrix.inverse() * vec;
         grav_vec.x = new_horiz;
@@ -842,7 +844,7 @@ impl Ninja {
 
     /// Set the vertical component relative to gravity of a vec to value
     pub fn grav_set_vert(&self, vec: DVec2, new_vert: f64) -> DVec2 {
-        let basis_matrix = DMat2::from_cols(-self.gravity_dir.perp(), self.gravity_dir);
+        let basis_matrix = self.basis_matrix();
         // convert vec to the pov of gravity
         let mut grav_vec = basis_matrix.inverse() * vec;
         grav_vec.y = new_vert;
@@ -853,14 +855,13 @@ impl Ninja {
     /// Convert a vec from coordinates that are relative to gravity
     /// into a vec with coordinates relative to cartesian axes of the screen
     pub fn grav_vec(&self, grav_vec: DVec2) -> DVec2 {
-        let basis_matrix = DMat2::from_cols(-self.gravity_dir.perp(), self.gravity_dir);
         // convert vec back to original frame of reference
-        basis_matrix * grav_vec
+        self.basis_matrix() * grav_vec
     }
 
     /// Add a value to the vertical component relative to gravity of a vec
     pub fn grav_add_vert(&self, vec: DVec2, vert_delta: f64) -> DVec2 {
-        let basis_matrix = DMat2::from_cols(-self.gravity_dir.perp(), self.gravity_dir);
+        let basis_matrix = self.basis_matrix();
         // convert vec to the pov of gravity
         let mut grav_vec = basis_matrix.inverse() * vec;
         grav_vec.y += vert_delta;
@@ -870,7 +871,7 @@ impl Ninja {
 
     /// Multiply the horizontal component relative to gravity of a vec by a value
     pub fn grav_mul_horiz(&self, vec: DVec2, horiz_scale: f64) -> DVec2 {
-        let basis_matrix = DMat2::from_cols(-self.gravity_dir.perp(), self.gravity_dir);
+        let basis_matrix = self.basis_matrix();
         // convert vec to the pov of gravity
         let mut grav_vec = basis_matrix.inverse() * vec;
         grav_vec.x *= horiz_scale;
@@ -880,7 +881,7 @@ impl Ninja {
 
     /// Multiply the vertical component relative to gravity of a vec by a value
     pub fn grav_mul_vert(&self, vec: DVec2, vert_scale: f64) -> DVec2 {
-        let basis_matrix = DMat2::from_cols(-self.gravity_dir.perp(), self.gravity_dir);
+        let basis_matrix = self.basis_matrix();
         // convert vec to the pov of gravity
         let mut grav_vec = basis_matrix.inverse() * vec;
         grav_vec.y *= vert_scale;
@@ -890,10 +891,10 @@ impl Ninja {
 
     /// Check if the absolute value of the vec's horizontal component relative to gravity is equal to a value
     pub fn grav_eq_abs_horiz(&self, vec: DVec2, horiz: f64) -> bool {
-        let basis_matrix = DMat2::from_cols(-self.gravity_dir.perp(), self.gravity_dir);
+        let basis_matrix = self.basis_matrix();
         // convert vec to the pov of gravity
         let grav_vec = basis_matrix.inverse() * vec;
-        if self.gravity_dir.x == 0.0 {
+        if self.orientation.vec2().x == 0.0 {
             // If gravity is vertical, use exact equality to preserve compatibility with n++.
             grav_vec.x.abs() == horiz
         } else {
