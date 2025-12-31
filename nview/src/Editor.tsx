@@ -356,6 +356,7 @@ export function EditorApp(props: {
         else if (event.code === 'KeyP') change = true, editor.press_p();
         else if (event.code === 'BracketLeft') change = true, editor.press_bracket_left();
         else if (event.code === 'BracketRight') change = true, editor.press_bracket_right();
+        else if (event.code === 'KeyF') change = true, editor.press_f();
         else if (event.code === 'KeyH') change = true, editor.press_h();
         else if (event.code === 'KeyJ') change = true, editor.press_j();
         else if (event.code === 'KeyK') change = true, editor.press_k();
@@ -502,8 +503,8 @@ export function EditorApp(props: {
                 <path id="tilemode-crosshair" stroke-width="1.5" fill="none" d={tilemodeCrosshairPath} />
                 <path id="crosshair" stroke-width="1.5" fill="none" d={crosshairPath} />
                 <filter id="outline" filterUnits="userSpaceOnUse" x="0" y="0" width="1056" height="600">
-                    <feMorphology in="SourceAlpha" operator="dilate" radius="0.5" result="DILATED" />
-                    <feFlood flood-color="var(--shove-thwump-ray)" flood-opacity="1" result="COLOR" />
+                    <feMorphology in="SourceAlpha" operator="dilate" radius="0.75" result="DILATED" />
+                    <feFlood flood-color="var(--editor-crosshair)" flood-opacity="1" result="COLOR" />
                     <feComposite in="COLOR" in2="DILATED" operator="in" result="OUTLINE" />
                     <feMerge>
                         <feMergeNode in="OUTLINE" />
@@ -540,7 +541,7 @@ export function EditorApp(props: {
             <Show when={mode() === MODE_PAINT_TILES}>
                 <use href="#tilemode-crosshair" x={tilemodeCrosshairPos().col * 24 + 12} y={tilemodeCrosshairPos().row * 24 + 12} />
             </Show>
-            <Show when={mode() === MODE_PEN_TOOL}>
+            <Show when={mode() === MODE_PEN_TOOL || mode() === MODE_SELECT_ENTITY}>
                 <use href="#crosshair" x={crosshairPos().x} y={crosshairPos().y} />
             </Show>
             <polyline stroke="black" fill="none" points={pastNinjas().map(({ x, y }) => `${x},${y}`).join(' ')} />

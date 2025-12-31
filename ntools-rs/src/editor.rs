@@ -4,7 +4,7 @@ use futures_channel::oneshot::{self, Receiver};
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{attract::Attract, editor::{editor_entity::{EditorEntity, EntityPos, ExportedEntity}, editor_state::{Command, EditorState}, move_selection::MoveSelection, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::{PlaceEntity, Stage}, select_entity::SelectEntity, select_tiles::SelectTiles}, entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floorchaser::Floorchaser, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump}, grid::{COLS, GridPos, ROWS}, map_file::MapFile, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationBinary, OrientationCardinal}, replay::Replay, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
+use crate::{attract::Attract, editor::{editor_entity::{EditorEntity, EntityId, EntityPos, ExportedEntity}, editor_state::{Command, EditorState}, move_selection::MoveSelection, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::{PlaceEntity, Stage}, select_entity::SelectEntity, select_tiles::SelectTiles}, entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floorchaser::Floorchaser, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump}, grid::{COLS, GridPos, ROWS}, map_file::MapFile, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationBinary, OrientationCardinal}, replay::Replay, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
 
 pub mod editor_entity;
 pub mod editor_state;
@@ -21,7 +21,7 @@ pub struct Editor {
     mode: EditorMode,
     cursor_pos: DVec2,
     selected_tile_category: TileCategory,
-    selected_entity_type: u8,
+    selected_entity_id: EntityId,
     /// Stack of tile variants for the tile type that
     /// is currently being painted.
     /// This is a stack because multiple keys can be pressed at once.
@@ -65,7 +65,7 @@ impl Editor {
             mode: EditorMode::PaintTiles,
             cursor_pos: DVec2::new(TILE_SIZE, TILE_SIZE),
             selected_tile_category: TileCategory::Tile1,
-            selected_entity_type: 0,
+            selected_entity_id: EntityId::Ninja,
             pressed_tile_variants: Vec::new(),
             pen_tool_is_clockwise: true,
             pen_tool_fine_grid: true,
@@ -517,13 +517,8 @@ impl Editor {
 
     #[wasm_bindgen]
     pub fn press_9(&mut self) {
-        self.mode = EditorMode::PlaceEntity(PlaceEntity {
-            entity: EditorEntity::Ninja {
-                pos: EntityPos::from_world_pos(PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid)),
-                orientation: self.entity_orientation.into(),
-            },
-            stage: None,
-        });
+        self.selected_entity_id = EntityId::Ninja;
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
     }
 
     #[wasm_bindgen]
@@ -533,24 +528,14 @@ impl Editor {
 
     #[wasm_bindgen]
     pub fn press_dash(&mut self) {
-        self.mode = EditorMode::PlaceEntity(PlaceEntity {
-            entity: EditorEntity::BounceBlock {
-                pos: EntityPos::from_world_pos(PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid)),
-                orientation: self.entity_orientation,
-            },
-            stage: None,
-        });
+        self.selected_entity_id = EntityId::BounceBlock;
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
     }
 
     #[wasm_bindgen]
     pub fn press_equals(&mut self) {
-        self.mode = EditorMode::PlaceEntity(PlaceEntity {
-            entity: EditorEntity::LaunchPad {
-                pos: EntityPos::from_world_pos(PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid)),
-                orientation: self.entity_orientation,
-            },
-            stage: None,
-        });
+        self.selected_entity_id = EntityId::LaunchPad;
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
     }
 
     #[wasm_bindgen]
@@ -772,71 +757,37 @@ impl Editor {
 
     #[wasm_bindgen]
     pub fn press_i(&mut self) {
-        let rounded_pos = PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid);
-        self.mode = EditorMode::PlaceEntity(PlaceEntity {
-            entity: EditorEntity::RegularDoor {
-                pos: EntityPos::from_world_pos(rounded_pos),
-                orientation: PlaceEntity::door_orientation_from_pos(rounded_pos, self.entity_orientation_binary),
-            },
-            stage: None,
-        });
+        self.selected_entity_id = EntityId::RegularDoor;
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
     }
 
     #[wasm_bindgen]
     pub fn press_o(&mut self) {
-        let rounded_pos = PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid);
-        self.mode = EditorMode::PlaceEntity(PlaceEntity {
-            entity: EditorEntity::LockedDoor {
-                door_pos: EntityPos::from_world_pos(rounded_pos),
-                switch_pos: EntityPos::from_world_pos(rounded_pos),
-                orientation: PlaceEntity::door_orientation_from_pos(rounded_pos, self.entity_orientation_binary),
-            },
-            stage: Some(Stage::PlaceDoor),
-        });
+        self.selected_entity_id = EntityId::LockedDoor;
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
     }
 
     #[wasm_bindgen]
     pub fn press_p(&mut self) {
-        let rounded_pos = PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid);
-        self.mode = EditorMode::PlaceEntity(PlaceEntity {
-            entity: EditorEntity::TrapDoor {
-                door_pos: EntityPos::from_world_pos(rounded_pos),
-                switch_pos: EntityPos::from_world_pos(rounded_pos),
-                orientation: PlaceEntity::door_orientation_from_pos(rounded_pos, self.entity_orientation_binary),
-            },
-            stage: Some(Stage::PlaceDoor),
-        });
+        self.selected_entity_id = EntityId::TrapDoor;
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
     }
 
     #[wasm_bindgen]
     pub fn press_bracket_left(&mut self) {
-        self.mode = EditorMode::PlaceEntity(PlaceEntity {
-            entity: EditorEntity::OneWay {
-                pos: EntityPos::from_world_pos(PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid)),
-                orientation: self.entity_orientation,
-            },
-            stage: None,
-        });
+        self.selected_entity_id = EntityId::OneWay;
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
     }
 
     #[wasm_bindgen]
     pub fn press_bracket_right(&mut self) {
-        self.mode = EditorMode::PlaceEntity(PlaceEntity {
-            entity: EditorEntity::Exit {
-                exit_pos: EntityPos::from_world_pos(PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid)),
-                switch_pos: EntityPos::from_world_pos(PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid)),
-            },
-            stage: Some(Stage::PlaceDoor),
-        })
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
     }
 
     #[wasm_bindgen]
     pub fn press_f(&mut self) {
         if let EditorMode::SelectEntity(_) = self.mode {
-            self.mode = EditorMode::PlaceEntity(PlaceEntity {
-                entity: todo!(),
-                stage: None,
-            });
+            self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
         } else {
             let crosshair_pos = PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid);
             self.mode = EditorMode::SelectEntity(SelectEntity::new(crosshair_pos, self.state.entities()));
@@ -865,34 +816,20 @@ impl Editor {
 
     #[wasm_bindgen]
     pub fn press_n(&mut self) {
-        self.mode = EditorMode::PlaceEntity(PlaceEntity {
-            entity: EditorEntity::FloorGuard {
-                pos: EntityPos::from_world_pos(PlaceEntity::round_to_grid_floorguard(self.cursor_pos, self.entity_fine_grid)),
-                orientation: self.entity_orientation.into(),
-            },
-            stage: None,
-        });
+        self.selected_entity_id = EntityId::FloorGuard;
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
     }
 
     #[wasm_bindgen]
     pub fn press_m(&mut self) {
-        self.mode = EditorMode::PlaceEntity(PlaceEntity {
-            entity: EditorEntity::Mine {
-                pos: EntityPos::from_world_pos(PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid)),
-            },
-            stage: None,
-        });
+        self.selected_entity_id = EntityId::Mine;
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
     }
 
     #[wasm_bindgen]
     pub fn press_comma(&mut self) {
-        self.mode = EditorMode::PlaceEntity(PlaceEntity {
-            entity: EditorEntity::Thwump {
-                pos: EntityPos::from_world_pos(PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid)),
-                orientation: self.entity_orientation,
-            },
-            stage: None,
-        });
+        self.selected_entity_id = EntityId::Thwump;
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
     }
 
     #[wasm_bindgen]
@@ -908,12 +845,8 @@ impl Editor {
 
     #[wasm_bindgen]
     pub fn press_num_0(&mut self) {
-        self.mode = EditorMode::PlaceEntity(PlaceEntity {
-            entity: EditorEntity::ToggleMine {
-                pos: EntityPos::from_world_pos(PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid)),
-            },
-            stage: None,
-        });
+        self.selected_entity_id = EntityId::ToggleMine;
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
     }
 
     #[wasm_bindgen]
@@ -928,12 +861,8 @@ impl Editor {
 
     #[wasm_bindgen]
     pub fn press_num_3(&mut self) {
-        self.mode = EditorMode::PlaceEntity(PlaceEntity {
-            entity: EditorEntity::BoostPad {
-                pos: EntityPos::from_world_pos(PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid)),
-            },
-            stage: None,
-        });
+        self.selected_entity_id = EntityId::BoostPad;
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
     }
 
     #[wasm_bindgen]
@@ -948,13 +877,8 @@ impl Editor {
 
     #[wasm_bindgen]
     pub fn press_num_7(&mut self) {
-        self.mode = EditorMode::PlaceEntity(PlaceEntity {
-            entity: EditorEntity::ShoveThwump {
-                pos: EntityPos::from_world_pos(PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid)),
-                orientation: self.entity_orientation,
-            },
-            stage: None,
-        });
+        self.selected_entity_id = EntityId::ShoveThwump;
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
     }
 
     #[wasm_bindgen]
