@@ -230,7 +230,6 @@ impl Mob for Thwump {
 /// - segment is not vertical
 /// - segment's x span at least partially overlaps [-half_width, half_width]
 pub fn segments_in_fov<'a>(origin: DVec2, basis_matrix_inverse: DMat2, half_width: f64, segments: impl Iterator<Item = &'a Segment>) -> impl Iterator<Item = (DVec2, DVec2)> {
-    // TODO: filter out inactive doors
     segments.flat_map(move |segment| {
         // convert into segments relative to origin
         match segment {

@@ -88,7 +88,7 @@ impl Segment {
                 // If u is exactly 0 or 1, position is closest to one of the two edges.
                 ClosestPoint {
                     point: start + u * seg,
-                    is_back_facing: delta.perp_dot(seg) < 0.0, // TODO: cross check this with normal
+                    is_back_facing: delta.perp_dot(seg) < 0.0,
                 }
             }
             Segment::Circular { start, end, center, curvature } => {

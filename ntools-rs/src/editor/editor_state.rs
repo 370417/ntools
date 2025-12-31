@@ -77,7 +77,7 @@ impl EditorState {
         for ninja in &attract.ninjas {
             let count: &mut u16 = entities.entry(EditorEntity::Ninja {
                 pos: EntityPos::from_world_pos(ninja.pos),
-                orientation: OrientationExt::N, // TODO: should match ninja's gravity
+                orientation: ninja.orientation,
             }).or_default();
             *count = count.saturating_add(1);
         }
