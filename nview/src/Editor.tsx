@@ -262,21 +262,21 @@ function Entities({ entities }: { entities: EntitiesProps }) {
         <ExitDoors exitDoors={[entities.exitDoors, () => {}]} />
         <OneWays oneWays={[entities.oneWays, () => {}]} />
         <Mines mines={[entities.mines, () => {}]} />
+        <RegularDoors regularDoors={[entities.regularDoors, () => {}]} />
+        <TrapDoors trapDoors={[entities.trapDoors, () => {}]} />
+        <LockedDoors lockedDoors={[entities.lockedDoors, () => {}]} />
         <LockedSwitches lockedSwitches={[entities.lockedSwitches, () => {}]} />
         <TrapSwitches trapSwitches={[entities.trapSwitches, () => {}]} />
         <ExitSwitches exitSwitches={[entities.exitSwitches, () => {}]} />
         <LaunchPads launchPads={[entities.launchPads, () => {}]} />
         <FloorGuards floorGuards={[entities.floorGuards, () => {}]} />
-        <RegularDoors regularDoors={[entities.regularDoors, () => {}]} />
-        <LockedDoors lockedDoors={[entities.lockedDoors, () => {}]} />
-        <TrapDoors trapDoors={[entities.trapDoors, () => {}]} />
         <Thwumps thwumps={[entities.thwumps, () => {}]} />
-        <BounceBlocks bounceBlocks={[entities.bounceBlocks, () => {}]} />
-        <BoostPads boostPads={[entities.boostPads, () => {}]} />
-        <ShoveThwumps shoveThwumps={[entities.shoveThwumps, () => {}]} />
         <For each={entities.ninjas()}>
             {ninja => <Ninja class="ninja" ninja={() => ninja} bones={() => BONES_STANDING} />}
         </For>
+        <BounceBlocks bounceBlocks={[entities.bounceBlocks, () => {}]} />
+        <ShoveThwumps shoveThwumps={[entities.shoveThwumps, () => {}]} />
+        <BoostPads boostPads={[entities.boostPads, () => {}]} />
     </>;
 }
 

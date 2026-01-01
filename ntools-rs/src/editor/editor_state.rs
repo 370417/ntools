@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use glam::DVec2;
 
-use crate::{attract::Attract, editor::editor_entity::{EditorEntity, EntityPos}, entity::mine::MineState, grid::GridPos, map_file::MapFile, orientation::OrientationExt, tile::{Tile, Tiles}};
+use crate::{attract::Attract, editor::editor_entity::{EditorEntity, EntityPos}, entity::mine::MineState, grid::GridPos, map_file::MapFile, tile::{Tile, Tiles}};
 
 /// State that is affected by undo and redo
 pub struct EditorState {

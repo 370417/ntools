@@ -185,20 +185,20 @@ export function ReplayApp(props: { replay: Replay, globalEventState: GlobalEvent
                 <ExitDoors exitDoors={exitDoors} />
                 <OneWays oneWays={oneWays} />
                 <Mines mines={mines} />
+                <RegularDoors regularDoors={regularDoors} />
+                <LockedDoors lockedDoors={lockedDoors} />
+                <TrapDoors trapDoors={trapDoors} />
                 <LockedSwitches lockedSwitches={lockedSwitches} />
                 <TrapSwitches trapSwitches={trapSwitches} />
                 <ExitSwitches exitSwitches={exitSwitches} />
                 <LaunchPads launchPads={launchPads} />
                 <FloorGuards floorGuards={floorGuards} />
-                <RegularDoors regularDoors={regularDoors} />
-                <LockedDoors lockedDoors={lockedDoors} />
-                <TrapDoors trapDoors={trapDoors} />
                 <Thwumps thwumps={thwumps} />
-                <BounceBlocks bounceBlocks={bounceBlocks} />
-                <BoostPads boostPads={boostPads} />
-                <ShoveThwumps shoveThwumps={shoveThwumps} />
                 <Ninja class="ninja preview" ninja={ninjaPreview} bones={ninjaPreviewBones} />
                 <Ninja class="ninja" ninja={ninja} bones={ninjaBones} />
+                <BounceBlocks bounceBlocks={bounceBlocks} />
+                <ShoveThwumps shoveThwumps={shoveThwumps} />
+                <BoostPads boostPads={boostPads} />
                 <path id="tiles" stroke-width="2" clip-path="url(#tiles-clip)" clip-rule="evenodd" d={tilePath()} fill-rule="evenodd" />
             </svg>
             <div>
