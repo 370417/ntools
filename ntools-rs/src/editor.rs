@@ -751,6 +751,18 @@ impl Editor {
     }
 
     #[wasm_bindgen]
+    pub fn press_t(&mut self) {
+        match &mut self.mode {
+            EditorMode::SelectEntity(select_entity) => {
+                if let Some(command) = select_entity.command_delete(self.state.entities()) {
+                    self.state.apply(command);
+                }
+            }
+            _ => {}
+        }
+    }
+
+    #[wasm_bindgen]
     pub fn press_y(&mut self) {
         // gauss turret
     }

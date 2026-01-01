@@ -349,6 +349,7 @@ export function EditorApp(props: {
         else if (event.code === 'KeyX') change = true, editor.press_x();
         else if (event.code === 'KeyC') change = true, editor.press_c();
 
+        else if (event.code === 'KeyT') change = true, editor.press_t();
         else if (event.code === 'KeyY') change = true, editor.press_y();
         else if (event.code === 'KeyU') change = true, editor.press_u();
         else if (event.code === 'KeyI') change = true, editor.press_i();

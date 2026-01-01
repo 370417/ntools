@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{editor::{editor_entity::{EditorEntity, EntityId, EntityPos, ExportedEntity}, editor_state::EditorEntities}, tile::TILE_SIZE};
+use crate::{editor::{editor_entity::{EditorEntity, EntityId, EntityPos, ExportedEntity}, editor_state::{Command, EditorEntities, SetEntityCount}}, tile::TILE_SIZE};
 
 pub struct SelectEntity {
     selected_entities: Vec<(EditorEntity, SelectionType)>,
@@ -139,6 +139,17 @@ impl SelectEntity {
                 .unwrap_or(EntityId::Ninja);
             self.selected_entity_offset = 0;
         }
+    }
+
+    pub fn command_delete(&self, entities: &EditorEntities) -> Option<Command> {
+        self.get_selection()
+            .and_then(|(entity, _)| entities.get(&entity).map(|count| (entity, count)))
+            .filter(|&(_entity, count)| *count > 0)
+            .map(|(entity, &count)| Command::SetEntityCount(SetEntityCount {
+                entity,
+                old_count: count,
+                new_count: count - 1,
+            }))
     }
 }
 
