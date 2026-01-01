@@ -4,10 +4,11 @@ use futures_channel::oneshot::{self, Receiver};
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{attract::Attract, editor::{editor_entity::{EditorEntity, EntityId, ExportedEntity}, editor_state::{Command, EditorState}, move_selection::MoveSelection, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::PlaceEntity, select_entity::SelectEntity, select_tiles::SelectTiles}, entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floor_guard::FloorGuard, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump}, grid::{COLS, GridPos, ROWS}, map_file::MapFile, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationBinary, OrientationCardinal}, replay::Replay, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
+use crate::{attract::Attract, editor::{editor_entity::{EditorEntity, EntityId, ExportedEntity}, editor_state::{Command, EditorState}, modify_entity::ModifyEntity, move_selection::MoveSelection, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::PlaceEntity, select_entity::SelectEntity, select_tiles::SelectTiles}, entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floor_guard::FloorGuard, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump}, grid::{COLS, GridPos, ROWS}, map_file::MapFile, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationBinary, OrientationCardinal}, replay::Replay, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
 
 pub mod editor_entity;
 pub mod editor_state;
+pub mod modify_entity;
 pub mod move_selection;
 pub mod pen_tool;
 pub mod place_entity;
@@ -50,7 +51,7 @@ pub enum EditorMode {
     MoveSelection(MoveSelection),
     PlaceEntity(PlaceEntity),
     SelectEntity(SelectEntity),
-    ModifyEntity,
+    ModifyEntity(ModifyEntity),
     EntityPalette,
     PenTool(PenTool),
 }
@@ -203,7 +204,7 @@ impl Editor {
             EditorMode::MoveSelection(_) => 3,
             EditorMode::PlaceEntity(_) => 4,
             EditorMode::SelectEntity(_) => 5,
-            EditorMode::ModifyEntity => 6,
+            EditorMode::ModifyEntity(_) => 6,
             EditorMode::EntityPalette => 7,
             EditorMode::PenTool(_) => 8,
         }
@@ -321,6 +322,9 @@ impl Editor {
                 let command = move_selection.command_paste(self.cursor_pos, self.state.tiles(), self.state.entities());
                 self.state.apply(command);
             }
+            EditorMode::SelectEntity(select_entity) => if let Some((entity, selection_type)) = select_entity.get_selection() {
+                self.mode = EditorMode::ModifyEntity(ModifyEntity::new(entity, selection_type));
+            },
             _ => {}
         }
     }
@@ -376,7 +380,10 @@ impl Editor {
 
     #[wasm_bindgen]
     pub fn entities(&self) -> Box<[ExportedEntity]> {
-        self.state.entities().keys().map(|entity| entity.export()).collect()
+        match &self.mode {
+            EditorMode::ModifyEntity(modify_entity) => modify_entity.export_entities(self.state.entities()),
+            _ => self.state.entities().keys().map(|entity| entity.export()).collect(),
+        }
     }
 
     #[wasm_bindgen]
@@ -856,7 +863,7 @@ impl Editor {
     pub fn press_slash(&mut self) {
         match &mut self.mode {
             EditorMode::PenTool(_) => self.pen_tool_fine_grid = !self.pen_tool_fine_grid,
-            EditorMode::PlaceEntity(_) | EditorMode::ModifyEntity => {
+            EditorMode::PlaceEntity(_) | EditorMode::ModifyEntity(_) => {
                 self.entity_fine_grid = !self.entity_fine_grid;
             }
             EditorMode::SelectEntity(select_entity) => {
