@@ -786,6 +786,7 @@ impl Editor {
 
     #[wasm_bindgen]
     pub fn press_bracket_right(&mut self) {
+        self.selected_entity_id = EntityId::ExitDoor;
         self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
     }
 

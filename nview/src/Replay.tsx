@@ -190,7 +190,7 @@ export function ReplayApp(props: { replay: Replay, globalEventState: GlobalEvent
                 <TrapDoors trapDoors={trapDoors} />
                 <LockedSwitches lockedSwitches={lockedSwitches} />
                 <TrapSwitches trapSwitches={trapSwitches} />
-                <ExitSwitches exitSwitches={exitSwitches} />
+                <ExitSwitches exitSwitches={exitSwitches[0]} />
                 <LaunchPads launchPads={launchPads} />
                 <FloorGuards floorGuards={floorGuards} />
                 <Thwumps thwumps={thwumps} />

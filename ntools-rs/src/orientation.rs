@@ -1,6 +1,7 @@
 use glam::DVec2;
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(debug_assertions, derive(Debug))]
 pub enum Orientation {
     E = 0,
     SE = 1,
@@ -28,6 +29,7 @@ pub enum Orientation {
 /// from arising when non-rotatable entities have a rotation byte set due to bulk rotate
 /// in the editor.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(debug_assertions, derive(Debug))]
 pub enum OrientationExt {
     N = 6,
     NE = 16,
@@ -48,6 +50,7 @@ pub enum OrientationExt {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(debug_assertions, derive(Debug))]
 pub enum OrientationCardinal {
     E = 0,
     S = 2,
@@ -56,6 +59,7 @@ pub enum OrientationCardinal {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(debug_assertions, derive(Debug))]
 pub enum OrientationBinary {
     /// Vertical
     V = 0,

@@ -16,7 +16,8 @@ pub struct SelectEntity {
 
 // TODO: show stack count in the ui (for stacked gold or bounce blocks) if greater than one
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(debug_assertions, derive(Debug))]
 pub enum SelectionType {
     Switch,
     NotSwitch,
@@ -138,5 +139,56 @@ impl SelectEntity {
                 .unwrap_or(EntityId::Ninja);
             self.selected_entity_offset = 0;
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::BTreeMap;
+
+    use super::*;
+
+    #[test]
+    fn test_exit() {
+        let entity_pos = EntityPos {
+            x: 6,
+            y: 6,
+        };
+
+        // entities: exit and exit switch stacked in same position
+        let mut entities = BTreeMap::new();
+        let exit = EditorEntity::Exit { exit_pos: entity_pos, switch_pos: entity_pos };
+        entities.insert(exit, 1);
+
+        let mut select_entity = SelectEntity::new(entity_pos.to_world_pos(), &entities, false);
+
+        // initially the door should be selected because doors are added to the selection vec before switches
+        assert_eq!(select_entity.get_selection(), Some((exit, SelectionType::NotSwitch)));
+        assert!(exported_has_no_switch(select_entity.get_selection_exported()));
+
+        // after incrementing, the switch should be selected
+        select_entity.increment_selection_index();
+        assert_eq!(select_entity.get_selection(), Some((exit, SelectionType::Switch)));
+        assert!(exported_has_switch(select_entity.get_selection_exported()));
+
+        select_entity.increment_selection_index();
+        assert_eq!(select_entity.get_selection(), Some((exit, SelectionType::NotSwitch)));
+        assert!(exported_has_no_switch(select_entity.get_selection_exported()));
+
+        select_entity.increment_selection_index();
+        assert_eq!(select_entity.get_selection(), Some((exit, SelectionType::Switch)));
+        assert!(exported_has_switch(select_entity.get_selection_exported()));
+    }
+
+    fn exported_has_switch(exported: Option<ExportedEntity>) -> bool {
+        exported.is_some_and(|exported| {
+            !exported.switch_x.is_nan() && !exported.switch_y.is_nan()
+        })
+    }
+
+    fn exported_has_no_switch(exported: Option<ExportedEntity>) -> bool {
+        exported.is_some_and(|exported| {
+            exported.switch_x.is_nan() && exported.switch_y.is_nan()
+        })
     }
 }

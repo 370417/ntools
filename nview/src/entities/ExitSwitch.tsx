@@ -1,6 +1,11 @@
 import { Index, type Accessor, type Signal } from "solid-js";
 import type { Replay } from "../assets/ntools_rs";
 
+// Note: there is a bug when using Firefox where if you try hovering over an exit and
+// switch stacked on top of each other in entity select mode and press x to
+// change the selection, solid js fails to hide the switch from view.
+// In Chrome, everything behaves as expected.
+
 export type ExitSwitchData = {
     x: number;
     y: number;
@@ -36,10 +41,8 @@ export function updateExitSwitches([exitSwitches, setExitSwitches]: Signal<ExitS
     setExitSwitches(newExitSwitches);
 }
 
-export function ExitSwitches(props: { exitSwitches: Signal<ExitSwitchData[]> }) {
-    const [exitSwitches] = props.exitSwitches;
-
-    return <Index each={exitSwitches()}>
+export function ExitSwitches(props: { exitSwitches: Accessor<ExitSwitchData[] | null> }) {
+    return <Index each={props.exitSwitches()}>
         {exitSwitch => <ExitSwitch exitSwitch={exitSwitch} />}
     </Index>;
 }

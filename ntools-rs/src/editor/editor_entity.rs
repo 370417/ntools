@@ -4,6 +4,7 @@ use wasm_bindgen::prelude::wasm_bindgen;
 use crate::{editor::{place_entity::Stage, select_entity::SelectionType}, grid::GridPos, orientation::{Orientation, OrientationBinary, OrientationExt}};
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(debug_assertions, derive(Debug))]
 pub enum EditorEntity {
     Ninja {
         pos: EntityPos,
@@ -135,6 +136,7 @@ impl TryFrom<u8> for EntityId {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(debug_assertions, derive(Debug))]
 pub struct EntityPos {
     // list y before x so that the generated Ord implementation compares y before comparing x
     pub y: i32,
@@ -142,6 +144,7 @@ pub struct EntityPos {
 }
 
 #[wasm_bindgen]
+#[cfg_attr(debug_assertions, derive(Debug))]
 pub struct ExportedEntity {
     pub type_int: u32,
     pub x: f64,
@@ -444,12 +447,16 @@ impl ExportedEntity {
     }
 
     /// Remove switch position if selection type isn't SelectionType::Switch
+    /// and if door and switch overlap.
+    /// We do this so that the door does not get covered by its switch when it is selected.
     pub fn with_selection_type(mut self, selection_type: SelectionType) -> Self {
         match selection_type {
             SelectionType::Switch => self,
-            SelectionType::NotSwitch => {
+            SelectionType::NotSwitch => if self.x == self.switch_x && self.y == self.switch_y {
                 self.switch_x = f64::NAN;
                 self.switch_y = f64::NAN;
+                self
+            } else {
                 self
             }
         }

@@ -267,7 +267,7 @@ function Entities({ entities }: { entities: EntitiesProps }) {
         <LockedDoors lockedDoors={[entities.lockedDoors, () => {}]} />
         <LockedSwitches lockedSwitches={[entities.lockedSwitches, () => {}]} />
         <TrapSwitches trapSwitches={[entities.trapSwitches, () => {}]} />
-        <ExitSwitches exitSwitches={[entities.exitSwitches, () => {}]} />
+        <ExitSwitches exitSwitches={entities.exitSwitches} />
         <LaunchPads launchPads={[entities.launchPads, () => {}]} />
         <FloorGuards floorGuards={[entities.floorGuards, () => {}]} />
         <Thwumps thwumps={[entities.thwumps, () => {}]} />
