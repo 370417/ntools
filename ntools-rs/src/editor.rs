@@ -756,6 +756,8 @@ impl Editor {
             EditorMode::SelectEntity(select_entity) => {
                 if let Some(command) = select_entity.command_delete(self.state.entities()) {
                     self.state.apply(command);
+                    let crosshair_pos = PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid);
+                    select_entity.set_selection(crosshair_pos, self.state.entities(), self.entity_fine_grid);
                 }
             }
             _ => {}
