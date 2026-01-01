@@ -1,3 +1,5 @@
+#![allow(clippy::zero_prefixed_literal)]
+
 use std::ops::{Index, IndexMut};
 
 use glam::DVec2;
@@ -8,6 +10,7 @@ pub const TILE_SIZE: f64 = 24.0;
 pub const TILE_HALF_SIZE: f64 = 12.0;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
+#[allow(clippy::enum_variant_names)]
 pub enum Tile {
     /// ```text
     /// +------+

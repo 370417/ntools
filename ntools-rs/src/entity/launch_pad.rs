@@ -23,21 +23,19 @@ impl LaunchPad {
 
     /// If the ninja is colliding with the launch pad (semi circle hitbox), return boost.
     pub fn logical_collision(&mut self, ninja: &Ninja) -> Option<DVec2> {
-        if ninja.is_valid_target() {
-            if overlap_circle_vs_circle(self.pos, RADIUS, ninja.pos, ninja::RADIUS) {
-                let self_normal = self.orientation.vec2();
-                if (self.pos - ninja.pos + ninja::RADIUS * self_normal).dot(self_normal) >= -0.1 {
-                    self.frames_since_last_touch = 0;
-                    let yboost_scale = if ninja.grav_get_vert(self_normal) < 0.0 {
-                        1.0 - ninja.grav_get_vert(self_normal)
-                    } else {
-                        1.0
-                    };
-                    return Some(ninja.grav_vec(DVec2::new(
-                        ninja.grav_get_horiz(self_normal) * BOOST,
-                        ninja.grav_get_vert(self_normal) * BOOST * yboost_scale,
-                    )));
-                }
+        if ninja.is_valid_target() && overlap_circle_vs_circle(self.pos, RADIUS, ninja.pos, ninja::RADIUS) {
+            let self_normal = self.orientation.vec2();
+            if (self.pos - ninja.pos + ninja::RADIUS * self_normal).dot(self_normal) >= -0.1 {
+                self.frames_since_last_touch = 0;
+                let yboost_scale = if ninja.grav_get_vert(self_normal) < 0.0 {
+                    1.0 - ninja.grav_get_vert(self_normal)
+                } else {
+                    1.0
+                };
+                return Some(ninja.grav_vec(DVec2::new(
+                    ninja.grav_get_horiz(self_normal) * BOOST,
+                    ninja.grav_get_vert(self_normal) * BOOST * yboost_scale,
+                )));
             }
         }
         None

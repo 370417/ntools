@@ -62,10 +62,7 @@ impl Segment {
     }
 
     pub fn is_from_tile(&self) -> bool {
-        match self {
-            Self::Door { .. } => false,
-            _ => true,
-        }
+        !matches!(self, Self::Door { .. })
     }
 
     pub fn is_active(&self, doors: &Doors) -> bool {
@@ -252,7 +249,7 @@ impl Segment {
 }
 
 pub fn extract_path(segments: &Grid<Segment>, outer_border: bool) -> String {
-    let mut segments: Vec<Segment> = segments.flat_iter().filter(|s| s.is_from_tile()).map(|s| s.clone()).collect();
+    let mut segments: Vec<Segment> = segments.flat_iter().filter(|s| s.is_from_tile()).cloned().collect();
 
     let mut path = Vec::new();
 
@@ -269,7 +266,7 @@ pub fn extract_path(segments: &Grid<Segment>, outer_border: bool) -> String {
         path.push(segment.svg_path(curr_pos));
         curr_pos = segment.end();
         while let Some((i, _)) = find_next_segment(curr_pos, &segments) {
-            let segment = segments.remove(i);
+            let segment = segments.swap_remove(i);
             path.push(segment.svg_path(curr_pos));
             curr_pos = segment.end();
         }
@@ -278,6 +275,6 @@ pub fn extract_path(segments: &Grid<Segment>, outer_border: bool) -> String {
     path.join(" ")
 }
 
-fn find_next_segment<'a>(curr_pos: DVec2, segments: &'a [Segment]) -> Option<(usize, &'a Segment)> {
+fn find_next_segment(curr_pos: DVec2, segments: &[Segment]) -> Option<(usize, &Segment)> {
     segments.iter().enumerate().find(|(_, segment)| segment.start() == curr_pos)
 }

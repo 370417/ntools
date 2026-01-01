@@ -87,13 +87,11 @@ impl Thwump {
                 .reduce(f64::min);
         }
 
-        if let (&ThwumpState::Waiting, Some(detection_range)) = (&self.state, self.detection_range) {
-            if ninja.is_valid_target() {
-                let activation_range = 2.0 * (SEMI_SIDE + ninja::RADIUS);
-                let ninja_pos_rel_thwump = basis_matrix_inverse * (ninja.pos - self.pos);
-                if ninja_pos_rel_thwump.x.abs() < activation_range && self.is_facing_ninja(ninja.pos, basis_matrix_inverse) && ninja_pos_rel_thwump.y < detection_range {
-                    self.state = ThwumpState::Forward;
-                }
+        if let (&ThwumpState::Waiting, Some(detection_range)) = (&self.state, self.detection_range) && ninja.is_valid_target() {
+            let activation_range = 2.0 * (SEMI_SIDE + ninja::RADIUS);
+            let ninja_pos_rel_thwump = basis_matrix_inverse * (ninja.pos - self.pos);
+            if ninja_pos_rel_thwump.x.abs() < activation_range && self.is_facing_ninja(ninja.pos, basis_matrix_inverse) && ninja_pos_rel_thwump.y < detection_range {
+                self.state = ThwumpState::Forward;
             }
         }
     }
@@ -183,14 +181,12 @@ impl Mob for Thwump {
         };
         let new_pos = self.pos + speed_magnitude * speed_dir;
 
-        if let ThwumpState::Backward = self.state {
-            if self.orientation.vec2().dot(new_pos - self.origin) <= 0.0 {
-                // If the thwump as retreated past its starting point, set its position to the origin.
-                self.pos = self.origin;
-                self.is_moving = false;
-                self.state = ThwumpState::Waiting;
-                return;
-            }
+        if let ThwumpState::Backward = self.state && self.orientation.vec2().dot(new_pos - self.origin) <= 0.0 {
+            // If the thwump as retreated past its starting point, set its position to the origin.
+            self.pos = self.origin;
+            self.is_moving = false;
+            self.state = ThwumpState::Waiting;
+            return;
         }
 
         let leading_edge_center = new_pos + 11.0 * speed_dir;

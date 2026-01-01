@@ -165,10 +165,8 @@ impl MoveSelection {
                 entity.pos_mut().rotate_cw_mut(self.center_of_rotation);
                 entity.rotate_cw();
             }
-            if *selection_type != SelectionType::Pos {
-                if let Some(switch_pos) = entity.switch_pos_mut() {
-                    switch_pos.rotate_cw_mut(self.center_of_rotation);
-                }
+            if *selection_type != SelectionType::Pos && let Some(switch_pos) = entity.switch_pos_mut() {
+                switch_pos.rotate_cw_mut(self.center_of_rotation);
             }
         }
     }
@@ -183,10 +181,8 @@ impl MoveSelection {
                 entity.pos_mut().rotate_ccw_mut(self.center_of_rotation);
                 entity.rotate_ccw();
             }
-            if *selection_type != SelectionType::Pos {
-                if let Some(switch_pos) = entity.switch_pos_mut() {
-                    switch_pos.rotate_ccw_mut(self.center_of_rotation);
-                }
+            if *selection_type != SelectionType::Pos && let Some(switch_pos) = entity.switch_pos_mut() {
+                switch_pos.rotate_ccw_mut(self.center_of_rotation);
             }
         }
     }
@@ -208,10 +204,8 @@ impl MoveSelection {
                 entity.pos_mut().flip_across_x_axis_mut(center);
                 entity.flip_across_x_axis();
             }
-            if *selection_type != SelectionType::Pos {
-                if let Some(switch_pos) = entity.switch_pos_mut() {
-                    switch_pos.flip_across_x_axis_mut(center);
-                }
+            if *selection_type != SelectionType::Pos && let Some(switch_pos) = entity.switch_pos_mut() {
+                switch_pos.flip_across_x_axis_mut(center);
             }
         }
     }
@@ -227,10 +221,8 @@ impl MoveSelection {
                 entity.pos_mut().flip_across_y_axis_mut(center);
                 entity.flip_across_y_axis();
             }
-            if *selection_type != SelectionType::Pos {
-                if let Some(switch_pos) = entity.switch_pos_mut() {
-                    switch_pos.flip_across_y_axis_mut(center);
-                }
+            if *selection_type != SelectionType::Pos && let Some(switch_pos) = entity.switch_pos_mut() {
+                switch_pos.flip_across_y_axis_mut(center);
             }
         }
     }

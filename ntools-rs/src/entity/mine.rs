@@ -47,6 +47,7 @@ impl Mine {
     }
 
     pub fn logical_collision(&mut self, ninja: &mut Ninja) {
+        #[allow(clippy::collapsible_if)]
         if ninja.is_valid_target() && self.state == MineState::Toggled {
             if overlap_circle_vs_circle(self.pos, self.radius(), ninja.pos, ninja::RADIUS) {
                 self.state = MineState::Untoggled;

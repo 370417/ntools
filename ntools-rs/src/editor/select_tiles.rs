@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use glam::DVec2;
 
-use crate::{editor::editor_state::{Command, EditorState, PaintTile}, grid::GridPos, tile::{HorizontalEdge, TILE_SIZE, Tile, Tiles, VerticalEdge}};
+use crate::{editor::editor_state::{Command, PaintTile}, grid::GridPos, tile::{HorizontalEdge, TILE_SIZE, Tile, Tiles, VerticalEdge}};
 
 pub struct SelectTiles {
     selected_tiles: HashSet<GridPos>,

@@ -239,30 +239,26 @@ impl EditorState {
         match command {
             Command::SetEntityCount(set_entity_count) => {
                 let entity = set_entity_count.entity;
-                if let Some(opposite_mine) = entity.opposite_mine() {
-                    if let Some(opposite_count) = self.entities.get(&opposite_mine) {
-                        *command = Command::SetTilesAndEntities(Vec::new(), vec![
-                            set_entity_count.clone(),
-                            SetEntityCount {
-                                entity: opposite_mine,
-                                old_count: *opposite_count,
-                                new_count: 0,
-                            },
-                        ]);
-                    }
+                if let Some(opposite_mine) = entity.opposite_mine() && let Some(opposite_count) = self.entities.get(&opposite_mine) {
+                    *command = Command::SetTilesAndEntities(Vec::new(), vec![
+                        set_entity_count.clone(),
+                        SetEntityCount {
+                            entity: opposite_mine,
+                            old_count: *opposite_count,
+                            new_count: 0,
+                        },
+                    ]);
                 }
             }
             Command::SetTilesAndEntities(_, set_entity_counts) => {
                 let mut additional_commands = Vec::new();
                 for set_entity_count in set_entity_counts.iter() {
-                    if let Some(opposite_mine) = set_entity_count.entity.opposite_mine() {
-                        if let Some(opposite_count) = self.entities.get(&opposite_mine) {
-                            additional_commands.push(SetEntityCount {
-                                entity: opposite_mine,
-                                old_count: *opposite_count,
-                                new_count: 0,
-                            });
-                        }
+                    if let Some(opposite_mine) = set_entity_count.entity.opposite_mine() && let Some(opposite_count) = self.entities.get(&opposite_mine) {
+                        additional_commands.push(SetEntityCount {
+                            entity: opposite_mine,
+                            old_count: *opposite_count,
+                            new_count: 0,
+                        });
                     }
                 }
                 set_entity_counts.append(&mut additional_commands);

@@ -150,10 +150,11 @@ impl ShoveThwump {
             ShoveThwumpState::Touched { touch, is_touched } => {
                 let depen = penetration_shwump(self.corners, self.pos, self.orientation, *touch, ninja.pos, ninja::RADIUS + 0.1);
                 *is_touched = depen.is_some();
-                if let Some(depen) = depen {
-                    if ninja.grav_eq_abs_horiz(depen.depen_unit_normal, 1.0) {
-                        return Some(ninja.grav_get_horiz(depen.depen_unit_normal));
-                    }
+                // depen
+                //     .filter(|depen| ninja.grav_eq_abs_horiz(depen.depen_unit_normal, 1.0))
+                //     .map(|depen| ninja.grav_get_horiz(depen.depen_unit_normal))
+                if let Some(depen) = depen && ninja.grav_eq_abs_horiz(depen.depen_unit_normal, 1.0) {
+                    return Some(ninja.grav_get_horiz(depen.depen_unit_normal));
                 }
                 None
             }

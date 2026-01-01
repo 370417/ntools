@@ -52,7 +52,7 @@ impl Replay {
     #[wasm_bindgen]
     pub fn send_past_ninjas(&mut self) {
         if let Some(sender) = self.sender.take() {
-            let _ = sender.send(std::mem::replace(&mut self.past_ninjas, Vec::new()));
+            let _ = sender.send(std::mem::take(&mut self.past_ninjas));
         }
     }
 

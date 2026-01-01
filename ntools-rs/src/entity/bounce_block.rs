@@ -65,14 +65,13 @@ impl BounceBlock {
             Corners::Round => penetration_square_vs_circle_with_orientation(self.pos, SEMI_SIDE, ninja.pos, ninja::RADIUS + 0.1, self.orientation),
             Corners::Square => penetration_square_vs_circle_with_orientation(self.pos, SEMI_SIDE + ninja::RADIUS + 0.1, ninja.pos, 0.0, self.orientation),
         };
-        if let Some(depen) = depen {
-            if ninja.grav_eq_abs_horiz(depen.depen_unit_normal, 1.0) {
-                // is it possible to desync based on the order of checks here?
-                // e.g. if you are between bounce blocks on the left and right
-                return Some(ninja.grav_get_horiz(depen.depen_unit_normal));
-            }
+        if let Some(depen) = depen && ninja.grav_eq_abs_horiz(depen.depen_unit_normal, 1.0) {
+            // is it possible to desync based on the order of checks here?
+            // e.g. if you are between bounce blocks on the left and right
+            Some(ninja.grav_get_horiz(depen.depen_unit_normal))
+        } else {
+            None
         }
-        None
     }
 }
 

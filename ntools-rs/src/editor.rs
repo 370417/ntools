@@ -1,3 +1,5 @@
+#![allow(clippy::single_match)]
+
 use std::collections::BTreeMap;
 
 use futures_channel::oneshot::{self, Receiver};
@@ -59,6 +61,7 @@ pub enum EditorMode {
 #[wasm_bindgen]
 impl Editor {
     #[wasm_bindgen]
+    #[allow(clippy::new_without_default)]
     pub fn new() -> Editor {
         Editor {
             state: EditorState::new(),
@@ -112,6 +115,7 @@ impl Editor {
     }
 
     #[wasm_bindgen]
+    #[allow(clippy::wrong_self_convention)]
     pub fn to_replay(&mut self, round_corners: bool) -> Result<Replay, String> {
         self.mode = EditorMode::PaintTiles;
 
@@ -212,14 +216,12 @@ impl Editor {
 
     #[wasm_bindgen]
     pub fn tiles_path(&self) -> String {
-        if let EditorMode::PenTool(pen_tool) = &self.mode {
-            if !pen_tool.is_none() {
-                let start = pen_tool.start(self.state.latest());
-                let end = pen_tool.crosshair(self.cursor_pos, self.state.latest(), self.pen_tool_fine_grid);
-                if start != end {
-                    let command = create_command(start, end, self.pen_tool_is_clockwise, None, self.state.tiles());
-                    return extract_path(&self.state.preview(command).segments(), true);
-                }
+        if let EditorMode::PenTool(pen_tool) = &self.mode && !pen_tool.is_none() {
+            let start = pen_tool.start(self.state.latest());
+            let end = pen_tool.crosshair(self.cursor_pos, self.state.latest(), self.pen_tool_fine_grid);
+            if start != end {
+                let command = create_command(start, end, self.pen_tool_is_clockwise, None, self.state.tiles());
+                return extract_path(&self.state.preview(command).segments(), true);
             }
         }
         extract_path(&self.state.tiles().segments(), true)
@@ -993,10 +995,8 @@ impl Editor {
 
     #[wasm_bindgen]
     pub fn receive_past_ninjas(&mut self) {
-        if let Some(receiver) = &mut self.receiver {
-            if let Ok(Some(past_ninjas)) = receiver.try_recv() {
-                self.past_ninjas = past_ninjas;
-            }
+        if let Some(receiver) = &mut self.receiver && let Ok(Some(past_ninjas)) = receiver.try_recv() {
+            self.past_ninjas = past_ninjas;
         }
     }
 

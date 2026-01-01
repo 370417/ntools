@@ -1,3 +1,5 @@
+#![allow(clippy::upper_case_acronyms)]
+
 use glam::DVec2;
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -98,10 +100,7 @@ impl Orientation {
     }
 
     pub fn is_orthogonal(&self) -> bool {
-        match self {
-            Self::W | Self::S | Self::E | Self::N => true,
-            _ => false,
-        }
+        matches!(self, Self::W | Self::S | Self::E | Self::N)
     }
 
     pub fn rotate_cw_mut(&mut self) {
@@ -237,10 +236,7 @@ impl OrientationExt {
     }
 
     pub fn is_orthogonal(&self) -> bool {
-        match self {
-            Self::W | Self::S | Self::E | Self::N => true,
-            _ => false,
-        }
+        matches!(self, Self::W | Self::S | Self::E | Self::N)
     }
 
     pub fn rotate_cw_mut(&mut self) {

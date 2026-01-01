@@ -79,7 +79,7 @@ impl FloorGuard {
                     // so after this line, we use the variable name x instead of y.
                     [start.y, end.y].into_iter()
                 })
-                .fold((core::f64::MIN, core::f64::MAX), |(mut largest_negative, mut smallest_positive), x| {
+                .fold((f64::MIN, f64::MAX), |(mut largest_negative, mut smallest_positive), x| {
                     if x <= 0.0 && x > largest_negative {
                         largest_negative = x;
                     }
@@ -98,26 +98,22 @@ impl FloorGuard {
 
         if ninja.is_valid_target() {
             let ninja_pos_rel_floorguard = basis_matrix_inverse * (ninja.pos - self.pos);
+            #[allow(clippy::collapsible_if)]
             if ninja_pos_rel_floorguard.y >= RADIUS - TILE_SIZE && ninja_pos_rel_floorguard.y <= RADIUS {
-                match (&self.state, self.detection_range) {
-                    (FloorGuardState::Waiting, Some(detection_range)) => {
-                        if ninja_pos_rel_floorguard.x >= 0.0 && ninja_pos_rel_floorguard.x <= detection_range.positive_x {
-                            self.state = FloorGuardState::ChasingRight;
-                        } else if ninja_pos_rel_floorguard.x <= 0.0 && ninja_pos_rel_floorguard.x >= detection_range.negative_x {
-                            self.state = FloorGuardState::ChasingLeft;
-                        }
+                if let (FloorGuardState::Waiting, Some(detection_range)) = (&self.state, self.detection_range) {
+                    if ninja_pos_rel_floorguard.x >= 0.0 && ninja_pos_rel_floorguard.x <= detection_range.positive_x {
+                        self.state = FloorGuardState::ChasingRight;
+                    } else if ninja_pos_rel_floorguard.x <= 0.0 && ninja_pos_rel_floorguard.x >= detection_range.negative_x {
+                        self.state = FloorGuardState::ChasingLeft;
                     }
-                    _ => {}
                 }
             }
         }
     }
 
     pub fn logical_collision(&mut self, ninja: &mut Ninja) {
-        if ninja.is_valid_target() {
-            if overlap_circle_vs_circle(self.pos, RADIUS, ninja.pos, ninja::RADIUS) {
-                ninja.kill(0, DVec2::ZERO, DVec2::ZERO);
-            }
+        if ninja.is_valid_target() && overlap_circle_vs_circle(self.pos, RADIUS, ninja.pos, ninja::RADIUS) {
+            ninja.kill(0, DVec2::ZERO, DVec2::ZERO);
         }
     }
 

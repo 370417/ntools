@@ -45,10 +45,8 @@ impl SelectEntity {
         }
 
         for &entity in entities.keys() {
-            if !fine_grid {
-                if entity.pos().x % 2 != 0 || entity.pos().y % 2 != 0 {
-                    continue;
-                }
+            if !fine_grid && (entity.pos().x % 2 != 0 || entity.pos().y % 2 != 0) {
+                continue;
             }
 
             if Some(entity.pos()) == best_pos {
@@ -88,24 +86,22 @@ impl SelectEntity {
         // isn't guaranteed to return the first one, so scan backwards for
         // the first entity matching self.selected_entity_id.
         while index > 0 {
-            if let Some((prev_entity, _)) = self.selected_entities.get(index - 1) {
-                if prev_entity.id() == self.selected_entity_id {
+            if let Some((prev_entity, _)) = self.selected_entities.get(index - 1)
+                && prev_entity.id() == self.selected_entity_id {
                     index -= 1;
                     continue;
                 }
-            }
             break;
         }
 
         // Scan forward based on self.selected_entity_offset
         let base_index = index;
         while index - base_index < self.selected_entity_offset {
-            if let Some((next_entity, _)) = self.selected_entities.get(index + 1) {
-                if next_entity.id() == self.selected_entity_id {
+            if let Some((next_entity, _)) = self.selected_entities.get(index + 1)
+                && next_entity.id() == self.selected_entity_id {
                     index += 1;
                     continue;
                 }
-            }
             break;
         }
 

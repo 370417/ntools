@@ -10,7 +10,7 @@ const GROUND_ACCEL: f64 = 0.06666666666666665;
 const AIR_ACCEL: f64 = 0.04444444444444444;
 const DRAG_REGULAR: f64 = 0.9933221725495059; // 0.99^(2/3)
 const DRAG_SLOW: f64 = 0.8617738760127536; // 0.80^(2/3)
-const FRICTION_GROUND: f64 = 0.9459290248857720; // 0.92^(2/3)
+const FRICTION_GROUND: f64 = 0.945_929_024_885_772; // 0.92^(2/3)
 const FRICTION_GROUND_SLOW: f64 = 0.8617738760127536; // 0.80^(2/3)
 const FRICTION_WALL: f64 = 0.9113380468927672; // 0.87^(2/3)
 const MAX_HOR_SPEED: f64 = 3.333333333333333;
@@ -99,10 +99,7 @@ pub struct CollisionState {
 
 impl NinjaState {
     fn is_grounded(&self) -> bool {
-        match self {
-            Self::Standing | Self::Running | Self::Skidding => true,
-            _ => false,
-        }
+        matches!(self, Self::Standing | Self::Running | Self::Skidding)
     }
 }
 
@@ -167,7 +164,7 @@ impl Ninja {
     // TODO: adjust for gravity
     pub fn collide_vs_objects(&mut self, collision_state: &mut CollisionState, entities: &mut Entities, entity_grid: &Grid<EntityIndex>) {
         for &entity_index in entity_grid.iter_neighborhood(self.pos) {
-            let Some(depen) = physical_collisions(entities, entity_index, &self) else { continue };
+            let Some(depen) = physical_collisions(entities, entity_index, self) else { continue };
             let pop = depen.depen_unit_normal * depen.depen_dist;
             self.pos += pop;
             let entity_type = entity_index.0;
@@ -366,6 +363,7 @@ impl Ninja {
         }
 
         // Check if ninja died from crushing.
+        #[allow(clippy::collapsible_if)]
         if collision_state.is_crushable && collision_state.crush_len > 0.0 {
             if collision_state.crush.length() / collision_state.crush_len < MIN_SURVIVABLE_CRUSHING {
                 self.kill(2, self.pos, DVec2::ZERO);
@@ -680,6 +678,7 @@ impl Ninja {
                 self.tilt = DVec2::from_angle(tilt_angle);
             }
         }
+        #[allow(clippy::collapsible_if)]
         if self.state != NinjaState::WallSliding {
             if self.speed.x.abs() > 0.01 {
                 self.facing = self.grav_get_horiz(self.speed).signum();
@@ -769,9 +768,9 @@ impl Ninja {
                 }
             }
         }
-        for i in 0..13 {
-            bones[i].x *= facing as f32;
-            bones[i] = tilt.as_vec2().rotate(bones[i]);
+        for bone in &mut bones {
+            bone.x *= facing as f32;
+            *bone = tilt.as_vec2().rotate(*bone);
         }
         bones
     }
@@ -791,10 +790,7 @@ impl Ninja {
 
     /// Return whether the ninja is a valid target for various interactions.
     pub fn is_valid_target(&self) -> bool {
-        match self.state {
-            NinjaState::Dead | NinjaState::Celebrating | NinjaState::Disabled => false,
-            _ => true,
-        }
+        !matches!(self.state, NinjaState::Dead | NinjaState::Celebrating | NinjaState::Disabled)
     }
 
     /// Prng based on ninja's state.

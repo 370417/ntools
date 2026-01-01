@@ -50,7 +50,7 @@ impl Exit {
             None => 0.0,
             Some(frames_since_door_open) => {
                 let prev_frames_since_door_open = frames_since_door_open.saturating_sub(1) as f64;
-                let t = prev_frames_since_door_open.lerp(frames_since_door_open as f64, partial_frame) / ANIM_DURATION as f64;
+                let t = prev_frames_since_door_open.lerp(frames_since_door_open as f64, partial_frame) / ANIM_DURATION;
                 ease_out_quad(t)
             }
         }

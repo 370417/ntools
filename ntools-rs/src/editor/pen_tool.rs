@@ -22,10 +22,7 @@ impl PenTool {
     }
 
     pub fn is_none(&self) -> bool {
-        match self.start {
-            PenToolStart::None => true,
-            _ => false,
-        }
+        matches!(self.start, PenToolStart::None)
     }
 
     pub fn crosshair(&self, cursor_pos: DVec2, latest_command: Option<&Command>, fine_grid: bool) -> DVec2 {
@@ -89,11 +86,7 @@ fn round_to_grid(cursor_pos: DVec2, fine_grid: bool) -> DVec2 {
         // First try rounding cursor pos to half tile grid
         let x = TILE_HALF_SIZE * (cursor_pos.x / TILE_HALF_SIZE).round().clamp(2.0, 2.0 + 2.0 * COLS as f64);
         let y = TILE_HALF_SIZE * (cursor_pos.y / TILE_HALF_SIZE).round().clamp(2.0, 2.0 + 2.0 * ROWS as f64);
-        if x % TILE_SIZE == 0.0 && y % TILE_SIZE == 0.0 {
-            return DVec2::new(x, y);
-        } else if x % TILE_SIZE == 0.0 {
-            return DVec2::new(x, y);
-        } else if y % TILE_SIZE == 0.0 {
+        if x % TILE_SIZE == 0.0 || y % TILE_SIZE == 0.0 {
             return DVec2::new(x, y);
         }
     }
