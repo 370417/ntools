@@ -1,8 +1,11 @@
 use std::sync::OnceLock;
 
 use glam::DVec2;
+use wasm_bindgen::prelude::wasm_bindgen;
 
-pub static ANIM_DATA: OnceLock<Box<[u8]>> = OnceLock::new();
+/// We store animation data in a global static because structs exposed to
+/// wasm can't store references, so this is the only way to avoid copying it.
+static ANIM_DATA: OnceLock<Box<[u8]>> = OnceLock::new();
 
 pub const DANCES: [(usize, usize); 22] = [
     (104, 104), // Default pose
@@ -31,14 +34,34 @@ pub const DANCES: [(usize, usize); 22] = [
 
 pub type Bones = [DVec2; 13];
 
+#[wasm_bindgen]
+pub fn set_anim_data(data: Box<[u8]>) {
+    ANIM_DATA.get_or_init(|| data);
+}
+
+#[wasm_bindgen]
+pub fn get_anim_state() -> usize {
+    if let Some(anim_data) = ANIM_DATA.get() {
+        // rudimentary correctness check
+        if anim_data.len() == 477572 {
+            0 // valid
+        } else {
+            1 // invalid
+        }
+    } else {
+        2 // missing
+    }
+}
+
 /// Get data for one animation frame.
 /// Instead of parsing the data like a normal person, this function
 /// reads it from the static array of bytes every time.
 pub fn get_anim_frame(i: usize) -> Bones {
-    let anim_data = include_bytes!("anim_data_line_new.txt.bin");
-    let anim_data_body = &anim_data[4..];
-
     let mut bones = [DVec2::ZERO; 13];
+
+    let Some(anim_data) = ANIM_DATA.get() else { return bones };
+
+    let anim_data_body = &anim_data[4..];
 
     let anim_frame_size = 16 * 13;
 

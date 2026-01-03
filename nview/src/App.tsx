@@ -1,8 +1,8 @@
 import { createSignal, Show, type Accessor, type Setter } from 'solid-js';
-import { Editor, Replay } from './assets/ntools_rs';
+import { Editor, get_anim_state, Replay, set_anim_data } from './assets/ntools_rs';
 import { EditorApp } from './Editor.tsx';
 import { ReplayApp } from './Replay.tsx';
-import { loadMap } from './localstorage.ts';
+import { loadAnimData, loadMap, saveAnimData } from './localstorage.ts';
 
 export type GlobalEventState = {
     isJump1Pressed: Accessor<boolean>,
@@ -109,8 +109,40 @@ export function App() {
         setIsSuicidePressed(false);
     });
 
+    loadAnimData();
+    const ANIM_VALID = 0;
+    const ANIM_INVALID = 1;
+    const ANIM_MISSING = 2;
+    // Set initial state to only be valid or missing.
+    // We avoid setting state to invalid at first because it is confusing
+    // for the user to see an error message before interacating with the page.
+    const [animState, setAnimState] = createSignal(get_anim_state() == ANIM_VALID ? ANIM_VALID : ANIM_MISSING);
+
     return <>
-        <Show when={!replay()}>
+        <Show when={animState() != ANIM_VALID}>
+            <label style={{ display: 'inline-block', height: '100%', padding: '3em', color: 'var(--main-menu-text)' }}>
+                <p>Select your copy of anim_data_line_new.txt.bin to get started.</p>
+                <input type="file" onchange={function(this: HTMLInputElement) {
+                    const files = this.files;
+                    if (files && files.length > 0) {
+                        const fileReader = new FileReader();
+                        fileReader.onloadend = () => {
+                            if (fileReader.result instanceof ArrayBuffer) {
+                                const data = new Uint8Array(fileReader.result);
+                                saveAnimData(data);
+                                set_anim_data(data);
+                                setAnimState(get_anim_state());
+                            }
+                        };
+                        fileReader.readAsArrayBuffer(files[0]);
+                    }
+                }} />
+                <Show when={animState() == ANIM_INVALID}>
+                    <p>Invalid file.</p>
+                </Show>
+            </label>
+        </Show>
+        <Show when={animState() == ANIM_VALID && !replay()}>
             <EditorApp
                 editor={editor}
                 pastNinjas={pastNinjas}
@@ -121,7 +153,7 @@ export function App() {
                 setRoundCorners={setRoundCorners}
             />
         </Show>
-        <Show when={!!replay()} keyed>
+        <Show when={animState() == ANIM_VALID && !!replay()} keyed>
             <ReplayApp replay={replay()!} globalEventState={globalEventState} />
         </Show>
     </>;

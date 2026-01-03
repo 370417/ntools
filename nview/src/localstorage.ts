@@ -1,4 +1,4 @@
-import type { Editor } from "./assets/ntools_rs";
+import { set_anim_data, type Editor } from "./assets/ntools_rs";
 
 export const debouncedSaveMap = debounce((editor: Editor) => {
     // encode bytes into string (non printable chars are safe)
@@ -14,6 +14,19 @@ export function loadMap(editor: Editor): boolean {
         editor.load_map(mapArray);
     }
     return !!mapStr;
+}
+
+export function saveAnimData(data: Uint8Array<ArrayBufferLike>) {
+    const animDataStr = String.fromCharCode(...data);
+    localStorage.setItem('animData', animDataStr);
+}
+
+export function loadAnimData() {
+    const animDataStr = localStorage.getItem('animData');
+    if (animDataStr) {
+        const animDataArray = Uint8Array.from(animDataStr, c => c.charCodeAt(0));
+        set_anim_data(animDataArray);
+    }
 }
 
 function debounce<F extends (...args: any[]) => void>(
