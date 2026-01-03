@@ -1,4 +1,8 @@
-use glam::Vec2;
+use std::sync::OnceLock;
+
+use glam::DVec2;
+
+pub static ANIM_DATA: OnceLock<Box<[u8]>> = OnceLock::new();
 
 pub const DANCES: [(usize, usize); 22] = [
     (104, 104), // Default pose
@@ -25,26 +29,26 @@ pub const DANCES: [(usize, usize); 22] = [
     (2242, 2295), // Kick
 ];
 
-pub type Bones = [Vec2; 13];
+pub type Bones = [DVec2; 13];
 
 /// Get data for one animation frame.
 /// Instead of parsing the data like a normal person, this function
 /// reads it from the static array of bytes every time.
 pub fn get_anim_frame(i: usize) -> Bones {
-    let anim_data = include_bytes!("anim_data_line_f32.txt.bin");
+    let anim_data = include_bytes!("anim_data_line_new.txt.bin");
     let anim_data_body = &anim_data[4..];
 
-    let mut bones = [Vec2::ZERO; 13];
+    let mut bones = [DVec2::ZERO; 13];
 
-    let anim_frame_size = 8 * 13;
+    let anim_frame_size = 16 * 13;
 
     let anim_frame = &anim_data_body[i * anim_frame_size..(i + 1) * anim_frame_size];
 
     for bone in 0..13 {
-        let anim_tuple = &anim_frame[bone * 8..(bone + 1) * 8];
+        let anim_tuple = &anim_frame[bone * 16..(bone + 1) * 16];
         // TODO: use as_array once stabilized
-        bones[bone].x = f32::from_le_bytes(anim_tuple[0..4].try_into().unwrap());
-        bones[bone].y = f32::from_le_bytes(anim_tuple[4..8].try_into().unwrap());
+        bones[bone].x = f64::from_le_bytes(anim_tuple[0..8].try_into().unwrap());
+        bones[bone].y = f64::from_le_bytes(anim_tuple[8..16].try_into().unwrap());
     }
 
     bones
@@ -52,7 +56,7 @@ pub fn get_anim_frame(i: usize) -> Bones {
 
 /// To pass bones data to wasm, we need to turn it into a boxed number slice.
 /// All x coordinates are stored first, then all y coordinates.
-pub fn flatten_bones(bones: &Bones) -> Box<[f32]> {
+pub fn flatten_bones(bones: &Bones) -> Box<[f64]> {
     let mut flat_bones = [0.0; 26];
     for i in 0..13 {
         flat_bones[i] = bones[i].x;

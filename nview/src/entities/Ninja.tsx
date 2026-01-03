@@ -12,7 +12,7 @@ const LIMBS = [[0, 12], [1, 12], [2, 8], [3, 9], [4, 10], [5, 11], [6, 7], [8, 0
 export function Ninja(props: {
     class: string,
     ninja: Accessor<NinjaData>,
-    bones: Accessor<Float32Array<ArrayBufferLike> | undefined>,
+    bones: Accessor<Float64Array<ArrayBufferLike> | undefined>,
 }) {
     function path() {
         const bones = props.bones();

@@ -752,7 +752,7 @@ impl Ninja {
 
         let prev_bones = Ninja::calc_ninja_position_inner(prev.anim_frame, prev.anim_state, prev.run_cycle, prev.facing, prev.tilt);
         for i in 0..bones.len() {
-            bones[i] = prev_bones[i].lerp(bones[i], partial_frame as f32)
+            bones[i] = prev_bones[i].lerp(bones[i], partial_frame)
         }
         bones
     }
@@ -760,7 +760,7 @@ impl Ninja {
     fn calc_ninja_position_inner(anim_frame: usize, anim_state: AnimState, run_cycle: usize, facing: f64, tilt: DVec2) -> Bones {
         let mut bones = get_anim_frame(anim_frame);
         if anim_state == AnimState::Running {
-            let interpolation = (run_cycle % 6) as f32 / 6.0;
+            let interpolation = (run_cycle % 6) as f64 / 6.0;
             if interpolation > 0.0 {
                 let next_bones = get_anim_frame(((anim_frame as isize - 12) % 72 + 12) as usize);
                 for i in 0..13 {
@@ -769,8 +769,8 @@ impl Ninja {
             }
         }
         for bone in &mut bones {
-            bone.x *= facing as f32;
-            *bone = tilt.as_vec2().rotate(*bone);
+            bone.x *= facing;
+            *bone = tilt.rotate(*bone);
         }
         bones
     }

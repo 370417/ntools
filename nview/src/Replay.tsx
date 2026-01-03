@@ -57,8 +57,8 @@ export function ReplayApp(props: { replay: Replay, globalEventState: GlobalEvent
     const [ninja, setNinja] = createSignal({ x: -50, y: -50, deg: 0 });
     const [ninjaPreview, setNinjaPreview] = createSignal({ x: -50, y: -50, deg: 0 });
 
-    const [ninjaBones, setNinjaBones] = createSignal<Float32Array<ArrayBufferLike>>();
-    const [ninjaPreviewBones, setNinjaPreviewBones] = createSignal<Float32Array<ArrayBufferLike>>();
+    const [ninjaBones, setNinjaBones] = createSignal<Float64Array<ArrayBufferLike>>();
+    const [ninjaPreviewBones, setNinjaPreviewBones] = createSignal<Float64Array<ArrayBufferLike>>();
 
     const mines = createSignal<MineData[]>([]);
     const bounceBlocks = createSignal<BounceBlockData[]>([]);

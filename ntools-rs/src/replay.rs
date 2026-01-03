@@ -196,13 +196,13 @@ impl Replay {
     }
 
     #[wasm_bindgen]
-    pub fn ninja_bones(&self, partial_frame: f64) -> Box<[f32]> {
+    pub fn ninja_bones(&self, partial_frame: f64) -> Box<[f64]> {
         let prev = &self.past_ninjas[self.current_sim.frame.saturating_sub(1) as usize];
         flatten_bones(&self.current_sim.ninja.calc_ninja_position(prev, partial_frame))
     }
 
     #[wasm_bindgen]
-    pub fn ninja_preview_bones(&self, partial_frame: f64) -> Box<[f32]> {
+    pub fn ninja_preview_bones(&self, partial_frame: f64) -> Box<[f64]> {
         let prev = &self.past_ninjas[self.current_sim.frame.saturating_sub(1) as usize];
         flatten_bones(&self.preview_sim.ninja.calc_ninja_position(prev,partial_frame))
     }
