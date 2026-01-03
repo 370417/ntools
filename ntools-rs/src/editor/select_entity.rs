@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{editor::{editor_entity::{EditorEntity, EntityId, EntityPos, ExportedEntity}, editor_state::{Command, EditorEntities, SetEntityCount}}, tile::TILE_SIZE};
+use crate::{editor::{editor_entity::{EditorEntity, EntityId, EntityPos, ExportedEntity}, editor_state::{Command, EditorEntities, SetEntityCount}, place_entity::PlaceEntity}, tile::TILE_SIZE};
 
 pub struct SelectEntity {
     selected_entities: Vec<(EditorEntity, SelectionType)>,
@@ -24,7 +24,8 @@ pub enum SelectionType {
 }
 
 impl SelectEntity {
-    pub fn new(crosshair_pos: DVec2, entities: &EditorEntities, fine_grid: bool) -> SelectEntity {
+    pub fn new(cursor_pos: DVec2, entities: &EditorEntities, fine_grid: bool) -> SelectEntity {
+        let crosshair_pos = PlaceEntity::round_to_grid(cursor_pos, fine_grid);
         let mut select_entity = SelectEntity {
             selected_entities: Vec::new(),
             selected_entity_id: EntityId::Ninja,

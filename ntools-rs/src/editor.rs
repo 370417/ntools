@@ -282,6 +282,13 @@ impl Editor {
                 place_entity.set_door_orientation_from_pos();
                 new_crosshair != old_crosshair
             }
+            EditorMode::ModifyEntity(modify_entity) => {
+                self.cursor_pos = new_cursor_pos;
+                let new_crosshair = modify_entity.crosshair(self.cursor_pos, self.entity_fine_grid);
+                modify_entity.set_pos(new_crosshair);
+                modify_entity.set_door_orientation_from_pos();
+                new_crosshair != old_crosshair
+            }
             EditorMode::SelectTiles(select_tiles) => {
                 let old_crosshair = GridPos::from_world_pos(self.cursor_pos).clamp();
                 self.cursor_pos = new_cursor_pos;
@@ -317,6 +324,10 @@ impl Editor {
             EditorMode::PenTool(pen_tool) => pen_tool.cursor_click(self.cursor_pos, self.pen_tool_is_clockwise, &mut self.state, self.pen_tool_fine_grid),
             EditorMode::PlaceEntity(place_entity) => if let Some(command) = place_entity.cursor_click(self.state.entities()) {
                 self.state.apply(command);
+            },
+            EditorMode::ModifyEntity(modify_entity) => if let Some(command) = modify_entity.cursor_click(self.state.entities()) {
+                self.state.apply(command);
+                self.mode = EditorMode::SelectEntity(SelectEntity::new(self.cursor_pos, self.state.entities(), self.entity_fine_grid))
             },
             EditorMode::PaintTiles => self.mode = EditorMode::SelectTiles(SelectTiles::new(self.cursor_pos)),
             EditorMode::SelectTiles(select_tiles) => select_tiles.start_selection(self.cursor_pos, shift),
@@ -392,6 +403,7 @@ impl Editor {
     pub fn preview_entities(&self) -> Box<[ExportedEntity]> {
         match &self.mode {
             EditorMode::PlaceEntity(place_entity) => Box::new([place_entity.entity.export().with_stage(place_entity.stage)]),
+            EditorMode::ModifyEntity(modify_entity) => Box::new([modify_entity.modified_entity.export()]),
             EditorMode::MoveSelection(move_selection) => move_selection.preview_entities(self.cursor_pos).map(|entity| entity.export()).collect(),
             EditorMode::SelectEntity(select_entity) => select_entity.get_selection_exported().into_iter().collect(),
             _ => Box::new([]),
@@ -412,6 +424,7 @@ impl Editor {
         match self.mode {
             EditorMode::PenTool(_) => self.pen_tool_fine_grid,
             EditorMode::PlaceEntity(_) => true,
+            EditorMode::ModifyEntity(_) => true,
             EditorMode::SelectEntity(_) => true,
             _ => false,
         }
@@ -421,6 +434,7 @@ impl Editor {
     pub fn show_quarter_grid(&self) -> bool {
         match self.mode {
             EditorMode::PlaceEntity(_) => self.entity_fine_grid,
+            EditorMode::ModifyEntity(_) => self.entity_fine_grid,
             EditorMode::SelectEntity(_) => self.entity_fine_grid,
             _ => false,
         }
@@ -565,6 +579,15 @@ impl Editor {
                 self.pressed_orientation = Some(Orientation::NW);
                 place_entity.set_orientation(self.entity_orientation);
             }
+            EditorMode::ModifyEntity(modify_entity) => {
+                self.entity_orientation = match self.pressed_orientation {
+                    Some(Orientation::N) => Orientation::NNW,
+                    Some(Orientation::W) => Orientation::WNW,
+                    _ => Orientation::NW,
+                };
+                self.pressed_orientation = Some(Orientation::NW);
+                modify_entity.set_orientation(self.entity_orientation);
+            }
             EditorMode::MoveSelection(move_selection) => move_selection.rotate_ccw(),
             _ => {}
         }
@@ -587,6 +610,17 @@ impl Editor {
                 self.entity_orientation_binary = OrientationBinary::V;
                 self.pressed_orientation = Some(Orientation::N);
                 place_entity.set_orientation(self.entity_orientation);
+            }
+            EditorMode::ModifyEntity(modify_entity) => {
+                self.entity_orientation = match self.pressed_orientation {
+                    Some(Orientation::NW) => Orientation::NNW,
+                    Some(Orientation::NE) => Orientation::NNE,
+                    _ => Orientation::N,
+                };
+                self.entity_orientation_cardinal = OrientationCardinal::N;
+                self.entity_orientation_binary = OrientationBinary::V;
+                self.pressed_orientation = Some(Orientation::N);
+                modify_entity.set_orientation(self.entity_orientation);
             }
             EditorMode::MoveSelection(move_selection) => move_selection.rotate_cw(),
             _ => {}
@@ -611,6 +645,17 @@ impl Editor {
                 self.entity_orientation_binary = OrientationBinary::H;
                 place_entity.set_orientation(self.entity_orientation);
             }
+            EditorMode::ModifyEntity(modify_entity) => {
+                self.entity_orientation = match self.pressed_orientation {
+                    Some(Orientation::NW) => Orientation::WNW,
+                    Some(Orientation::SW) => Orientation::WSW,
+                    _ => Orientation::W,
+                };
+                self.entity_orientation_cardinal = OrientationCardinal::W;
+                self.pressed_orientation = Some(Orientation::W);
+                self.entity_orientation_binary = OrientationBinary::H;
+                modify_entity.set_orientation(self.entity_orientation);
+            }
             EditorMode::MoveSelection(move_selection) => move_selection.flip_across_y_axis(),
             _ => {}
         }
@@ -634,6 +679,17 @@ impl Editor {
                 self.entity_orientation_binary = OrientationBinary::V;
                 place_entity.set_orientation(self.entity_orientation);
             }
+            EditorMode::ModifyEntity(modify_entity) => {
+                self.entity_orientation = match self.pressed_orientation {
+                    Some(Orientation::SW) => Orientation::SSW,
+                    Some(Orientation::SE) => Orientation::SSE,
+                    _ => Orientation::S,
+                };
+                self.entity_orientation_cardinal = OrientationCardinal::S;
+                self.pressed_orientation = Some(Orientation::S);
+                self.entity_orientation_binary = OrientationBinary::V;
+                modify_entity.set_orientation(self.entity_orientation);
+            }
             EditorMode::MoveSelection(move_selection) => move_selection.flip_across_x_axis(),
             _ => {}
         }
@@ -654,6 +710,15 @@ impl Editor {
                 };
                 self.pressed_orientation = Some(Orientation::NE);
                 place_entity.set_orientation(self.entity_orientation);
+            }
+            EditorMode::ModifyEntity(modify_entity) => {
+                self.entity_orientation = match self.pressed_orientation {
+                    Some(Orientation::N) => Orientation::NNE,
+                    Some(Orientation::E) => Orientation::ENE,
+                    _ => Orientation::NE,
+                };
+                self.pressed_orientation = Some(Orientation::NE);
+                modify_entity.set_orientation(self.entity_orientation);
             }
             EditorMode::SelectTiles(select_tiles) => {
                 let command = select_tiles.command_fill_selection(self.state.tiles(), Tile::TileE);
@@ -685,6 +750,17 @@ impl Editor {
                 self.entity_orientation_binary = OrientationBinary::H;
                 place_entity.set_orientation(self.entity_orientation);
             }
+            EditorMode::ModifyEntity(modify_entity) => {
+                self.entity_orientation = match self.pressed_orientation {
+                    Some(Orientation::NE) => Orientation::ENE,
+                    Some(Orientation::SE) => Orientation::ESE,
+                    _ => Orientation::E,
+                };
+                self.entity_orientation_cardinal = OrientationCardinal::E;
+                self.pressed_orientation = Some(Orientation::E);
+                self.entity_orientation_binary = OrientationBinary::H;
+                modify_entity.set_orientation(self.entity_orientation);
+            }
             EditorMode::SelectTiles(select_tiles) => {
                 let command = select_tiles.command_fill_selection(self.state.tiles(), Tile::TileD);
                 self.state.apply(command);
@@ -709,6 +785,15 @@ impl Editor {
                 self.pressed_orientation = Some(Orientation::SW);
                 place_entity.set_orientation(self.entity_orientation);
             }
+            EditorMode::ModifyEntity(modify_entity) => {
+                self.entity_orientation = match self.pressed_orientation {
+                    Some(Orientation::S) => Orientation::SSW,
+                    Some(Orientation::W) => Orientation::WSW,
+                    _ => Orientation::SW,
+                };
+                self.pressed_orientation = Some(Orientation::SW);
+                modify_entity.set_orientation(self.entity_orientation);
+            }
             _ => {}
         }
     }
@@ -721,6 +806,9 @@ impl Editor {
             }
             EditorMode::PlaceEntity(place_entity) => {
                 place_entity.press_x();
+            }
+            EditorMode::ModifyEntity(modify_entity) => {
+                modify_entity.press_x();
             }
             EditorMode::SelectTiles(select_tiles) => {
                 let selection = &select_tiles.selection_preview();
@@ -748,6 +836,15 @@ impl Editor {
                 };
                 self.pressed_orientation = Some(Orientation::SE);
                 place_entity.set_orientation(self.entity_orientation);
+            }
+            EditorMode::ModifyEntity(modify_entity) => {
+                self.entity_orientation = match self.pressed_orientation {
+                    Some(Orientation::S) => Orientation::SSE,
+                    Some(Orientation::E) => Orientation::ESE,
+                    _ => Orientation::SE,
+                };
+                self.pressed_orientation = Some(Orientation::SE);
+                modify_entity.set_orientation(self.entity_orientation);
             }
             EditorMode::SelectTiles(select_tiles) => {
                 let selection = &select_tiles.selection_preview();
@@ -818,8 +915,7 @@ impl Editor {
         if let EditorMode::SelectEntity(_) = self.mode {
             self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
         } else {
-            let crosshair_pos = PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid);
-            self.mode = EditorMode::SelectEntity(SelectEntity::new(crosshair_pos, self.state.entities(), self.entity_fine_grid));
+            self.mode = EditorMode::SelectEntity(SelectEntity::new(self.cursor_pos, self.state.entities(), self.entity_fine_grid));
         }
     }
 
@@ -865,8 +961,15 @@ impl Editor {
     pub fn press_slash(&mut self) {
         match &mut self.mode {
             EditorMode::PenTool(_) => self.pen_tool_fine_grid = !self.pen_tool_fine_grid,
-            EditorMode::PlaceEntity(_) | EditorMode::ModifyEntity(_) => {
+            EditorMode::PlaceEntity(place_entity) => {
                 self.entity_fine_grid = !self.entity_fine_grid;
+                place_entity.set_pos(place_entity.crosshair(self.cursor_pos, self.entity_fine_grid));
+                place_entity.set_door_orientation_from_pos();
+            }
+            EditorMode::ModifyEntity(modify_entity) => {
+                self.entity_fine_grid = !self.entity_fine_grid;
+                modify_entity.set_pos(modify_entity.crosshair(self.cursor_pos, self.entity_fine_grid));
+                modify_entity.set_door_orientation_from_pos();
             }
             EditorMode::SelectEntity(select_entity) => {
                 self.entity_fine_grid = !self.entity_fine_grid;
@@ -1041,6 +1144,7 @@ impl Editor {
         match &self.mode {
             EditorMode::PenTool(pen_tool) => pen_tool.crosshair(self.cursor_pos, self.state.latest(), self.pen_tool_fine_grid),
             EditorMode::PlaceEntity(place_entity) => place_entity.crosshair(self.cursor_pos, self.entity_fine_grid),
+            EditorMode::ModifyEntity(modify_entity) => modify_entity.crosshair(self.cursor_pos, self.entity_fine_grid),
             EditorMode::SelectEntity(_) => PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid),
             _ => DVec2::new(TILE_SIZE, TILE_SIZE),
         }

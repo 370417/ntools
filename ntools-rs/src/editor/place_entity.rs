@@ -228,13 +228,7 @@ impl PlaceEntity {
             EditorEntity::Thwump { pos, .. } |
             EditorEntity::ShoveThwump { pos, .. } |
             EditorEntity::OneWay { pos, .. } => *pos = new_pos,
-            EditorEntity::Exit { exit_pos, switch_pos } => match self.stage {
-                Some(Stage::PlaceDoor) => {
-                    *exit_pos = new_pos;
-                    *switch_pos = new_pos;
-                }
-                Some(Stage::PlaceSwitch) | None => *switch_pos = new_pos,
-            },
+            EditorEntity::Exit { exit_pos: door_pos, switch_pos } |
             EditorEntity::LockedDoor { door_pos, switch_pos, .. } |
             EditorEntity::TrapDoor { door_pos, switch_pos, .. } => match self.stage {
                 Some(Stage::PlaceDoor) => {
@@ -277,7 +271,7 @@ impl PlaceEntity {
                 Some(Command::SetEntityCount(SetEntityCount {
                     entity,
                     old_count,
-                    new_count: old_count + 1,
+                    new_count: old_count.saturating_add(1),
                 }))
             }
             entity => {
