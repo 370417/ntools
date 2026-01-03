@@ -50,9 +50,8 @@ export function EditorFooter(props: {
             Export map
         </a>
         {" | "}
-        Show trail <input type="checkbox" />
-        |
-        Bounce block/thwump/shwump corners
+        <label>Show trail <input type="checkbox" checked disabled /></label>
+        {" | Bounce block/thwump/shwump corners "}
         <select onchange={e => props.setRoundCorners(e.currentTarget.value == 'rounded')}>
             <option selected={!props.roundCorners()}>square</option>
             <option selected={props.roundCorners()}>rounded</option>

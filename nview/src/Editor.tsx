@@ -529,7 +529,7 @@ export function EditorApp(props: {
             {regularGridYs.map(y => <line class="regular-grid" x1="24" x2={24 * 43} y1={y} y2={y} />)}
             <Entities entities={entities} />
             <path id="tiles" stroke-width="2" clip-path="url(#tiles-clip)" clip-rule="evenodd" d={tilePath()} fill-rule="evenodd" />
-            <g filter="url(#outline)">
+            <g filter={[MODE_MOVE_SELECTION, MODE_SELECT_ENTITY, MODE_MODIFY_ENTITY].includes(mode()) ? "url(#outline)" : ""}>
                 <Entities entities={previewEntities} />
             </g>
             <path id="selected-tiles" d={selectedTilePath()} fill-rule="evenodd" />
