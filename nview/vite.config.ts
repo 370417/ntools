@@ -6,4 +6,8 @@ import topLevelAwait from 'vite-plugin-top-level-await';
 
 export default defineConfig({
     plugins: [solid(), wasm(), topLevelAwait()],
+    build: {
+        outDir: '../docs',
+        emptyOutDir: true,
+    },
 });
