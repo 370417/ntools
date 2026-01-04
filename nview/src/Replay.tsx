@@ -1,4 +1,4 @@
-import { createSignal, Index, onCleanup, type Accessor } from 'solid-js';
+import { createSignal, onCleanup } from 'solid-js';
 import { Replay } from './assets/ntools_rs';
 import { Scrubber } from './Scrubber';
 // import Stats from 'stats-js';
