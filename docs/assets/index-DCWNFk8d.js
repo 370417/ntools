@@ -550,7 +550,7 @@
       n
     ];
   }
-  const yr = "/assets/ntools_rs_bg-DtL7Ojh2.wasm", mr = async (t = {}, e) => {
+  const yr = "" + new URL("ntools_rs_bg-DtL7Ojh2.wasm", import.meta.url).href, mr = async (t = {}, e) => {
     let r;
     if (e.startsWith("data:")) {
       const s = e.replace(/^data:.*?base64,/, "");
