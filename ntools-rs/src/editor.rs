@@ -6,7 +6,7 @@ use futures_channel::oneshot::{self, Receiver};
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{attract::Attract, editor::{editor_entity::{EditorEntity, EntityId, ExportedEntity}, editor_state::{Command, EditorState}, modify_entity::ModifyEntity, move_selection::MoveSelection, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::PlaceEntity, select_entity::SelectEntity, select_tiles::SelectTiles}, entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floor_guard::FloorGuard, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump}, grid::{COLS, GridPos, ROWS}, map_file::MapFile, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationBinary, OrientationCardinal}, replay::Replay, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
+use crate::{attract::Attract, editor::{editor_entity::{EditorEntity, EntityId, ExportedEntity}, editor_state::{Command, EditorState}, modify_entity::ModifyEntity, move_selection::MoveSelection, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::PlaceEntity, select_entity::SelectEntity, select_tiles::SelectTiles}, entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floor_guard::FloorGuard, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump}, grid::{COLS, GridPos, ROWS}, map_file::MapFile, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationBinary, OrientationCardinal}, replay::Replay, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_HALF_SIZE, TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
 
 pub mod editor_entity;
 pub mod editor_state;
@@ -1199,14 +1199,25 @@ impl Editor {
                 let new_cursor_pos = place_entity.press_direction(direction, self.cursor_pos, self.entity_fine_grid);
                 self.set_cursor_pos(new_cursor_pos.x, new_cursor_pos.y, shift);
             }
-            EditorMode::SelectEntity(select_entity) => {}
+            EditorMode::SelectEntity(_) => {
+                let crosshair = PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid);
+                let new_cursor_pos = if self.entity_fine_grid {
+                    crosshair + TILE_HALF_SIZE * 0.5 * direction.vec2()
+                } else {
+                    crosshair + TILE_HALF_SIZE * direction.vec2()
+                };
+                self.set_cursor_pos(new_cursor_pos.x, new_cursor_pos.y, shift);
+            }
             EditorMode::ModifyEntity(modify_entity) => {
                 let new_cursor_pos = modify_entity.press_direction(direction, self.cursor_pos, self.entity_fine_grid);
                 let new_cursor_pos = new_cursor_pos - modify_entity.cursor_offset;
                 self.set_cursor_pos(new_cursor_pos.x, new_cursor_pos.y, shift);
             }
             EditorMode::EntityPalette => {}
-            EditorMode::PenTool(pen_tool) => {}
+            EditorMode::PenTool(pen_tool) => {
+                let new_cursor_pos = pen_tool.press_direction(direction, self.cursor_pos, self.pen_tool_fine_grid, &self.state);
+                self.set_cursor_pos(new_cursor_pos.x, new_cursor_pos.y, shift);
+            }
         }
     }
 

@@ -1,7 +1,7 @@
 use float_ord::FloatOrd;
 use glam::DVec2;
 
-use crate::{editor::editor_state::{Command, EditorState, PaintTile}, grid::{COLS, GridPos, ROWS, is_pos_in_bounds}, tile::{HorizontalEdge, TILE_HALF_SIZE, TILE_SIZE, Tile, Tiles, VerticalEdge}};
+use crate::{editor::editor_state::{Command, EditorState, PaintTile}, grid::{COLS, GridPos, ROWS, is_pos_in_bounds}, orientation::OrientationCardinal, tile::{HorizontalEdge, TILE_HALF_SIZE, TILE_SIZE, Tile, Tiles, VerticalEdge}};
 
 pub struct PenTool {
     pub start: PenToolStart,
@@ -75,6 +75,21 @@ impl PenTool {
                 _ => PenToolStart::Some(crosshair)
             }
         };
+    }
+
+    /// Calculates the new crosshair position needed in response to pressing a direction key.
+    pub fn press_direction(&self, direction: OrientationCardinal, cursor_pos: DVec2, fine_grid: bool, state: &EditorState) -> DVec2 {
+        let crosshair = self.crosshair(cursor_pos, state.latest(), fine_grid);
+        if fine_grid {
+            let half_step_crosshair = crosshair + TILE_HALF_SIZE * direction.vec2();
+            if half_step_crosshair.x % TILE_SIZE == 0.0 || half_step_crosshair.y % TILE_SIZE == 0.0 {
+                half_step_crosshair
+            } else {
+                crosshair + TILE_SIZE * direction.vec2()
+            }
+        } else {
+            crosshair + TILE_SIZE * direction.vec2()
+        }
     }
 }
 
