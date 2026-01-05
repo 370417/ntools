@@ -283,7 +283,7 @@ impl Editor {
                 new_crosshair != old_crosshair
             }
             EditorMode::ModifyEntity(modify_entity) => {
-                self.cursor_pos = new_cursor_pos;
+                self.cursor_pos = new_cursor_pos + modify_entity.cursor_offset;
                 let new_crosshair = modify_entity.crosshair(self.cursor_pos, self.entity_fine_grid);
                 modify_entity.set_pos(new_crosshair);
                 modify_entity.set_door_orientation_from_pos(&mut self.entity_orientation_binary);
@@ -336,7 +336,7 @@ impl Editor {
                 self.state.apply(command);
             }
             EditorMode::SelectEntity(select_entity) => if let Some((entity, selection_type)) = select_entity.get_selection() {
-                self.mode = EditorMode::ModifyEntity(ModifyEntity::new(entity, selection_type));
+                self.mode = EditorMode::ModifyEntity(ModifyEntity::new(entity, selection_type, self.cursor_pos));
             },
             _ => {}
         }
@@ -885,7 +885,7 @@ impl Editor {
         self.selected_entity_id = EntityId::RegularDoor;
         self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
         // call set_cursor_pos to correct the cursor position if it is illegal for a door
-        self.set_cursor_pos(self.cursor_pos.x, self.cursor_pos.y, false);
+        self.set_cursor_pos(self.true_cursor_pos().x, self.true_cursor_pos().y, false);
     }
 
     #[wasm_bindgen]
@@ -893,7 +893,7 @@ impl Editor {
         self.selected_entity_id = EntityId::LockedDoor;
         self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
         // call set_cursor_pos to correct the cursor position if it is illegal for a door
-        self.set_cursor_pos(self.cursor_pos.x, self.cursor_pos.y, false);
+        self.set_cursor_pos(self.true_cursor_pos().x, self.true_cursor_pos().y, false);
     }
 
     #[wasm_bindgen]
@@ -901,7 +901,7 @@ impl Editor {
         self.selected_entity_id = EntityId::TrapDoor;
         self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
         // call set_cursor_pos to correct the cursor position if it is illegal for a door
-        self.set_cursor_pos(self.cursor_pos.x, self.cursor_pos.y, false);
+        self.set_cursor_pos(self.true_cursor_pos().x, self.true_cursor_pos().y, false);
     }
 
     #[wasm_bindgen]
@@ -1197,10 +1197,19 @@ impl Editor {
             EditorMode::SelectEntity(select_entity) => {}
             EditorMode::ModifyEntity(modify_entity) => {
                 let new_cursor_pos = modify_entity.press_direction(direction, self.cursor_pos, self.entity_fine_grid);
+                let new_cursor_pos = new_cursor_pos - modify_entity.cursor_offset;
                 self.set_cursor_pos(new_cursor_pos.x, new_cursor_pos.y, shift);
             }
             EditorMode::EntityPalette => {}
             EditorMode::PenTool(pen_tool) => {}
+        }
+    }
+
+    /// cursor pos without offset
+    fn true_cursor_pos(&self) -> DVec2 {
+        match &self.mode {
+            EditorMode::ModifyEntity(modify_entity) => self.cursor_pos - modify_entity.cursor_offset,
+            _ => self.cursor_pos,
         }
     }
 }
