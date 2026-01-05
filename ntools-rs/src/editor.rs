@@ -1195,7 +1195,10 @@ impl Editor {
                 self.set_cursor_pos(new_cursor_pos.x, new_cursor_pos.y, shift);
             }
             EditorMode::SelectEntity(select_entity) => {}
-            EditorMode::ModifyEntity(modify_entity) => {}
+            EditorMode::ModifyEntity(modify_entity) => {
+                let new_cursor_pos = modify_entity.press_direction(direction, self.cursor_pos, self.entity_fine_grid);
+                self.set_cursor_pos(new_cursor_pos.x, new_cursor_pos.y, shift);
+            }
             EditorMode::EntityPalette => {}
             EditorMode::PenTool(pen_tool) => {}
         }
