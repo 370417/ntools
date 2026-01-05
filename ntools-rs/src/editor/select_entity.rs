@@ -37,7 +37,7 @@ impl SelectEntity {
 
     pub fn set_selection(&mut self, crosshair_pos: DVec2, entities: &EditorEntities) {
         // loop through all entities to get the closest ones to the cursor
-        let mut min_dist_squared = TILE_SIZE * TILE_SIZE + 0.1;
+        let mut min_dist_squared = 4.0 * TILE_SIZE * TILE_SIZE + 0.1;
         let mut best_pos = None;
         let mut best_entities = Vec::new();
 
@@ -45,10 +45,16 @@ impl SelectEntity {
             (pos1.to_world_pos() - pos2).length_squared()
         }
 
+        fn dist_chebyshev(pos1: EntityPos, pos2: DVec2) -> f64 {
+            let delta = pos1.to_world_pos() - pos2;
+            delta.x.abs().max(delta.y.abs())
+        }
+
         for &entity in entities.keys() {
             if Some(entity.pos()) == best_pos {
                 best_entities.push((entity, SelectionType::NotSwitch));
-            } else if dist_squared(entity.pos(), crosshair_pos) < min_dist_squared {
+            } else if dist_squared(entity.pos(), crosshair_pos) < min_dist_squared
+                   && dist_chebyshev(entity.pos(), crosshair_pos) <= TILE_SIZE {
                 min_dist_squared = dist_squared(entity.pos(), crosshair_pos);
                 best_pos = Some(entity.pos());
                 best_entities = vec![(entity, SelectionType::NotSwitch)];
@@ -57,7 +63,8 @@ impl SelectEntity {
             if let Some(switch_pos) = entity.switch_pos() {
                 if Some(switch_pos) == best_pos {
                     best_entities.push((entity, SelectionType::Switch));
-                } else if dist_squared(switch_pos, crosshair_pos) < min_dist_squared {
+                } else if dist_squared(switch_pos, crosshair_pos) < min_dist_squared
+                       && dist_chebyshev(entity.pos(), crosshair_pos) <= TILE_SIZE {
                     min_dist_squared = dist_squared(switch_pos, crosshair_pos);
                     best_pos = Some(switch_pos);
                     best_entities = vec![(entity, SelectionType::Switch)];
