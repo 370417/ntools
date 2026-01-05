@@ -279,7 +279,7 @@ impl Editor {
                 self.cursor_pos = new_cursor_pos;
                 let new_crosshair = place_entity.crosshair(self.cursor_pos, self.entity_fine_grid);
                 place_entity.set_pos(new_crosshair);
-                place_entity.set_door_orientation_from_pos();
+                place_entity.set_door_orientation_from_pos(&mut self.entity_orientation_binary);
                 new_crosshair != old_crosshair
             }
             EditorMode::ModifyEntity(modify_entity) => {
@@ -964,7 +964,7 @@ impl Editor {
             EditorMode::PlaceEntity(place_entity) => {
                 self.entity_fine_grid = !self.entity_fine_grid;
                 place_entity.set_pos(place_entity.crosshair(self.cursor_pos, self.entity_fine_grid));
-                place_entity.set_door_orientation_from_pos();
+                place_entity.set_door_orientation_from_pos(&mut self.entity_orientation_binary);
             }
             EditorMode::ModifyEntity(modify_entity) => {
                 self.entity_fine_grid = !self.entity_fine_grid;

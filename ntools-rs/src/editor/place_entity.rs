@@ -191,14 +191,16 @@ impl PlaceEntity {
         }
     }
 
-    pub fn set_door_orientation_from_pos(&mut self) {
+    pub fn set_door_orientation_from_pos(&mut self, editor_orientation: &mut OrientationBinary) {
         match (&mut self.entity, self.stage) {
             (EditorEntity::RegularDoor { pos, orientation }, _) => {
                 *orientation = Self::door_orientation_from_pos(pos.to_world_pos(), *orientation);
+                *editor_orientation = *orientation;
             }
             (EditorEntity::LockedDoor { door_pos, orientation, .. }, Some(Stage::PlaceDoor)) |
             (EditorEntity::TrapDoor { door_pos, orientation, .. }, Some(Stage::PlaceDoor)) => {
                 *orientation = Self::door_orientation_from_pos(door_pos.to_world_pos(), *orientation);
+                *editor_orientation = *orientation;
             }
             _ => {}
         }
