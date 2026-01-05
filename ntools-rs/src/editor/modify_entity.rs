@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{editor::{editor_entity::{EditorEntity, EntityPos, ExportedEntity}, editor_state::{Command, EditorEntities, SetEntityCount}, place_entity::PlaceEntity, select_entity::SelectionType}, orientation::Orientation};
+use crate::{editor::{editor_entity::{EditorEntity, EntityPos, ExportedEntity}, editor_state::{Command, EditorEntities, SetEntityCount}, place_entity::PlaceEntity, select_entity::SelectionType}, orientation::{Orientation, OrientationBinary}};
 
 pub struct ModifyEntity {
     pub original_entity: EditorEntity,
@@ -31,14 +31,16 @@ impl ModifyEntity {
         }
     }
 
-    pub fn set_door_orientation_from_pos(&mut self) {
+    pub fn set_door_orientation_from_pos(&mut self, editor_orientation: &mut OrientationBinary) {
         match (&mut self.modified_entity, self.selection_type) {
             (EditorEntity::RegularDoor { pos, orientation }, _) => {
                 *orientation = PlaceEntity::door_orientation_from_pos(pos.to_world_pos(), *orientation);
+                *editor_orientation = *orientation;
             }
             (EditorEntity::LockedDoor { door_pos, orientation, .. }, SelectionType::NotSwitch) |
             (EditorEntity::TrapDoor { door_pos, orientation, .. }, SelectionType::NotSwitch) => {
                 *orientation = PlaceEntity::door_orientation_from_pos(door_pos.to_world_pos(), *orientation);
+                *editor_orientation = *orientation;
             }
             _ => {}
         }

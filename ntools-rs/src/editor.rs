@@ -286,7 +286,7 @@ impl Editor {
                 self.cursor_pos = new_cursor_pos;
                 let new_crosshair = modify_entity.crosshair(self.cursor_pos, self.entity_fine_grid);
                 modify_entity.set_pos(new_crosshair);
-                modify_entity.set_door_orientation_from_pos();
+                modify_entity.set_door_orientation_from_pos(&mut self.entity_orientation_binary);
                 new_crosshair != old_crosshair
             }
             EditorMode::SelectTiles(select_tiles) => {
@@ -884,18 +884,24 @@ impl Editor {
     pub fn press_i(&mut self) {
         self.selected_entity_id = EntityId::RegularDoor;
         self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
+        // call set_cursor_pos to correct the cursor position if it is illegal for a door
+        self.set_cursor_pos(self.cursor_pos.x, self.cursor_pos.y, false);
     }
 
     #[wasm_bindgen]
     pub fn press_o(&mut self) {
         self.selected_entity_id = EntityId::LockedDoor;
         self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
+        // call set_cursor_pos to correct the cursor position if it is illegal for a door
+        self.set_cursor_pos(self.cursor_pos.x, self.cursor_pos.y, false);
     }
 
     #[wasm_bindgen]
     pub fn press_p(&mut self) {
         self.selected_entity_id = EntityId::TrapDoor;
         self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
+        // call set_cursor_pos to correct the cursor position if it is illegal for a door
+        self.set_cursor_pos(self.cursor_pos.x, self.cursor_pos.y, false);
     }
 
     #[wasm_bindgen]
@@ -969,7 +975,7 @@ impl Editor {
             EditorMode::ModifyEntity(modify_entity) => {
                 self.entity_fine_grid = !self.entity_fine_grid;
                 modify_entity.set_pos(modify_entity.crosshair(self.cursor_pos, self.entity_fine_grid));
-                modify_entity.set_door_orientation_from_pos();
+                modify_entity.set_door_orientation_from_pos(&mut self.entity_orientation_binary);
             }
             EditorMode::SelectEntity(select_entity) => {
                 self.entity_fine_grid = !self.entity_fine_grid;
