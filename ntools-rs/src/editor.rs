@@ -1172,19 +1172,22 @@ impl Editor {
 
     fn press_direction(&mut self, direction: OrientationCardinal, shift: bool) {
         match &self.mode {
-            EditorMode::PaintTiles => {
+            EditorMode::PaintTiles |
+            EditorMode::MoveSelection(_) => {
                 let crosshair = self.tile_crosshair();
                 let crosshair = GridPos {
                     x: crosshair.x.saturating_add_signed(direction.vec2().x as i8),
                     y: crosshair.y.saturating_add_signed(direction.vec2().y as i8),
                 };
-                let pos = crosshair.to_world_pos();
-                self.set_cursor_pos(pos.x, pos.y, shift);
+                let new_cursor_pos = crosshair.to_world_pos();
+                self.set_cursor_pos(new_cursor_pos.x, new_cursor_pos.y, shift);
             }
             EditorMode::TilePalette => {}
-            EditorMode::SelectTiles(select_tiles) => {}
-            EditorMode::MoveSelection(move_selection) => {}
-            EditorMode::PlaceEntity(place_entity) => {}
+            EditorMode::SelectTiles(_) => {}
+            EditorMode::PlaceEntity(place_entity) => {
+                let new_cursor_pos = place_entity.press_direction(direction, self.cursor_pos, self.entity_fine_grid);
+                self.set_cursor_pos(new_cursor_pos.x, new_cursor_pos.y, shift);
+            }
             EditorMode::SelectEntity(select_entity) => {}
             EditorMode::ModifyEntity(modify_entity) => {}
             EditorMode::EntityPalette => {}
