@@ -1019,6 +1019,26 @@ impl Editor {
     }
 
     #[wasm_bindgen]
+    pub fn press_up(&mut self, shift: bool) {
+        self.press_direction(OrientationCardinal::N, shift);
+    }
+
+    #[wasm_bindgen]
+    pub fn press_down(&mut self, shift: bool) {
+        self.press_direction(OrientationCardinal::S, shift);
+    }
+
+    #[wasm_bindgen]
+    pub fn press_left(&mut self, shift: bool) {
+        self.press_direction(OrientationCardinal::W, shift);
+    }
+
+    #[wasm_bindgen]
+    pub fn press_right(&mut self, shift: bool) {
+        self.press_direction(OrientationCardinal::E, shift);
+    }
+
+    #[wasm_bindgen]
     pub fn release_q(&mut self) {
         // Releasing keys should still clean up pressed state even in other modes
         // because the user could switch modes while holding down a key.
@@ -1147,6 +1167,28 @@ impl Editor {
             EditorMode::ModifyEntity(modify_entity) => modify_entity.crosshair(self.cursor_pos, self.entity_fine_grid),
             EditorMode::SelectEntity(_) => PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid),
             _ => DVec2::new(TILE_SIZE, TILE_SIZE),
+        }
+    }
+
+    fn press_direction(&mut self, direction: OrientationCardinal, shift: bool) {
+        match &self.mode {
+            EditorMode::PaintTiles => {
+                let crosshair = self.tile_crosshair();
+                let crosshair = GridPos {
+                    x: crosshair.x.saturating_add_signed(direction.vec2().x as i8),
+                    y: crosshair.y.saturating_add_signed(direction.vec2().y as i8),
+                };
+                let pos = crosshair.to_world_pos();
+                self.set_cursor_pos(pos.x, pos.y, shift);
+            }
+            EditorMode::TilePalette => {}
+            EditorMode::SelectTiles(select_tiles) => {}
+            EditorMode::MoveSelection(move_selection) => {}
+            EditorMode::PlaceEntity(place_entity) => {}
+            EditorMode::SelectEntity(select_entity) => {}
+            EditorMode::ModifyEntity(modify_entity) => {}
+            EditorMode::EntityPalette => {}
+            EditorMode::PenTool(pen_tool) => {}
         }
     }
 }

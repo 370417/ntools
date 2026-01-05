@@ -366,6 +366,11 @@ export function EditorApp(props: {
         else if (event.code === 'KeyM') change = true, editor.press_m();
         else if (event.code === 'Comma') change = true, editor.press_comma();
 
+        else if (event.code === 'ArrowUp') change = true, editor.press_up(event.shiftKey);
+        else if (event.code === 'ArrowDown') change = true, editor.press_down(event.shiftKey);
+        else if (event.code === 'ArrowLeft') change = true, editor.press_left(event.shiftKey);
+        else if (event.code === 'ArrowRight') change = true, editor.press_right(event.shiftKey);
+
         else if (event.code === 'Escape') change = editor.press_escape();
 
         else if (event.code === 'Slash') change = true, editor.press_slash();
