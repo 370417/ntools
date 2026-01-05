@@ -60,7 +60,6 @@ pub enum EditorMode {
 
 #[wasm_bindgen]
 impl Editor {
-    #[wasm_bindgen]
     #[allow(clippy::new_without_default)]
     pub fn new() -> Editor {
         Editor {
@@ -83,7 +82,6 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn load_attract(&mut self, attract_bytes: &[u8]) -> Result<(), String> {
         let attract = Attract::from_bytes(attract_bytes)?;
         self.set_level_name(&attract.level_name);
@@ -91,7 +89,6 @@ impl Editor {
         Ok(())
     }
 
-    #[wasm_bindgen]
     pub fn load_map(&mut self, map_bytes: &[u8]) -> Result<(), String> {
         let map = MapFile::from_bytes(map_bytes)?;
         self.set_level_name(&map.level_name);
@@ -99,22 +96,18 @@ impl Editor {
         Ok(())
     }
 
-    #[wasm_bindgen]
     pub fn export_map(&self) -> Box<[u8]> {
         self.state.to_map(self.level_name.clone()).to_bytes().into()
     }
 
-    #[wasm_bindgen]
     pub fn get_level_name(&self) -> String {
         self.level_name.clone()
     }
 
-    #[wasm_bindgen]
     pub fn set_level_name(&mut self, name: &str) {
         self.level_name = name.chars().filter(|char| char.is_ascii()).collect();
     }
 
-    #[wasm_bindgen]
     #[allow(clippy::wrong_self_convention)]
     pub fn to_replay(&mut self, round_corners: bool) -> Result<Replay, String> {
         self.mode = EditorMode::PaintTiles;
@@ -199,7 +192,6 @@ impl Editor {
         })
     }
 
-    #[wasm_bindgen]
     pub fn mode(&self) -> u32 {
         match self.mode {
             EditorMode::PaintTiles => 0,
@@ -214,7 +206,6 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn tiles_path(&self) -> String {
         if let EditorMode::PenTool(pen_tool) = &self.mode && !pen_tool.is_none() {
             let start = pen_tool.start(self.state.latest());
@@ -227,7 +218,6 @@ impl Editor {
         extract_path(&self.state.tiles().segments(), true)
     }
 
-    #[wasm_bindgen]
     pub fn selected_tiles_path(&self) -> String {
         match &self.mode {
             EditorMode::PenTool(pen_tool) => {
@@ -251,7 +241,6 @@ impl Editor {
     }
 
     /// Return true if the cursor has moved enough to move to a different grid location
-    #[wasm_bindgen]
     pub fn set_cursor_pos(&mut self, x: f64, y: f64, shift: bool) -> bool {
         let new_cursor_pos = DVec2::new(
             x.clamp(TILE_SIZE, TILE_SIZE * (1 + COLS) as f64),
@@ -318,7 +307,6 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn cursor_down(&mut self, shift: bool) {
         match &mut self.mode {
             EditorMode::PenTool(pen_tool) => pen_tool.cursor_down(self.cursor_pos, self.pen_tool_is_clockwise, &mut self.state, self.pen_tool_fine_grid),
@@ -347,7 +335,6 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn cursor_up(&mut self) {
         match &mut self.mode {
             EditorMode::SelectTiles(select_tiles) => {
@@ -360,7 +347,6 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn double_click(&mut self, shift: bool) {
         match &mut self.mode {
             mode @ EditorMode::PaintTiles => {
@@ -376,27 +362,22 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn tile_crosshair_col(&self) -> u8 {
         self.tile_crosshair().x
     }
 
-    #[wasm_bindgen]
     pub fn tile_crosshair_row(&self) -> u8 {
         self.tile_crosshair().y
     }
 
-    #[wasm_bindgen]
     pub fn crosshair_x(&self) -> f64 {
         self.crosshair().x
     }
 
-    #[wasm_bindgen]
     pub fn crosshair_y(&self) -> f64 {
         self.crosshair().y
     }
 
-    #[wasm_bindgen]
     pub fn entities(&self) -> Box<[ExportedEntity]> {
         match &self.mode {
             EditorMode::ModifyEntity(modify_entity) => modify_entity.export_entities(self.state.entities()),
@@ -404,7 +385,6 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn preview_entities(&self) -> Box<[ExportedEntity]> {
         match &self.mode {
             EditorMode::PlaceEntity(place_entity) => Box::new([place_entity.entity.export().with_stage(place_entity.stage)]),
@@ -415,7 +395,6 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn selected_tile_outline_path(&self) -> String {
         match &self.mode {
             EditorMode::SelectTiles(select_tiles) => select_tiles.selected_tile_outline_path(),
@@ -424,7 +403,6 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn show_half_grid(&self) -> bool {
         match self.mode {
             EditorMode::PenTool(_) => self.pen_tool_fine_grid,
@@ -435,7 +413,6 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn show_quarter_grid(&self) -> bool {
         match self.mode {
             EditorMode::PlaceEntity(_) => self.entity_fine_grid,
@@ -445,7 +422,6 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn undo(&mut self) {
         let pen_tool_origin = match self.state.latest() {
             Some(Command::PenTool { first_start, .. }) => *first_start,
@@ -464,12 +440,10 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn redo(&mut self) {
         self.state.redo();
     }
 
-    #[wasm_bindgen]
     pub fn press_escape(&mut self) -> bool {
         match &mut self.mode {
             EditorMode::PenTool(pen_tool) => match pen_tool.start {
@@ -489,7 +463,6 @@ impl Editor {
         false
     }
 
-    #[wasm_bindgen]
     pub fn press_backtick(&mut self) {
         match self.mode {
             EditorMode::PenTool(_) => {}
@@ -497,78 +470,65 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn press_1(&mut self, shift: bool) {
         self.mode = EditorMode::PaintTiles;
         self.selected_tile_category = TileCategory::Tile1.shift(shift);
     }
 
-    #[wasm_bindgen]
     pub fn press_2(&mut self, shift: bool) {
         self.mode = EditorMode::PaintTiles;
         self.selected_tile_category = TileCategory::Tile2.shift(shift);
     }
 
-    #[wasm_bindgen]
     pub fn press_3(&mut self, shift: bool) {
         self.mode = EditorMode::PaintTiles;
         self.selected_tile_category = TileCategory::Tile3.shift(shift);
     }
 
-    #[wasm_bindgen]
     pub fn press_4(&mut self, shift: bool) {
         self.mode = EditorMode::PaintTiles;
         self.selected_tile_category = TileCategory::Tile4.shift(shift);
     }
 
-    #[wasm_bindgen]
     pub fn press_5(&mut self, shift: bool) {
         self.mode = EditorMode::PaintTiles;
         self.selected_tile_category = TileCategory::Tile5.shift(shift);
     }
 
-    #[wasm_bindgen]
     pub fn press_6(&mut self, shift: bool) {
         self.mode = EditorMode::PaintTiles;
         self.selected_tile_category = TileCategory::Tile6.shift(shift);
     }
 
-    #[wasm_bindgen]
     pub fn press_7(&mut self, shift: bool) {
         self.mode = EditorMode::PaintTiles;
         self.selected_tile_category = TileCategory::Tile7.shift(shift);
     }
 
-    #[wasm_bindgen]
     pub fn press_8(&mut self, shift: bool) {
         self.mode = EditorMode::PaintTiles;
         self.selected_tile_category = TileCategory::Tile8.shift(shift);
     }
 
-    #[wasm_bindgen]
     pub fn press_9(&mut self) {
         self.selected_entity_id = EntityId::Ninja;
         self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
     }
 
-    #[wasm_bindgen]
     pub fn press_0(&mut self) {
         // gold
     }
 
-    #[wasm_bindgen]
     pub fn press_dash(&mut self) {
         self.selected_entity_id = EntityId::BounceBlock;
         self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
     }
 
-    #[wasm_bindgen]
     pub fn press_equals(&mut self) {
         self.selected_entity_id = EntityId::LaunchPad;
         self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
     }
 
-    #[wasm_bindgen]
     pub fn press_q(&mut self, shift: bool) {
         match &mut self.mode {
             EditorMode::PaintTiles => {
@@ -598,7 +558,6 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn press_w(&mut self, shift: bool) {
         match &mut self.mode {
             EditorMode::PaintTiles => {
@@ -632,7 +591,6 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn press_a(&mut self, shift: bool) {
         match &mut self.mode {
             EditorMode::PaintTiles => {
@@ -666,7 +624,6 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn press_s(&mut self, shift: bool) {
         match &mut self.mode {
             EditorMode::PaintTiles => {
@@ -700,7 +657,6 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn press_e(&mut self) {
         match &mut self.mode {
             EditorMode::PaintTiles => {
@@ -737,7 +693,6 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn press_d(&mut self) {
         match &mut self.mode {
             EditorMode::PaintTiles => {
@@ -778,7 +733,6 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn press_z(&mut self) {
         match &mut self.mode {
             EditorMode::PlaceEntity(place_entity) => {
@@ -803,7 +757,6 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn press_x(&mut self) {
         match &mut self.mode {
             EditorMode::PenTool(_) => {
@@ -830,7 +783,6 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn press_c(&mut self) {
         match &mut self.mode {
             EditorMode::PlaceEntity(place_entity) => {
@@ -861,7 +813,6 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn press_t(&mut self) {
         match &mut self.mode {
             EditorMode::SelectEntity(select_entity) => {
@@ -875,17 +826,14 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn press_y(&mut self) {
         // gauss turret
     }
 
-    #[wasm_bindgen]
     pub fn press_u(&mut self) {
         // rocket turret
     }
 
-    #[wasm_bindgen]
     pub fn press_i(&mut self) {
         self.selected_entity_id = EntityId::RegularDoor;
         self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
@@ -893,7 +841,6 @@ impl Editor {
         self.set_cursor_pos(self.true_cursor_pos().x, self.true_cursor_pos().y, false);
     }
 
-    #[wasm_bindgen]
     pub fn press_o(&mut self) {
         self.selected_entity_id = EntityId::LockedDoor;
         self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
@@ -901,7 +848,6 @@ impl Editor {
         self.set_cursor_pos(self.true_cursor_pos().x, self.true_cursor_pos().y, false);
     }
 
-    #[wasm_bindgen]
     pub fn press_p(&mut self) {
         self.selected_entity_id = EntityId::TrapDoor;
         self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
@@ -909,19 +855,16 @@ impl Editor {
         self.set_cursor_pos(self.true_cursor_pos().x, self.true_cursor_pos().y, false);
     }
 
-    #[wasm_bindgen]
     pub fn press_bracket_left(&mut self) {
         self.selected_entity_id = EntityId::OneWay;
         self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
     }
 
-    #[wasm_bindgen]
     pub fn press_bracket_right(&mut self) {
         self.selected_entity_id = EntityId::ExitDoor;
         self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
     }
 
-    #[wasm_bindgen]
     pub fn press_f(&mut self) {
         if let EditorMode::SelectEntity(_) = self.mode {
             self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
@@ -930,45 +873,37 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn press_h(&mut self) {
         // zap drone
     }
 
-    #[wasm_bindgen]
     pub fn press_j(&mut self) {
         // chase drone
     }
 
-    #[wasm_bindgen]
     pub fn press_k(&mut self) {
         // laser drone
     }
 
-    #[wasm_bindgen]
     pub fn press_l(&mut self) {
         // chaingun drone
     }
 
-    #[wasm_bindgen]
     pub fn press_n(&mut self) {
         self.selected_entity_id = EntityId::FloorGuard;
         self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
     }
 
-    #[wasm_bindgen]
     pub fn press_m(&mut self) {
         self.selected_entity_id = EntityId::Mine;
         self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
     }
 
-    #[wasm_bindgen]
     pub fn press_comma(&mut self) {
         self.selected_entity_id = EntityId::Thwump;
         self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
     }
 
-    #[wasm_bindgen]
     pub fn press_slash(&mut self) {
         match &mut self.mode {
             EditorMode::PenTool(_) => self.pen_tool_fine_grid = !self.pen_tool_fine_grid,
@@ -991,65 +926,55 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn press_num_0(&mut self) {
         self.selected_entity_id = EntityId::ToggleMine;
         self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
     }
 
-    #[wasm_bindgen]
     pub fn press_num_1(&mut self) {
         // evil ninja
     }
 
-    #[wasm_bindgen]
     pub fn press_num_2(&mut self) {
         // laser turret
     }
 
-    #[wasm_bindgen]
     pub fn press_num_3(&mut self) {
         self.selected_entity_id = EntityId::BoostPad;
         self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
     }
 
-    #[wasm_bindgen]
     pub fn press_num_4(&mut self) {
         // death ball
     }
 
-    #[wasm_bindgen]
     pub fn press_num_5(&mut self) {
         // mini drone
     }
 
-    #[wasm_bindgen]
     pub fn press_num_7(&mut self) {
         self.selected_entity_id = EntityId::ShoveThwump;
         self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
     }
 
-    #[wasm_bindgen]
     pub fn press_up(&mut self, shift: bool) {
         self.press_direction(OrientationCardinal::N, shift);
     }
 
-    #[wasm_bindgen]
     pub fn press_down(&mut self, shift: bool) {
         self.press_direction(OrientationCardinal::S, shift);
     }
 
-    #[wasm_bindgen]
     pub fn press_left(&mut self, shift: bool) {
         self.press_direction(OrientationCardinal::W, shift);
     }
 
-    #[wasm_bindgen]
     pub fn press_right(&mut self, shift: bool) {
         self.press_direction(OrientationCardinal::E, shift);
     }
 
-    #[wasm_bindgen]
+    pub fn press_enter(&mut self) {}
+
     pub fn release_q(&mut self) {
         // Releasing keys should still clean up pressed state even in other modes
         // because the user could switch modes while holding down a key.
@@ -1059,7 +984,6 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn release_w(&mut self) {
         // Releasing keys should still clean up pressed state even in other modes
         // because the user could switch modes while holding down a key.
@@ -1069,7 +993,6 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn release_a(&mut self) {
         // Releasing keys should still clean up pressed state even in other modes
         // because the user could switch modes while holding down a key.
@@ -1079,7 +1002,6 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn release_s(&mut self) {
         // Releasing keys should still clean up pressed state even in other modes
         // because the user could switch modes while holding down a key.
@@ -1089,7 +1011,6 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn release_e(&mut self) {
         // Releasing keys should still clean up pressed state even in other modes
         // because the user could switch modes while holding down a key.
@@ -1099,7 +1020,6 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn release_d(&mut self) {
         // Releasing keys should still clean up pressed state even in other modes
         // because the user could switch modes while holding down a key.
@@ -1109,7 +1029,6 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn release_z(&mut self) {
         // Releasing keys should still clean up pressed state even in other modes
         // because the user could switch modes while holding down a key.
@@ -1118,7 +1037,6 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn release_c(&mut self) {
         // Releasing keys should still clean up pressed state even in other modes
         // because the user could switch modes while holding down a key.
@@ -1127,24 +1045,20 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn receive_past_ninjas(&mut self) {
         if let Some(receiver) = &mut self.receiver && let Ok(Some(past_ninjas)) = receiver.try_recv() {
             self.past_ninjas = past_ninjas;
         }
     }
 
-    #[wasm_bindgen]
     pub fn past_ninjas_len(&self) -> usize {
         self.past_ninjas.len()
     }
 
-    #[wasm_bindgen]
     pub fn past_ninja_x(&self, i: usize) -> f64 {
         self.past_ninjas[i].pos.x
     }
 
-    #[wasm_bindgen]
     pub fn past_ninja_y(&self, i: usize) -> f64 {
         self.past_ninjas[i].pos.y
     }
