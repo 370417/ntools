@@ -31,11 +31,11 @@ impl SelectEntity {
             selected_entity_id: EntityId::Ninja,
             selected_entity_offset: 0,
         };
-        select_entity.set_selection(crosshair_pos, entities, fine_grid);
+        select_entity.set_selection(crosshair_pos, entities);
         select_entity
     }
 
-    pub fn set_selection(&mut self, crosshair_pos: DVec2, entities: &EditorEntities, fine_grid: bool) {
+    pub fn set_selection(&mut self, crosshair_pos: DVec2, entities: &EditorEntities) {
         // loop through all entities to get the closest ones to the cursor
         let mut min_dist_squared = TILE_SIZE * TILE_SIZE + 0.1;
         let mut best_pos = None;

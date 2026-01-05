@@ -95,7 +95,7 @@ impl ModifyEntity {
         }
     }
 
-    pub fn cursor_click(&mut self, entities: &EditorEntities) -> Option<Command> {
+    pub fn cursor_down(&mut self, entities: &EditorEntities) -> Option<Command> {
         if self.modified_entity == self.original_entity {
             return None;
         }

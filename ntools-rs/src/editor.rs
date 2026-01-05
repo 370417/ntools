@@ -308,7 +308,7 @@ impl Editor {
                 self.cursor_pos = new_cursor_pos;
                 let new_crosshair = PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid);
                 if new_crosshair != old_crosshair {
-                    select_entity.set_selection(new_crosshair, self.state.entities(), self.entity_fine_grid);
+                    select_entity.set_selection(new_crosshair, self.state.entities());
                     true
                 } else {
                     false
@@ -321,11 +321,11 @@ impl Editor {
     #[wasm_bindgen]
     pub fn cursor_down(&mut self, shift: bool) {
         match &mut self.mode {
-            EditorMode::PenTool(pen_tool) => pen_tool.cursor_click(self.cursor_pos, self.pen_tool_is_clockwise, &mut self.state, self.pen_tool_fine_grid),
-            EditorMode::PlaceEntity(place_entity) => if let Some(command) = place_entity.cursor_click(self.state.entities()) {
+            EditorMode::PenTool(pen_tool) => pen_tool.cursor_down(self.cursor_pos, self.pen_tool_is_clockwise, &mut self.state, self.pen_tool_fine_grid),
+            EditorMode::PlaceEntity(place_entity) => if let Some(command) = place_entity.cursor_down(self.state.entities()) {
                 self.state.apply(command);
             },
-            EditorMode::ModifyEntity(modify_entity) => if let Some(command) = modify_entity.cursor_click(self.state.entities()) {
+            EditorMode::ModifyEntity(modify_entity) => if let Some(command) = modify_entity.cursor_down(self.state.entities()) {
                 self.state.apply(command);
                 self.mode = EditorMode::SelectEntity(SelectEntity::new(self.cursor_pos, self.state.entities(), self.entity_fine_grid))
             },
@@ -868,7 +868,7 @@ impl Editor {
                 if let Some(command) = select_entity.command_delete(self.state.entities()) {
                     self.state.apply(command);
                     let crosshair_pos = PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid);
-                    select_entity.set_selection(crosshair_pos, self.state.entities(), self.entity_fine_grid);
+                    select_entity.set_selection(crosshair_pos, self.state.entities());
                 }
             }
             _ => {}
@@ -985,7 +985,7 @@ impl Editor {
             EditorMode::SelectEntity(select_entity) => {
                 self.entity_fine_grid = !self.entity_fine_grid;
                 let crosshair_pos = PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid);
-                select_entity.set_selection(crosshair_pos, self.state.entities(), self.entity_fine_grid);
+                select_entity.set_selection(crosshair_pos, self.state.entities());
             }
             _ => {}
         }

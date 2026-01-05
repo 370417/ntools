@@ -47,7 +47,7 @@ impl PenTool {
         }
     }
 
-    pub fn cursor_click(&mut self, cursor_pos: DVec2, is_clockwise: bool, state: &mut EditorState, fine_grid: bool) {
+    pub fn cursor_down(&mut self, cursor_pos: DVec2, is_clockwise: bool, state: &mut EditorState, fine_grid: bool) {
         let latest = state.latest();
         let crosshair = self.crosshair(cursor_pos, latest, fine_grid);
         self.start = match &self.start {

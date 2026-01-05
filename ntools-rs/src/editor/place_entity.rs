@@ -261,7 +261,7 @@ impl PlaceEntity {
         }
     }
 
-    pub fn cursor_click(&mut self, entities: &EditorEntities) -> Option<Command> {
+    pub fn cursor_down(&mut self, entities: &EditorEntities) -> Option<Command> {
         if let Some(Stage::PlaceDoor) = self.stage {
             self.stage = Some(Stage::PlaceSwitch);
             return None;
