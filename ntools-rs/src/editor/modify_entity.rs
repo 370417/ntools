@@ -13,15 +13,11 @@ pub struct ModifyEntity {
 
 impl ModifyEntity {
     pub fn new(entity: EditorEntity, selection_type: SelectionType, cursor_pos: DVec2) -> ModifyEntity {
-        let entity_pos = match selection_type {
-            SelectionType::Switch => entity.switch_pos().unwrap_or(EntityPos { x: 0, y: 0 }),
-            SelectionType::NotSwitch => entity.pos(),
-        };
         ModifyEntity {
             original_entity: entity,
             modified_entity: entity,
             selection_type,
-            cursor_offset: entity_pos.to_world_pos() - cursor_pos,
+            cursor_offset: selection_type.entity_pos(entity).to_world_pos() - cursor_pos,
         }
     }
 

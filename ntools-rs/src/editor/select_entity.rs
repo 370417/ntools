@@ -46,10 +46,6 @@ impl SelectEntity {
         }
 
         for &entity in entities.keys() {
-            if !fine_grid && (entity.pos().x % 2 != 0 || entity.pos().y % 2 != 0) {
-                continue;
-            }
-
             if Some(entity.pos()) == best_pos {
                 best_entities.push((entity, SelectionType::NotSwitch));
             } else if dist_squared(entity.pos(), crosshair_pos) < min_dist_squared {
@@ -147,6 +143,15 @@ impl SelectEntity {
                 old_count: count,
                 new_count: count - 1,
             }))
+    }
+}
+
+impl SelectionType {
+    pub fn entity_pos(self, entity: EditorEntity) -> EntityPos {
+        match self {
+            SelectionType::Switch => entity.switch_pos().unwrap_or(EntityPos { x: 0, y: 0 }),
+            SelectionType::NotSwitch => entity.pos(),
+        }
     }
 }
 

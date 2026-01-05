@@ -336,6 +336,11 @@ impl Editor {
                 self.state.apply(command);
             }
             EditorMode::SelectEntity(select_entity) => if let Some((entity, selection_type)) = select_entity.get_selection() {
+                let entity_pos = selection_type.entity_pos(entity);
+                if !self.entity_fine_grid && (entity_pos.x % 2 != 0 || entity_pos.y % 2 != 0) {
+                    // set fine grid to true if the selected entity isn't on the coarse grid
+                    self.entity_fine_grid = true;
+                }
                 self.mode = EditorMode::ModifyEntity(ModifyEntity::new(entity, selection_type, self.cursor_pos));
             },
             _ => {}
