@@ -179,8 +179,8 @@ impl Editor {
         self.receiver = Some(receiver);
 
         Ok(Replay {
-            level_name: String::new(),
-            author_name: None,
+            _level_name: String::new(),
+            _author_name: None,
             segments,
             inputs: Vec::new(),
             past_ninjas: vec![current_sim.ninja.to_past_ninja()],

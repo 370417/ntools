@@ -8,8 +8,8 @@ use crate::{anim_data::flatten_bones, attract::Attract, entity::mine::Mine, grid
 
 #[wasm_bindgen]
 pub struct Replay {
-    pub(crate) level_name: String,
-    pub(crate) author_name: Option<String>,
+    pub(crate) _level_name: String,
+    pub(crate) _author_name: Option<String>,
     pub(crate) segments: Grid<Segment>,
     pub(crate) inputs: Vec<u8>,
     pub(crate) past_ninjas: Vec<PastNinja>,
@@ -35,8 +35,8 @@ impl Replay {
         keyframes.insert(0, KeyFrame::from_sim(&current_sim, &current_sim.entities.mines));
 
         Ok(Replay {
-            level_name,
-            author_name: Some(author_name),
+            _level_name: level_name,
+            _author_name: Some(author_name),
             segments,
             inputs,
             past_ninjas: Vec::new(),
