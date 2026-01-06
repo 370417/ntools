@@ -349,6 +349,8 @@ export function EditorApp(props: {
         else if (event.code === 'KeyX') change = true, editor.press_x();
         else if (event.code === 'KeyC') change = true, editor.press_c();
 
+        else if (event.code === 'Space') change = true, editor.press_space();
+
         else if (event.code === 'KeyT') change = true, editor.press_t();
         else if (event.code === 'KeyY') change = true, editor.press_y();
         else if (event.code === 'KeyU') change = true, editor.press_u();
@@ -392,6 +394,8 @@ export function EditorApp(props: {
         else if (event.code === 'KeyD') change = true, editor.release_d();
         else if (event.code === 'KeyZ') change = true, editor.release_z();
         else if (event.code === 'KeyC') change = true, editor.release_c();
+
+        else if (event.code === 'Space') change = true, editor.release_space();
 
         if (change) {
             render(false);

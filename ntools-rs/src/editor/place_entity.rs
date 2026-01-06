@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{editor::{Editor, editor_entity::{EditorEntity, EntityId, EntityPos}, editor_state::{Command, EditorEntities, SetEntityCount}}, orientation::{Orientation, OrientationBinary, OrientationCardinal}, tile::{TILE_HALF_SIZE, TILE_SIZE}};
+use crate::{editor::{Editor, editor_entity::{EditorEntity, EntityId, EntityPos}, editor_state::{Command, EditorEntities, SetEntityCount}}, orientation::{Orientation, OrientationBinary, OrientationCardinal, Orientations}, tile::{TILE_HALF_SIZE, TILE_SIZE}};
 
 pub struct PlaceEntity {
     pub entity: EditorEntity,
@@ -16,13 +16,13 @@ pub enum Stage {
 }
 
 impl PlaceEntity {
-    pub fn new(editor: &Editor) -> PlaceEntity {
-        let rounded_pos = PlaceEntity::round_to_grid(editor.cursor_pos, editor.entity_fine_grid);
-        match editor.selected_entity_id {
+    pub fn new(id: EntityId, cursor_pos: DVec2, fine_grid: bool, orientations: Orientations) -> PlaceEntity {
+        let rounded_pos = PlaceEntity::round_to_grid(cursor_pos, fine_grid);
+        match id {
             EntityId::Ninja => PlaceEntity {
                 entity: EditorEntity::Ninja {
                     pos: EntityPos::from_world_pos(rounded_pos),
-                    orientation: editor.entity_orientation.into(),
+                    orientation: orientations.orientation.into(),
                 },
                 stage: None,
             },
@@ -44,7 +44,7 @@ impl PlaceEntity {
             EntityId::RegularDoor => PlaceEntity {
                 entity: EditorEntity::RegularDoor {
                     pos: EntityPos::from_world_pos(rounded_pos),
-                    orientation: PlaceEntity::door_orientation_from_pos(rounded_pos, editor.entity_orientation_binary),
+                    orientation: PlaceEntity::door_orientation_from_pos(rounded_pos, orientations.orientation_binary),
                 },
                 stage: None,
             },
@@ -52,7 +52,7 @@ impl PlaceEntity {
                 entity: EditorEntity::LockedDoor {
                     door_pos: EntityPos::from_world_pos(rounded_pos),
                     switch_pos: EntityPos::from_world_pos(rounded_pos),
-                    orientation: PlaceEntity::door_orientation_from_pos(rounded_pos, editor.entity_orientation_binary),
+                    orientation: PlaceEntity::door_orientation_from_pos(rounded_pos, orientations.orientation_binary),
                 },
                 stage: Some(Stage::PlaceDoor),
             },
@@ -61,7 +61,7 @@ impl PlaceEntity {
                 entity: EditorEntity::TrapDoor {
                     door_pos: EntityPos::from_world_pos(rounded_pos),
                     switch_pos: EntityPos::from_world_pos(rounded_pos),
-                    orientation: PlaceEntity::door_orientation_from_pos(rounded_pos, editor.entity_orientation_binary),
+                    orientation: PlaceEntity::door_orientation_from_pos(rounded_pos, orientations.orientation_binary),
                 },
                 stage: Some(Stage::PlaceDoor),
             },
@@ -69,14 +69,14 @@ impl PlaceEntity {
             EntityId::LaunchPad => PlaceEntity {
                 entity: EditorEntity::LaunchPad {
                     pos: EntityPos::from_world_pos(rounded_pos),
-                    orientation: editor.entity_orientation,
+                    orientation: orientations.orientation,
                 },
                 stage: None,
             },
             EntityId::OneWay => PlaceEntity {
                 entity: EditorEntity::OneWay {
                     pos: EntityPos::from_world_pos(rounded_pos),
-                    orientation: editor.entity_orientation,
+                    orientation: orientations.orientation,
                 },
                 stage: None,
             },
@@ -87,14 +87,14 @@ impl PlaceEntity {
             EntityId::FloorGuard => PlaceEntity {
                 entity: EditorEntity::FloorGuard {
                     pos: EntityPos::from_world_pos(rounded_pos),
-                    orientation: editor.entity_orientation.into(),
+                    orientation: orientations.orientation.into(),
                 },
                 stage: None,
             },
             EntityId::BounceBlock => PlaceEntity {
                 entity: EditorEntity::BounceBlock {
                     pos: EntityPos::from_world_pos(rounded_pos),
-                    orientation: editor.entity_orientation,
+                    orientation: orientations.orientation,
                 },
                 stage: None,
             },
@@ -103,7 +103,7 @@ impl PlaceEntity {
             EntityId::Thwump => PlaceEntity {
                 entity: EditorEntity::Thwump {
                     pos: EntityPos::from_world_pos(rounded_pos),
-                    orientation: editor.entity_orientation,
+                    orientation: orientations.orientation,
                 },
                 stage: None,
             },
@@ -127,7 +127,7 @@ impl PlaceEntity {
             EntityId::ShoveThwump => PlaceEntity {
                 entity: EditorEntity::ShoveThwump {
                     pos: EntityPos::from_world_pos(rounded_pos),
-                    orientation: editor.entity_orientation,
+                    orientation: orientations.orientation,
                 },
                 stage: None,
             },
