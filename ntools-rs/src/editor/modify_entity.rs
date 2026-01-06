@@ -97,7 +97,7 @@ impl ModifyEntity {
 
     pub fn cursor_down(&mut self, entities: &EditorEntities) -> Option<Command> {
         if self.modified_entity == self.original_entity {
-            return None;
+            return Some(Command::SetTilesAndEntities(Vec::new(), Vec::new()));
         }
         let original_count = *entities.get(&self.original_entity).unwrap_or(&0);
         let remove_original_entity = SetEntityCount {
