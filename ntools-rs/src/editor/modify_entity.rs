@@ -147,8 +147,8 @@ impl ModifyEntity {
     }
 
     /// Calculates the new crosshair position needed in response to pressing a direction key.
-    pub fn press_direction(&self, direction: OrientationCardinal, cursor_pos: DVec2, fine_grid: bool) -> DVec2 {
-        let crosshair = self.crosshair(cursor_pos, fine_grid);
+    pub fn press_direction(&self, direction: OrientationCardinal, fine_grid: bool) -> DVec2 {
+        let crosshair = self.selection_type.entity_pos(self.modified_entity).to_world_pos();
         if let (EditorEntity::LockedDoor { orientation, .. }, SelectionType::NotSwitch) |
                (EditorEntity::TrapDoor { orientation, .. }, SelectionType::NotSwitch) |
                (EditorEntity::RegularDoor { orientation, .. }, SelectionType::NotSwitch) = (self.modified_entity, self.selection_type) {

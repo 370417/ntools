@@ -973,7 +973,27 @@ impl Editor {
         self.press_direction(OrientationCardinal::E, shift);
     }
 
-    pub fn press_enter(&mut self) {}
+    pub fn press_enter(&mut self) {
+        match &self.mode {
+            EditorMode::PaintTiles => {}
+            EditorMode::TilePalette => {}
+            EditorMode::SelectTiles(_) => {}
+            EditorMode::MoveSelection(_) |
+            EditorMode::PlaceEntity(_) |
+            EditorMode::PenTool(_) |
+            EditorMode::ModifyEntity(_) => {
+                self.cursor_down(false);
+            }
+            EditorMode::SelectEntity(select_entity) => {
+                if select_entity.get_selection().is_some() {
+                    self.cursor_down(false);
+                } else {
+                    // set mode
+                }
+            }
+            EditorMode::EntityPalette => {}
+        }
+    }
 
     pub fn release_q(&mut self) {
         // Releasing keys should still clean up pressed state even in other modes
@@ -1123,7 +1143,7 @@ impl Editor {
                 self.set_cursor_pos(new_cursor_pos.x, new_cursor_pos.y, shift);
             }
             EditorMode::ModifyEntity(modify_entity) => {
-                let new_cursor_pos = modify_entity.press_direction(direction, self.cursor_pos, self.entity_fine_grid);
+                let new_cursor_pos = modify_entity.press_direction(direction, self.entity_fine_grid);
                 let new_cursor_pos = new_cursor_pos - modify_entity.cursor_offset;
                 self.set_cursor_pos(new_cursor_pos.x, new_cursor_pos.y, shift);
             }
