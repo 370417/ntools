@@ -1,4 +1,4 @@
-use crate::{editor::editor_entity::{EntityId, EntityPos}, grid::GridPos, orientation::{Orientation, OrientationBinary, OrientationCardinal, Orientations}};
+use crate::{editor::editor_entity::{EditorEntity, EntityId, EntityPos}, grid::GridPos, orientation::{Orientation, OrientationBinary, OrientationCardinal, Orientations}};
 
 pub struct EntityPalette {
     pub center: GridPos,
@@ -11,8 +11,6 @@ impl EntityPalette {
         });
     }
 }
-
-fn entity_from_id(id: EntityId, ) {}
 
 const ENTITIES_IN_PALETTE: [EntityId; 24] = [
     EntityId::Mine,

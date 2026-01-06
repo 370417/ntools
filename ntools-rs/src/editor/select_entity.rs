@@ -64,7 +64,7 @@ impl SelectEntity {
                 if Some(switch_pos) == best_pos {
                     best_entities.push((entity, SelectionType::Switch));
                 } else if dist_squared(switch_pos, crosshair_pos) < min_dist_squared
-                       && dist_chebyshev(entity.pos(), crosshair_pos) <= TILE_SIZE {
+                       && dist_chebyshev(switch_pos, crosshair_pos) <= TILE_SIZE {
                     min_dist_squared = dist_squared(switch_pos, crosshair_pos);
                     best_pos = Some(switch_pos);
                     best_entities = vec![(entity, SelectionType::Switch)];

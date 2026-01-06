@@ -67,10 +67,7 @@ impl ModifyEntity {
             EditorEntity::Exit { exit_pos: door_pos, switch_pos } |
             EditorEntity::LockedDoor { door_pos, switch_pos, .. } |
             EditorEntity::TrapDoor { door_pos, switch_pos, .. } => match self.selection_type {
-                SelectionType::NotSwitch => {
-                    *door_pos = new_pos;
-                    *switch_pos = new_pos;
-                }
+                SelectionType::NotSwitch => *door_pos = new_pos,
                 SelectionType::Switch => *switch_pos = new_pos,
             },
         }

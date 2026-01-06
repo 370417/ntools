@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{editor::{Editor, editor_entity::{EditorEntity, EntityId, EntityPos}, editor_state::{Command, EditorEntities, SetEntityCount}}, orientation::{Orientation, OrientationBinary, OrientationCardinal, Orientations}, tile::{TILE_HALF_SIZE, TILE_SIZE}};
+use crate::{editor::{editor_entity::{EditorEntity, EntityId, EntityPos}, editor_state::{Command, EditorEntities, SetEntityCount}}, orientation::{Orientation, OrientationBinary, OrientationCardinal, Orientations}, tile::{TILE_HALF_SIZE, TILE_SIZE}};
 
 pub struct PlaceEntity {
     pub entity: EditorEntity,
@@ -16,120 +16,17 @@ pub enum Stage {
 }
 
 impl PlaceEntity {
-    pub fn new(id: EntityId, cursor_pos: DVec2, fine_grid: bool, orientations: Orientations) -> PlaceEntity {
+    pub fn new(id: EntityId, cursor_pos: DVec2, fine_grid: bool, mut orientations: Orientations) -> PlaceEntity {
         let rounded_pos = PlaceEntity::round_to_grid(cursor_pos, fine_grid);
-        match id {
-            EntityId::Ninja => PlaceEntity {
-                entity: EditorEntity::Ninja {
-                    pos: EntityPos::from_world_pos(rounded_pos),
-                    orientation: orientations.orientation.into(),
-                },
-                stage: None,
-            },
-            EntityId::Mine => PlaceEntity {
-                entity: EditorEntity::Mine {
-                    pos: EntityPos::from_world_pos(rounded_pos),
-                },
-                stage: None,
-            },
-            EntityId::Gold => todo!(),
-            EntityId::ExitDoor => PlaceEntity {
-                entity: EditorEntity::Exit {
-                    exit_pos: EntityPos::from_world_pos(rounded_pos),
-                    switch_pos: EntityPos::from_world_pos(rounded_pos),
-                },
-                stage: Some(Stage::PlaceDoor),
-            },
-            EntityId::ExitSwitch => todo!(),
-            EntityId::RegularDoor => PlaceEntity {
-                entity: EditorEntity::RegularDoor {
-                    pos: EntityPos::from_world_pos(rounded_pos),
-                    orientation: PlaceEntity::door_orientation_from_pos(rounded_pos, orientations.orientation_binary),
-                },
-                stage: None,
-            },
-            EntityId::LockedDoor => PlaceEntity {
-                entity: EditorEntity::LockedDoor {
-                    door_pos: EntityPos::from_world_pos(rounded_pos),
-                    switch_pos: EntityPos::from_world_pos(rounded_pos),
-                    orientation: PlaceEntity::door_orientation_from_pos(rounded_pos, orientations.orientation_binary),
-                },
-                stage: Some(Stage::PlaceDoor),
-            },
-            EntityId::LockedSwitch => todo!(),
-            EntityId::TrapDoor => PlaceEntity {
-                entity: EditorEntity::TrapDoor {
-                    door_pos: EntityPos::from_world_pos(rounded_pos),
-                    switch_pos: EntityPos::from_world_pos(rounded_pos),
-                    orientation: PlaceEntity::door_orientation_from_pos(rounded_pos, orientations.orientation_binary),
-                },
-                stage: Some(Stage::PlaceDoor),
-            },
-            EntityId::TrapSwitch => todo!(),
-            EntityId::LaunchPad => PlaceEntity {
-                entity: EditorEntity::LaunchPad {
-                    pos: EntityPos::from_world_pos(rounded_pos),
-                    orientation: orientations.orientation,
-                },
-                stage: None,
-            },
-            EntityId::OneWay => PlaceEntity {
-                entity: EditorEntity::OneWay {
-                    pos: EntityPos::from_world_pos(rounded_pos),
-                    orientation: orientations.orientation,
-                },
-                stage: None,
-            },
-            EntityId::ChainsawDrone => todo!(),
-            EntityId::LaserDrone => todo!(),
-            EntityId::ZapDrone => todo!(),
-            EntityId::ChaseDrone => todo!(),
-            EntityId::FloorGuard => PlaceEntity {
-                entity: EditorEntity::FloorGuard {
-                    pos: EntityPos::from_world_pos(rounded_pos),
-                    orientation: orientations.orientation.into(),
-                },
-                stage: None,
-            },
-            EntityId::BounceBlock => PlaceEntity {
-                entity: EditorEntity::BounceBlock {
-                    pos: EntityPos::from_world_pos(rounded_pos),
-                    orientation: orientations.orientation,
-                },
-                stage: None,
-            },
-            EntityId::RocketTurret => todo!(),
-            EntityId::GaussTurret => todo!(),
-            EntityId::Thwump => PlaceEntity {
-                entity: EditorEntity::Thwump {
-                    pos: EntityPos::from_world_pos(rounded_pos),
-                    orientation: orientations.orientation,
-                },
-                stage: None,
-            },
-            EntityId::ToggleMine => PlaceEntity {
-                entity: EditorEntity::ToggleMine {
-                    pos: EntityPos::from_world_pos(rounded_pos),
-                },
-                stage: None,
-            },
-            EntityId::EvilNinja => todo!(),
-            EntityId::LaserTurret => todo!(),
-            EntityId::BoostPad => PlaceEntity {
-                entity: EditorEntity::BoostPad {
-                    pos: EntityPos::from_world_pos(rounded_pos),
-                },
-                stage: None,
-            },
-            EntityId::DeathBall => todo!(),
-            EntityId::MiniDrone => todo!(),
-            EntityId::Bat => todo!(),
-            EntityId::ShoveThwump => PlaceEntity {
-                entity: EditorEntity::ShoveThwump {
-                    pos: EntityPos::from_world_pos(rounded_pos),
-                    orientation: orientations.orientation,
-                },
-                stage: None,
+        let pos = EntityPos::from_world_pos(rounded_pos);
+        orientations.orientation_binary = PlaceEntity::door_orientation_from_pos(rounded_pos, orientations.orientation_binary);
+        PlaceEntity {
+            entity: EditorEntity::from_parts(id, pos, orientations),
+            stage: match id {
+                EntityId::ExitDoor |
+                EntityId::LockedDoor |
+                EntityId::TrapDoor => Some(Stage::PlaceDoor),
+                _ => None,
             },
         }
     }
