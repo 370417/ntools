@@ -1,10 +1,13 @@
 use float_ord::FloatOrd;
 use glam::DVec2;
 
-use crate::{grid::GridPos, segment::extract_path_from_segments, tile::{Tile, TileCategory, TileVariant}};
+use crate::{grid::GridPos, orientation::OrientationCardinal, segment::extract_path_from_segments, tile::{Tile, TileCategory, TileVariant}};
 
 pub struct TilePalette {
     pub center: GridPos,
+    /// Shift is stored purely for modifying the visual tile palette preview.
+    /// The selected tile category stored in the Editor struct does not change
+    /// when shift is pressed.
     pub shift: bool,
 }
 
@@ -38,6 +41,45 @@ impl TilePalette {
 
     pub fn selected_pos(&self, selected_category: TileCategory) -> DVec2 {
         self.tile_pos_in_palette(selected_category).unwrap_or(self.center).center()
+    }
+
+    pub fn press_direction(selected_category: &mut TileCategory, direction: OrientationCardinal) {
+        use TileCategory::*;
+        use OrientationCardinal::*;
+        match (*selected_category, direction) {
+            (Tile2, N) |
+            (Tile3, N) |
+            (Tile4, N) |
+            (Tile7, N) |
+            (Tile8, N) |
+            (Tile5, S) => *selected_category = Tile1,
+            (Tile1, S) |
+            (Tile3, S) |
+            (Tile4, S) |
+            (Tile7, S) |
+            (Tile8, S) |
+            (Tile6, N) => *selected_category = Tile2,
+            (Tile4, E) |
+            (Tile5, E) |
+            (Tile1, E) |
+            (Tile2, E) |
+            (Tile6, E) |
+            (Tile7, W) => *selected_category = Tile3,
+            (Tile3, W) |
+            (Tile5, W) |
+            (Tile1, W) |
+            (Tile2, W) |
+            (Tile6, W) |
+            (Tile8, E) => *selected_category = Tile4,
+            (Tile1, N) => *selected_category = Tile5,
+            (Tile2, S) => *selected_category = Tile6,
+            (Tile3, E) => *selected_category = Tile7,
+            (Tile4, W) => *selected_category = Tile8,
+            (Tile5, N) |
+            (Tile6, S) |
+            (Tile7, E) |
+            (Tile8, W) => {}
+        }
     }
 
     fn tile_pos_in_palette(&self, tile_category: TileCategory) -> Option<GridPos> {

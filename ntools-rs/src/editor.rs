@@ -614,14 +614,11 @@ impl Editor {
         }
 
         match &mut self.mode {
-            EditorMode::PaintTiles => {
-                self.pressed_tile_variants.push(TileVariant::Q);
-                self.last_tile_variant = TileVariant::Q;
-                self.paint_tile(PaintTileArgs { amend: false, shift });
-            }
+            EditorMode::PaintTiles |
             EditorMode::TilePalette(_) => {
                 self.pressed_tile_variants.push(TileVariant::Q);
                 self.last_tile_variant = TileVariant::Q;
+                self.paint_tile(PaintTileArgs { amend: false, shift });
             }
             EditorMode::PlaceEntity(place_entity) => {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
@@ -650,14 +647,11 @@ impl Editor {
         }
 
         match &mut self.mode {
-            EditorMode::PaintTiles => {
-                self.pressed_tile_variants.push(TileVariant::W);
-                self.last_tile_variant = TileVariant::W;
-                self.paint_tile(PaintTileArgs { amend: false, shift });
-            }
+            EditorMode::PaintTiles |
             EditorMode::TilePalette(_) => {
                 self.pressed_tile_variants.push(TileVariant::W);
                 self.last_tile_variant = TileVariant::W;
+                self.paint_tile(PaintTileArgs { amend: false, shift });
             }
             EditorMode::PlaceEntity(place_entity) => {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
@@ -686,14 +680,11 @@ impl Editor {
         }
 
         match &mut self.mode {
-            EditorMode::PaintTiles => {
-                self.pressed_tile_variants.push(TileVariant::A);
-                self.last_tile_variant = TileVariant::A;
-                self.paint_tile(PaintTileArgs { amend: false, shift });
-            }
+            EditorMode::PaintTiles |
             EditorMode::TilePalette(_) => {
                 self.pressed_tile_variants.push(TileVariant::A);
                 self.last_tile_variant = TileVariant::A;
+                self.paint_tile(PaintTileArgs { amend: false, shift });
             }
             EditorMode::PlaceEntity(place_entity) => {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
@@ -722,14 +713,11 @@ impl Editor {
         }
 
         match &mut self.mode {
-            EditorMode::PaintTiles => {
-                self.pressed_tile_variants.push(TileVariant::S);
-                self.last_tile_variant = TileVariant::S;
-                self.paint_tile(PaintTileArgs { amend: false, shift });
-            }
+            EditorMode::PaintTiles |
             EditorMode::TilePalette(_) => {
                 self.pressed_tile_variants.push(TileVariant::S);
                 self.last_tile_variant = TileVariant::S;
+                self.paint_tile(PaintTileArgs { amend: false, shift });
             }
             EditorMode::PlaceEntity(place_entity) => {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
@@ -756,14 +744,11 @@ impl Editor {
         }
 
         match &mut self.mode {
-            EditorMode::PaintTiles => {
-                self.pressed_tile_variants.push(TileVariant::E);
-                self.last_tile_variant = TileVariant::E;
-                self.paint_tile(PaintTileArgs { amend: false, shift: false });
-            }
+            EditorMode::PaintTiles |
             EditorMode::TilePalette(_) => {
                 self.pressed_tile_variants.push(TileVariant::E);
                 self.last_tile_variant = TileVariant::E;
+                self.paint_tile(PaintTileArgs { amend: false, shift: false });
             }
             EditorMode::PlaceEntity(place_entity) => {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
@@ -799,14 +784,11 @@ impl Editor {
         }
 
         match &mut self.mode {
-            EditorMode::PaintTiles => {
-                self.pressed_tile_variants.push(TileVariant::D);
-                self.last_tile_variant = TileVariant::D;
-                self.paint_tile(PaintTileArgs { amend: false, shift: false });
-            }
+            EditorMode::PaintTiles |
             EditorMode::TilePalette(_) => {
                 self.pressed_tile_variants.push(TileVariant::D);
                 self.last_tile_variant = TileVariant::D;
+                self.paint_tile(PaintTileArgs { amend: false, shift: false });
             }
             EditorMode::PlaceEntity(place_entity) => {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
@@ -1276,7 +1258,7 @@ impl Editor {
                 let new_cursor_pos = crosshair.to_world_pos();
                 self.set_cursor_pos(new_cursor_pos.x, new_cursor_pos.y, shift);
             }
-            EditorMode::TilePalette(_) => {}
+            EditorMode::TilePalette(_) => TilePalette::press_direction(&mut self.selected_tile_category, direction),
             EditorMode::SelectTiles(_) => {}
             EditorMode::PlaceEntity(place_entity) => {
                 let new_cursor_pos = place_entity.press_direction(direction, self.cursor_pos, self.entity_fine_grid);
