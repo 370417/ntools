@@ -6,7 +6,7 @@ use futures_channel::oneshot::{self, Receiver};
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{attract::Attract, editor::{editor_entity::{EditorEntity, EntityId, ExportedEntity}, editor_state::{Command, EditorState}, entity_palette::EntityPalette, modify_entity::ModifyEntity, move_selection::MoveSelection, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::PlaceEntity, select_entity::SelectEntity, select_tiles::SelectTiles}, entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floor_guard::FloorGuard, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump}, grid::{COLS, GridPos, ROWS}, map_file::MapFile, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationBinary, OrientationCardinal, Orientations}, replay::Replay, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_HALF_SIZE, TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
+use crate::{attract::Attract, editor::{editor_entity::{EditorEntity, EntityId, ExportedEntity}, editor_state::{Command, EditorState}, entity_palette::EntityPalette, modify_entity::ModifyEntity, move_selection::MoveSelection, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::PlaceEntity, select_entity::SelectEntity, select_tiles::SelectTiles, tile_palette::TilePalette}, entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floor_guard::FloorGuard, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump}, grid::{COLS, GridPos, ROWS}, map_file::MapFile, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationBinary, OrientationCardinal, Orientations}, replay::Replay, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_HALF_SIZE, TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
 
 pub mod editor_entity;
 pub mod editor_state;
@@ -17,6 +17,7 @@ pub mod pen_tool;
 pub mod place_entity;
 pub mod select_entity;
 pub mod select_tiles;
+pub mod tile_palette;
 
 #[wasm_bindgen]
 pub struct Editor {
@@ -30,6 +31,8 @@ pub struct Editor {
     /// is currently being painted.
     /// This is a stack because multiple keys can be pressed at once.
     pressed_tile_variants: Vec<TileVariant>,
+    /// Stores the last tile variant even after the keys for tile variants are released.
+    last_tile_variant: TileVariant,
     /// If true, pen tool closes tiles to the right of the stroke relative to stroke direction.
     /// If false, it closes tiles to the left.
     pen_tool_is_clockwise: bool,
@@ -47,7 +50,7 @@ pub struct Editor {
 
 pub enum EditorMode {
     PaintTiles,
-    TilePalette,
+    TilePalette(TilePalette),
     SelectTiles(SelectTiles),
     MoveSelection(MoveSelection),
     PlaceEntity(PlaceEntity),
@@ -69,6 +72,7 @@ impl Editor {
             selected_tile_category: TileCategory::Tile1,
             selected_entity_id: EntityId::Ninja,
             pressed_tile_variants: Vec::new(),
+            last_tile_variant: TileVariant::Q,
             pen_tool_is_clockwise: true,
             pen_tool_fine_grid: true,
             entity_fine_grid: false,
@@ -196,7 +200,7 @@ impl Editor {
     pub fn mode(&self) -> u32 {
         match self.mode {
             EditorMode::PaintTiles => 0,
-            EditorMode::TilePalette => 1,
+            EditorMode::TilePalette(_) => 1,
             EditorMode::SelectTiles(_) => 2,
             EditorMode::MoveSelection(_) => 3,
             EditorMode::PlaceEntity(_) => 4,
@@ -235,6 +239,9 @@ impl Editor {
             }
             EditorMode::MoveSelection(move_selection) => {
                 return move_selection.selected_tiles_path(self.cursor_pos);
+            }
+            EditorMode::TilePalette(tile_palette) => {
+                return tile_palette.tiles(self.last_tile_variant);
             }
             _ => {}
         }
@@ -581,7 +588,12 @@ impl Editor {
         match &mut self.mode {
             EditorMode::PaintTiles => {
                 self.pressed_tile_variants.push(TileVariant::Q);
+                self.last_tile_variant = TileVariant::Q;
                 self.paint_tile(PaintTileArgs { amend: false, shift });
+            }
+            EditorMode::TilePalette(_) => {
+                self.pressed_tile_variants.push(TileVariant::Q);
+                self.last_tile_variant = TileVariant::Q;
             }
             EditorMode::PlaceEntity(place_entity) => {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
@@ -612,7 +624,12 @@ impl Editor {
         match &mut self.mode {
             EditorMode::PaintTiles => {
                 self.pressed_tile_variants.push(TileVariant::W);
+                self.last_tile_variant = TileVariant::W;
                 self.paint_tile(PaintTileArgs { amend: false, shift });
+            }
+            EditorMode::TilePalette(_) => {
+                self.pressed_tile_variants.push(TileVariant::W);
+                self.last_tile_variant = TileVariant::W;
             }
             EditorMode::PlaceEntity(place_entity) => {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
@@ -643,7 +660,12 @@ impl Editor {
         match &mut self.mode {
             EditorMode::PaintTiles => {
                 self.pressed_tile_variants.push(TileVariant::A);
+                self.last_tile_variant = TileVariant::A;
                 self.paint_tile(PaintTileArgs { amend: false, shift });
+            }
+            EditorMode::TilePalette(_) => {
+                self.pressed_tile_variants.push(TileVariant::A);
+                self.last_tile_variant = TileVariant::A;
             }
             EditorMode::PlaceEntity(place_entity) => {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
@@ -674,7 +696,12 @@ impl Editor {
         match &mut self.mode {
             EditorMode::PaintTiles => {
                 self.pressed_tile_variants.push(TileVariant::S);
+                self.last_tile_variant = TileVariant::S;
                 self.paint_tile(PaintTileArgs { amend: false, shift });
+            }
+            EditorMode::TilePalette(_) => {
+                self.pressed_tile_variants.push(TileVariant::S);
+                self.last_tile_variant = TileVariant::S;
             }
             EditorMode::PlaceEntity(place_entity) => {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
@@ -703,7 +730,12 @@ impl Editor {
         match &mut self.mode {
             EditorMode::PaintTiles => {
                 self.pressed_tile_variants.push(TileVariant::E);
+                self.last_tile_variant = TileVariant::E;
                 self.paint_tile(PaintTileArgs { amend: false, shift: false });
+            }
+            EditorMode::TilePalette(_) => {
+                self.pressed_tile_variants.push(TileVariant::E);
+                self.last_tile_variant = TileVariant::E;
             }
             EditorMode::PlaceEntity(place_entity) => {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
@@ -741,7 +773,12 @@ impl Editor {
         match &mut self.mode {
             EditorMode::PaintTiles => {
                 self.pressed_tile_variants.push(TileVariant::D);
+                self.last_tile_variant = TileVariant::D;
                 self.paint_tile(PaintTileArgs { amend: false, shift: false });
+            }
+            EditorMode::TilePalette(_) => {
+                self.pressed_tile_variants.push(TileVariant::D);
+                self.last_tile_variant = TileVariant::D;
             }
             EditorMode::PlaceEntity(place_entity) => {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
@@ -1007,7 +1044,7 @@ impl Editor {
     pub fn press_enter(&mut self) {
         match &self.mode {
             EditorMode::PaintTiles => {}
-            EditorMode::TilePalette => {}
+            EditorMode::TilePalette(_) => {}
             EditorMode::SelectTiles(_) => {}
             EditorMode::MoveSelection(_) |
             EditorMode::PlaceEntity(_) |
@@ -1032,10 +1069,19 @@ impl Editor {
         });
     }
 
+    pub fn press_alt_left(&mut self) {
+        self.mode = EditorMode::TilePalette(TilePalette {
+            center: self.tile_crosshair(),
+        });
+    }
+
     pub fn release_q(&mut self) {
         // Releasing keys should still clean up pressed state even in other modes
         // because the user could switch modes while holding down a key.
         self.pressed_tile_variants.retain(|variant| *variant != TileVariant::Q);
+        if let Some(&tile_variant) = self.pressed_tile_variants.last() {
+            self.last_tile_variant = tile_variant;
+        }
         if let Some(Orientation::NW) = self.pressed_orientation {
             self.pressed_orientation = None;
         }
@@ -1045,6 +1091,9 @@ impl Editor {
         // Releasing keys should still clean up pressed state even in other modes
         // because the user could switch modes while holding down a key.
         self.pressed_tile_variants.retain(|variant| *variant != TileVariant::W);
+        if let Some(&tile_variant) = self.pressed_tile_variants.last() {
+            self.last_tile_variant = tile_variant;
+        }
         if let Some(Orientation::N) = self.pressed_orientation {
             self.pressed_orientation = None;
         }
@@ -1054,6 +1103,9 @@ impl Editor {
         // Releasing keys should still clean up pressed state even in other modes
         // because the user could switch modes while holding down a key.
         self.pressed_tile_variants.retain(|variant| *variant != TileVariant::A);
+        if let Some(&tile_variant) = self.pressed_tile_variants.last() {
+            self.last_tile_variant = tile_variant;
+        }
         if let Some(Orientation::W) = self.pressed_orientation {
             self.pressed_orientation = None;
         }
@@ -1063,6 +1115,9 @@ impl Editor {
         // Releasing keys should still clean up pressed state even in other modes
         // because the user could switch modes while holding down a key.
         self.pressed_tile_variants.retain(|variant| *variant != TileVariant::S);
+        if let Some(&tile_variant) = self.pressed_tile_variants.last() {
+            self.last_tile_variant = tile_variant;
+        }
         if let Some(Orientation::S) = self.pressed_orientation {
             self.pressed_orientation = None;
         }
@@ -1072,6 +1127,9 @@ impl Editor {
         // Releasing keys should still clean up pressed state even in other modes
         // because the user could switch modes while holding down a key.
         self.pressed_tile_variants.retain(|variant| *variant != TileVariant::E);
+        if let Some(&tile_variant) = self.pressed_tile_variants.last() {
+            self.last_tile_variant = tile_variant;
+        }
         if let Some(Orientation::NE) = self.pressed_orientation {
             self.pressed_orientation = None;
         }
@@ -1081,6 +1139,9 @@ impl Editor {
         // Releasing keys should still clean up pressed state even in other modes
         // because the user could switch modes while holding down a key.
         self.pressed_tile_variants.retain(|variant| *variant != TileVariant::D);
+        if let Some(&tile_variant) = self.pressed_tile_variants.last() {
+            self.last_tile_variant = tile_variant;
+        }
         if let Some(Orientation::W) = self.pressed_orientation {
             self.pressed_orientation = None;
         }
@@ -1104,6 +1165,10 @@ impl Editor {
 
     pub fn release_space(&mut self) {
         self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
+    }
+
+    pub fn release_alt_left(&mut self) {
+        self.mode = EditorMode::PaintTiles;
     }
 
     pub fn receive_past_ninjas(&mut self) {
@@ -1168,7 +1233,7 @@ impl Editor {
                 let new_cursor_pos = crosshair.to_world_pos();
                 self.set_cursor_pos(new_cursor_pos.x, new_cursor_pos.y, shift);
             }
-            EditorMode::TilePalette => {}
+            EditorMode::TilePalette(_) => {}
             EditorMode::SelectTiles(_) => {}
             EditorMode::PlaceEntity(place_entity) => {
                 let new_cursor_pos = place_entity.press_direction(direction, self.cursor_pos, self.entity_fine_grid);

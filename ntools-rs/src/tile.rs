@@ -870,6 +870,11 @@ impl Tile {
         }
     }
 
+    pub fn all_segments(self, pos: GridPos) -> impl Iterator<Item = Segment> {
+        let outer_segments = [(0, 1), (1, 0), (0, -1), (-1, 0)].iter().map(move |&direction| self.outer_segment(pos, direction));
+        std::iter::once(self.inner_segment(pos)).chain(outer_segments).flatten()
+    }
+
     pub fn add_outer_segments_to_grid(&self, pos: GridPos, segments: &mut Grid<Segment>) {
         for direction in [(0, 1), (1, 0), (0, -1), (-1, 0)] {
             let neighbor_pos = pos.plus(direction);

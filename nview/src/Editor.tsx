@@ -356,6 +356,7 @@ export function EditorApp(props: {
         else if (event.code === 'KeyC') change = true, editor.press_c();
 
         else if (event.code === 'Space') change = true, editor.press_space();
+        else if (event.code === 'AltLeft') change = true, editor.press_alt_left();
 
         else if (event.code === 'KeyT') change = true, editor.press_t();
         else if (event.code === 'KeyY') change = true, editor.press_y();
@@ -402,6 +403,7 @@ export function EditorApp(props: {
         else if (event.code === 'KeyC') change = true, editor.release_c();
 
         else if (event.code === 'Space') change = true, editor.release_space();
+        else if (event.code === 'AltLeft') change = true, editor.release_alt_left();
 
         if (change) {
             render(false);
