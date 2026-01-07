@@ -353,7 +353,7 @@ impl Editor {
                 }
             }
             EditorMode::TilePalette(tile_palette) => {
-                let Some(new_selected_category) = tile_palette.selected_category_from_cursor(new_cursor_pos, shift) else { return false };
+                let Some(new_selected_category) = tile_palette.selected_category_from_cursor(new_cursor_pos) else { return false };
                 if new_selected_category != self.selected_tile_category {
                     self.selected_tile_category = new_selected_category;
                     true
@@ -1239,16 +1239,18 @@ impl Editor {
     }
 
     fn paint_tile(&mut self, args: PaintTileArgs) {
-        let crosshair = self.tile_crosshair();
-        let command = Command::paint_tile(
-            crosshair,
-            self.state.tiles()[crosshair],
-            Tile::from_keys(self.selected_tile_category.shift(args.shift), self.last_tile_variant),
-        );
-        if args.amend {
-            self.state.amend(command);
-        } else {
-            self.state.apply(command);
+        if let Some(&tile_variant) = self.pressed_tile_variants.last() {
+            let crosshair = self.tile_crosshair();
+            let command = Command::paint_tile(
+                crosshair,
+                self.state.tiles()[crosshair],
+                Tile::from_keys(self.selected_tile_category.shift(args.shift), tile_variant),
+            );
+            if args.amend {
+                self.state.amend(command);
+            } else {
+                self.state.apply(command);
+            }
         }
     }
 
