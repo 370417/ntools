@@ -353,7 +353,7 @@ impl Editor {
                 }
             }
             EditorMode::TilePalette(tile_palette) => {
-                let Some(new_selected_category) = tile_palette.selected_category_from_cursor(new_cursor_pos) else { return false };
+                let Some(new_selected_category) = tile_palette.selected_category_from_cursor(new_cursor_pos, shift) else { return false };
                 if new_selected_category != self.selected_tile_category {
                     self.selected_tile_category = new_selected_category;
                     true
@@ -1097,10 +1097,18 @@ impl Editor {
         });
     }
 
-    pub fn press_alt_left(&mut self) {
+    pub fn press_alt_left(&mut self, shift: bool) {
         self.mode = EditorMode::TilePalette(TilePalette {
             center: self.tile_crosshair(),
+            shift,
         });
+    }
+
+    pub fn press_shift(&mut self) {
+        match &mut self.mode {
+            EditorMode::TilePalette(tile_palette) => tile_palette.shift = true,
+            _ => {}
+        }
     }
 
     pub fn release_q(&mut self) {
@@ -1199,6 +1207,13 @@ impl Editor {
         self.mode = EditorMode::PaintTiles;
     }
 
+    pub fn release_shift(&mut self) {
+        match &mut self.mode {
+            EditorMode::TilePalette(tile_palette) => tile_palette.shift = false,
+            _ => {}
+        }
+    }
+
     pub fn receive_past_ninjas(&mut self) {
         if let Some(receiver) = &mut self.receiver && let Ok(Some(past_ninjas)) = receiver.try_recv() {
             self.past_ninjas = past_ninjas;
@@ -1224,18 +1239,16 @@ impl Editor {
     }
 
     fn paint_tile(&mut self, args: PaintTileArgs) {
-        if let Some(&tile_variant) = self.pressed_tile_variants.last() {
-            let crosshair = self.tile_crosshair();
-            let command = Command::paint_tile(
-                crosshair,
-                self.state.tiles()[crosshair],
-                Tile::from_keys(self.selected_tile_category.shift(args.shift), tile_variant),
-            );
-            if args.amend {
-                self.state.amend(command);
-            } else {
-                self.state.apply(command);
-            }
+        let crosshair = self.tile_crosshair();
+        let command = Command::paint_tile(
+            crosshair,
+            self.state.tiles()[crosshair],
+            Tile::from_keys(self.selected_tile_category.shift(args.shift), self.last_tile_variant),
+        );
+        if args.amend {
+            self.state.amend(command);
+        } else {
+            self.state.apply(command);
         }
     }
 

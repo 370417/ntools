@@ -332,6 +332,9 @@ export function EditorApp(props: {
             return;
         }
 
+        if (event.shiftKey) change = true, editor.press_shift();
+        // Note: no else
+
         if (event.code ==='Backquote') change = true, editor.press_backtick();
         else if (event.code === 'Digit1') change = true, editor.press_1(event.shiftKey);
         else if (event.code === 'Digit2') change = true, editor.press_2(event.shiftKey);
@@ -358,7 +361,7 @@ export function EditorApp(props: {
         else if (event.code === 'KeyC') change = true, editor.press_c();
 
         else if (event.code === 'Space') change = true, editor.press_space();
-        else if (event.code === 'AltLeft') change = true, editor.press_alt_left();
+        else if (event.code === 'AltLeft') change = true, editor.press_alt_left(event.shiftKey);
 
         else if (event.code === 'KeyT') change = true, editor.press_t();
         else if (event.code === 'KeyY') change = true, editor.press_y();
@@ -395,6 +398,10 @@ export function EditorApp(props: {
 
     const keyupListener = (event: KeyboardEvent) => {
         let change = false;
+
+        if (!event.shiftKey) change = true, editor.release_shift();
+        // Note: no else
+
         if (event.code === 'KeyQ') change = true, editor.release_q();
         else if (event.code === 'KeyW') change = true, editor.release_w();
         else if (event.code === 'KeyA') change = true, editor.release_a();
