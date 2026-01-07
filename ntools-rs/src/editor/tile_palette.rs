@@ -1,3 +1,6 @@
+use float_ord::FloatOrd;
+use glam::DVec2;
+
 use crate::{grid::GridPos, segment::extract_path_from_segments, tile::{Tile, TileCategory, TileVariant}};
 
 pub struct TilePalette {
@@ -14,6 +17,26 @@ impl TilePalette {
             tile.all_segments(pos)
         });
         extract_path_from_segments(segments.collect(), false)
+    }
+
+    pub fn selected_category_from_cursor(&self, cursor_pos: DVec2) -> Option<TileCategory> {
+        if GridPos::from_world_pos(cursor_pos) == self.center {
+            // center of palette acts as a deadzone for the mouse
+            return None;
+        }
+
+        TILE_CATEGORIES.iter().filter_map(|&category| {
+            self.tile_pos_in_palette(category).map(|pos| {
+                let distance = (pos.to_world_pos() - cursor_pos).length_squared();
+                (category, distance)
+            })
+        })
+        .min_by_key(|&(_, distance)| FloatOrd(distance))
+        .map(|(category, _)| category)
+    }
+
+    pub fn selected_pos(&self, selected_category: TileCategory) -> DVec2 {
+        self.tile_pos_in_palette(selected_category).unwrap_or(self.center).center()
     }
 
     fn tile_pos_in_palette(&self, tile_category: TileCategory) -> Option<GridPos> {

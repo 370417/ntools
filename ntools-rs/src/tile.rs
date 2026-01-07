@@ -252,7 +252,7 @@ pub enum Tile {
     Tile8A = 11,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum TileCategory {
     Tile1,
     Tile2,

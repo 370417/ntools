@@ -251,6 +251,7 @@ impl Editor {
     pub fn palette_center_x(&self) -> f64 {
         match &self.mode {
             EditorMode::EntityPalette(entity_palette) => entity_palette.center.center().x,
+            EditorMode::TilePalette(tile_palette) => tile_palette.center.center().x,
             _ => f64::NAN,
         }
     }
@@ -258,6 +259,7 @@ impl Editor {
     pub fn palette_center_y(&self) -> f64 {
         match &self.mode {
             EditorMode::EntityPalette(entity_palette) => entity_palette.center.center().y,
+            EditorMode::TilePalette(tile_palette) => tile_palette.center.center().y,
             _ => f64::NAN,
         }
     }
@@ -265,6 +267,7 @@ impl Editor {
     pub fn palette_selection_x(&self) -> f64 {
         match &self.mode {
             EditorMode::EntityPalette(entity_palette) => entity_palette.selected_pos(self.selected_entity_id).x,
+            EditorMode::TilePalette(tile_palette) => tile_palette.selected_pos(self.selected_tile_category).x,
             _ => f64::NAN,
         }
     }
@@ -272,6 +275,7 @@ impl Editor {
     pub fn palette_selection_y(&self) -> f64 {
         match &self.mode {
             EditorMode::EntityPalette(entity_palette) => entity_palette.selected_pos(self.selected_entity_id).y,
+            EditorMode::TilePalette(tile_palette) => tile_palette.selected_pos(self.selected_tile_category).y,
             _ => f64::NAN,
         }
     }
@@ -348,7 +352,15 @@ impl Editor {
                     false
                 }
             }
-            _ => false
+            EditorMode::TilePalette(tile_palette) => {
+                let Some(new_selected_category) = tile_palette.selected_category_from_cursor(new_cursor_pos) else { return false };
+                if new_selected_category != self.selected_tile_category {
+                    self.selected_tile_category = new_selected_category;
+                    true
+                } else {
+                    false
+                }
+            }
         }
     }
 
@@ -517,42 +529,58 @@ impl Editor {
     }
 
     pub fn press_1(&mut self, shift: bool) {
-        self.mode = EditorMode::PaintTiles;
+        if !matches!(self.mode, EditorMode::TilePalette(_)) {
+            self.mode = EditorMode::PaintTiles;
+        }
         self.selected_tile_category = TileCategory::Tile1.shift(shift);
     }
 
     pub fn press_2(&mut self, shift: bool) {
-        self.mode = EditorMode::PaintTiles;
+        if !matches!(self.mode, EditorMode::TilePalette(_)) {
+            self.mode = EditorMode::PaintTiles;
+        }
         self.selected_tile_category = TileCategory::Tile2.shift(shift);
     }
 
     pub fn press_3(&mut self, shift: bool) {
-        self.mode = EditorMode::PaintTiles;
+        if !matches!(self.mode, EditorMode::TilePalette(_)) {
+            self.mode = EditorMode::PaintTiles;
+        }
         self.selected_tile_category = TileCategory::Tile3.shift(shift);
     }
 
     pub fn press_4(&mut self, shift: bool) {
-        self.mode = EditorMode::PaintTiles;
+        if !matches!(self.mode, EditorMode::TilePalette(_)) {
+            self.mode = EditorMode::PaintTiles;
+        }
         self.selected_tile_category = TileCategory::Tile4.shift(shift);
     }
 
     pub fn press_5(&mut self, shift: bool) {
-        self.mode = EditorMode::PaintTiles;
+        if !matches!(self.mode, EditorMode::TilePalette(_)) {
+            self.mode = EditorMode::PaintTiles;
+        }
         self.selected_tile_category = TileCategory::Tile5.shift(shift);
     }
 
     pub fn press_6(&mut self, shift: bool) {
-        self.mode = EditorMode::PaintTiles;
+        if !matches!(self.mode, EditorMode::TilePalette(_)) {
+            self.mode = EditorMode::PaintTiles;
+        }
         self.selected_tile_category = TileCategory::Tile6.shift(shift);
     }
 
     pub fn press_7(&mut self, shift: bool) {
-        self.mode = EditorMode::PaintTiles;
+        if !matches!(self.mode, EditorMode::TilePalette(_)) {
+            self.mode = EditorMode::PaintTiles;
+        }
         self.selected_tile_category = TileCategory::Tile7.shift(shift);
     }
 
     pub fn press_8(&mut self, shift: bool) {
-        self.mode = EditorMode::PaintTiles;
+        if !matches!(self.mode, EditorMode::TilePalette(_)) {
+            self.mode = EditorMode::PaintTiles;
+        }
         self.selected_tile_category = TileCategory::Tile8.shift(shift);
     }
 

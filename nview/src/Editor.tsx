@@ -33,7 +33,7 @@ const xhairHalfSize = 4;
 const crosshairPath = `M ${-xhairHalfSize} 0 H ${xhairHalfSize} M 0 ${-xhairHalfSize} V ${xhairHalfSize}`;
 
 const MODE_PAINT_TILES = 0;
-// const MODE_TILE_PALETTE = 1;
+const MODE_TILE_PALETTE = 1;
 // const MODE_SELECT_TILES = 2;
 const MODE_MOVE_SELECTION = 3;
 // const MODE_PLACE_ENTITY = 4;
@@ -63,6 +63,8 @@ const BONES_STANDING = new Float64Array([-0.039, -0.0249, 0.1127, -0.1738, 0.111
 
 const ENTITY_PALETTE_SIZE = 150;
 const ENTITY_PALETTE_RETICLE_RADIUS = 16;
+
+const TILE_PALETTE_PATH = "M -13 -13 V -62 H 13 V -13 H 62 V 13 H 13 V 62 H -13 V 13 H -62 V -13 H -13 M -12 -12 H 12 V 12 H -12 V -12";
 
 type Line = {
     x1: number;
@@ -568,7 +570,13 @@ export function EditorApp(props: {
             <Show when={mode() === MODE_ENTITY_PALETTE}>
                 <circle fill="none" stroke="var(--entity-palette-reticle)" cx={paletteSelection().x} cy={paletteSelection().y} r={ENTITY_PALETTE_RETICLE_RADIUS} />
             </Show>
+            <Show when={mode() === MODE_TILE_PALETTE}>
+                <path d={TILE_PALETTE_PATH} fill-rule="evenodd" fill="color-mix(in srgb,var(--background) 18%,white 15%)" transform={`translate(${paletteCenter().x},${paletteCenter().y})`} />
+            </Show>
             <path id="selected-tiles" d={selectedTilePath()} fill-rule="evenodd" />
+            <Show when={mode() === MODE_TILE_PALETTE}>
+                <rect fill="none" stroke="var(--editor-crosshair)" stroke-width="2" x={paletteSelection().x - 13} y={paletteSelection().y - 13} width="26" height="26" />
+            </Show>
             <For each={doorSwitchLines()}>
                 {line => <line class="door-switch-line" x1={line.x1} y1={line.y1} x2={line.x2} y2={line.y2} />}
             </For>
