@@ -6,16 +6,18 @@ use futures_channel::oneshot::{self, Receiver};
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{attract::Attract, editor::{editor_entity::{EditorEntity, EntityId, ExportedEntity}, editor_state::{Command, EditorState}, modify_entity::ModifyEntity, move_selection::MoveSelection, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::PlaceEntity, select_entity::SelectEntity, select_tiles::SelectTiles}, entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floor_guard::FloorGuard, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump}, grid::{COLS, GridPos, ROWS}, map_file::MapFile, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationBinary, OrientationCardinal}, replay::Replay, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
+use crate::{attract::Attract, editor::{editor_entity::{EditorEntity, EntityId, ExportedEntity}, editor_state::{Command, EditorState}, entity_palette::EntityPalette, modify_entity::ModifyEntity, move_selection::MoveSelection, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::PlaceEntity, select_entity::SelectEntity, select_tiles::SelectTiles, tile_palette::TilePalette}, entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floor_guard::FloorGuard, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump}, grid::{COLS, GridPos, ROWS}, map_file::MapFile, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationBinary, OrientationCardinal, Orientations}, replay::Replay, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_HALF_SIZE, TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
 
 pub mod editor_entity;
 pub mod editor_state;
+pub mod entity_palette;
 pub mod modify_entity;
 pub mod move_selection;
 pub mod pen_tool;
 pub mod place_entity;
 pub mod select_entity;
 pub mod select_tiles;
+pub mod tile_palette;
 
 #[wasm_bindgen]
 pub struct Editor {
@@ -29,14 +31,14 @@ pub struct Editor {
     /// is currently being painted.
     /// This is a stack because multiple keys can be pressed at once.
     pressed_tile_variants: Vec<TileVariant>,
+    /// Stores the last tile variant even after the keys for tile variants are released.
+    last_tile_variant: TileVariant,
     /// If true, pen tool closes tiles to the right of the stroke relative to stroke direction.
     /// If false, it closes tiles to the left.
     pen_tool_is_clockwise: bool,
     pen_tool_fine_grid: bool,
     entity_fine_grid: bool,
-    entity_orientation: Orientation,
-    entity_orientation_cardinal: OrientationCardinal,
-    entity_orientation_binary: OrientationBinary,
+    entity_orientations: Orientations,
     /// Keep track of the orientation key that is currently pressed
     /// to allow for inputing secondary diagonals by pressing two orientation
     /// keys at once.
@@ -48,19 +50,18 @@ pub struct Editor {
 
 pub enum EditorMode {
     PaintTiles,
-    TilePalette,
+    TilePalette(TilePalette),
     SelectTiles(SelectTiles),
     MoveSelection(MoveSelection),
     PlaceEntity(PlaceEntity),
     SelectEntity(SelectEntity),
     ModifyEntity(ModifyEntity),
-    EntityPalette,
+    EntityPalette(EntityPalette),
     PenTool(PenTool),
 }
 
 #[wasm_bindgen]
 impl Editor {
-    #[wasm_bindgen]
     #[allow(clippy::new_without_default)]
     pub fn new() -> Editor {
         Editor {
@@ -71,19 +72,21 @@ impl Editor {
             selected_tile_category: TileCategory::Tile1,
             selected_entity_id: EntityId::Ninja,
             pressed_tile_variants: Vec::new(),
+            last_tile_variant: TileVariant::Q,
             pen_tool_is_clockwise: true,
             pen_tool_fine_grid: true,
             entity_fine_grid: false,
-            entity_orientation: Orientation::N,
-            entity_orientation_cardinal: OrientationCardinal::N,
-            entity_orientation_binary: OrientationBinary::V,
+            entity_orientations: Orientations {
+                orientation: Orientation::N,
+                orientation_cardinal: OrientationCardinal::N,
+                orientation_binary: OrientationBinary::V,
+            },
             pressed_orientation: None,
             past_ninjas: Vec::new(),
             receiver: None,
         }
     }
 
-    #[wasm_bindgen]
     pub fn load_attract(&mut self, attract_bytes: &[u8]) -> Result<(), String> {
         let attract = Attract::from_bytes(attract_bytes)?;
         self.set_level_name(&attract.level_name);
@@ -91,7 +94,6 @@ impl Editor {
         Ok(())
     }
 
-    #[wasm_bindgen]
     pub fn load_map(&mut self, map_bytes: &[u8]) -> Result<(), String> {
         let map = MapFile::from_bytes(map_bytes)?;
         self.set_level_name(&map.level_name);
@@ -99,22 +101,18 @@ impl Editor {
         Ok(())
     }
 
-    #[wasm_bindgen]
     pub fn export_map(&self) -> Box<[u8]> {
         self.state.to_map(self.level_name.clone()).to_bytes().into()
     }
 
-    #[wasm_bindgen]
     pub fn get_level_name(&self) -> String {
         self.level_name.clone()
     }
 
-    #[wasm_bindgen]
     pub fn set_level_name(&mut self, name: &str) {
         self.level_name = name.chars().filter(|char| char.is_ascii()).collect();
     }
 
-    #[wasm_bindgen]
     #[allow(clippy::wrong_self_convention)]
     pub fn to_replay(&mut self, round_corners: bool) -> Result<Replay, String> {
         self.mode = EditorMode::PaintTiles;
@@ -186,8 +184,8 @@ impl Editor {
         self.receiver = Some(receiver);
 
         Ok(Replay {
-            level_name: String::new(),
-            author_name: None,
+            _level_name: String::new(),
+            _author_name: None,
             segments,
             inputs: Vec::new(),
             past_ninjas: vec![current_sim.ninja.to_past_ninja()],
@@ -199,22 +197,20 @@ impl Editor {
         })
     }
 
-    #[wasm_bindgen]
     pub fn mode(&self) -> u32 {
         match self.mode {
             EditorMode::PaintTiles => 0,
-            EditorMode::TilePalette => 1,
+            EditorMode::TilePalette(_) => 1,
             EditorMode::SelectTiles(_) => 2,
             EditorMode::MoveSelection(_) => 3,
             EditorMode::PlaceEntity(_) => 4,
             EditorMode::SelectEntity(_) => 5,
             EditorMode::ModifyEntity(_) => 6,
-            EditorMode::EntityPalette => 7,
+            EditorMode::EntityPalette(_) => 7,
             EditorMode::PenTool(_) => 8,
         }
     }
 
-    #[wasm_bindgen]
     pub fn tiles_path(&self) -> String {
         if let EditorMode::PenTool(pen_tool) = &self.mode && !pen_tool.is_none() {
             let start = pen_tool.start(self.state.latest());
@@ -227,7 +223,6 @@ impl Editor {
         extract_path(&self.state.tiles().segments(), true)
     }
 
-    #[wasm_bindgen]
     pub fn selected_tiles_path(&self) -> String {
         match &self.mode {
             EditorMode::PenTool(pen_tool) => {
@@ -245,13 +240,47 @@ impl Editor {
             EditorMode::MoveSelection(move_selection) => {
                 return move_selection.selected_tiles_path(self.cursor_pos);
             }
+            EditorMode::TilePalette(tile_palette) => {
+                return tile_palette.tiles(self.last_tile_variant);
+            }
             _ => {}
         }
         String::new()
     }
 
+    pub fn palette_center_x(&self) -> f64 {
+        match &self.mode {
+            EditorMode::EntityPalette(entity_palette) => entity_palette.center.center().x,
+            EditorMode::TilePalette(tile_palette) => tile_palette.center.center().x,
+            _ => f64::NAN,
+        }
+    }
+
+    pub fn palette_center_y(&self) -> f64 {
+        match &self.mode {
+            EditorMode::EntityPalette(entity_palette) => entity_palette.center.center().y,
+            EditorMode::TilePalette(tile_palette) => tile_palette.center.center().y,
+            _ => f64::NAN,
+        }
+    }
+
+    pub fn palette_selection_x(&self) -> f64 {
+        match &self.mode {
+            EditorMode::EntityPalette(entity_palette) => entity_palette.selected_pos(self.selected_entity_id).x,
+            EditorMode::TilePalette(tile_palette) => tile_palette.selected_pos(self.selected_tile_category).x,
+            _ => f64::NAN,
+        }
+    }
+
+    pub fn palette_selection_y(&self) -> f64 {
+        match &self.mode {
+            EditorMode::EntityPalette(entity_palette) => entity_palette.selected_pos(self.selected_entity_id).y,
+            EditorMode::TilePalette(tile_palette) => tile_palette.selected_pos(self.selected_tile_category).y,
+            _ => f64::NAN,
+        }
+    }
+
     /// Return true if the cursor has moved enough to move to a different grid location
-    #[wasm_bindgen]
     pub fn set_cursor_pos(&mut self, x: f64, y: f64, shift: bool) -> bool {
         let new_cursor_pos = DVec2::new(
             x.clamp(TILE_SIZE, TILE_SIZE * (1 + COLS) as f64),
@@ -279,14 +308,14 @@ impl Editor {
                 self.cursor_pos = new_cursor_pos;
                 let new_crosshair = place_entity.crosshair(self.cursor_pos, self.entity_fine_grid);
                 place_entity.set_pos(new_crosshair);
-                place_entity.set_door_orientation_from_pos();
+                place_entity.set_door_orientation_from_pos(&mut self.entity_orientations.orientation_binary);
                 new_crosshair != old_crosshair
             }
             EditorMode::ModifyEntity(modify_entity) => {
-                self.cursor_pos = new_cursor_pos;
+                self.cursor_pos = new_cursor_pos + modify_entity.cursor_offset;
                 let new_crosshair = modify_entity.crosshair(self.cursor_pos, self.entity_fine_grid);
                 modify_entity.set_pos(new_crosshair);
-                modify_entity.set_door_orientation_from_pos();
+                modify_entity.set_door_orientation_from_pos(&mut self.entity_orientations.orientation_binary);
                 new_crosshair != old_crosshair
             }
             EditorMode::SelectTiles(select_tiles) => {
@@ -308,24 +337,40 @@ impl Editor {
                 self.cursor_pos = new_cursor_pos;
                 let new_crosshair = PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid);
                 if new_crosshair != old_crosshair {
-                    select_entity.set_selection(new_crosshair, self.state.entities(), self.entity_fine_grid);
+                    select_entity.set_selection(new_crosshair, self.state.entities());
                     true
                 } else {
                     false
                 }
             }
-            _ => false
+            EditorMode::EntityPalette(entity_palette) => {
+                let new_selected_entity_id = entity_palette.selected_entity_from_cursor(new_cursor_pos);
+                if new_selected_entity_id != self.selected_entity_id {
+                    self.selected_entity_id = new_selected_entity_id;
+                    true
+                } else {
+                    false
+                }
+            }
+            EditorMode::TilePalette(tile_palette) => {
+                let Some(new_selected_category) = tile_palette.selected_category_from_cursor(new_cursor_pos) else { return false };
+                if new_selected_category != self.selected_tile_category {
+                    self.selected_tile_category = new_selected_category;
+                    true
+                } else {
+                    false
+                }
+            }
         }
     }
 
-    #[wasm_bindgen]
     pub fn cursor_down(&mut self, shift: bool) {
         match &mut self.mode {
-            EditorMode::PenTool(pen_tool) => pen_tool.cursor_click(self.cursor_pos, self.pen_tool_is_clockwise, &mut self.state, self.pen_tool_fine_grid),
-            EditorMode::PlaceEntity(place_entity) => if let Some(command) = place_entity.cursor_click(self.state.entities()) {
+            EditorMode::PenTool(pen_tool) => pen_tool.cursor_down(self.cursor_pos, self.pen_tool_is_clockwise, &mut self.state, self.pen_tool_fine_grid),
+            EditorMode::PlaceEntity(place_entity) => if let Some(command) = place_entity.cursor_down(self.state.entities()) {
                 self.state.apply(command);
             },
-            EditorMode::ModifyEntity(modify_entity) => if let Some(command) = modify_entity.cursor_click(self.state.entities()) {
+            EditorMode::ModifyEntity(modify_entity) => if let Some(command) = modify_entity.cursor_down(self.state.entities()) {
                 self.state.apply(command);
                 self.mode = EditorMode::SelectEntity(SelectEntity::new(self.cursor_pos, self.state.entities(), self.entity_fine_grid))
             },
@@ -336,13 +381,17 @@ impl Editor {
                 self.state.apply(command);
             }
             EditorMode::SelectEntity(select_entity) => if let Some((entity, selection_type)) = select_entity.get_selection() {
-                self.mode = EditorMode::ModifyEntity(ModifyEntity::new(entity, selection_type));
+                let entity_pos = selection_type.entity_pos(entity);
+                if !self.entity_fine_grid && (entity_pos.x % 2 != 0 || entity_pos.y % 2 != 0) {
+                    // set fine grid to true if the selected entity isn't on the coarse grid
+                    self.entity_fine_grid = true;
+                }
+                self.mode = EditorMode::ModifyEntity(ModifyEntity::new(entity, selection_type, self.cursor_pos));
             },
             _ => {}
         }
     }
 
-    #[wasm_bindgen]
     pub fn cursor_up(&mut self) {
         match &mut self.mode {
             EditorMode::SelectTiles(select_tiles) => {
@@ -355,7 +404,6 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn double_click(&mut self, shift: bool) {
         match &mut self.mode {
             mode @ EditorMode::PaintTiles => {
@@ -371,27 +419,22 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn tile_crosshair_col(&self) -> u8 {
         self.tile_crosshair().x
     }
 
-    #[wasm_bindgen]
     pub fn tile_crosshair_row(&self) -> u8 {
         self.tile_crosshair().y
     }
 
-    #[wasm_bindgen]
     pub fn crosshair_x(&self) -> f64 {
         self.crosshair().x
     }
 
-    #[wasm_bindgen]
     pub fn crosshair_y(&self) -> f64 {
         self.crosshair().y
     }
 
-    #[wasm_bindgen]
     pub fn entities(&self) -> Box<[ExportedEntity]> {
         match &self.mode {
             EditorMode::ModifyEntity(modify_entity) => modify_entity.export_entities(self.state.entities()),
@@ -399,18 +442,17 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn preview_entities(&self) -> Box<[ExportedEntity]> {
         match &self.mode {
             EditorMode::PlaceEntity(place_entity) => Box::new([place_entity.entity.export().with_stage(place_entity.stage)]),
             EditorMode::ModifyEntity(modify_entity) => Box::new([modify_entity.modified_entity.export()]),
             EditorMode::MoveSelection(move_selection) => move_selection.preview_entities(self.cursor_pos).map(|entity| entity.export()).collect(),
             EditorMode::SelectEntity(select_entity) => select_entity.get_selection_exported().into_iter().collect(),
+            EditorMode::EntityPalette(entity_palette) => entity_palette.preview_entities(self.entity_orientations, self.selected_entity_id).map(|entity| entity.export().without_switch()).collect(),
             _ => Box::new([]),
         }
     }
 
-    #[wasm_bindgen]
     pub fn selected_tile_outline_path(&self) -> String {
         match &self.mode {
             EditorMode::SelectTiles(select_tiles) => select_tiles.selected_tile_outline_path(),
@@ -419,7 +461,6 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn show_half_grid(&self) -> bool {
         match self.mode {
             EditorMode::PenTool(_) => self.pen_tool_fine_grid,
@@ -430,7 +471,6 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn show_quarter_grid(&self) -> bool {
         match self.mode {
             EditorMode::PlaceEntity(_) => self.entity_fine_grid,
@@ -440,7 +480,6 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn undo(&mut self) {
         let pen_tool_origin = match self.state.latest() {
             Some(Command::PenTool { first_start, .. }) => *first_start,
@@ -459,12 +498,10 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn redo(&mut self) {
         self.state.redo();
     }
 
-    #[wasm_bindgen]
     pub fn press_escape(&mut self) -> bool {
         match &mut self.mode {
             EditorMode::PenTool(pen_tool) => match pen_tool.start {
@@ -484,7 +521,6 @@ impl Editor {
         false
     }
 
-    #[wasm_bindgen]
     pub fn press_backtick(&mut self) {
         match self.mode {
             EditorMode::PenTool(_) => {}
@@ -492,234 +528,237 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn press_1(&mut self, shift: bool) {
-        self.mode = EditorMode::PaintTiles;
+        if !matches!(self.mode, EditorMode::TilePalette(_)) {
+            self.mode = EditorMode::PaintTiles;
+        }
         self.selected_tile_category = TileCategory::Tile1.shift(shift);
     }
 
-    #[wasm_bindgen]
     pub fn press_2(&mut self, shift: bool) {
-        self.mode = EditorMode::PaintTiles;
+        if !matches!(self.mode, EditorMode::TilePalette(_)) {
+            self.mode = EditorMode::PaintTiles;
+        }
         self.selected_tile_category = TileCategory::Tile2.shift(shift);
     }
 
-    #[wasm_bindgen]
     pub fn press_3(&mut self, shift: bool) {
-        self.mode = EditorMode::PaintTiles;
+        if !matches!(self.mode, EditorMode::TilePalette(_)) {
+            self.mode = EditorMode::PaintTiles;
+        }
         self.selected_tile_category = TileCategory::Tile3.shift(shift);
     }
 
-    #[wasm_bindgen]
     pub fn press_4(&mut self, shift: bool) {
-        self.mode = EditorMode::PaintTiles;
+        if !matches!(self.mode, EditorMode::TilePalette(_)) {
+            self.mode = EditorMode::PaintTiles;
+        }
         self.selected_tile_category = TileCategory::Tile4.shift(shift);
     }
 
-    #[wasm_bindgen]
     pub fn press_5(&mut self, shift: bool) {
-        self.mode = EditorMode::PaintTiles;
+        if !matches!(self.mode, EditorMode::TilePalette(_)) {
+            self.mode = EditorMode::PaintTiles;
+        }
         self.selected_tile_category = TileCategory::Tile5.shift(shift);
     }
 
-    #[wasm_bindgen]
     pub fn press_6(&mut self, shift: bool) {
-        self.mode = EditorMode::PaintTiles;
+        if !matches!(self.mode, EditorMode::TilePalette(_)) {
+            self.mode = EditorMode::PaintTiles;
+        }
         self.selected_tile_category = TileCategory::Tile6.shift(shift);
     }
 
-    #[wasm_bindgen]
     pub fn press_7(&mut self, shift: bool) {
-        self.mode = EditorMode::PaintTiles;
+        if !matches!(self.mode, EditorMode::TilePalette(_)) {
+            self.mode = EditorMode::PaintTiles;
+        }
         self.selected_tile_category = TileCategory::Tile7.shift(shift);
     }
 
-    #[wasm_bindgen]
     pub fn press_8(&mut self, shift: bool) {
-        self.mode = EditorMode::PaintTiles;
+        if !matches!(self.mode, EditorMode::TilePalette(_)) {
+            self.mode = EditorMode::PaintTiles;
+        }
         self.selected_tile_category = TileCategory::Tile8.shift(shift);
     }
 
-    #[wasm_bindgen]
     pub fn press_9(&mut self) {
         self.selected_entity_id = EntityId::Ninja;
-        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
     }
 
-    #[wasm_bindgen]
     pub fn press_0(&mut self) {
         // gold
     }
 
-    #[wasm_bindgen]
     pub fn press_dash(&mut self) {
         self.selected_entity_id = EntityId::BounceBlock;
-        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
     }
 
-    #[wasm_bindgen]
     pub fn press_equals(&mut self) {
         self.selected_entity_id = EntityId::LaunchPad;
-        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
     }
 
-    #[wasm_bindgen]
     pub fn press_q(&mut self, shift: bool) {
+        fn set_orientation(pressed_orientation: &mut Option<Orientation>, orientations: &mut Orientations) {
+            orientations.orientation = match *pressed_orientation {
+                Some(Orientation::N) => Orientation::NNW,
+                Some(Orientation::W) => Orientation::WNW,
+                _ => Orientation::NW,
+            };
+            *pressed_orientation = Some(Orientation::NW);
+        }
+
         match &mut self.mode {
-            EditorMode::PaintTiles => {
+            EditorMode::PaintTiles |
+            EditorMode::TilePalette(_) => {
                 self.pressed_tile_variants.push(TileVariant::Q);
+                self.last_tile_variant = TileVariant::Q;
                 self.paint_tile(PaintTileArgs { amend: false, shift });
             }
             EditorMode::PlaceEntity(place_entity) => {
-                self.entity_orientation = match self.pressed_orientation {
-                    Some(Orientation::N) => Orientation::NNW,
-                    Some(Orientation::W) => Orientation::WNW,
-                    _ => Orientation::NW,
-                };
-                self.pressed_orientation = Some(Orientation::NW);
-                place_entity.set_orientation(self.entity_orientation);
+                set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
+                place_entity.set_orientation(self.entity_orientations.orientation);
             }
             EditorMode::ModifyEntity(modify_entity) => {
-                self.entity_orientation = match self.pressed_orientation {
-                    Some(Orientation::N) => Orientation::NNW,
-                    Some(Orientation::W) => Orientation::WNW,
-                    _ => Orientation::NW,
-                };
-                self.pressed_orientation = Some(Orientation::NW);
-                modify_entity.set_orientation(self.entity_orientation);
+                set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
+                modify_entity.set_orientation(self.entity_orientations.orientation);
             }
+            EditorMode::EntityPalette(_) => set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations),
             EditorMode::MoveSelection(move_selection) => move_selection.rotate_ccw(),
             _ => {}
         }
     }
 
-    #[wasm_bindgen]
     pub fn press_w(&mut self, shift: bool) {
+        fn set_orientation(pressed_orientation: &mut Option<Orientation>, orientations: &mut Orientations) {
+            orientations.orientation = match *pressed_orientation {
+                Some(Orientation::NW) => Orientation::NNW,
+                Some(Orientation::NE) => Orientation::NNE,
+                _ => Orientation::N,
+            };
+            orientations.orientation_cardinal = OrientationCardinal::N;
+            orientations.orientation_binary = OrientationBinary::V;
+            *pressed_orientation = Some(Orientation::N);
+        }
+
         match &mut self.mode {
-            EditorMode::PaintTiles => {
+            EditorMode::PaintTiles |
+            EditorMode::TilePalette(_) => {
                 self.pressed_tile_variants.push(TileVariant::W);
+                self.last_tile_variant = TileVariant::W;
                 self.paint_tile(PaintTileArgs { amend: false, shift });
             }
             EditorMode::PlaceEntity(place_entity) => {
-                self.entity_orientation = match self.pressed_orientation {
-                    Some(Orientation::NW) => Orientation::NNW,
-                    Some(Orientation::NE) => Orientation::NNE,
-                    _ => Orientation::N,
-                };
-                self.entity_orientation_cardinal = OrientationCardinal::N;
-                self.entity_orientation_binary = OrientationBinary::V;
-                self.pressed_orientation = Some(Orientation::N);
-                place_entity.set_orientation(self.entity_orientation);
+                set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
+                place_entity.set_orientation(self.entity_orientations.orientation);
             }
             EditorMode::ModifyEntity(modify_entity) => {
-                self.entity_orientation = match self.pressed_orientation {
-                    Some(Orientation::NW) => Orientation::NNW,
-                    Some(Orientation::NE) => Orientation::NNE,
-                    _ => Orientation::N,
-                };
-                self.entity_orientation_cardinal = OrientationCardinal::N;
-                self.entity_orientation_binary = OrientationBinary::V;
-                self.pressed_orientation = Some(Orientation::N);
-                modify_entity.set_orientation(self.entity_orientation);
+                set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
+                modify_entity.set_orientation(self.entity_orientations.orientation);
             }
+            EditorMode::EntityPalette(_) => set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations),
             EditorMode::MoveSelection(move_selection) => move_selection.rotate_cw(),
             _ => {}
         }
     }
 
-    #[wasm_bindgen]
     pub fn press_a(&mut self, shift: bool) {
+        fn set_orientation(pressed_orientation: &mut Option<Orientation>, orientations: &mut Orientations) {
+            orientations.orientation = match *pressed_orientation {
+                Some(Orientation::NW) => Orientation::WNW,
+                Some(Orientation::SW) => Orientation::WSW,
+                _ => Orientation::W,
+            };
+            orientations.orientation_cardinal = OrientationCardinal::W;
+            *pressed_orientation = Some(Orientation::W);
+            orientations.orientation_binary = OrientationBinary::H;
+        }
+
         match &mut self.mode {
-            EditorMode::PaintTiles => {
+            EditorMode::PaintTiles |
+            EditorMode::TilePalette(_) => {
                 self.pressed_tile_variants.push(TileVariant::A);
+                self.last_tile_variant = TileVariant::A;
                 self.paint_tile(PaintTileArgs { amend: false, shift });
             }
             EditorMode::PlaceEntity(place_entity) => {
-                self.entity_orientation = match self.pressed_orientation {
-                    Some(Orientation::NW) => Orientation::WNW,
-                    Some(Orientation::SW) => Orientation::WSW,
-                    _ => Orientation::W,
-                };
-                self.entity_orientation_cardinal = OrientationCardinal::W;
-                self.pressed_orientation = Some(Orientation::W);
-                self.entity_orientation_binary = OrientationBinary::H;
-                place_entity.set_orientation(self.entity_orientation);
+                set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
+                place_entity.set_orientation(self.entity_orientations.orientation);
             }
             EditorMode::ModifyEntity(modify_entity) => {
-                self.entity_orientation = match self.pressed_orientation {
-                    Some(Orientation::NW) => Orientation::WNW,
-                    Some(Orientation::SW) => Orientation::WSW,
-                    _ => Orientation::W,
-                };
-                self.entity_orientation_cardinal = OrientationCardinal::W;
-                self.pressed_orientation = Some(Orientation::W);
-                self.entity_orientation_binary = OrientationBinary::H;
-                modify_entity.set_orientation(self.entity_orientation);
+                set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
+                modify_entity.set_orientation(self.entity_orientations.orientation);
             }
+            EditorMode::EntityPalette(_) => set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations),
             EditorMode::MoveSelection(move_selection) => move_selection.flip_across_y_axis(),
             _ => {}
         }
     }
 
-    #[wasm_bindgen]
     pub fn press_s(&mut self, shift: bool) {
+        fn set_orientation(pressed_orientation: &mut Option<Orientation>, orientations: &mut Orientations) {
+            orientations.orientation = match *pressed_orientation {
+                Some(Orientation::SW) => Orientation::SSW,
+                Some(Orientation::SE) => Orientation::SSE,
+                _ => Orientation::S,
+            };
+            orientations.orientation_cardinal = OrientationCardinal::S;
+            *pressed_orientation = Some(Orientation::S);
+            orientations.orientation_binary = OrientationBinary::V;
+        }
+
         match &mut self.mode {
-            EditorMode::PaintTiles => {
+            EditorMode::PaintTiles |
+            EditorMode::TilePalette(_) => {
                 self.pressed_tile_variants.push(TileVariant::S);
+                self.last_tile_variant = TileVariant::S;
                 self.paint_tile(PaintTileArgs { amend: false, shift });
             }
             EditorMode::PlaceEntity(place_entity) => {
-                self.entity_orientation = match self.pressed_orientation {
-                    Some(Orientation::SW) => Orientation::SSW,
-                    Some(Orientation::SE) => Orientation::SSE,
-                    _ => Orientation::S,
-                };
-                self.entity_orientation_cardinal = OrientationCardinal::S;
-                self.pressed_orientation = Some(Orientation::S);
-                self.entity_orientation_binary = OrientationBinary::V;
-                place_entity.set_orientation(self.entity_orientation);
+                set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
+                place_entity.set_orientation(self.entity_orientations.orientation);
             }
             EditorMode::ModifyEntity(modify_entity) => {
-                self.entity_orientation = match self.pressed_orientation {
-                    Some(Orientation::SW) => Orientation::SSW,
-                    Some(Orientation::SE) => Orientation::SSE,
-                    _ => Orientation::S,
-                };
-                self.entity_orientation_cardinal = OrientationCardinal::S;
-                self.pressed_orientation = Some(Orientation::S);
-                self.entity_orientation_binary = OrientationBinary::V;
-                modify_entity.set_orientation(self.entity_orientation);
+                set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
+                modify_entity.set_orientation(self.entity_orientations.orientation);
             }
+            EditorMode::EntityPalette(_) => set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations),
             EditorMode::MoveSelection(move_selection) => move_selection.flip_across_x_axis(),
             _ => {}
         }
     }
 
-    #[wasm_bindgen]
     pub fn press_e(&mut self) {
+        fn set_orientation(pressed_orientation: &mut Option<Orientation>, orientations: &mut Orientations) {
+            orientations.orientation = match *pressed_orientation {
+                Some(Orientation::N) => Orientation::NNE,
+                Some(Orientation::E) => Orientation::ENE,
+                _ => Orientation::NE,
+            };
+            *pressed_orientation = Some(Orientation::NE);
+        }
+
         match &mut self.mode {
-            EditorMode::PaintTiles => {
+            EditorMode::PaintTiles |
+            EditorMode::TilePalette(_) => {
                 self.pressed_tile_variants.push(TileVariant::E);
+                self.last_tile_variant = TileVariant::E;
                 self.paint_tile(PaintTileArgs { amend: false, shift: false });
             }
             EditorMode::PlaceEntity(place_entity) => {
-                self.entity_orientation = match self.pressed_orientation {
-                    Some(Orientation::N) => Orientation::NNE,
-                    Some(Orientation::E) => Orientation::ENE,
-                    _ => Orientation::NE,
-                };
-                self.pressed_orientation = Some(Orientation::NE);
-                place_entity.set_orientation(self.entity_orientation);
+                set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
+                place_entity.set_orientation(self.entity_orientations.orientation);
             }
             EditorMode::ModifyEntity(modify_entity) => {
-                self.entity_orientation = match self.pressed_orientation {
-                    Some(Orientation::N) => Orientation::NNE,
-                    Some(Orientation::E) => Orientation::ENE,
-                    _ => Orientation::NE,
-                };
-                self.pressed_orientation = Some(Orientation::NE);
-                modify_entity.set_orientation(self.entity_orientation);
+                set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
+                modify_entity.set_orientation(self.entity_orientations.orientation);
             }
+            EditorMode::EntityPalette(_) => set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations),
             EditorMode::SelectTiles(select_tiles) => {
                 let command = select_tiles.command_fill_selection(self.state.tiles(), Tile::TileE);
                 self.state.apply(command);
@@ -732,35 +771,34 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn press_d(&mut self) {
+        fn set_orientation(pressed_orientation: &mut Option<Orientation>, orientations: &mut Orientations) {
+            orientations.orientation = match *pressed_orientation {
+                Some(Orientation::NE) => Orientation::ENE,
+                Some(Orientation::SE) => Orientation::ESE,
+                _ => Orientation::E,
+            };
+            orientations.orientation_cardinal = OrientationCardinal::E;
+            *pressed_orientation = Some(Orientation::E);
+            orientations.orientation_binary = OrientationBinary::H;
+        }
+
         match &mut self.mode {
-            EditorMode::PaintTiles => {
+            EditorMode::PaintTiles |
+            EditorMode::TilePalette(_) => {
                 self.pressed_tile_variants.push(TileVariant::D);
+                self.last_tile_variant = TileVariant::D;
                 self.paint_tile(PaintTileArgs { amend: false, shift: false });
             }
             EditorMode::PlaceEntity(place_entity) => {
-                self.entity_orientation = match self.pressed_orientation {
-                    Some(Orientation::NE) => Orientation::ENE,
-                    Some(Orientation::SE) => Orientation::ESE,
-                    _ => Orientation::E,
-                };
-                self.entity_orientation_cardinal = OrientationCardinal::E;
-                self.pressed_orientation = Some(Orientation::E);
-                self.entity_orientation_binary = OrientationBinary::H;
-                place_entity.set_orientation(self.entity_orientation);
+                set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
+                place_entity.set_orientation(self.entity_orientations.orientation);
             }
             EditorMode::ModifyEntity(modify_entity) => {
-                self.entity_orientation = match self.pressed_orientation {
-                    Some(Orientation::NE) => Orientation::ENE,
-                    Some(Orientation::SE) => Orientation::ESE,
-                    _ => Orientation::E,
-                };
-                self.entity_orientation_cardinal = OrientationCardinal::E;
-                self.pressed_orientation = Some(Orientation::E);
-                self.entity_orientation_binary = OrientationBinary::H;
-                modify_entity.set_orientation(self.entity_orientation);
+                set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
+                modify_entity.set_orientation(self.entity_orientations.orientation);
             }
+            EditorMode::EntityPalette(_) => set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations),
             EditorMode::SelectTiles(select_tiles) => {
                 let command = select_tiles.command_fill_selection(self.state.tiles(), Tile::TileD);
                 self.state.apply(command);
@@ -773,32 +811,30 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn press_z(&mut self) {
+        fn set_orientation(pressed_orientation: &mut Option<Orientation>, orientations: &mut Orientations) {
+            orientations.orientation = match *pressed_orientation {
+                Some(Orientation::S) => Orientation::SSW,
+                Some(Orientation::W) => Orientation::WSW,
+                _ => Orientation::SW,
+            };
+            *pressed_orientation = Some(Orientation::SW);
+        }
+
         match &mut self.mode {
             EditorMode::PlaceEntity(place_entity) => {
-                self.entity_orientation = match self.pressed_orientation {
-                    Some(Orientation::S) => Orientation::SSW,
-                    Some(Orientation::W) => Orientation::WSW,
-                    _ => Orientation::SW,
-                };
-                self.pressed_orientation = Some(Orientation::SW);
-                place_entity.set_orientation(self.entity_orientation);
+                set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
+                place_entity.set_orientation(self.entity_orientations.orientation);
             }
             EditorMode::ModifyEntity(modify_entity) => {
-                self.entity_orientation = match self.pressed_orientation {
-                    Some(Orientation::S) => Orientation::SSW,
-                    Some(Orientation::W) => Orientation::WSW,
-                    _ => Orientation::SW,
-                };
-                self.pressed_orientation = Some(Orientation::SW);
-                modify_entity.set_orientation(self.entity_orientation);
+                set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
+                modify_entity.set_orientation(self.entity_orientations.orientation);
             }
+            EditorMode::EntityPalette(_) => set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations),
             _ => {}
         }
     }
 
-    #[wasm_bindgen]
     pub fn press_x(&mut self) {
         match &mut self.mode {
             EditorMode::PenTool(_) => {
@@ -825,27 +861,26 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn press_c(&mut self) {
+        fn set_orientation(pressed_orientation: &mut Option<Orientation>, orientations: &mut Orientations) {
+            orientations.orientation = match *pressed_orientation {
+                Some(Orientation::S) => Orientation::SSE,
+                Some(Orientation::E) => Orientation::ESE,
+                _ => Orientation::SE,
+            };
+            *pressed_orientation = Some(Orientation::SE);
+        }
+
         match &mut self.mode {
             EditorMode::PlaceEntity(place_entity) => {
-                self.entity_orientation = match self.pressed_orientation {
-                    Some(Orientation::S) => Orientation::SSE,
-                    Some(Orientation::E) => Orientation::ESE,
-                    _ => Orientation::SE,
-                };
-                self.pressed_orientation = Some(Orientation::SE);
-                place_entity.set_orientation(self.entity_orientation);
+                set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
+                place_entity.set_orientation(self.entity_orientations.orientation);
             }
             EditorMode::ModifyEntity(modify_entity) => {
-                self.entity_orientation = match self.pressed_orientation {
-                    Some(Orientation::S) => Orientation::SSE,
-                    Some(Orientation::E) => Orientation::ESE,
-                    _ => Orientation::SE,
-                };
-                self.pressed_orientation = Some(Orientation::SE);
-                modify_entity.set_orientation(self.entity_orientation);
+                set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
+                modify_entity.set_orientation(self.entity_orientations.orientation);
             }
+            EditorMode::EntityPalette(_) => set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations),
             EditorMode::SelectTiles(select_tiles) => {
                 let selection = &select_tiles.selection_preview();
                 if !selection.is_empty() {
@@ -856,229 +891,280 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn press_t(&mut self) {
         match &mut self.mode {
             EditorMode::SelectEntity(select_entity) => {
                 if let Some(command) = select_entity.command_delete(self.state.entities()) {
                     self.state.apply(command);
                     let crosshair_pos = PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid);
-                    select_entity.set_selection(crosshair_pos, self.state.entities(), self.entity_fine_grid);
+                    select_entity.set_selection(crosshair_pos, self.state.entities());
                 }
             }
             _ => {}
         }
     }
 
-    #[wasm_bindgen]
     pub fn press_y(&mut self) {
         // gauss turret
     }
 
-    #[wasm_bindgen]
     pub fn press_u(&mut self) {
         // rocket turret
     }
 
-    #[wasm_bindgen]
     pub fn press_i(&mut self) {
         self.selected_entity_id = EntityId::RegularDoor;
-        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
+        // call set_cursor_pos to correct the cursor position if it is illegal for a door
+        self.set_cursor_pos(self.true_cursor_pos().x, self.true_cursor_pos().y, false);
     }
 
-    #[wasm_bindgen]
     pub fn press_o(&mut self) {
         self.selected_entity_id = EntityId::LockedDoor;
-        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
+        // call set_cursor_pos to correct the cursor position if it is illegal for a door
+        self.set_cursor_pos(self.true_cursor_pos().x, self.true_cursor_pos().y, false);
     }
 
-    #[wasm_bindgen]
     pub fn press_p(&mut self) {
         self.selected_entity_id = EntityId::TrapDoor;
-        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
+        // call set_cursor_pos to correct the cursor position if it is illegal for a door
+        self.set_cursor_pos(self.true_cursor_pos().x, self.true_cursor_pos().y, false);
     }
 
-    #[wasm_bindgen]
     pub fn press_bracket_left(&mut self) {
         self.selected_entity_id = EntityId::OneWay;
-        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
     }
 
-    #[wasm_bindgen]
     pub fn press_bracket_right(&mut self) {
         self.selected_entity_id = EntityId::ExitDoor;
-        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
     }
 
-    #[wasm_bindgen]
     pub fn press_f(&mut self) {
         if let EditorMode::SelectEntity(_) = self.mode {
-            self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
+            self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
         } else {
             self.mode = EditorMode::SelectEntity(SelectEntity::new(self.cursor_pos, self.state.entities(), self.entity_fine_grid));
         }
     }
 
-    #[wasm_bindgen]
     pub fn press_h(&mut self) {
         // zap drone
     }
 
-    #[wasm_bindgen]
     pub fn press_j(&mut self) {
         // chase drone
     }
 
-    #[wasm_bindgen]
     pub fn press_k(&mut self) {
         // laser drone
     }
 
-    #[wasm_bindgen]
     pub fn press_l(&mut self) {
         // chaingun drone
     }
 
-    #[wasm_bindgen]
     pub fn press_n(&mut self) {
         self.selected_entity_id = EntityId::FloorGuard;
-        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
     }
 
-    #[wasm_bindgen]
     pub fn press_m(&mut self) {
         self.selected_entity_id = EntityId::Mine;
-        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
     }
 
-    #[wasm_bindgen]
     pub fn press_comma(&mut self) {
         self.selected_entity_id = EntityId::Thwump;
-        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
     }
 
-    #[wasm_bindgen]
     pub fn press_slash(&mut self) {
         match &mut self.mode {
             EditorMode::PenTool(_) => self.pen_tool_fine_grid = !self.pen_tool_fine_grid,
             EditorMode::PlaceEntity(place_entity) => {
                 self.entity_fine_grid = !self.entity_fine_grid;
                 place_entity.set_pos(place_entity.crosshair(self.cursor_pos, self.entity_fine_grid));
-                place_entity.set_door_orientation_from_pos();
+                place_entity.set_door_orientation_from_pos(&mut self.entity_orientations.orientation_binary);
             }
             EditorMode::ModifyEntity(modify_entity) => {
                 self.entity_fine_grid = !self.entity_fine_grid;
                 modify_entity.set_pos(modify_entity.crosshair(self.cursor_pos, self.entity_fine_grid));
-                modify_entity.set_door_orientation_from_pos();
+                modify_entity.set_door_orientation_from_pos(&mut self.entity_orientations.orientation_binary);
             }
             EditorMode::SelectEntity(select_entity) => {
                 self.entity_fine_grid = !self.entity_fine_grid;
                 let crosshair_pos = PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid);
-                select_entity.set_selection(crosshair_pos, self.state.entities(), self.entity_fine_grid);
+                select_entity.set_selection(crosshair_pos, self.state.entities());
             }
             _ => {}
         }
     }
 
-    #[wasm_bindgen]
     pub fn press_num_0(&mut self) {
         self.selected_entity_id = EntityId::ToggleMine;
-        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
     }
 
-    #[wasm_bindgen]
     pub fn press_num_1(&mut self) {
         // evil ninja
     }
 
-    #[wasm_bindgen]
     pub fn press_num_2(&mut self) {
         // laser turret
     }
 
-    #[wasm_bindgen]
     pub fn press_num_3(&mut self) {
         self.selected_entity_id = EntityId::BoostPad;
-        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
     }
 
-    #[wasm_bindgen]
     pub fn press_num_4(&mut self) {
         // death ball
     }
 
-    #[wasm_bindgen]
     pub fn press_num_5(&mut self) {
         // mini drone
     }
 
-    #[wasm_bindgen]
     pub fn press_num_7(&mut self) {
         self.selected_entity_id = EntityId::ShoveThwump;
-        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self));
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
     }
 
-    #[wasm_bindgen]
+    pub fn press_up(&mut self, shift: bool) {
+        self.press_direction(OrientationCardinal::N, shift);
+    }
+
+    pub fn press_down(&mut self, shift: bool) {
+        self.press_direction(OrientationCardinal::S, shift);
+    }
+
+    pub fn press_left(&mut self, shift: bool) {
+        self.press_direction(OrientationCardinal::W, shift);
+    }
+
+    pub fn press_right(&mut self, shift: bool) {
+        self.press_direction(OrientationCardinal::E, shift);
+    }
+
+    pub fn press_enter(&mut self) {
+        match &self.mode {
+            EditorMode::PaintTiles => {}
+            EditorMode::TilePalette(_) => {}
+            EditorMode::SelectTiles(_) => {}
+            EditorMode::MoveSelection(_) |
+            EditorMode::PlaceEntity(_) |
+            EditorMode::PenTool(_) |
+            EditorMode::ModifyEntity(_) => {
+                self.cursor_down(false);
+            }
+            EditorMode::SelectEntity(select_entity) => {
+                if select_entity.get_selection().is_some() {
+                    self.cursor_down(false);
+                } else {
+                    // set mode
+                }
+            }
+            EditorMode::EntityPalette(_) => {}
+        }
+    }
+
+    pub fn press_space(&mut self) {
+        self.mode = EditorMode::EntityPalette(EntityPalette {
+            center: self.tile_crosshair(),
+        });
+    }
+
+    pub fn press_alt_left(&mut self, shift: bool) {
+        self.mode = EditorMode::TilePalette(TilePalette {
+            center: self.tile_crosshair(),
+            shift,
+        });
+    }
+
+    pub fn press_shift(&mut self) {
+        match &mut self.mode {
+            EditorMode::TilePalette(tile_palette) => tile_palette.shift = true,
+            _ => {}
+        }
+    }
+
     pub fn release_q(&mut self) {
         // Releasing keys should still clean up pressed state even in other modes
         // because the user could switch modes while holding down a key.
         self.pressed_tile_variants.retain(|variant| *variant != TileVariant::Q);
+        if let Some(&tile_variant) = self.pressed_tile_variants.last() {
+            self.last_tile_variant = tile_variant;
+        }
         if let Some(Orientation::NW) = self.pressed_orientation {
             self.pressed_orientation = None;
         }
     }
 
-    #[wasm_bindgen]
     pub fn release_w(&mut self) {
         // Releasing keys should still clean up pressed state even in other modes
         // because the user could switch modes while holding down a key.
         self.pressed_tile_variants.retain(|variant| *variant != TileVariant::W);
+        if let Some(&tile_variant) = self.pressed_tile_variants.last() {
+            self.last_tile_variant = tile_variant;
+        }
         if let Some(Orientation::N) = self.pressed_orientation {
             self.pressed_orientation = None;
         }
     }
 
-    #[wasm_bindgen]
     pub fn release_a(&mut self) {
         // Releasing keys should still clean up pressed state even in other modes
         // because the user could switch modes while holding down a key.
         self.pressed_tile_variants.retain(|variant| *variant != TileVariant::A);
+        if let Some(&tile_variant) = self.pressed_tile_variants.last() {
+            self.last_tile_variant = tile_variant;
+        }
         if let Some(Orientation::W) = self.pressed_orientation {
             self.pressed_orientation = None;
         }
     }
 
-    #[wasm_bindgen]
     pub fn release_s(&mut self) {
         // Releasing keys should still clean up pressed state even in other modes
         // because the user could switch modes while holding down a key.
         self.pressed_tile_variants.retain(|variant| *variant != TileVariant::S);
+        if let Some(&tile_variant) = self.pressed_tile_variants.last() {
+            self.last_tile_variant = tile_variant;
+        }
         if let Some(Orientation::S) = self.pressed_orientation {
             self.pressed_orientation = None;
         }
     }
 
-    #[wasm_bindgen]
     pub fn release_e(&mut self) {
         // Releasing keys should still clean up pressed state even in other modes
         // because the user could switch modes while holding down a key.
         self.pressed_tile_variants.retain(|variant| *variant != TileVariant::E);
+        if let Some(&tile_variant) = self.pressed_tile_variants.last() {
+            self.last_tile_variant = tile_variant;
+        }
         if let Some(Orientation::NE) = self.pressed_orientation {
             self.pressed_orientation = None;
         }
     }
 
-    #[wasm_bindgen]
     pub fn release_d(&mut self) {
         // Releasing keys should still clean up pressed state even in other modes
         // because the user could switch modes while holding down a key.
         self.pressed_tile_variants.retain(|variant| *variant != TileVariant::D);
+        if let Some(&tile_variant) = self.pressed_tile_variants.last() {
+            self.last_tile_variant = tile_variant;
+        }
         if let Some(Orientation::W) = self.pressed_orientation {
             self.pressed_orientation = None;
         }
     }
 
-    #[wasm_bindgen]
     pub fn release_z(&mut self) {
         // Releasing keys should still clean up pressed state even in other modes
         // because the user could switch modes while holding down a key.
@@ -1087,7 +1173,6 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
     pub fn release_c(&mut self) {
         // Releasing keys should still clean up pressed state even in other modes
         // because the user could switch modes while holding down a key.
@@ -1096,24 +1181,35 @@ impl Editor {
         }
     }
 
-    #[wasm_bindgen]
+    pub fn release_space(&mut self) {
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
+    }
+
+    pub fn release_alt_left(&mut self) {
+        self.mode = EditorMode::PaintTiles;
+    }
+
+    pub fn release_shift(&mut self) {
+        match &mut self.mode {
+            EditorMode::TilePalette(tile_palette) => tile_palette.shift = false,
+            _ => {}
+        }
+    }
+
     pub fn receive_past_ninjas(&mut self) {
         if let Some(receiver) = &mut self.receiver && let Ok(Some(past_ninjas)) = receiver.try_recv() {
             self.past_ninjas = past_ninjas;
         }
     }
 
-    #[wasm_bindgen]
     pub fn past_ninjas_len(&self) -> usize {
         self.past_ninjas.len()
     }
 
-    #[wasm_bindgen]
     pub fn past_ninja_x(&self, i: usize) -> f64 {
         self.past_ninjas[i].pos.x
     }
 
-    #[wasm_bindgen]
     pub fn past_ninja_y(&self, i: usize) -> f64 {
         self.past_ninjas[i].pos.y
     }
@@ -1147,6 +1243,54 @@ impl Editor {
             EditorMode::ModifyEntity(modify_entity) => modify_entity.crosshair(self.cursor_pos, self.entity_fine_grid),
             EditorMode::SelectEntity(_) => PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid),
             _ => DVec2::new(TILE_SIZE, TILE_SIZE),
+        }
+    }
+
+    fn press_direction(&mut self, direction: OrientationCardinal, shift: bool) {
+        match &self.mode {
+            EditorMode::PaintTiles |
+            EditorMode::MoveSelection(_) => {
+                let crosshair = self.tile_crosshair();
+                let crosshair = GridPos {
+                    x: crosshair.x.saturating_add_signed(direction.vec2().x as i8),
+                    y: crosshair.y.saturating_add_signed(direction.vec2().y as i8),
+                };
+                let new_cursor_pos = crosshair.to_world_pos();
+                self.set_cursor_pos(new_cursor_pos.x, new_cursor_pos.y, shift);
+            }
+            EditorMode::TilePalette(_) => TilePalette::press_direction(&mut self.selected_tile_category, direction),
+            EditorMode::SelectTiles(_) => {}
+            EditorMode::PlaceEntity(place_entity) => {
+                let new_cursor_pos = place_entity.press_direction(direction, self.cursor_pos, self.entity_fine_grid);
+                self.set_cursor_pos(new_cursor_pos.x, new_cursor_pos.y, shift);
+            }
+            EditorMode::SelectEntity(_) => {
+                let crosshair = PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid);
+                let new_cursor_pos = if self.entity_fine_grid {
+                    crosshair + TILE_HALF_SIZE * 0.5 * direction.vec2()
+                } else {
+                    crosshair + TILE_HALF_SIZE * direction.vec2()
+                };
+                self.set_cursor_pos(new_cursor_pos.x, new_cursor_pos.y, shift);
+            }
+            EditorMode::ModifyEntity(modify_entity) => {
+                let new_cursor_pos = modify_entity.press_direction(direction, self.entity_fine_grid);
+                let new_cursor_pos = new_cursor_pos - modify_entity.cursor_offset;
+                self.set_cursor_pos(new_cursor_pos.x, new_cursor_pos.y, shift);
+            }
+            EditorMode::EntityPalette(_) => EntityPalette::press_direction(&mut self.selected_entity_id, direction),
+            EditorMode::PenTool(pen_tool) => {
+                let new_cursor_pos = pen_tool.press_direction(direction, self.cursor_pos, self.pen_tool_fine_grid, &self.state);
+                self.set_cursor_pos(new_cursor_pos.x, new_cursor_pos.y, shift);
+            }
+        }
+    }
+
+    /// cursor pos without offset
+    fn true_cursor_pos(&self) -> DVec2 {
+        match &self.mode {
+            EditorMode::ModifyEntity(modify_entity) => self.cursor_pos - modify_entity.cursor_offset,
+            _ => self.cursor_pos,
         }
     }
 }

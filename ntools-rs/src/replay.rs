@@ -8,8 +8,8 @@ use crate::{anim_data::flatten_bones, attract::Attract, entity::mine::Mine, grid
 
 #[wasm_bindgen]
 pub struct Replay {
-    pub(crate) level_name: String,
-    pub(crate) author_name: Option<String>,
+    pub(crate) _level_name: String,
+    pub(crate) _author_name: Option<String>,
     pub(crate) segments: Grid<Segment>,
     pub(crate) inputs: Vec<u8>,
     pub(crate) past_ninjas: Vec<PastNinja>,
@@ -23,7 +23,6 @@ pub struct Replay {
 #[wasm_bindgen]
 impl Replay {
     // TODO: delete this?
-    #[wasm_bindgen]
     pub fn from_attract(attract_bytes: &[u8]) -> Result<Replay, String> {
         let Attract { level_name, author_name, tile_segments, ninjas, entities, inputs, .. } = Attract::from_bytes(attract_bytes)?;
 
@@ -36,8 +35,8 @@ impl Replay {
         keyframes.insert(0, KeyFrame::from_sim(&current_sim, &current_sim.entities.mines));
 
         Ok(Replay {
-            level_name,
-            author_name: Some(author_name),
+            _level_name: level_name,
+            _author_name: Some(author_name),
             segments,
             inputs,
             past_ninjas: Vec::new(),
@@ -49,14 +48,12 @@ impl Replay {
         })
     }
 
-    #[wasm_bindgen]
     pub fn send_past_ninjas(&mut self) {
         if let Some(sender) = self.sender.take() {
             let _ = sender.send(std::mem::take(&mut self.past_ninjas));
         }
     }
 
-    #[wasm_bindgen]
     pub fn set_input(&mut self, jump: bool, right: bool, left: bool, suicide: bool) {
         if self.current_sim.frame == self.inputs.len() as u32 {
             if self.current_sim.frame >= 3 * 60 * 60 {
@@ -76,7 +73,6 @@ impl Replay {
         }
     }
 
-    #[wasm_bindgen]
     pub fn tick(&mut self) {
         if (self.current_sim.frame as usize) < self.inputs.len() {
             // Save keyframe every 120 frames
@@ -99,7 +95,6 @@ impl Replay {
     }
 
     /// Seek until self.current_sim reaches target_frame
-    #[wasm_bindgen]
     pub fn seek(&mut self, target_frame: u32) {
         if (target_frame as usize) <= self.inputs.len() {
             // TODO: can use upper_bound method to get closest_keyframe once btree_cursors feature is stabilized.
@@ -119,7 +114,6 @@ impl Replay {
     }
 
     /// Seek until self.preview_sim reaches target_frame
-    #[wasm_bindgen]
     pub fn seek_preview(&mut self, target_frame: u32) {
         if (target_frame as usize) <= self.inputs.len() {
             // TODO: can use upper_bound method to get closest_keyframe once btree_cursors feature is stabilized.
@@ -140,7 +134,6 @@ impl Replay {
 
     /// Clear all input history and move ninja to a specific position.
     /// Entity state does not reset.
-    #[wasm_bindgen]
     pub fn place_ninja(&mut self, x: f64, y: f64) {
         // Clamp x and y to playable area.
         // 0th row and col are always filled with walls.
@@ -156,12 +149,10 @@ impl Replay {
         self.past_ninjas = vec![self.current_sim.ninja.to_past_ninja()];
     }
 
-    #[wasm_bindgen]
     pub fn replay_length(&self) -> u32 {
         self.inputs.len() as u32
     }
 
-    #[wasm_bindgen]
     pub fn progress(&self) -> u32 {
         self.current_sim.frame
     }
@@ -170,59 +161,48 @@ impl Replay {
         self.preview_sim.frame
     }
 
-    #[wasm_bindgen]
     pub fn tiles_path(&self) -> String {
         extract_path(&self.segments, true)
     }
 
-    #[wasm_bindgen]
     pub fn ninja_x(&self, partial_frame: f64) -> f64 {
         self.current_sim.ninja.pos_old.x.lerp(self.current_sim.ninja.pos.x, partial_frame)
     }
 
-    #[wasm_bindgen]
     pub fn ninja_y(&self, partial_frame: f64) -> f64 {
         self.current_sim.ninja.pos_old.y.lerp(self.current_sim.ninja.pos.y, partial_frame)
     }
 
-    #[wasm_bindgen]
     pub fn ninja_preview_x(&self, partial_frame: f64) -> f64 {
         self.preview_sim.ninja.pos_old.x.lerp(self.preview_sim.ninja.pos.x, partial_frame)
     }
 
-    #[wasm_bindgen]
     pub fn ninja_preview_y(&self, partial_frame: f64) -> f64 {
         self.preview_sim.ninja.pos_old.y.lerp(self.preview_sim.ninja.pos.y, partial_frame)
     }
 
-    #[wasm_bindgen]
     pub fn ninja_bones(&self, partial_frame: f64) -> Box<[f64]> {
         let prev = &self.past_ninjas[self.current_sim.frame.saturating_sub(1) as usize];
         flatten_bones(&self.current_sim.ninja.calc_ninja_position(prev, partial_frame))
     }
 
-    #[wasm_bindgen]
     pub fn ninja_preview_bones(&self, partial_frame: f64) -> Box<[f64]> {
         let prev = &self.past_ninjas[self.current_sim.frame.saturating_sub(1) as usize];
         flatten_bones(&self.preview_sim.ninja.calc_ninja_position(prev,partial_frame))
     }
 
-    #[wasm_bindgen]
     pub fn mines_len(&self) -> usize {
         self.current_sim.entities.mines.len()
     }
 
-    #[wasm_bindgen]
     pub fn mine_x(&self, i: usize) -> f64 {
         self.current_sim.entities.mines[i].pos.x
     }
 
-    #[wasm_bindgen]
     pub fn mine_y(&self, i: usize) -> f64 {
         self.current_sim.entities.mines[i].pos.y
     }
 
-    #[wasm_bindgen]
     pub fn mine_state(&self, i: usize) -> u8 {
         use crate::entity::mine::MineState::*;
         match self.current_sim.entities.mines[i].state {
@@ -232,279 +212,224 @@ impl Replay {
         }
     }
 
-    #[wasm_bindgen]
     pub fn bounce_blocks_len(&self) -> usize {
         self.current_sim.entities.bounce_blocks.len()
     }
 
-    #[wasm_bindgen]
     pub fn bounce_block_x(&self, i: usize, partial_frame: f64) -> f64 {
         let bounce_block = &self.current_sim.entities.bounce_blocks[i];
         bounce_block.pos_old.x.lerp(bounce_block.pos.x, partial_frame)
     }
 
-    #[wasm_bindgen]
     pub fn bounce_block_y(&self, i: usize, partial_frame: f64) -> f64 {
         let bounce_block = &self.current_sim.entities.bounce_blocks[i];
         bounce_block.pos_old.y.lerp(bounce_block.pos.y, partial_frame)
     }
 
-    #[wasm_bindgen]
     pub fn bounce_block_deg(&self, i: usize) -> f64 {
         self.current_sim.entities.bounce_blocks[i].orientation.rotation_deg()
     }
 
-    #[wasm_bindgen]
     pub fn one_ways_len(&self) -> usize {
         self.current_sim.entities.one_ways.len()
     }
 
-    #[wasm_bindgen]
     pub fn one_way_x(&self, i: usize) -> f64 {
         self.current_sim.entities.one_ways[i].pos.x
     }
 
-    #[wasm_bindgen]
     pub fn one_way_y(&self, i: usize) -> f64 {
         self.current_sim.entities.one_ways[i].pos.y
     }
 
-    #[wasm_bindgen]
     pub fn one_way_deg(&self, i: usize) -> f64 {
         self.current_sim.entities.one_ways[i].orientation.rotation_deg()
     }
 
-    #[wasm_bindgen]
     pub fn boost_pads_len(&self) -> usize {
         self.current_sim.entities.boost_pads.len()
     }
 
-    #[wasm_bindgen]
     pub fn boost_pad_x(&self, i: usize) -> f64 {
         self.current_sim.entities.boost_pads[i].pos.x
     }
 
-    #[wasm_bindgen]
     pub fn boost_pad_y(&self, i: usize) -> f64 {
         self.current_sim.entities.boost_pads[i].pos.y
     }
 
-    #[wasm_bindgen]
     pub fn boost_pad_deg(&self, i: usize, partial_frame: f64) -> f64 {
         self.current_sim.entities.boost_pads[i].rotation(partial_frame).to_degrees()
     }
 
-    #[wasm_bindgen]
     pub fn boost_pad_anim_progress(&self, i: usize, partial_frame: f64) -> f64 {
         self.current_sim.entities.boost_pads[i].eased_animation_progress(partial_frame)
     }
 
-    #[wasm_bindgen]
     pub fn exit_doors_len(&self) -> usize {
         self.current_sim.entities.exits.len()
     }
 
-    #[wasm_bindgen]
     pub fn exit_door_x(&self, i: usize) -> f64 {
         self.current_sim.entities.exits[i].door_pos.x
     }
 
-    #[wasm_bindgen]
     pub fn exit_door_y(&self, i: usize) -> f64 {
         self.current_sim.entities.exits[i].door_pos.y
     }
 
-    #[wasm_bindgen]
     pub fn exit_anim_progress(&self, i: usize, partial_frame: f64) -> f64 {
         self.current_sim.entities.exits[i].eased_animation_progress(partial_frame)
     }
 
-    #[wasm_bindgen]
     pub fn exit_switch_x(&self, i: usize) -> f64 {
         self.current_sim.entities.exits[i].switch_pos.x
     }
 
-    #[wasm_bindgen]
     pub fn exit_switch_y(&self, i: usize) -> f64 {
         self.current_sim.entities.exits[i].switch_pos.y
     }
 
-    #[wasm_bindgen]
     pub fn thwumps_len(&self) -> usize {
         self.current_sim.entities.thwumps.len()
     }
 
-    #[wasm_bindgen]
     pub fn thwump_x(&self, i: usize, partial_frame: f64) -> f64 {
         self.current_sim.entities.thwumps[i].x(partial_frame)
     }
 
-    #[wasm_bindgen]
     pub fn thwump_y(&self, i: usize, partial_frame: f64) -> f64 {
         self.current_sim.entities.thwumps[i].y(partial_frame)
     }
 
-    #[wasm_bindgen]
     pub fn thwump_deg(&self, i: usize) -> f64 {
         self.current_sim.entities.thwumps[i].orientation.rotation_deg()
     }
 
-    #[wasm_bindgen]
     pub fn launch_pads_len(&self) -> usize {
         self.current_sim.entities.launch_pads.len()
     }
 
-    #[wasm_bindgen]
     pub fn launch_pad_x(&self, i: usize) -> f64 {
         self.current_sim.entities.launch_pads[i].pos.x
     }
 
-    #[wasm_bindgen]
     pub fn launch_pad_y(&self, i: usize) -> f64 {
         self.current_sim.entities.launch_pads[i].pos.y
     }
 
-    #[wasm_bindgen]
     pub fn launch_pad_deg(&self, i: usize) -> f64 {
         self.current_sim.entities.launch_pads[i].orientation.rotation_deg()
     }
 
-    #[wasm_bindgen]
     pub fn floor_guards_len(&self) -> usize {
         self.current_sim.entities.floor_guards.len()
     }
 
-    #[wasm_bindgen]
     pub fn floor_guard_x(&self, i: usize, partial_frame: f64) -> f64 {
         self.current_sim.entities.floor_guards[i].x(partial_frame)
     }
 
-    #[wasm_bindgen]
     pub fn floor_guard_y(&self, i: usize, partial_frame: f64) -> f64 {
         self.current_sim.entities.floor_guards[i].y(partial_frame)
     }
 
-    #[wasm_bindgen]
     pub fn floor_guard_deg(&self, i: usize) -> f64 {
         self.current_sim.entities.floor_guards[i].orientation.rotation_deg()
     }
 
-    #[wasm_bindgen]
     pub fn locked_doors_len(&self) -> usize {
         self.current_sim.entities.doors.locked.len()
     }
 
-    #[wasm_bindgen]
     pub fn locked_door_x(&self, i: usize) -> f64 {
         self.current_sim.entities.doors.locked[i].pos.x
     }
 
-    #[wasm_bindgen]
     pub fn locked_door_y(&self, i: usize) -> f64 {
         self.current_sim.entities.doors.locked[i].pos.y
     }
 
-    #[wasm_bindgen]
     pub fn locked_door_deg(&self, i: usize) -> f64 {
         self.current_sim.entities.doors.locked[i].orientation.rotation_deg()
     }
 
-    #[wasm_bindgen]
     pub fn locked_door_anim_progress(&self, i: usize, partial_frame: f64) -> f64 {
         self.current_sim.entities.doors.locked[i].eased_animation_progress(partial_frame)
     }
 
-    #[wasm_bindgen]
     pub fn locked_switch_x(&self, i: usize) -> f64 {
         self.current_sim.entities.doors.locked[i].switch_pos.x
     }
 
-    #[wasm_bindgen]
     pub fn locked_switch_y(&self, i: usize) -> f64 {
         self.current_sim.entities.doors.locked[i].switch_pos.y
     }
 
-    #[wasm_bindgen]
     pub fn trap_doors_len(&self) -> usize {
         self.current_sim.entities.doors.trap.len()
     }
 
-    #[wasm_bindgen]
     pub fn trap_door_x(&self, i: usize) -> f64 {
         self.current_sim.entities.doors.trap[i].pos.x
     }
 
-    #[wasm_bindgen]
     pub fn trap_door_y(&self, i: usize) -> f64 {
         self.current_sim.entities.doors.trap[i].pos.y
     }
 
-    #[wasm_bindgen]
     pub fn trap_door_deg(&self, i: usize) -> f64 {
         self.current_sim.entities.doors.trap[i].orientation.rotation_deg()
     }
 
-    #[wasm_bindgen]
     pub fn trap_door_anim_progress(&self, i: usize, partial_frame: f64) -> f64 {
         self.current_sim.entities.doors.trap[i].eased_animation_progress(partial_frame)
     }
 
-    #[wasm_bindgen]
     pub fn trap_switch_x(&self, i: usize) -> f64 {
         self.current_sim.entities.doors.trap[i].switch_pos.x
     }
 
-    #[wasm_bindgen]
     pub fn trap_switch_y(&self, i: usize) -> f64 {
         self.current_sim.entities.doors.trap[i].switch_pos.y
     }
 
-    #[wasm_bindgen]
     pub fn regular_doors_len(&self) -> usize {
         self.current_sim.entities.doors.regular.len()
     }
 
-    #[wasm_bindgen]
     pub fn regular_door_x(&self, i: usize) -> f64 {
         self.current_sim.entities.doors.regular[i].pos.x
     }
 
-    #[wasm_bindgen]
     pub fn regular_door_y(&self, i: usize) -> f64 {
         self.current_sim.entities.doors.regular[i].pos.y
     }
 
-    #[wasm_bindgen]
     pub fn regular_door_deg(&self, i: usize) -> f64 {
         self.current_sim.entities.doors.regular[i].orientation.rotation_deg()
     }
 
-    #[wasm_bindgen]
     pub fn regular_door_anim_progress(&self, i: usize, partial_frame: f64) -> f64 {
         self.current_sim.entities.doors.regular[i].eased_animation_progress(partial_frame)
     }
 
-    #[wasm_bindgen]
     pub fn shove_thwumps_len(&self) -> usize {
         self.current_sim.entities.shove_thwumps.len()
     }
 
-    #[wasm_bindgen]
     pub fn shove_thwump_x(&self, i: usize, partial_frame: f64) -> f64 {
         self.current_sim.entities.shove_thwumps[i].x(partial_frame)
     }
 
-    #[wasm_bindgen]
     pub fn shove_thwump_y(&self, i: usize, partial_frame: f64) -> f64 {
         self.current_sim.entities.shove_thwumps[i].y(partial_frame)
     }
 
-    #[wasm_bindgen]
     pub fn shove_thwump_deg(&self, i: usize) -> f64 {
         self.current_sim.entities.shove_thwumps[i].orientation.rotation_deg()
     }
 
-    #[wasm_bindgen]
     pub fn shove_thwump_touch(&self, i: usize) -> i32 {
         self.current_sim.entities.shove_thwumps[i].touch_as_num()
     }

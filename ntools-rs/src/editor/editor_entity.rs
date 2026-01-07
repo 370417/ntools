@@ -1,7 +1,7 @@
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{editor::{place_entity::Stage, select_entity::SelectionType}, grid::GridPos, orientation::{Orientation, OrientationBinary, OrientationExt}};
+use crate::{editor::{place_entity::Stage, select_entity::SelectionType}, grid::GridPos, orientation::{Orientation, OrientationBinary, OrientationExt, Orientations}};
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(debug_assertions, derive(Debug))]
@@ -155,6 +155,37 @@ pub struct ExportedEntity {
 }
 
 impl EditorEntity {
+    pub fn from_parts(id: EntityId, pos: EntityPos, orientations: Orientations) -> EditorEntity {
+        match id {
+            EntityId::Ninja => EditorEntity::Ninja { pos, orientation: orientations.orientation.into() },
+            EntityId::Mine => EditorEntity::Mine { pos },
+            EntityId::Gold => todo!(),
+            EntityId::ExitDoor | EntityId::ExitSwitch => EditorEntity::Exit { exit_pos: pos, switch_pos: pos },
+            EntityId::RegularDoor => EditorEntity::RegularDoor { pos, orientation: orientations.orientation_binary },
+            EntityId::LockedDoor | EntityId::LockedSwitch => EditorEntity::LockedDoor { door_pos: pos, orientation: orientations.orientation_binary, switch_pos: pos },
+            EntityId::TrapDoor | EntityId::TrapSwitch => EditorEntity::TrapDoor { door_pos: pos, orientation: orientations.orientation_binary, switch_pos: pos },
+            EntityId::LaunchPad => EditorEntity::LaunchPad { pos, orientation: orientations.orientation },
+            EntityId::OneWay => EditorEntity::OneWay { pos, orientation: orientations.orientation },
+            EntityId::ChainsawDrone => todo!(),
+            EntityId::LaserDrone => todo!(),
+            EntityId::ZapDrone => todo!(),
+            EntityId::ChaseDrone => todo!(),
+            EntityId::FloorGuard => EditorEntity::FloorGuard { pos, orientation: orientations.orientation.into() },
+            EntityId::BounceBlock => EditorEntity::BounceBlock { pos, orientation: orientations.orientation },
+            EntityId::RocketTurret => todo!(),
+            EntityId::GaussTurret => todo!(),
+            EntityId::Thwump => EditorEntity::Thwump { pos, orientation: orientations.orientation },
+            EntityId::ToggleMine => EditorEntity::ToggleMine { pos },
+            EntityId::EvilNinja => todo!(),
+            EntityId::LaserTurret => todo!(),
+            EntityId::BoostPad => EditorEntity::BoostPad { pos },
+            EntityId::DeathBall => todo!(),
+            EntityId::MiniDrone => todo!(),
+            EntityId::Bat => todo!(),
+            EntityId::ShoveThwump => EditorEntity::ShoveThwump { pos, orientation: orientations.orientation },
+        }
+    }
+
     pub fn export(&self) -> ExportedEntity {
         let pos = self.pos().to_world_pos();
         let switch_pos = self.switch_pos().map(EntityPos::to_world_pos).unwrap_or(DVec2::splat(f64::NAN));
@@ -436,29 +467,31 @@ impl EntityPos {
 
 impl ExportedEntity {
     /// Remove switch position if stage isn't Stage::PlaceSwitch
-    pub fn with_stage(mut self, stage: Option<Stage>) -> Self {
+    pub fn with_stage(self, stage: Option<Stage>) -> Self {
         if let Some(Stage::PlaceSwitch) = stage {
             self
         } else {
-            self.switch_x = f64::NAN;
-            self.switch_y = f64::NAN;
-            self
+            self.without_switch()
         }
     }
 
     /// Remove switch position if selection type isn't SelectionType::Switch
     /// and if door and switch overlap.
     /// We do this so that the door does not get covered by its switch when it is selected.
-    pub fn with_selection_type(mut self, selection_type: SelectionType) -> Self {
+    pub fn with_selection_type(self, selection_type: SelectionType) -> Self {
         match selection_type {
             SelectionType::Switch => self,
             SelectionType::NotSwitch => if self.x == self.switch_x && self.y == self.switch_y {
-                self.switch_x = f64::NAN;
-                self.switch_y = f64::NAN;
-                self
+                self.without_switch()
             } else {
                 self
             }
         }
+    }
+
+    pub fn without_switch(mut self) -> Self {
+        self.switch_x = f64::NAN;
+        self.switch_y = f64::NAN;
+        self
     }
 }

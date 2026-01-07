@@ -101,13 +101,21 @@ impl GridPos {
 
     pub fn plus(self, (x, y): (i32, i32)) -> GridPos {
         GridPos {
-            x: (self.x as i32 + x).max(0) as u8,
-            y: (self.y as i32 + y).max(0) as u8,
+            x: self.x.saturating_add_signed(x as i8),
+            y: self.y.saturating_add_signed(y as i8),
         }
     }
 
     pub fn in_bounds(self) -> bool {
         self.x > 0 && self.y > 0 && self.x <= COLS as u8 && self.y <= ROWS as u8
+    }
+
+    pub fn filter_in_bounds(self) -> Option<GridPos> {
+        if self.in_bounds() {
+            Some(self)
+        } else {
+            None
+        }
     }
 
     pub fn to_world_pos(self) -> DVec2 {

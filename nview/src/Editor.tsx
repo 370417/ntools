@@ -33,13 +33,13 @@ const xhairHalfSize = 4;
 const crosshairPath = `M ${-xhairHalfSize} 0 H ${xhairHalfSize} M 0 ${-xhairHalfSize} V ${xhairHalfSize}`;
 
 const MODE_PAINT_TILES = 0;
-// const MODE_TILE_PALETTE = 1;
+const MODE_TILE_PALETTE = 1;
 // const MODE_SELECT_TILES = 2;
 const MODE_MOVE_SELECTION = 3;
 // const MODE_PLACE_ENTITY = 4;
 const MODE_SELECT_ENTITY = 5;
 const MODE_MODIFY_ENTITY = 6;
-// const MODE_ENTITY_PALETTE = 7;
+const MODE_ENTITY_PALETTE = 7;
 const MODE_PEN_TOOL = 8;
 
 const ENTITY_NINJA = 0;
@@ -60,6 +60,11 @@ const ENTITY_SHOVE_THWUMP = 28;
 
 const BONES_STANDING = new Float64Array([-0.039, -0.0249, 0.1127, -0.1738, 0.1115, -0.1512, -0.0846, 0.0749, 0.1072, -0.0423, 0.0263, -0.1452, -0.0358, -0.075, -0.377, 0.4686, 0.4643, -0.0225, -0.0453, -0.5054, -0.4724, 0.1962, 0.2293, -0.1812, -0.2266, -0.2224]);
 // const BONES_FALLING = new Float64Array([0.018, 0.0, 0.4156, 0.0988, 0.3581, -0.3242, -0.0708, 0.0845, 0.2924, 0.3212, 0.1853, -0.1927, -0.0236, -0.06, -0.3602, 0.3086, 0.1278, -0.3238, -0.2018, -0.4976, -0.4488, 0.0656, -0.024, -0.2729, -0.3268, -0.2042]);
+
+const ENTITY_PALETTE_SIZE = 150;
+const ENTITY_PALETTE_RETICLE_RADIUS = 16;
+
+const TILE_PALETTE_PATH = "M -13 -13 V -62 H 13 V -13 H 62 V 13 H 13 V 62 H -13 V 13 H -62 V -13 H -13 M -12 -12 H 12 V 12 H -12 V -12";
 
 type Line = {
     x1: number;
@@ -300,6 +305,9 @@ export function EditorApp(props: {
     const [crosshairPos, setCrosshairPos] = createSignal({ x: 24, y: 24 });
     const [selectedTileOutlinePath, setSelectedTileOutlinePath] = createSignal('');
 
+    const [paletteCenter, setPaletteCenter] = createSignal({ x: NaN, y: NaN });
+    const [paletteSelection, setPaletteSelection] = createSignal({ x: NaN, y: NaN });
+
     const entities = createEntities();
     const previewEntities = createEntities();
 
@@ -323,6 +331,9 @@ export function EditorApp(props: {
             }
             return;
         }
+
+        if (event.shiftKey) change = true, editor.press_shift();
+        // Note: no else
 
         if (event.code ==='Backquote') change = true, editor.press_backtick();
         else if (event.code === 'Digit1') change = true, editor.press_1(event.shiftKey);
@@ -349,6 +360,9 @@ export function EditorApp(props: {
         else if (event.code === 'KeyX') change = true, editor.press_x();
         else if (event.code === 'KeyC') change = true, editor.press_c();
 
+        else if (event.code === 'Space') change = true, editor.press_space();
+        else if (event.code === 'AltLeft') change = true, editor.press_alt_left(event.shiftKey);
+
         else if (event.code === 'KeyT') change = true, editor.press_t();
         else if (event.code === 'KeyY') change = true, editor.press_y();
         else if (event.code === 'KeyU') change = true, editor.press_u();
@@ -366,6 +380,12 @@ export function EditorApp(props: {
         else if (event.code === 'KeyM') change = true, editor.press_m();
         else if (event.code === 'Comma') change = true, editor.press_comma();
 
+        else if (event.code === 'ArrowUp') change = true, editor.press_up(event.shiftKey);
+        else if (event.code === 'ArrowDown') change = true, editor.press_down(event.shiftKey);
+        else if (event.code === 'ArrowLeft') change = true, editor.press_left(event.shiftKey);
+        else if (event.code === 'ArrowRight') change = true, editor.press_right(event.shiftKey);
+        else if (event.code === 'Enter') change = true, editor.press_enter();
+
         else if (event.code === 'Escape') change = editor.press_escape();
 
         else if (event.code === 'Slash') change = true, editor.press_slash();
@@ -378,6 +398,10 @@ export function EditorApp(props: {
 
     const keyupListener = (event: KeyboardEvent) => {
         let change = false;
+
+        if (!event.shiftKey) change = true, editor.release_shift();
+        // Note: no else
+
         if (event.code === 'KeyQ') change = true, editor.release_q();
         else if (event.code === 'KeyW') change = true, editor.release_w();
         else if (event.code === 'KeyA') change = true, editor.release_a();
@@ -386,6 +410,9 @@ export function EditorApp(props: {
         else if (event.code === 'KeyD') change = true, editor.release_d();
         else if (event.code === 'KeyZ') change = true, editor.release_z();
         else if (event.code === 'KeyC') change = true, editor.release_c();
+
+        else if (event.code === 'Space') change = true, editor.release_space();
+        else if (event.code === 'AltLeft') change = true, editor.release_alt_left();
 
         if (change) {
             render(false);
@@ -427,6 +454,15 @@ export function EditorApp(props: {
         setDoorSwitchLines(lines);
 
         setSelectedTileOutlinePath(editor.selected_tile_outline_path());
+
+        setPaletteCenter({
+            x: editor.palette_center_x(),
+            y: editor.palette_center_y(),
+        });
+        setPaletteSelection({
+            x: editor.palette_selection_x(),
+            y: editor.palette_selection_y(),
+        });
 
         if (save) {
             debouncedSaveMap(editor);
@@ -529,10 +565,25 @@ export function EditorApp(props: {
             {regularGridYs.map(y => <line class="regular-grid" x1="24" x2={24 * 43} y1={y} y2={y} />)}
             <Entities entities={entities} />
             <path id="tiles" stroke-width="2" clip-path="url(#tiles-clip)" clip-rule="evenodd" d={tilePath()} fill-rule="evenodd" />
+            <Show when={mode() === MODE_ENTITY_PALETTE}>
+                {/* palette background color from https://coloration-cimn.onrender.com/ */}
+                <rect fill="color-mix(in srgb,var(--background) 18%,white 15%)"
+                    style={{ "mix-blend-mode": "hard-light" }}
+                    x={paletteCenter().x - ENTITY_PALETTE_SIZE / 2} y={paletteCenter().y - ENTITY_PALETTE_SIZE / 2} width={ENTITY_PALETTE_SIZE} height={ENTITY_PALETTE_SIZE} />
+            </Show>
             <g filter={[MODE_MOVE_SELECTION, MODE_SELECT_ENTITY, MODE_MODIFY_ENTITY].includes(mode()) ? "url(#outline)" : ""}>
                 <Entities entities={previewEntities} />
             </g>
+            <Show when={mode() === MODE_ENTITY_PALETTE}>
+                <circle fill="none" stroke="var(--entity-palette-reticle)" cx={paletteSelection().x} cy={paletteSelection().y} r={ENTITY_PALETTE_RETICLE_RADIUS} />
+            </Show>
+            <Show when={mode() === MODE_TILE_PALETTE}>
+                <path d={TILE_PALETTE_PATH} fill-rule="evenodd" fill="color-mix(in srgb,var(--background) 18%,white 15%)" transform={`translate(${paletteCenter().x},${paletteCenter().y})`} />
+            </Show>
             <path id="selected-tiles" d={selectedTilePath()} fill-rule="evenodd" />
+            <Show when={mode() === MODE_TILE_PALETTE}>
+                <rect fill="none" stroke="var(--editor-crosshair)" stroke-width="2" x={paletteSelection().x - 13} y={paletteSelection().y - 13} width="26" height="26" />
+            </Show>
             <For each={doorSwitchLines()}>
                 {line => <line class="door-switch-line" x1={line.x1} y1={line.y1} x2={line.x2} y2={line.y2} />}
             </For>

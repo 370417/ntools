@@ -69,6 +69,13 @@ pub enum OrientationBinary {
     H = 2,
 }
 
+#[derive(Clone, Copy)]
+pub struct Orientations {
+    pub orientation: Orientation,
+    pub orientation_cardinal: OrientationCardinal,
+    pub orientation_binary: OrientationBinary,
+}
+
 impl Orientation {
     /// Orientation represented by unit vector.
     pub fn vec2(&self) -> DVec2 {

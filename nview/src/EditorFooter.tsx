@@ -51,7 +51,7 @@ export function EditorFooter(props: {
         </a>
         {" | "}
         <label>Show trail <input type="checkbox" checked disabled /></label>
-        {" | Bounce block/thwump/shwump corners "}
+        {" | Object corners "}
         <select onchange={e => props.setRoundCorners(e.currentTarget.value == 'rounded')}>
             <option selected={!props.roundCorners()}>square</option>
             <option selected={props.roundCorners()}>rounded</option>

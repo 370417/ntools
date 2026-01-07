@@ -249,8 +249,11 @@ impl Segment {
 }
 
 pub fn extract_path(segments: &Grid<Segment>, outer_border: bool) -> String {
-    let mut segments: Vec<Segment> = segments.flat_iter().filter(|s| s.is_from_tile()).cloned().collect();
+    let segments = segments.flat_iter().filter(|s| s.is_from_tile()).cloned().collect();
+    extract_path_from_segments(segments, outer_border)
+}
 
+pub fn extract_path_from_segments(mut segments: Vec<Segment>, outer_border: bool) -> String {
     let mut path = Vec::new();
 
     if outer_border {

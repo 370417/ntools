@@ -252,7 +252,7 @@ pub enum Tile {
     Tile8A = 11,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum TileCategory {
     Tile1,
     Tile2,
@@ -868,6 +868,11 @@ impl Tile {
                 curvature: Curvature::Convex,
             }),
         }
+    }
+
+    pub fn all_segments(self, pos: GridPos) -> impl Iterator<Item = Segment> {
+        let outer_segments = [(0, 1), (1, 0), (0, -1), (-1, 0)].iter().map(move |&direction| self.outer_segment(pos, direction));
+        std::iter::once(self.inner_segment(pos)).chain(outer_segments).flatten()
     }
 
     pub fn add_outer_segments_to_grid(&self, pos: GridPos, segments: &mut Grid<Segment>) {

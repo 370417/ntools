@@ -1,19 +1,23 @@
 use glam::DVec2;
 
-use crate::{editor::{editor_entity::{EditorEntity, EntityPos, ExportedEntity}, editor_state::{Command, EditorEntities, SetEntityCount}, place_entity::PlaceEntity, select_entity::SelectionType}, orientation::Orientation};
+use crate::{editor::{editor_entity::{EditorEntity, EntityPos, ExportedEntity}, editor_state::{Command, EditorEntities, SetEntityCount}, place_entity::PlaceEntity, select_entity::SelectionType}, orientation::{Orientation, OrientationBinary, OrientationCardinal}, tile::{TILE_HALF_SIZE, TILE_SIZE}};
 
 pub struct ModifyEntity {
     pub original_entity: EditorEntity,
     pub modified_entity: EditorEntity,
     pub selection_type: SelectionType,
+    /// Keep the modified entity at its original offset from the cursor to prevent it
+    /// from snapping to the cursor when first selected.
+    pub cursor_offset: DVec2,
 }
 
 impl ModifyEntity {
-    pub fn new(entity: EditorEntity, selection_type: SelectionType) -> ModifyEntity {
+    pub fn new(entity: EditorEntity, selection_type: SelectionType, cursor_pos: DVec2) -> ModifyEntity {
         ModifyEntity {
             original_entity: entity,
             modified_entity: entity,
             selection_type,
+            cursor_offset: selection_type.entity_pos(entity).to_world_pos() - cursor_pos,
         }
     }
 
@@ -31,14 +35,16 @@ impl ModifyEntity {
         }
     }
 
-    pub fn set_door_orientation_from_pos(&mut self) {
+    pub fn set_door_orientation_from_pos(&mut self, editor_orientation: &mut OrientationBinary) {
         match (&mut self.modified_entity, self.selection_type) {
             (EditorEntity::RegularDoor { pos, orientation }, _) => {
                 *orientation = PlaceEntity::door_orientation_from_pos(pos.to_world_pos(), *orientation);
+                *editor_orientation = *orientation;
             }
             (EditorEntity::LockedDoor { door_pos, orientation, .. }, SelectionType::NotSwitch) |
             (EditorEntity::TrapDoor { door_pos, orientation, .. }, SelectionType::NotSwitch) => {
                 *orientation = PlaceEntity::door_orientation_from_pos(door_pos.to_world_pos(), *orientation);
+                *editor_orientation = *orientation;
             }
             _ => {}
         }
@@ -61,10 +67,7 @@ impl ModifyEntity {
             EditorEntity::Exit { exit_pos: door_pos, switch_pos } |
             EditorEntity::LockedDoor { door_pos, switch_pos, .. } |
             EditorEntity::TrapDoor { door_pos, switch_pos, .. } => match self.selection_type {
-                SelectionType::NotSwitch => {
-                    *door_pos = new_pos;
-                    *switch_pos = new_pos;
-                }
+                SelectionType::NotSwitch => *door_pos = new_pos,
                 SelectionType::Switch => *switch_pos = new_pos,
             },
         }
@@ -89,9 +92,9 @@ impl ModifyEntity {
         }
     }
 
-    pub fn cursor_click(&mut self, entities: &EditorEntities) -> Option<Command> {
+    pub fn cursor_down(&mut self, entities: &EditorEntities) -> Option<Command> {
         if self.modified_entity == self.original_entity {
-            return None;
+            return Some(Command::SetTilesAndEntities(Vec::new(), Vec::new()));
         }
         let original_count = *entities.get(&self.original_entity).unwrap_or(&0);
         let remove_original_entity = SetEntityCount {
@@ -137,6 +140,25 @@ impl ModifyEntity {
             EditorEntity::Mine { pos } => self.modified_entity = EditorEntity::ToggleMine { pos },
             EditorEntity::ToggleMine { pos } => self.modified_entity = EditorEntity::Mine { pos },
             _ => {}
+        }
+    }
+
+    /// Calculates the new crosshair position needed in response to pressing a direction key.
+    pub fn press_direction(&self, direction: OrientationCardinal, fine_grid: bool) -> DVec2 {
+        let crosshair = self.selection_type.entity_pos(self.modified_entity).to_world_pos();
+        if let (EditorEntity::LockedDoor { orientation, .. }, SelectionType::NotSwitch) |
+               (EditorEntity::TrapDoor { orientation, .. }, SelectionType::NotSwitch) |
+               (EditorEntity::RegularDoor { orientation, .. }, SelectionType::NotSwitch) = (self.modified_entity, self.selection_type) {
+            if orientation.vec2().dot(direction.vec2()).abs() == 1.0 {
+                // when moving door along its axis, move it a full tile
+                return crosshair + TILE_SIZE * direction.vec2();
+            }
+        }
+
+        if fine_grid {
+            crosshair + TILE_HALF_SIZE * 0.5 * direction.vec2()
+        } else {
+            crosshair + TILE_HALF_SIZE * direction.vec2()
         }
     }
 
