@@ -1278,7 +1278,7 @@ impl Editor {
                 let new_cursor_pos = new_cursor_pos - modify_entity.cursor_offset;
                 self.set_cursor_pos(new_cursor_pos.x, new_cursor_pos.y, shift);
             }
-            EditorMode::EntityPalette(_) => {}
+            EditorMode::EntityPalette(_) => EntityPalette::press_direction(&mut self.selected_entity_id, direction),
             EditorMode::PenTool(pen_tool) => {
                 let new_cursor_pos = pen_tool.press_direction(direction, self.cursor_pos, self.pen_tool_fine_grid, &self.state);
                 self.set_cursor_pos(new_cursor_pos.x, new_cursor_pos.y, shift);

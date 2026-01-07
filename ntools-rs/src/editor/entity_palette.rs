@@ -1,7 +1,7 @@
 use float_ord::FloatOrd;
 use glam::DVec2;
 
-use crate::{editor::editor_entity::{EditorEntity, EntityId, EntityPos}, grid::GridPos, orientation::Orientations};
+use crate::{editor::editor_entity::{EditorEntity, EntityId, EntityPos}, grid::GridPos, orientation::{OrientationCardinal, Orientations}};
 
 pub struct EntityPalette {
     pub center: GridPos,
@@ -35,6 +35,33 @@ impl EntityPalette {
     pub fn selected_pos(&self, selected_entity_id: EntityId) -> DVec2 {
         let pos = entity_pos_in_palette(selected_entity_id).unwrap_or(EntityPos { x: 0, y: 0 });
         self.center.center() + pos.to_world_pos()
+    }
+
+    pub fn press_direction(selected_entity_id: &mut EntityId, direction: OrientationCardinal) {
+        let mut pos = entity_pos_in_palette(*selected_entity_id).unwrap_or(EntityPos { x: 0, y: 0 });
+        pos.x += 5 * direction.vec2().x as i32;
+        pos.y += 5 * direction.vec2().y as i32;
+
+        // skip over center
+        if pos.x == 0 && pos.y == 0 {
+            pos.x += 5 * direction.vec2().x as i32;
+            pos.y += 5 * direction.vec2().y as i32;
+        }
+
+        // wrap around edges
+        if pos.x.abs() > 10 {
+            pos.x = -10 * pos.x.signum();
+        }
+        if pos.y.abs() > 10 {
+            pos.y = -10 * pos.y.signum();
+        }
+
+        for &entity_id in &ENTITIES_IN_PALETTE {
+            if entity_pos_in_palette(entity_id) == Some(pos) {
+                *selected_entity_id = entity_id;
+                break;
+            }
+        }
     }
 }
 
