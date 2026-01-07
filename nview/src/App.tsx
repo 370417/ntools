@@ -3,6 +3,7 @@ import { Editor, get_anim_state, Replay, set_anim_data } from './assets/ntools_r
 import { EditorApp } from './Editor.tsx';
 import { ReplayApp } from './Replay.tsx';
 import { loadAnimData, loadMap, saveAnimData } from './localstorage.ts';
+import { loadStandardPalettes } from './palette.ts';
 
 export type GlobalEventState = {
     isJump1Pressed: Accessor<boolean>,
@@ -117,6 +118,8 @@ export function App() {
     // We avoid setting state to invalid at first because it is confusing
     // for the user to see an error message before interacating with the page.
     const [animState, setAnimState] = createSignal(get_anim_state() == ANIM_VALID ? ANIM_VALID : ANIM_MISSING);
+
+    loadStandardPalettes();
 
     return <>
         <Show when={animState() != ANIM_VALID}>

@@ -316,7 +316,7 @@ export function EditorApp(props: {
     const keydownListener = (event: KeyboardEvent) => {
         let change = false;
 
-        if (event.target instanceof HTMLInputElement) {
+        if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) {
             return;
         }
 

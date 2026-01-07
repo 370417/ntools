@@ -1,6 +1,7 @@
 import type { Accessor, Setter } from "solid-js";
 import type { Editor } from "./assets/ntools_rs";
 import { debouncedSaveMap } from "./localstorage";
+import { getPaletteColors, themes, updatePaletteCss } from "./palette";
 
 export function EditorFooter(props: {
     editor: Editor,
@@ -44,7 +45,7 @@ export function EditorFooter(props: {
             const blob = new Blob([map.buffer as ArrayBuffer], { type: 'application/octet-stream' });
             const downloadUrl = URL.createObjectURL(blob);
             this.href = downloadUrl;
-            this.download = props.editor.get_level_name();
+            this.download = props.editor.get_level_name().replaceAll(/[^a-z]/gi, '_');
             setTimeout(() => URL.revokeObjectURL(downloadUrl), 100);
         }}>
             Export map
@@ -55,6 +56,15 @@ export function EditorFooter(props: {
         <select onchange={e => props.setRoundCorners(e.currentTarget.value == 'rounded')}>
             <option selected={!props.roundCorners()}>square</option>
             <option selected={props.roundCorners()}>rounded</option>
+        </select>
+        {" | "}
+        <select onchange={e => {
+            const colors = getPaletteColors(e.currentTarget.value);
+            if (colors) updatePaletteCss(colors);
+        }}>
+            {themes.map(theme => {
+                return <option selected={theme === 'vasquez'}>{theme}</option>
+            })}
         </select>
         <input type="text" value={props.levelName()} style={{ float: 'right' }} oninput={e => {
             props.editor.set_level_name(e.currentTarget.value);
