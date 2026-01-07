@@ -129,14 +129,26 @@ export function App() {
                         fileReader.onloadend = () => {
                             if (fileReader.result instanceof ArrayBuffer) {
                                 const data = new Uint8Array(fileReader.result);
-                                saveAnimData(data);
-                                set_anim_data(data);
-                                setAnimState(get_anim_state());
+                                try {
+                                    saveAnimData(data);
+                                    set_anim_data(data);
+                                    setAnimState(get_anim_state());
+                                } catch (e) {
+                                    setAnimState(ANIM_INVALID);
+                                }
                             }
                         };
                         fileReader.readAsArrayBuffer(files[0]);
                     }
                 }} />
+                <dl>
+                    <dt>Windows</dt>
+                    <dd>{"C:\\Program Files (x86)\\Steam\\steamapps\\common\\N++\\anim_data_line_new.txt.bin"}</dd>
+                    <dt>Linux</dt>
+                    <dd>{"~/.steam/steam/steamapps/common/N++/anim_data_line_new.txt.bin"}</dd>
+                    <dt>Mac</dt>
+                    <dd>{"~/Library/Application Support/Steam/steamapps/common/N++/N++.app/Contents/Resources/NPP/anim_data_line_new.txt.bin"}</dd>
+                </dl>
                 <Show when={animState() == ANIM_INVALID}>
                     <p>Invalid file.</p>
                 </Show>
