@@ -31,6 +31,11 @@ impl EntityPalette {
         .unwrap_or((EntityId::Ninja, 0.0))
         .0
     }
+
+    pub fn selected_pos(&self, selected_entity_id: EntityId) -> DVec2 {
+        let pos = entity_pos_in_palette(selected_entity_id).unwrap_or(EntityPos { x: 0, y: 0 });
+        self.center.center() + pos.to_world_pos()
+    }
 }
 
 const ENTITIES_IN_PALETTE: [EntityId; 24] = [
@@ -64,34 +69,34 @@ fn entity_pos_in_palette(entity_id: EntityId) -> Option<EntityPos> {
     // currently unsupported entities are commented out
     match entity_id {
         EntityId::Ninja => None,
-        EntityId::Mine => Some(EntityPos { x: -8, y: 0 }),
-        // EntityId::Gold => Some(EntityPos { x: 4, y: 0 }),
-        EntityId::ExitDoor => Some(EntityPos { x: 0, y: -8 }),
+        EntityId::Mine => Some(EntityPos { x: -10, y: 0 }),
+        // EntityId::Gold => Some(EntityPos { x: 5, y: 0 }),
+        EntityId::ExitDoor => Some(EntityPos { x: 0, y: -10 }),
         EntityId::ExitSwitch => None,
-        EntityId::RegularDoor => Some(EntityPos { x: -8, y: -4 }),
-        EntityId::LockedDoor => Some(EntityPos { x: -4, y: -4 }),
+        EntityId::RegularDoor => Some(EntityPos { x: -10, y: -5 }),
+        EntityId::LockedDoor => Some(EntityPos { x: -5, y: -5 }),
         EntityId::LockedSwitch => None,
-        EntityId::TrapDoor => Some(EntityPos { x: 0, y: -4 }),
+        EntityId::TrapDoor => Some(EntityPos { x: 0, y: -5 }),
         EntityId::TrapSwitch => None,
-        EntityId::LaunchPad => Some(EntityPos { x: 4, y: -4 }),
-        EntityId::OneWay => Some(EntityPos { x: -4, y: -8 }),
-        // EntityId::ChainsawDrone => Some(EntityPos { x: 8, y: -8 }),
-        // EntityId::LaserDrone => Some(EntityPos { x: 8, y: -4 }),
-        // EntityId::ZapDrone => Some(EntityPos { x: 8, y: 0 }),
-        // EntityId::ChaseDrone => Some(EntityPos { x: 8, y: 4 }),
-        EntityId::FloorGuard => Some(EntityPos { x: -4, y: 4 }),
-        EntityId::BounceBlock => Some(EntityPos { x: 0, y: 4 }),
-        // EntityId::RocketTurret => Some(EntityPos { x: 4, y: 4 }),
-        // EntityId::GaussTurret => Some(EntityPos { x: -8, y: 4 }),
-        EntityId::Thwump => Some(EntityPos { x: -4, y: 8 }),
-        EntityId::ToggleMine => Some(EntityPos { x: -4, y: 0 }),
-        // EntityId::EvilNinja => Some(EntityPos { x: 4, y: 8 }),
-        // EntityId::LaserTurret => Some(EntityPos { x: -8, y: 8 }),
-        EntityId::BoostPad => Some(EntityPos { x: 4, y: -8 }),
-        // EntityId::DeathBall => Some(EntityPos { x: -8, y: -8 }),
-        // EntityId::MiniDrone => Some(EntityPos { x: 8, y: 8 }),
+        EntityId::LaunchPad => Some(EntityPos { x: 5, y: -5 }),
+        EntityId::OneWay => Some(EntityPos { x: -5, y: -10 }),
+        // EntityId::ChainsawDrone => Some(EntityPos { x: 10, y: -10 }),
+        // EntityId::LaserDrone => Some(EntityPos { x: 10, y: -5 }),
+        // EntityId::ZapDrone => Some(EntityPos { x: 10, y: 0 }),
+        // EntityId::ChaseDrone => Some(EntityPos { x: 10, y: 5 }),
+        EntityId::FloorGuard => Some(EntityPos { x: -5, y: 5 }),
+        EntityId::BounceBlock => Some(EntityPos { x: 0, y: 5 }),
+        // EntityId::RocketTurret => Some(EntityPos { x: 5, y: 5 }),
+        // EntityId::GaussTurret => Some(EntityPos { x: -10, y: 5 }),
+        EntityId::Thwump => Some(EntityPos { x: -5, y: 10 }),
+        EntityId::ToggleMine => Some(EntityPos { x: -5, y: 0 }),
+        // EntityId::EvilNinja => Some(EntityPos { x: 5, y: 10 }),
+        // EntityId::LaserTurret => Some(EntityPos { x: -10, y: 10 }),
+        EntityId::BoostPad => Some(EntityPos { x: 5, y: -10 }),
+        // EntityId::DeathBall => Some(EntityPos { x: -10, y: -10 }),
+        // EntityId::MiniDrone => Some(EntityPos { x: 10, y: 10 }),
         // EntityId::Bat => None,
-        EntityId::ShoveThwump => Some(EntityPos { x: 0, y: 8 }),
+        EntityId::ShoveThwump => Some(EntityPos { x: 0, y: 10 }),
         _ => None,
     }
 }

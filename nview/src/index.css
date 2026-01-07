@@ -72,6 +72,8 @@ body {
 
     --editor-crosshair: #FFFFFF;
     --tiles-selected: #C2CEB1;
+    --entity-arrows: #FBC902;
+    --entity-palette-reticle: #000000;
 
     background: var(--tiles);
 

@@ -241,6 +241,34 @@ impl Editor {
         String::new()
     }
 
+    pub fn palette_center_x(&self) -> f64 {
+        match &self.mode {
+            EditorMode::EntityPalette(entity_palette) => entity_palette.center.center().x,
+            _ => f64::NAN,
+        }
+    }
+
+    pub fn palette_center_y(&self) -> f64 {
+        match &self.mode {
+            EditorMode::EntityPalette(entity_palette) => entity_palette.center.center().y,
+            _ => f64::NAN,
+        }
+    }
+
+    pub fn palette_selection_x(&self) -> f64 {
+        match &self.mode {
+            EditorMode::EntityPalette(entity_palette) => entity_palette.selected_pos(self.selected_entity_id).x,
+            _ => f64::NAN,
+        }
+    }
+
+    pub fn palette_selection_y(&self) -> f64 {
+        match &self.mode {
+            EditorMode::EntityPalette(entity_palette) => entity_palette.selected_pos(self.selected_entity_id).y,
+            _ => f64::NAN,
+        }
+    }
+
     /// Return true if the cursor has moved enough to move to a different grid location
     pub fn set_cursor_pos(&mut self, x: f64, y: f64, shift: bool) -> bool {
         let new_cursor_pos = DVec2::new(
