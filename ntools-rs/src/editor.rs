@@ -304,6 +304,15 @@ impl Editor {
                     false
                 }
             }
+            EditorMode::EntityPalette(entity_palette) => {
+                let new_selected_entity_id = entity_palette.selected_entity_from_cursor(new_cursor_pos);
+                if new_selected_entity_id != self.selected_entity_id {
+                    self.selected_entity_id = new_selected_entity_id;
+                    true
+                } else {
+                    false
+                }
+            }
             _ => false
         }
     }
@@ -392,7 +401,7 @@ impl Editor {
             EditorMode::ModifyEntity(modify_entity) => Box::new([modify_entity.modified_entity.export()]),
             EditorMode::MoveSelection(move_selection) => move_selection.preview_entities(self.cursor_pos).map(|entity| entity.export()).collect(),
             EditorMode::SelectEntity(select_entity) => select_entity.get_selection_exported().into_iter().collect(),
-            EditorMode::EntityPalette(entity_palette) => entity_palette.preview_entities(self.entity_orientations).map(|entity| entity.export()).collect(),
+            EditorMode::EntityPalette(entity_palette) => entity_palette.preview_entities(self.entity_orientations, self.selected_entity_id).map(|entity| entity.export().without_switch()).collect(),
             _ => Box::new([]),
         }
     }

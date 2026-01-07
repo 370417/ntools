@@ -467,29 +467,31 @@ impl EntityPos {
 
 impl ExportedEntity {
     /// Remove switch position if stage isn't Stage::PlaceSwitch
-    pub fn with_stage(mut self, stage: Option<Stage>) -> Self {
+    pub fn with_stage(self, stage: Option<Stage>) -> Self {
         if let Some(Stage::PlaceSwitch) = stage {
             self
         } else {
-            self.switch_x = f64::NAN;
-            self.switch_y = f64::NAN;
-            self
+            self.without_switch()
         }
     }
 
     /// Remove switch position if selection type isn't SelectionType::Switch
     /// and if door and switch overlap.
     /// We do this so that the door does not get covered by its switch when it is selected.
-    pub fn with_selection_type(mut self, selection_type: SelectionType) -> Self {
+    pub fn with_selection_type(self, selection_type: SelectionType) -> Self {
         match selection_type {
             SelectionType::Switch => self,
             SelectionType::NotSwitch => if self.x == self.switch_x && self.y == self.switch_y {
-                self.switch_x = f64::NAN;
-                self.switch_y = f64::NAN;
-                self
+                self.without_switch()
             } else {
                 self
             }
         }
+    }
+
+    pub fn without_switch(mut self) -> Self {
+        self.switch_x = f64::NAN;
+        self.switch_y = f64::NAN;
+        self
     }
 }
