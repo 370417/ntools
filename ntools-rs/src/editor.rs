@@ -516,6 +516,10 @@ impl Editor {
                 self.mode = EditorMode::PaintTiles;
                 return true;
             }
+            EditorMode::ModifyEntity(_) => {
+                self.mode = EditorMode::SelectEntity(SelectEntity::new(self.cursor_pos, self.state.entities(), self.entity_fine_grid));
+                return true;
+            }
             _ => {}
         }
         false
