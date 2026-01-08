@@ -119,14 +119,20 @@ impl Editor {
 
     #[allow(clippy::wrong_self_convention)]
     pub fn to_replay(&mut self, round_corners: bool) -> Result<Replay, String> {
-        self.mode = EditorMode::PaintTiles;
 
-        let ninjas = self.state.entities().iter().filter_map(|(entity, _)| {
+        let mut ninjas: Vec<_> = self.state.entities().iter().filter_map(|(entity, _)| {
             match entity {
                 EditorEntity::Ninja { pos, orientation } => Some(Ninja::new(pos.to_world_pos(), *orientation)),
                 _ => None,
             }
         }).collect();
+
+        if matches!(self.mode, EditorMode::SpawnNinja) || ninjas.is_empty() {
+            let past_ninja = closest_past_ninja(self.cursor_pos, &self.past_ninjas, self.show_past_ninjas_trail);
+            ninjas = vec![Ninja::from_past_ninja(&past_ninja)];
+        }
+
+        self.mode = EditorMode::PaintTiles;
 
         let mut entities = Entities::new();
         for (entity, &count) in self.state.entities().iter() {
@@ -1240,13 +1246,11 @@ impl Editor {
         self.past_ninjas[i].pos.y
     }
 
-    pub fn past_ninja_bones(&self) -> Option<Box<[f64]>> {
-        if let EditorMode::SpawnNinja = self.mode && self.show_past_ninjas_trail {
-            closest_past_ninja(self.cursor_pos, &self.past_ninjas)
-                .map(PastNinja::calc_ninja_position)
-                .map(|bones| flatten_bones(&bones))
+    pub fn past_ninja_bones(&self) -> Box<[f64]> {
+        if let EditorMode::SpawnNinja = self.mode {
+            flatten_bones(&closest_past_ninja(self.cursor_pos, &self.past_ninjas, self.show_past_ninjas_trail).calc_ninja_position())
         } else {
-            None
+            Box::new([])
         }
     }
 }
@@ -1278,7 +1282,7 @@ impl Editor {
             EditorMode::PlaceEntity(place_entity) => place_entity.crosshair(self.cursor_pos, self.entity_fine_grid),
             EditorMode::ModifyEntity(modify_entity) => modify_entity.crosshair(self.cursor_pos, self.entity_fine_grid),
             EditorMode::SelectEntity(_) => PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid),
-            EditorMode::SpawnNinja => closest_past_ninja(self.cursor_pos, &self.past_ninjas).map(|ninja| ninja.pos).unwrap_or(self.cursor_pos),
+            EditorMode::SpawnNinja => closest_past_ninja(self.cursor_pos, &self.past_ninjas, self.show_past_ninjas_trail).pos,
             _ => DVec2::new(TILE_SIZE, TILE_SIZE),
         }
     }

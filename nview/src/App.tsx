@@ -168,6 +168,7 @@ export function App() {
         <Show when={animState() == ANIM_VALID && !replay()}>
             <EditorApp
                 editor={editor}
+                setReplay={setReplay}
                 pastNinjas={pastNinjas}
                 globalEventState={globalEventState}
                 levelName={levelName}

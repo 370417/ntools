@@ -1,5 +1,5 @@
 import { createSignal, For, onCleanup, Show, type Accessor, type Setter } from "solid-js";
-import { Editor, ExportedEntity } from "./assets/ntools_rs";
+import { Editor, ExportedEntity, Replay } from "./assets/ntools_rs";
 import { Ninja, type NinjaData } from "./entities/Ninja";
 import { ExitDoors, type ExitDoorData } from "./entities/ExitDoor";
 import { ExitSwitches, type ExitSwitchData } from "./entities/ExitSwitch";
@@ -289,6 +289,7 @@ function Entities({ entities }: { entities: EntitiesProps }) {
 
 export function EditorApp(props: {
     editor: Editor,
+    setReplay: Setter<Replay | undefined>,
     pastNinjas: Accessor<{ x: number, y: number }[]>,
     globalEventState: GlobalEventState,
     levelName: Accessor<string>,
@@ -341,7 +342,8 @@ export function EditorApp(props: {
         if (event.shiftKey) change = true, editor.press_shift();
         // Note: no else
 
-        if (event.code ==='Backquote') change = true, editor.press_backtick();
+        if (event.code === 'Enter' && editor.mode() === MODE_SPAWN_NINJA) props.setReplay(editor.to_replay(props.roundCorners()));
+        else if (event.code ==='Backquote') change = true, editor.press_backtick();
         else if (event.code === 'Digit1') change = true, editor.press_1(event.shiftKey);
         else if (event.code === 'Digit2') change = true, editor.press_2(event.shiftKey);
         else if (event.code === 'Digit3') change = true, editor.press_3(event.shiftKey);

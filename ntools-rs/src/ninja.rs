@@ -56,7 +56,7 @@ pub struct PastNinja {
     pub pos: DVec2,
     pub speed: DVec2,
     pub facing: f64,
-    anim_state: AnimState,
+    pub anim_state: AnimState,
     pub anim_frame: usize,
     pub run_cycle: usize,
     pub tilt: DVec2,
@@ -77,7 +77,7 @@ pub enum NinjaState {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
-enum AnimState {
+pub enum AnimState {
     Standing,
     Running,
     Skidding,
@@ -122,7 +122,7 @@ impl Ninja {
             floor_buffer: None,
             wall_buffer: None,
             launch_pad_buffer: None,
-            launch_pad_boost_normal: -DVec2::Y,
+            launch_pad_boost_normal: orientation.vec2(),
             floor_unit_normal: orientation.vec2(),
             ceiling_unit_normal: -orientation.vec2(),
             anim_state: AnimState::Standing,
@@ -136,6 +136,39 @@ impl Ninja {
         };
         ninja.update_graphics(0.0);
         ninja
+    }
+
+    pub fn from_past_ninja(past_ninja: &PastNinja) -> Ninja {
+        let orientation = OrientationExt::N;
+        Ninja {
+            pos: past_ninja.pos,
+            pos_old: past_ninja.pos,
+            speed: past_ninja.speed,
+            orientation,
+            applied_gravity: GRAVITY_FALL,
+            applied_drag: DRAG_REGULAR,
+            state: NinjaState::Falling,
+            airborne: true,
+            walled: false,
+            wall_normal: 0.0,
+            jump_input_old: false,
+            jump_duration: 0,
+            jump_buffer: None,
+            floor_buffer: None,
+            wall_buffer: None,
+            launch_pad_buffer: None,
+            launch_pad_boost_normal: orientation.vec2(),
+            floor_unit_normal: orientation.vec2(),
+            ceiling_unit_normal: -orientation.vec2(),
+            anim_state: past_ninja.anim_state,
+            facing: past_ninja.facing,
+            tilt: past_ninja.tilt,
+            anim_rate: 0.0,
+            anim_frame: past_ninja.anim_frame,
+            frame_residual: 0.0,
+            dance_end: 0,
+            run_cycle: past_ninja.run_cycle,
+        }
     }
 
     /// Update position and speed by applying drag and gravity before collision phase.
