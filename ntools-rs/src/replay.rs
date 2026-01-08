@@ -18,6 +18,7 @@ pub struct Replay {
     pub(crate) preview_sim: Simulation,
     pub(crate) keyframes: BTreeMap<u32, KeyFrame>,
     pub(crate) sender: Option<Sender<Vec<PastNinja>>>,
+    pub(crate) anim_data: Box<[u8]>,
 }
 
 #[wasm_bindgen]
@@ -45,6 +46,7 @@ impl Replay {
             current_sim,
             keyframes,
             sender: None,
+            anim_data: Box::new([]),
         })
     }
 
@@ -183,12 +185,12 @@ impl Replay {
 
     pub fn ninja_bones(&self, partial_frame: f64) -> Box<[f64]> {
         let prev = &self.past_ninjas[self.current_sim.frame.saturating_sub(1) as usize];
-        flatten_bones(&self.current_sim.ninja.calc_ninja_position(prev, partial_frame))
+        flatten_bones(&self.current_sim.ninja.calc_ninja_position(prev, partial_frame, &self.anim_data))
     }
 
     pub fn ninja_preview_bones(&self, partial_frame: f64) -> Box<[f64]> {
         let prev = &self.past_ninjas[self.current_sim.frame.saturating_sub(1) as usize];
-        flatten_bones(&self.preview_sim.ninja.calc_ninja_position(prev,partial_frame))
+        flatten_bones(&self.preview_sim.ninja.calc_ninja_position(prev,partial_frame, &self.anim_data))
     }
 
     pub fn mines_len(&self) -> usize {

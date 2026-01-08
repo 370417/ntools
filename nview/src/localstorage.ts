@@ -1,4 +1,4 @@
-import { set_anim_data, type Editor } from "./assets/ntools_rs";
+import { type Editor } from "./assets/ntools_rs";
 import type { Palette } from "./palette";
 
 export const debouncedSaveMap = debounce((editor: Editor) => {
@@ -19,14 +19,15 @@ export function loadMap(editor: Editor): boolean {
 
 export function saveAnimData(data: Uint8Array<ArrayBufferLike>) {
     const animDataStr = String.fromCharCode(...data);
+    console.log('anim data length', data.byteLength);
     localStorage.setItem('animData', animDataStr);
 }
 
-export function loadAnimData() {
+export function loadAnimData(editor: Editor) {
     const animDataStr = localStorage.getItem('animData');
     if (animDataStr) {
         const animDataArray = Uint8Array.from(animDataStr, c => c.charCodeAt(0));
-        set_anim_data(animDataArray);
+        editor.set_anim_data(animDataArray);
     }
 }
 

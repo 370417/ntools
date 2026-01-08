@@ -48,6 +48,7 @@ pub struct Editor {
     past_ninjas: Vec<PastNinja>,
     show_past_ninjas_trail: bool,
     receiver: Option<Receiver<Vec<PastNinja>>>,
+    anim_data: Box<[u8]>,
 }
 
 pub enum EditorMode {
@@ -88,6 +89,19 @@ impl Editor {
             past_ninjas: Vec::new(),
             show_past_ninjas_trail: false,
             receiver: None,
+            anim_data: Box::new([]),
+        }
+    }
+
+    pub fn set_anim_data(&mut self, data: Box<[u8]>) {
+        self.anim_data = data;
+    }
+
+    pub fn get_anim_state(&self) -> usize {
+        match self.anim_data.len() {
+            0 => 2, // missing
+            477572 => 0, // valid
+            _ => 1, // invalid
         }
     }
 
@@ -204,6 +218,7 @@ impl Editor {
             current_sim,
             keyframes,
             sender: Some(sender),
+            anim_data: self.anim_data.clone(),
         })
     }
 
@@ -1256,7 +1271,7 @@ impl Editor {
 
     pub fn past_ninja_bones(&self) -> Box<[f64]> {
         if let EditorMode::SpawnNinja = self.mode {
-            flatten_bones(&closest_past_ninja(self.cursor_pos, &self.past_ninjas, self.entity_orientations.orientation, self.show_past_ninjas_trail).calc_ninja_position())
+            flatten_bones(&closest_past_ninja(self.cursor_pos, &self.past_ninjas, self.entity_orientations.orientation, self.show_past_ninjas_trail).calc_ninja_position(&self.anim_data))
         } else {
             Box::new([])
         }

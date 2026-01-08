@@ -1,5 +1,5 @@
 import { createEffect, createSignal, Show, type Accessor, type Setter } from 'solid-js';
-import { Editor, get_anim_state, Replay, set_anim_data } from './assets/ntools_rs';
+import { Editor, Replay } from './assets/ntools_rs';
 import { EditorApp } from './Editor.tsx';
 import { ReplayApp } from './Replay.tsx';
 import { debouncedSavePalette, loadAnimData, loadMap, loadPalette, saveAnimData } from './localstorage.ts';
@@ -110,14 +110,14 @@ export function App() {
         setIsSuicidePressed(false);
     });
 
-    loadAnimData();
+    loadAnimData(editor);
     const ANIM_VALID = 0;
     const ANIM_INVALID = 1;
     const ANIM_MISSING = 2;
     // Set initial state to only be valid or missing.
     // We avoid setting state to invalid at first because it is confusing
     // for the user to see an error message before interacating with the page.
-    const [animState, setAnimState] = createSignal(get_anim_state() == ANIM_VALID ? ANIM_VALID : ANIM_MISSING);
+    const [animState, setAnimState] = createSignal(editor.get_anim_state() == ANIM_VALID ? ANIM_VALID : ANIM_MISSING);
 
     loadStandardPalettes();
     const [palette, setPalette] = createSignal(loadPalette());
@@ -142,8 +142,8 @@ export function App() {
                                 const data = new Uint8Array(fileReader.result);
                                 try {
                                     saveAnimData(data);
-                                    set_anim_data(data);
-                                    setAnimState(get_anim_state());
+                                    editor.set_anim_data(data);
+                                    setAnimState(editor.get_anim_state());
                                 } catch (e) {
                                     setAnimState(ANIM_INVALID);
                                 }

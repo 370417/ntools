@@ -168,7 +168,6 @@ const outtePaletteIndex: Record<PaletteFileName, number> = (() => {
             }
         }
     }
-    console.log(paletteIndex);
     return paletteIndex;
 })();
 
