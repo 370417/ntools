@@ -6,7 +6,7 @@ use futures_channel::oneshot::{self, Receiver};
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{attract::Attract, editor::{editor_entity::{EditorEntity, EntityId, ExportedEntity}, editor_state::{Command, EditorState}, entity_palette::EntityPalette, modify_entity::ModifyEntity, move_selection::MoveSelection, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::PlaceEntity, select_entity::SelectEntity, select_tiles::SelectTiles, tile_palette::TilePalette}, entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floor_guard::FloorGuard, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump}, grid::{COLS, GridPos, ROWS}, map_file::MapFile, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationBinary, OrientationCardinal, Orientations}, replay::Replay, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_HALF_SIZE, TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
+use crate::{anim_data::flatten_bones, attract::Attract, editor::{editor_entity::{EditorEntity, EntityId, ExportedEntity}, editor_state::{Command, EditorState}, entity_palette::EntityPalette, modify_entity::ModifyEntity, move_selection::MoveSelection, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::PlaceEntity, select_entity::SelectEntity, select_tiles::SelectTiles, spawn_ninja::closest_past_ninja, tile_palette::TilePalette}, entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floor_guard::FloorGuard, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump}, grid::{COLS, GridPos, ROWS}, map_file::MapFile, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationBinary, OrientationCardinal, Orientations}, replay::Replay, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_HALF_SIZE, TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
 
 pub mod editor_entity;
 pub mod editor_state;
@@ -17,6 +17,7 @@ pub mod pen_tool;
 pub mod place_entity;
 pub mod select_entity;
 pub mod select_tiles;
+pub mod spawn_ninja;
 pub mod tile_palette;
 
 #[wasm_bindgen]
@@ -59,6 +60,7 @@ pub enum EditorMode {
     ModifyEntity(ModifyEntity),
     EntityPalette(EntityPalette),
     PenTool(PenTool),
+    SpawnNinja,
 }
 
 #[wasm_bindgen]
@@ -210,6 +212,7 @@ impl Editor {
             EditorMode::ModifyEntity(_) => 6,
             EditorMode::EntityPalette(_) => 7,
             EditorMode::PenTool(_) => 8,
+            EditorMode::SpawnNinja => 9,
         }
     }
 
@@ -371,6 +374,10 @@ impl Editor {
                     false
                 }
             }
+            EditorMode::SpawnNinja => {
+                self.cursor_pos = new_cursor_pos;
+                true
+            }
         }
     }
 
@@ -528,6 +535,10 @@ impl Editor {
             }
             EditorMode::ModifyEntity(_) => {
                 self.mode = EditorMode::SelectEntity(SelectEntity::new(self.cursor_pos, self.state.entities(), self.entity_fine_grid));
+                return true;
+            }
+            EditorMode::SpawnNinja => {
+                self.mode = EditorMode::PaintTiles;
                 return true;
             }
             _ => {}
@@ -1067,7 +1078,7 @@ impl Editor {
 
     pub fn press_enter(&mut self) {
         match &self.mode {
-            EditorMode::PaintTiles => {}
+            EditorMode::PaintTiles => self.mode = EditorMode::SpawnNinja,
             EditorMode::TilePalette(_) => {}
             EditorMode::SelectTiles(_) => {}
             EditorMode::MoveSelection(_) |
@@ -1080,10 +1091,11 @@ impl Editor {
                 if select_entity.get_selection().is_some() {
                     self.cursor_down(false);
                 } else {
-                    // set mode
+                    self.mode = EditorMode::SpawnNinja;
                 }
             }
             EditorMode::EntityPalette(_) => {}
+            EditorMode::SpawnNinja => {}
         }
     }
 
@@ -1227,6 +1239,16 @@ impl Editor {
     pub fn past_ninja_y(&self, i: usize) -> f64 {
         self.past_ninjas[i].pos.y
     }
+
+    pub fn past_ninja_bones(&self) -> Option<Box<[f64]>> {
+        if let EditorMode::SpawnNinja = self.mode && self.show_past_ninjas_trail {
+            closest_past_ninja(self.cursor_pos, &self.past_ninjas)
+                .map(PastNinja::calc_ninja_position)
+                .map(|bones| flatten_bones(&bones))
+        } else {
+            None
+        }
+    }
 }
 
 impl Editor {
@@ -1256,6 +1278,7 @@ impl Editor {
             EditorMode::PlaceEntity(place_entity) => place_entity.crosshair(self.cursor_pos, self.entity_fine_grid),
             EditorMode::ModifyEntity(modify_entity) => modify_entity.crosshair(self.cursor_pos, self.entity_fine_grid),
             EditorMode::SelectEntity(_) => PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid),
+            EditorMode::SpawnNinja => closest_past_ninja(self.cursor_pos, &self.past_ninjas).map(|ninja| ninja.pos).unwrap_or(self.cursor_pos),
             _ => DVec2::new(TILE_SIZE, TILE_SIZE),
         }
     }
@@ -1297,6 +1320,7 @@ impl Editor {
                 let new_cursor_pos = pen_tool.press_direction(direction, self.cursor_pos, self.pen_tool_fine_grid, &self.state);
                 self.set_cursor_pos(new_cursor_pos.x, new_cursor_pos.y, shift);
             }
+            EditorMode::SpawnNinja => {}
         }
     }
 

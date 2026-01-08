@@ -42,6 +42,7 @@ const MODE_SELECT_ENTITY = 5;
 const MODE_MODIFY_ENTITY = 6;
 const MODE_ENTITY_PALETTE = 7;
 const MODE_PEN_TOOL = 8;
+const MODE_SPAWN_NINJA = 9;
 
 const ENTITY_NINJA = 0;
 const ENTITY_MINE = 1;
@@ -60,7 +61,7 @@ const ENTITY_BOOST_PAD = 24;
 const ENTITY_SHOVE_THWUMP = 28;
 
 const BONES_STANDING = new Float64Array([-0.039, -0.0249, 0.1127, -0.1738, 0.1115, -0.1512, -0.0846, 0.0749, 0.1072, -0.0423, 0.0263, -0.1452, -0.0358, -0.075, -0.377, 0.4686, 0.4643, -0.0225, -0.0453, -0.5054, -0.4724, 0.1962, 0.2293, -0.1812, -0.2266, -0.2224]);
-// const BONES_FALLING = new Float64Array([0.018, 0.0, 0.4156, 0.0988, 0.3581, -0.3242, -0.0708, 0.0845, 0.2924, 0.3212, 0.1853, -0.1927, -0.0236, -0.06, -0.3602, 0.3086, 0.1278, -0.3238, -0.2018, -0.4976, -0.4488, 0.0656, -0.024, -0.2729, -0.3268, -0.2042]);
+const BONES_FALLING = new Float64Array([0.018, 0.0, 0.4156, 0.0988, 0.3581, -0.3242, -0.0708, 0.0845, 0.2924, 0.3212, 0.1853, -0.1927, -0.0236, -0.06, -0.3602, 0.3086, 0.1278, -0.3238, -0.2018, -0.4976, -0.4488, 0.0656, -0.024, -0.2729, -0.3268, -0.2042]);
 
 const ENTITY_PALETTE_SIZE = 150;
 const ENTITY_PALETTE_RETICLE_RADIUS = 16;
@@ -316,6 +317,7 @@ export function EditorApp(props: {
 
     const [doorSwitchLines, setDoorSwitchLines] = createSignal<Line[]>([]);
     const [showTrail, setShowTrail] = createSignal(editor.get_show_trail());
+    const [ninjaPreviewBones, setNinjaPreviewBones] = createSignal<Float64Array<ArrayBufferLike>>();
 
     const keydownListener = (event: KeyboardEvent) => {
         let change = false;
@@ -468,6 +470,8 @@ export function EditorApp(props: {
             y: editor.palette_selection_y(),
         });
 
+        setNinjaPreviewBones(editor.past_ninja_bones());
+
         if (save) {
             debouncedSaveMap(editor);
         }
@@ -599,6 +603,9 @@ export function EditorApp(props: {
             </Show>
             <Show when={mode() === MODE_PEN_TOOL || mode() === MODE_SELECT_ENTITY}>
                 <use href="#crosshair" x={crosshairPos().x} y={crosshairPos().y} />
+            </Show>
+            <Show when={mode() === MODE_SPAWN_NINJA}>
+                <Ninja class="ninja" ninja={() => ({ x: crosshairPos().x, y: crosshairPos().y, deg: 0 })} bones={() => ninjaPreviewBones() ?? BONES_FALLING} />
             </Show>
             <Show when={showTrail()}>
                 <polyline stroke="var(--ninja)" fill="none" points={pastNinjas().map(({ x, y }) => `${x},${y}`).join(' ')} />

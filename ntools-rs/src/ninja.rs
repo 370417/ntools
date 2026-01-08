@@ -913,3 +913,8 @@ impl Ninja {
     }
 }
 
+impl PastNinja {
+    pub fn calc_ninja_position(&self) -> [DVec2; 13] {
+        Ninja::calc_ninja_position_inner(self.anim_frame, self.anim_state, self.run_cycle, self.facing, self.tilt)
+    }
+}
