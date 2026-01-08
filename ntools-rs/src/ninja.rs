@@ -777,26 +777,26 @@ impl Ninja {
 
     /// Calculate the positions of ninja's joints. The positions are fetched from the animation data,
     /// after applying mirroring, rotation or interpolation if necessary.
-    pub fn calc_ninja_position(&self, prev: &PastNinja, partial_frame: f64) -> Bones {
-        let mut bones = Ninja::calc_ninja_position_inner(self.anim_frame, self.anim_state, self.run_cycle, self.facing, self.tilt);
+    pub fn calc_ninja_position(&self, prev: &PastNinja, partial_frame: f64, anim_data: &[u8]) -> Bones {
+        let mut bones = Ninja::calc_ninja_position_inner(self.anim_frame, self.anim_state, self.run_cycle, self.facing, self.tilt, anim_data);
 
         if self.facing != prev.facing || self.anim_state != prev.anim_state {
             return bones;
         }
 
-        let prev_bones = Ninja::calc_ninja_position_inner(prev.anim_frame, prev.anim_state, prev.run_cycle, prev.facing, prev.tilt);
+        let prev_bones = Ninja::calc_ninja_position_inner(prev.anim_frame, prev.anim_state, prev.run_cycle, prev.facing, prev.tilt, anim_data);
         for i in 0..bones.len() {
             bones[i] = prev_bones[i].lerp(bones[i], partial_frame)
         }
         bones
     }
 
-    fn calc_ninja_position_inner(anim_frame: usize, anim_state: AnimState, run_cycle: usize, facing: f64, tilt: DVec2) -> Bones {
-        let mut bones = get_anim_frame(anim_frame);
+    fn calc_ninja_position_inner(anim_frame: usize, anim_state: AnimState, run_cycle: usize, facing: f64, tilt: DVec2, anim_data: &[u8]) -> Bones {
+        let mut bones = get_anim_frame(anim_frame, anim_data);
         if anim_state == AnimState::Running {
             let interpolation = (run_cycle % 6) as f64 / 6.0;
             if interpolation > 0.0 {
-                let next_bones = get_anim_frame(((anim_frame as isize - 12) % 72 + 12) as usize);
+                let next_bones = get_anim_frame(((anim_frame as isize - 12) % 72 + 12) as usize, anim_data);
                 for i in 0..13 {
                     bones[i] += interpolation * (next_bones[i] - bones[i]);
                 }
@@ -949,7 +949,7 @@ impl Ninja {
 }
 
 impl PastNinja {
-    pub fn calc_ninja_position(&self) -> [DVec2; 13] {
-        Ninja::calc_ninja_position_inner(self.anim_frame, self.anim_state, self.run_cycle, self.facing, self.tilt)
+    pub fn calc_ninja_position(&self, anim_data: &[u8]) -> [DVec2; 13] {
+        Ninja::calc_ninja_position_inner(self.anim_frame, self.anim_state, self.run_cycle, self.facing, self.tilt, anim_data)
     }
 }
