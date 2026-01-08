@@ -141,10 +141,15 @@ export function App() {
                             if (fileReader.result instanceof ArrayBuffer) {
                                 const data = new Uint8Array(fileReader.result);
                                 try {
-                                    saveAnimData(data);
+                                    try {
+                                        saveAnimData(data);
+                                    } catch (e) {
+                                        console.error(e);
+                                    }
                                     editor.set_anim_data(data);
                                     setAnimState(editor.get_anim_state());
                                 } catch (e) {
+                                    console.error(e);
                                     setAnimState(ANIM_INVALID);
                                 }
                             }
