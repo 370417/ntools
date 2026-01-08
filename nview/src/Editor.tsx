@@ -315,6 +315,7 @@ export function EditorApp(props: {
     const previewEntities = createEntities();
 
     const [doorSwitchLines, setDoorSwitchLines] = createSignal<Line[]>([]);
+    const [showTrail, setShowTrail] = createSignal(editor.get_show_trail());
 
     const keydownListener = (event: KeyboardEvent) => {
         let change = false;
@@ -599,7 +600,9 @@ export function EditorApp(props: {
             <Show when={mode() === MODE_PEN_TOOL || mode() === MODE_SELECT_ENTITY}>
                 <use href="#crosshair" x={crosshairPos().x} y={crosshairPos().y} />
             </Show>
-            <polyline stroke="var(--ninja)" fill="none" points={pastNinjas().map(({ x, y }) => `${x},${y}`).join(' ')} />
+            <Show when={showTrail()}>
+                <polyline stroke="var(--ninja)" fill="none" points={pastNinjas().map(({ x, y }) => `${x},${y}`).join(' ')} />
+            </Show>
         </svg>
         <EditorFooter
             editor={editor}
@@ -610,6 +613,8 @@ export function EditorApp(props: {
             setRoundCorners={props.setRoundCorners}
             palette={props.palette}
             setPalette={props.setPalette}
+            showTrail={showTrail}
+            setShowTrail={setShowTrail}
         />
     </>;
 }

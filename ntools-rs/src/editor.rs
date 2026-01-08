@@ -45,6 +45,7 @@ pub struct Editor {
     /// We only track the most recently pressed orientation key.
     pressed_orientation: Option<Orientation>,
     past_ninjas: Vec<PastNinja>,
+    show_past_ninjas_trail: bool,
     receiver: Option<Receiver<Vec<PastNinja>>>,
 }
 
@@ -83,6 +84,7 @@ impl Editor {
             },
             pressed_orientation: None,
             past_ninjas: Vec::new(),
+            show_past_ninjas_trail: false,
             receiver: None,
         }
     }
@@ -278,6 +280,14 @@ impl Editor {
             EditorMode::TilePalette(tile_palette) => tile_palette.selected_pos(self.selected_tile_category).y,
             _ => f64::NAN,
         }
+    }
+
+    pub fn get_show_trail(&self) -> bool {
+        self.show_past_ninjas_trail
+    }
+
+    pub fn set_show_trail(&mut self, show_trail: bool) {
+        self.show_past_ninjas_trail = show_trail;
     }
 
     /// Return true if the cursor has moved enough to move to a different grid location
