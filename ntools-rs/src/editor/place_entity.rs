@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{editor::{editor_entity::{EditorEntity, EntityId, EntityPos}, editor_state::{Command, EditorEntities, SetEntityCount}}, orientation::{Orientation, OrientationBinary, OrientationCardinal, Orientations}, tile::{TILE_HALF_SIZE, TILE_SIZE}};
+use crate::{editor::{editor_entity::{EditorEntity, EntityId, EntityPos}, editor_state::{Command, EditorEntities, SetEntityCount}}, orientation::{OrientationBinary, OrientationCardinal, Orientations}, tile::{TILE_HALF_SIZE, TILE_SIZE}};
 
 pub struct PlaceEntity {
     pub entity: EditorEntity,
@@ -41,6 +41,7 @@ impl PlaceEntity {
             } else {
                 Self::round_to_grid(cursor_pos, fine_grid)
             },
+            EditorEntity::ZapDrone { .. } => Self::round_to_grid_drone(cursor_pos),
             _ => Self::round_to_grid(cursor_pos, fine_grid)
         }
     }
@@ -61,6 +62,11 @@ impl PlaceEntity {
         } else {
             ((cursor_pos - DVec2::new(0.0, 6.0)) / 12.0).round() * 12.0 + DVec2::new(0.0, 6.0)
         }
+    }
+
+    pub fn round_to_grid_drone(cursor_pos: DVec2) -> DVec2 {
+        let offset = DVec2::splat(TILE_HALF_SIZE);
+        ((cursor_pos + offset) / TILE_SIZE).round() * TILE_SIZE - offset
     }
 
     pub fn round_to_grid_door(cursor_pos: DVec2, fine_grid: bool) -> DVec2 {
@@ -122,6 +128,7 @@ impl PlaceEntity {
             EditorEntity::RegularDoor { pos, .. } |
             EditorEntity::BounceBlock { pos, .. } |
             EditorEntity::LaunchPad { pos, .. } |
+            EditorEntity::ZapDrone { pos, .. } |
             EditorEntity::FloorGuard { pos, .. } |
             EditorEntity::BoostPad { pos } |
             EditorEntity::Thwump { pos, .. } |
@@ -139,15 +146,16 @@ impl PlaceEntity {
         }
     }
 
-    pub fn set_orientation(&mut self, new_orientation: Orientation) {
+    pub fn set_orientation(&mut self, orientations: Orientations) {
         match &mut self.entity {
             EditorEntity::Ninja { orientation, .. } |
-            EditorEntity::FloorGuard { orientation, .. } => *orientation = new_orientation.into(),
+            EditorEntity::FloorGuard { orientation, .. } => *orientation = orientations.orientation.into(),
             EditorEntity::OneWay { orientation, .. } |
             EditorEntity::LaunchPad { orientation, .. } |
             EditorEntity::Thwump { orientation, .. } |
             EditorEntity::ShoveThwump { orientation, .. } |
-            EditorEntity::BounceBlock { orientation, .. } => *orientation = new_orientation,
+            EditorEntity::BounceBlock { orientation, .. } => *orientation = orientations.orientation,
+            EditorEntity::ZapDrone { orientation, .. } => *orientation = orientations.orientation_cardinal,
             EditorEntity::RegularDoor { .. } |
             EditorEntity::LockedDoor { .. } |
             EditorEntity::TrapDoor { .. } |
@@ -210,6 +218,10 @@ impl PlaceEntity {
                 // when moving door along its axis, move it a full tile
                 return crosshair + TILE_SIZE * direction.vec2();
             }
+        }
+
+        if let EditorEntity::ZapDrone { .. } = self.entity {
+            return crosshair + TILE_SIZE * direction.vec2();
         }
 
         if fine_grid {

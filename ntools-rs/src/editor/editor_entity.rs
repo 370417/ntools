@@ -1,7 +1,7 @@
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{editor::{place_entity::Stage, select_entity::SelectionType}, grid::GridPos, orientation::{Orientation, OrientationBinary, OrientationExt, Orientations}};
+use crate::{editor::{place_entity::Stage, select_entity::SelectionType}, grid::GridPos, orientation::{Orientation, OrientationBinary, OrientationCardinal, OrientationExt, Orientations}};
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(debug_assertions, derive(Debug))]
@@ -39,6 +39,10 @@ pub enum EditorEntity {
         pos: EntityPos,
         orientation: Orientation,
     },
+    ZapDrone {
+        pos: EntityPos,
+        orientation: OrientationCardinal,
+    },
     FloorGuard {
         pos: EntityPos,
         orientation: OrientationExt,
@@ -60,7 +64,7 @@ pub enum EditorEntity {
     ShoveThwump {
         pos: EntityPos,
         orientation: Orientation,
-    }
+    },
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -168,7 +172,7 @@ impl EditorEntity {
             EntityId::OneWay => EditorEntity::OneWay { pos, orientation: orientations.orientation },
             EntityId::ChainsawDrone => todo!(),
             EntityId::LaserDrone => todo!(),
-            EntityId::ZapDrone => todo!(),
+            EntityId::ZapDrone => EditorEntity::ZapDrone { pos, orientation: orientations.orientation_cardinal },
             EntityId::ChaseDrone => todo!(),
             EntityId::FloorGuard => EditorEntity::FloorGuard { pos, orientation: orientations.orientation.into() },
             EntityId::BounceBlock => EditorEntity::BounceBlock { pos, orientation: orientations.orientation },
@@ -207,6 +211,7 @@ impl EditorEntity {
             EditorEntity::RegularDoor { pos, .. } |
             EditorEntity::BounceBlock { pos, .. } |
             EditorEntity::LaunchPad { pos, .. } |
+            EditorEntity::ZapDrone { pos, .. } |
             EditorEntity::FloorGuard { pos, .. } |
             EditorEntity::BoostPad { pos } |
             EditorEntity::Thwump { pos, .. } |
@@ -226,6 +231,7 @@ impl EditorEntity {
             EditorEntity::RegularDoor { pos, .. } |
             EditorEntity::BounceBlock { pos, .. } |
             EditorEntity::LaunchPad { pos, .. } |
+            EditorEntity::ZapDrone { pos, .. } |
             EditorEntity::FloorGuard { pos, .. } |
             EditorEntity::BoostPad { pos } |
             EditorEntity::Thwump { pos, .. } |
@@ -267,6 +273,7 @@ impl EditorEntity {
             EditorEntity::RegularDoor { orientation, .. } |
             EditorEntity::LockedDoor { orientation, .. } |
             EditorEntity::TrapDoor { orientation, .. } => orientation.rotate_cw_mut(),
+            EditorEntity::ZapDrone { orientation, .. } => orientation.rotate_cw_mut(),
             EditorEntity::Mine { .. } |
             EditorEntity::ToggleMine { .. } |
             EditorEntity::BoostPad { .. } |
@@ -286,6 +293,7 @@ impl EditorEntity {
             EditorEntity::RegularDoor { orientation, .. } |
             EditorEntity::LockedDoor { orientation, .. } |
             EditorEntity::TrapDoor { orientation, .. } => orientation.rotate_ccw_mut(),
+            EditorEntity::ZapDrone { orientation, .. } => orientation.rotate_ccw_mut(),
             EditorEntity::Mine { .. } |
             EditorEntity::ToggleMine { .. } |
             EditorEntity::BoostPad { .. } |
@@ -305,6 +313,7 @@ impl EditorEntity {
             EditorEntity::RegularDoor { orientation, .. } |
             EditorEntity::LockedDoor { orientation, .. } |
             EditorEntity::TrapDoor { orientation, .. } => orientation.flip_across_x_axis_mut(),
+            EditorEntity::ZapDrone { orientation, .. } => orientation.flip_across_x_axis_mut(),
             EditorEntity::Mine { .. } |
             EditorEntity::ToggleMine { .. } |
             EditorEntity::BoostPad { .. } |
@@ -324,6 +333,7 @@ impl EditorEntity {
             EditorEntity::RegularDoor { orientation, .. } |
             EditorEntity::LockedDoor { orientation, .. } |
             EditorEntity::TrapDoor { orientation, .. } => orientation.flip_across_y_axis_mut(),
+            EditorEntity::ZapDrone { orientation, .. } => orientation.flip_across_y_axis_mut(),
             EditorEntity::Mine { .. } |
             EditorEntity::ToggleMine { .. } |
             EditorEntity::BoostPad { .. } |
@@ -343,6 +353,7 @@ impl EditorEntity {
             EditorEntity::RegularDoor { orientation, .. } |
             EditorEntity::LockedDoor { orientation, .. } |
             EditorEntity::TrapDoor { orientation, .. } => orientation.rotation_deg(),
+            EditorEntity::ZapDrone { orientation, .. } => orientation.rotation_deg(),
             EditorEntity::Mine { .. } |
             EditorEntity::ToggleMine { .. } |
             EditorEntity::BoostPad { .. } |
@@ -360,6 +371,7 @@ impl EditorEntity {
             EditorEntity::TrapDoor { .. } => EntityId::TrapDoor,
             EditorEntity::LaunchPad { .. } => EntityId::LaunchPad,
             EditorEntity::OneWay { .. } => EntityId::OneWay,
+            EditorEntity::ZapDrone { .. } => EntityId::ZapDrone,
             EditorEntity::FloorGuard { .. } => EntityId::FloorGuard,
             EditorEntity::BounceBlock { .. } => EntityId::BounceBlock,
             EditorEntity::Thwump { .. } => EntityId::Thwump,

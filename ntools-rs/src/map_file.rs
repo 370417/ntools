@@ -190,13 +190,10 @@ fn calc_entity_counts(entities: &EditorEntities) -> [u16; 40] {
     let mut entity_counts = [0_u16; 40];
     for (&entity, &count) in entities.iter() {
         match entity {
-            EditorEntity::Ninja { .. } => entity_counts[0] = entity_counts[0].saturating_add(count),
-            EditorEntity::Mine { .. } => entity_counts[1] = entity_counts[1].saturating_add(count),
             EditorEntity::Exit { .. } => {
                 entity_counts[3] = entity_counts[3].saturating_add(count);
                 entity_counts[4] = entity_counts[4].saturating_add(count);
             }
-            EditorEntity::RegularDoor { .. } => entity_counts[5] = entity_counts[5].saturating_add(count),
             EditorEntity::LockedDoor { .. } => {
                 entity_counts[6] = entity_counts[6].saturating_add(count);
                 // entity_counts[7] = entity_counts[7].saturating_add(count);
@@ -205,14 +202,7 @@ fn calc_entity_counts(entities: &EditorEntities) -> [u16; 40] {
                 entity_counts[8] = entity_counts[8].saturating_add(count);
                 // entity_counts[9] = entity_counts[9].saturating_add(count);
             }
-            EditorEntity::LaunchPad { .. } => entity_counts[10] = entity_counts[10].saturating_add(count),
-            EditorEntity::OneWay { .. } => entity_counts[11] = entity_counts[11].saturating_add(count),
-            EditorEntity::FloorGuard { .. } => entity_counts[16] = entity_counts[16].saturating_add(count),
-            EditorEntity::BounceBlock { .. } => entity_counts[17] = entity_counts[17].saturating_add(count),
-            EditorEntity::Thwump { .. } => entity_counts[20] = entity_counts[20].saturating_add(count),
-            EditorEntity::ToggleMine { .. } => entity_counts[21] = entity_counts[21].saturating_add(count),
-            EditorEntity::BoostPad { .. } => entity_counts[24] = entity_counts[24].saturating_add(count),
-            EditorEntity::ShoveThwump { .. } => entity_counts[28] = entity_counts[28].saturating_add(count),
+            entity => entity_counts[entity.id() as usize] = entity_counts[entity.id() as usize].saturating_add(count),
         }
     }
     entity_counts
@@ -244,14 +234,15 @@ fn editor_entities_to_bytes(entities: &EditorEntities) -> Vec<u8> {
 
     for (&entity, &count) in entities.iter() {
         for _ in 0..count {
+            let id = entity.id() as u8;
             match entity {
-                EditorEntity::Ninja { pos, orientation } => bytes.extend([0, pos.x as u8, pos.y as u8, orientation as u8, 0]),
-                EditorEntity::Mine { pos } => bytes.extend([1, pos.x as u8, pos.y as u8, 0, 0]),
+                EditorEntity::Ninja { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
+                EditorEntity::Mine { pos } => bytes.extend([id, pos.x as u8, pos.y as u8, 0, 0]),
                 EditorEntity::Exit { exit_pos, switch_pos } => {
                     bytes.extend([3, exit_pos.x as u8, exit_pos.y as u8, 0, 0]);
                     bytes.extend([4, switch_pos.x as u8, switch_pos.y as u8, 0, 0]);
                 }
-                EditorEntity::RegularDoor { pos, orientation } => bytes.extend([5, pos.x as u8, pos.y as u8, orientation as u8, 0]),
+                EditorEntity::RegularDoor { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
                 EditorEntity::LockedDoor { door_pos, orientation, switch_pos } => {
                     bytes.extend([6, door_pos.x as u8, door_pos.y as u8, orientation as u8, 0]);
                     bytes.extend([7, switch_pos.x as u8, switch_pos.y as u8, 0, 0]);
@@ -260,14 +251,15 @@ fn editor_entities_to_bytes(entities: &EditorEntities) -> Vec<u8> {
                     bytes.extend([8, door_pos.x as u8, door_pos.y as u8, orientation as u8, 0]);
                     bytes.extend([9, switch_pos.x as u8, switch_pos.y as u8, 0, 0]);
                 }
-                EditorEntity::LaunchPad { pos, orientation } => bytes.extend([10, pos.x as u8, pos.y as u8, orientation as u8, 0]),
-                EditorEntity::OneWay { pos, orientation } => bytes.extend([11, pos.x as u8, pos.y as u8, orientation as u8, 0]),
-                EditorEntity::FloorGuard { pos, orientation } => bytes.extend([16, pos.x as u8, pos.y as u8, orientation as u8, 0]),
-                EditorEntity::BounceBlock { pos, orientation } => bytes.extend([17, pos.x as u8, pos.y as u8, orientation as u8, 0]),
-                EditorEntity::Thwump { pos, orientation } => bytes.extend([20, pos.x as u8, pos.y as u8, orientation as u8, 0]),
-                EditorEntity::ToggleMine { pos } => bytes.extend([21, pos.x as u8, pos.y as u8, 0, 0]),
-                EditorEntity::BoostPad { pos } => bytes.extend([24, pos.x as u8, pos.y as u8, 0, 0]),
-                EditorEntity::ShoveThwump { pos, orientation } => bytes.extend([28, pos.x as u8, pos.y as u8, orientation as u8, 0]),
+                EditorEntity::LaunchPad { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
+                EditorEntity::OneWay { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
+                EditorEntity::ZapDrone { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
+                EditorEntity::FloorGuard { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
+                EditorEntity::BounceBlock { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
+                EditorEntity::Thwump { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
+                EditorEntity::ToggleMine { pos } => bytes.extend([id, pos.x as u8, pos.y as u8, 0, 0]),
+                EditorEntity::BoostPad { pos } => bytes.extend([id, pos.x as u8, pos.y as u8, 0, 0]),
+                EditorEntity::ShoveThwump { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
             }
         }
     }

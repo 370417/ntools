@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{editor::{editor_entity::{EditorEntity, EntityPos, ExportedEntity}, editor_state::{Command, EditorEntities, SetEntityCount}, place_entity::PlaceEntity, select_entity::SelectionType}, orientation::{Orientation, OrientationBinary, OrientationCardinal}, tile::{TILE_HALF_SIZE, TILE_SIZE}};
+use crate::{editor::{editor_entity::{EditorEntity, EntityPos, ExportedEntity}, editor_state::{Command, EditorEntities, SetEntityCount}, place_entity::PlaceEntity, select_entity::SelectionType}, orientation::{OrientationBinary, OrientationCardinal, Orientations}, tile::{TILE_HALF_SIZE, TILE_SIZE}};
 
 pub struct ModifyEntity {
     pub original_entity: EditorEntity,
@@ -31,6 +31,7 @@ impl ModifyEntity {
             } else {
                 PlaceEntity::round_to_grid(cursor_pos, fine_grid)
             },
+            EditorEntity::ZapDrone { .. } => PlaceEntity::round_to_grid_drone(cursor_pos),
             _ => PlaceEntity::round_to_grid(cursor_pos, fine_grid)
         }
     }
@@ -59,6 +60,7 @@ impl ModifyEntity {
             EditorEntity::RegularDoor { pos, .. } |
             EditorEntity::BounceBlock { pos, .. } |
             EditorEntity::LaunchPad { pos, .. } |
+            EditorEntity::ZapDrone { pos, .. } |
             EditorEntity::FloorGuard { pos, .. } |
             EditorEntity::BoostPad { pos } |
             EditorEntity::Thwump { pos, .. } |
@@ -73,15 +75,16 @@ impl ModifyEntity {
         }
     }
 
-    pub fn set_orientation(&mut self, new_orientation: Orientation) {
+    pub fn set_orientation(&mut self, orientations: Orientations) {
         match &mut self.modified_entity {
             EditorEntity::Ninja { orientation, .. } |
-            EditorEntity::FloorGuard { orientation, .. } => *orientation = new_orientation.into(),
+            EditorEntity::FloorGuard { orientation, .. } => *orientation = orientations.orientation.into(),
             EditorEntity::OneWay { orientation, .. } |
             EditorEntity::LaunchPad { orientation, .. } |
             EditorEntity::Thwump { orientation, .. } |
             EditorEntity::ShoveThwump { orientation, .. } |
-            EditorEntity::BounceBlock { orientation, .. } => *orientation = new_orientation,
+            EditorEntity::BounceBlock { orientation, .. } => *orientation = orientations.orientation,
+            EditorEntity::ZapDrone { orientation, .. } => *orientation = orientations.orientation_cardinal,
             EditorEntity::RegularDoor { .. } |
             EditorEntity::LockedDoor { .. } |
             EditorEntity::TrapDoor { .. } |
@@ -153,6 +156,10 @@ impl ModifyEntity {
                 // when moving door along its axis, move it a full tile
                 return crosshair + TILE_SIZE * direction.vec2();
             }
+        }
+
+        if let EditorEntity::ZapDrone { .. } = self.modified_entity {
+            return crosshair + TILE_SIZE * direction.vec2();
         }
 
         if fine_grid {
