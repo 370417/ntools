@@ -19,6 +19,7 @@ import { ThwumpDefs, Thwumps, type ThwumpData } from "./entities/Thwump";
 import { ShoveThwumps, type ShoveThwumpData } from "./entities/ShoveThwump";
 import { EditorFooter } from "./EditorFooter";
 import { debouncedSaveMap } from "./localstorage";
+import type { Palette } from "./palette";
 
 const COLS = 42;
 const ROWS = 23;
@@ -293,6 +294,8 @@ export function EditorApp(props: {
     setLevelName: Setter<string>,
     roundCorners: Accessor<boolean>,
     setRoundCorners: Setter<boolean>,
+    palette: Accessor<Palette | undefined>,
+    setPalette: Setter<Palette | undefined>,
 }) {
     const { editor, pastNinjas } = props;
 
@@ -578,7 +581,7 @@ export function EditorApp(props: {
                 <circle fill="none" stroke="var(--entity-palette-reticle)" cx={paletteSelection().x} cy={paletteSelection().y} r={ENTITY_PALETTE_RETICLE_RADIUS} />
             </Show>
             <Show when={mode() === MODE_TILE_PALETTE}>
-                <path d={TILE_PALETTE_PATH} fill-rule="evenodd" fill="color-mix(in srgb,var(--background) 18%,white 15%)" transform={`translate(${paletteCenter().x},${paletteCenter().y})`} />
+                <path d={TILE_PALETTE_PATH} fill-rule="evenodd" fill="color-mix(in srgb,var(--background) 18%,white 15%)" style={{ "mix-blend-mode": "hard-light" }} transform={`translate(${paletteCenter().x},${paletteCenter().y})`} />
             </Show>
             <path id="selected-tiles" d={selectedTilePath()} fill-rule="evenodd" />
             <Show when={mode() === MODE_TILE_PALETTE}>
@@ -596,7 +599,7 @@ export function EditorApp(props: {
             <Show when={mode() === MODE_PEN_TOOL || mode() === MODE_SELECT_ENTITY}>
                 <use href="#crosshair" x={crosshairPos().x} y={crosshairPos().y} />
             </Show>
-            <polyline stroke="black" fill="none" points={pastNinjas().map(({ x, y }) => `${x},${y}`).join(' ')} />
+            <polyline stroke="var(--ninja)" fill="none" points={pastNinjas().map(({ x, y }) => `${x},${y}`).join(' ')} />
         </svg>
         <EditorFooter
             editor={editor}
@@ -605,6 +608,8 @@ export function EditorApp(props: {
             setLevelName={props.setLevelName}
             roundCorners={props.roundCorners}
             setRoundCorners={props.setRoundCorners}
+            palette={props.palette}
+            setPalette={props.setPalette}
         />
     </>;
 }

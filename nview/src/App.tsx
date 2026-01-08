@@ -1,9 +1,9 @@
-import { createSignal, Show, type Accessor, type Setter } from 'solid-js';
+import { createEffect, createSignal, Show, type Accessor, type Setter } from 'solid-js';
 import { Editor, get_anim_state, Replay, set_anim_data } from './assets/ntools_rs';
 import { EditorApp } from './Editor.tsx';
 import { ReplayApp } from './Replay.tsx';
-import { loadAnimData, loadMap, saveAnimData } from './localstorage.ts';
-import { loadStandardPalettes } from './palette.ts';
+import { debouncedSavePalette, loadAnimData, loadMap, loadPalette, saveAnimData } from './localstorage.ts';
+import { loadStandardPalettes, updatePaletteCss } from './palette.ts';
 
 export type GlobalEventState = {
     isJump1Pressed: Accessor<boolean>,
@@ -120,6 +120,14 @@ export function App() {
     const [animState, setAnimState] = createSignal(get_anim_state() == ANIM_VALID ? ANIM_VALID : ANIM_MISSING);
 
     loadStandardPalettes();
+    const [palette, setPalette] = createSignal(loadPalette());
+    createEffect(() => {
+        const paletteObj = palette();
+        if (paletteObj) {
+            updatePaletteCss(paletteObj.colors);
+            debouncedSavePalette(paletteObj);
+        }
+    });
 
     return <>
         <Show when={animState() != ANIM_VALID}>
@@ -166,6 +174,8 @@ export function App() {
                 setLevelName={setLevelName}
                 roundCorners={roundCorners}
                 setRoundCorners={setRoundCorners}
+                palette={palette}
+                setPalette={setPalette}
             />
         </Show>
         <Show when={animState() == ANIM_VALID && !!replay()} keyed>

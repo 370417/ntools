@@ -1,7 +1,7 @@
 import type { Accessor, Setter } from "solid-js";
 import type { Editor } from "./assets/ntools_rs";
 import { debouncedSaveMap } from "./localstorage";
-import { getPaletteColors, themes, updatePaletteCss } from "./palette";
+import { getPaletteColors, themes, updatePaletteCss, type Palette } from "./palette";
 
 export function EditorFooter(props: {
     editor: Editor,
@@ -10,6 +10,8 @@ export function EditorFooter(props: {
     setLevelName: Setter<string>,
     roundCorners: Accessor<boolean>,
     setRoundCorners: Setter<boolean>,
+    palette: Accessor<Palette | undefined>,
+    setPalette: Setter<Palette | undefined>,
 }) {
     return <div style={{
         padding: '0 1.2em',
@@ -60,10 +62,15 @@ export function EditorFooter(props: {
         {" | "}
         <select onchange={e => {
             const colors = getPaletteColors(e.currentTarget.value);
-            if (colors) updatePaletteCss(colors);
+            if (colors) {
+                props.setPalette({
+                    name: e.currentTarget.value,
+                    colors,
+                });
+            }
         }}>
             {themes.map(theme => {
-                return <option selected={theme === 'vasquez'}>{theme}</option>
+                return <option selected={theme === (props.palette()?.name ?? 'vasquez')}>{theme}</option>
             })}
         </select>
         <input type="text" value={props.levelName()} style={{ float: 'right' }} oninput={e => {

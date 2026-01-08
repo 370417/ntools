@@ -1,5 +1,10 @@
 import paletteUrl from './assets/palette.png';
 
+export type Palette = {
+    name: string,
+    colors: Record<ColorVarName, string>,
+}
+
 export const themes = [
     "acid",           "airline",         "argon",         "autumn",
     "BASIC",          "berry",           "birthday cake", "bloodmoon",
