@@ -1,8 +1,9 @@
-import { createSignal, Show, type Accessor, type Setter } from 'solid-js';
+import { createEffect, createSignal, Show, type Accessor, type Setter } from 'solid-js';
 import { Editor, get_anim_state, Replay, set_anim_data } from './assets/ntools_rs';
 import { EditorApp } from './Editor.tsx';
 import { ReplayApp } from './Replay.tsx';
-import { loadAnimData, loadMap, saveAnimData } from './localstorage.ts';
+import { debouncedSavePalette, loadAnimData, loadMap, loadPalette, saveAnimData } from './localstorage.ts';
+import { loadStandardPalettes, updatePaletteCss } from './palette.ts';
 
 export type GlobalEventState = {
     isJump1Pressed: Accessor<boolean>,
@@ -118,6 +119,16 @@ export function App() {
     // for the user to see an error message before interacating with the page.
     const [animState, setAnimState] = createSignal(get_anim_state() == ANIM_VALID ? ANIM_VALID : ANIM_MISSING);
 
+    loadStandardPalettes();
+    const [palette, setPalette] = createSignal(loadPalette());
+    createEffect(() => {
+        const paletteObj = palette();
+        if (paletteObj) {
+            updatePaletteCss(paletteObj.colors);
+            debouncedSavePalette(paletteObj);
+        }
+    });
+
     return <>
         <Show when={animState() != ANIM_VALID}>
             <label style={{ display: 'inline-block', height: '100%', padding: '3em', color: 'var(--main-menu-text)' }}>
@@ -129,14 +140,26 @@ export function App() {
                         fileReader.onloadend = () => {
                             if (fileReader.result instanceof ArrayBuffer) {
                                 const data = new Uint8Array(fileReader.result);
-                                saveAnimData(data);
-                                set_anim_data(data);
-                                setAnimState(get_anim_state());
+                                try {
+                                    saveAnimData(data);
+                                    set_anim_data(data);
+                                    setAnimState(get_anim_state());
+                                } catch (e) {
+                                    setAnimState(ANIM_INVALID);
+                                }
                             }
                         };
                         fileReader.readAsArrayBuffer(files[0]);
                     }
                 }} />
+                <dl>
+                    <dt>Windows</dt>
+                    <dd>{"C:\\Program Files (x86)\\Steam\\steamapps\\common\\N++\\anim_data_line_new.txt.bin"}</dd>
+                    <dt>Linux</dt>
+                    <dd>{"~/.steam/steam/steamapps/common/N++/anim_data_line_new.txt.bin"}</dd>
+                    <dt>Mac</dt>
+                    <dd>{"~/Library/Application Support/Steam/steamapps/common/N++/N++.app/Contents/Resources/NPP/anim_data_line_new.txt.bin"}</dd>
+                </dl>
                 <Show when={animState() == ANIM_INVALID}>
                     <p>Invalid file.</p>
                 </Show>
@@ -145,12 +168,15 @@ export function App() {
         <Show when={animState() == ANIM_VALID && !replay()}>
             <EditorApp
                 editor={editor}
+                setReplay={setReplay}
                 pastNinjas={pastNinjas}
                 globalEventState={globalEventState}
                 levelName={levelName}
                 setLevelName={setLevelName}
                 roundCorners={roundCorners}
                 setRoundCorners={setRoundCorners}
+                palette={palette}
+                setPalette={setPalette}
             />
         </Show>
         <Show when={animState() == ANIM_VALID && !!replay()} keyed>

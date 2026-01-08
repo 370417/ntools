@@ -1,4 +1,4 @@
-import { createSignal, onCleanup } from 'solid-js';
+import { createSignal, onCleanup, Show } from 'solid-js';
 import { Replay } from './assets/ntools_rs';
 import { Scrubber } from './Scrubber';
 // import Stats from 'stats-js';
@@ -37,6 +37,14 @@ export function ReplayApp(props: { replay: Replay, globalEventState: GlobalEvent
             replay.place_ninja(props.globalEventState.mouseGamePos().x, props.globalEventState.mouseGamePos().y);
             if (!isPlaying()) {
                 renderFrame(1);
+            }
+        } else if (event.code === 'Escape') {
+            if (isPlaying()) {
+                setIsPlaying(false);
+                setRecording(false);
+            } else {
+                setIsPlaying(true);
+                setRecording(true);
             }
         }
     };
@@ -202,31 +210,31 @@ export function ReplayApp(props: { replay: Replay, globalEventState: GlobalEvent
                 <path id="tiles" stroke-width="2" clip-path="url(#tiles-clip)" clip-rule="evenodd" d={tilePath()} fill-rule="evenodd" />
             </svg>
             <div>
-                <Scrubber
-                    recording={recording}
-                    setRecording={setRecording}
-                    isPlaying={isPlaying}
-                    setIsPlaying={setIsPlaying}
-                    dragStart={dragStart}
-                    setDragStart={setDragStart}
-                    length={replayLength}
-                    progress={progress}
-                    previewProgress={previewProgress}
-                    seek={frame => {
-                        setProgress(frame);
-                        replay.seek(frame);
-                        renderFrame(1);
-                    }}
-                    previewSeek={frame => {
-                        setPreviewProgress(frame);
-                        if (replay) {
-                            if (frame !== undefined && dragStart() === undefined) {
-                                replay.seek_preview(frame);
-                            }
+                <Show when={!recording() || !isPlaying()}>
+                    <Scrubber
+                        isPlaying={isPlaying}
+                        setIsPlaying={setIsPlaying}
+                        dragStart={dragStart}
+                        setDragStart={setDragStart}
+                        length={replayLength}
+                        progress={progress}
+                        previewProgress={previewProgress}
+                        seek={frame => {
+                            setProgress(frame);
+                            replay.seek(frame);
                             renderFrame(1);
-                        }
-                    }}
-                />
+                        }}
+                        previewSeek={frame => {
+                            setPreviewProgress(frame);
+                            if (replay) {
+                                if (frame !== undefined && dragStart() === undefined) {
+                                    replay.seek_preview(frame);
+                                }
+                                renderFrame(1);
+                            }
+                        }}
+                    />
+                </Show>
             </div>
         </>
     )

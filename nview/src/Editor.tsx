@@ -1,5 +1,5 @@
 import { createSignal, For, onCleanup, Show, type Accessor, type Setter } from "solid-js";
-import { Editor, ExportedEntity } from "./assets/ntools_rs";
+import { Editor, ExportedEntity, Replay } from "./assets/ntools_rs";
 import { Ninja, type NinjaData } from "./entities/Ninja";
 import { ExitDoors, type ExitDoorData } from "./entities/ExitDoor";
 import { ExitSwitches, type ExitSwitchData } from "./entities/ExitSwitch";
@@ -19,6 +19,7 @@ import { ThwumpDefs, Thwumps, type ThwumpData } from "./entities/Thwump";
 import { ShoveThwumps, type ShoveThwumpData } from "./entities/ShoveThwump";
 import { EditorFooter } from "./EditorFooter";
 import { debouncedSaveMap } from "./localstorage";
+import type { Palette } from "./palette";
 
 const COLS = 42;
 const ROWS = 23;
@@ -41,6 +42,7 @@ const MODE_SELECT_ENTITY = 5;
 const MODE_MODIFY_ENTITY = 6;
 const MODE_ENTITY_PALETTE = 7;
 const MODE_PEN_TOOL = 8;
+const MODE_SPAWN_NINJA = 9;
 
 const ENTITY_NINJA = 0;
 const ENTITY_MINE = 1;
@@ -59,7 +61,7 @@ const ENTITY_BOOST_PAD = 24;
 const ENTITY_SHOVE_THWUMP = 28;
 
 const BONES_STANDING = new Float64Array([-0.039, -0.0249, 0.1127, -0.1738, 0.1115, -0.1512, -0.0846, 0.0749, 0.1072, -0.0423, 0.0263, -0.1452, -0.0358, -0.075, -0.377, 0.4686, 0.4643, -0.0225, -0.0453, -0.5054, -0.4724, 0.1962, 0.2293, -0.1812, -0.2266, -0.2224]);
-// const BONES_FALLING = new Float64Array([0.018, 0.0, 0.4156, 0.0988, 0.3581, -0.3242, -0.0708, 0.0845, 0.2924, 0.3212, 0.1853, -0.1927, -0.0236, -0.06, -0.3602, 0.3086, 0.1278, -0.3238, -0.2018, -0.4976, -0.4488, 0.0656, -0.024, -0.2729, -0.3268, -0.2042]);
+const BONES_FALLING = new Float64Array([0.018, 0.0, 0.4156, 0.0988, 0.3581, -0.3242, -0.0708, 0.0845, 0.2924, 0.3212, 0.1853, -0.1927, -0.0236, -0.06, -0.3602, 0.3086, 0.1278, -0.3238, -0.2018, -0.4976, -0.4488, 0.0656, -0.024, -0.2729, -0.3268, -0.2042]);
 
 const ENTITY_PALETTE_SIZE = 150;
 const ENTITY_PALETTE_RETICLE_RADIUS = 16;
@@ -287,12 +289,15 @@ function Entities({ entities }: { entities: EntitiesProps }) {
 
 export function EditorApp(props: {
     editor: Editor,
+    setReplay: Setter<Replay | undefined>,
     pastNinjas: Accessor<{ x: number, y: number }[]>,
     globalEventState: GlobalEventState,
     levelName: Accessor<string>,
     setLevelName: Setter<string>,
     roundCorners: Accessor<boolean>,
     setRoundCorners: Setter<boolean>,
+    palette: Accessor<Palette | undefined>,
+    setPalette: Setter<Palette | undefined>,
 }) {
     const { editor, pastNinjas } = props;
 
@@ -312,11 +317,13 @@ export function EditorApp(props: {
     const previewEntities = createEntities();
 
     const [doorSwitchLines, setDoorSwitchLines] = createSignal<Line[]>([]);
+    const [showTrail, setShowTrail] = createSignal(editor.get_show_trail());
+    const [ninjaPreviewBones, setNinjaPreviewBones] = createSignal<Float64Array<ArrayBufferLike>>();
 
     const keydownListener = (event: KeyboardEvent) => {
         let change = false;
 
-        if (event.target instanceof HTMLInputElement) {
+        if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) {
             return;
         }
 
@@ -335,7 +342,8 @@ export function EditorApp(props: {
         if (event.shiftKey) change = true, editor.press_shift();
         // Note: no else
 
-        if (event.code ==='Backquote') change = true, editor.press_backtick();
+        if (event.code === 'Enter' && editor.mode() === MODE_SPAWN_NINJA) props.setReplay(editor.to_replay(props.roundCorners()));
+        else if (event.code ==='Backquote') change = true, editor.press_backtick();
         else if (event.code === 'Digit1') change = true, editor.press_1(event.shiftKey);
         else if (event.code === 'Digit2') change = true, editor.press_2(event.shiftKey);
         else if (event.code === 'Digit3') change = true, editor.press_3(event.shiftKey);
@@ -464,6 +472,8 @@ export function EditorApp(props: {
             y: editor.palette_selection_y(),
         });
 
+        setNinjaPreviewBones(editor.past_ninja_bones());
+
         if (save) {
             debouncedSaveMap(editor);
         }
@@ -519,8 +529,12 @@ export function EditorApp(props: {
                 // skip if secondary button is pressed (right click)
             } else {
                 // primary click
-                editor.cursor_down(event.shiftKey);
-                render(true);
+                if (editor.mode() === MODE_SPAWN_NINJA) {
+                    props.setReplay(editor.to_replay(props.roundCorners()));
+                } else {
+                    editor.cursor_down(event.shiftKey);
+                    render(true);
+                }
             }
         }}
         ondblclick={event => { editor.double_click(event.shiftKey); render(false) }}
@@ -578,7 +592,7 @@ export function EditorApp(props: {
                 <circle fill="none" stroke="var(--entity-palette-reticle)" cx={paletteSelection().x} cy={paletteSelection().y} r={ENTITY_PALETTE_RETICLE_RADIUS} />
             </Show>
             <Show when={mode() === MODE_TILE_PALETTE}>
-                <path d={TILE_PALETTE_PATH} fill-rule="evenodd" fill="color-mix(in srgb,var(--background) 18%,white 15%)" transform={`translate(${paletteCenter().x},${paletteCenter().y})`} />
+                <path d={TILE_PALETTE_PATH} fill-rule="evenodd" fill="color-mix(in srgb,var(--background) 18%,white 15%)" style={{ "mix-blend-mode": "hard-light" }} transform={`translate(${paletteCenter().x},${paletteCenter().y})`} />
             </Show>
             <path id="selected-tiles" d={selectedTilePath()} fill-rule="evenodd" />
             <Show when={mode() === MODE_TILE_PALETTE}>
@@ -596,7 +610,12 @@ export function EditorApp(props: {
             <Show when={mode() === MODE_PEN_TOOL || mode() === MODE_SELECT_ENTITY}>
                 <use href="#crosshair" x={crosshairPos().x} y={crosshairPos().y} />
             </Show>
-            <polyline stroke="black" fill="none" points={pastNinjas().map(({ x, y }) => `${x},${y}`).join(' ')} />
+            <Show when={mode() === MODE_SPAWN_NINJA}>
+                <Ninja class="ninja" ninja={() => ({ x: crosshairPos().x, y: crosshairPos().y, deg: 0 })} bones={() => ninjaPreviewBones() ?? BONES_FALLING} />
+            </Show>
+            <Show when={showTrail()}>
+                <polyline stroke="var(--ninja)" fill="none" points={pastNinjas().map(({ x, y }) => `${x},${y}`).join(' ')} />
+            </Show>
         </svg>
         <EditorFooter
             editor={editor}
@@ -605,6 +624,10 @@ export function EditorApp(props: {
             setLevelName={props.setLevelName}
             roundCorners={props.roundCorners}
             setRoundCorners={props.setRoundCorners}
+            palette={props.palette}
+            setPalette={props.setPalette}
+            showTrail={showTrail}
+            setShowTrail={setShowTrail}
         />
     </>;
 }

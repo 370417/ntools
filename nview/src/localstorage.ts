@@ -1,4 +1,5 @@
 import { set_anim_data, type Editor } from "./assets/ntools_rs";
+import type { Palette } from "./palette";
 
 export const debouncedSaveMap = debounce((editor: Editor) => {
     // encode bytes into string (non printable chars are safe)
@@ -26,6 +27,26 @@ export function loadAnimData() {
     if (animDataStr) {
         const animDataArray = Uint8Array.from(animDataStr, c => c.charCodeAt(0));
         set_anim_data(animDataArray);
+    }
+}
+
+export const debouncedSavePalette = debounce(savePalette, 1000);
+
+function savePalette(palette: Palette) {
+    const paletteStr = JSON.stringify(palette);
+    localStorage.setItem('palette', paletteStr);
+}
+
+export function loadPalette(): Palette | undefined {
+    const paletteStr = localStorage.getItem('palette');
+    if (!paletteStr) return;
+    try {
+        const palette = JSON.parse(paletteStr);
+        if (typeof palette?.name === 'string' && typeof palette?.colors === 'object') {
+            return palette;
+        }
+    } catch (e) {
+        return;
     }
 }
 

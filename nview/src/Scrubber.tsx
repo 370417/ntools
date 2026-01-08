@@ -2,8 +2,6 @@ import { Match, onCleanup, Switch, type Accessor, type Setter } from "solid-js";
 import "./Scrubber.css";
 
 type ScrubberProps = {
-    recording: Accessor<boolean>,
-    setRecording: Setter<boolean>,
     isPlaying: Accessor<boolean>,
     setIsPlaying: Setter<boolean>,
     dragStart: Accessor<number | undefined>,
@@ -103,14 +101,11 @@ export function Scrubber(props: ScrubberProps) {
     }
 
     return <div id="media-controls">
-        <div class="text-button" classList={{ recording: props.recording() }} onclick={() => {
-            props.setRecording(!props.recording());
-        }}><div>⏺</div></div>
         <div class="text-button" onclick={() => {
             if (props.isPlaying()) {
                 props.setIsPlaying(false);
             } else {
-                if (props.progress() >= props.length() && !props.recording()) {
+                if (props.progress() >= props.length()) {
                     // Go back to start if we press play after reaching the end of the recorded inputs.
                     props.seek(0);
                 }
