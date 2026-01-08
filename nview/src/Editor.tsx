@@ -529,8 +529,12 @@ export function EditorApp(props: {
                 // skip if secondary button is pressed (right click)
             } else {
                 // primary click
-                editor.cursor_down(event.shiftKey);
-                render(true);
+                if (editor.mode() === MODE_SPAWN_NINJA) {
+                    props.setReplay(editor.to_replay(props.roundCorners()));
+                } else {
+                    editor.cursor_down(event.shiftKey);
+                    render(true);
+                }
             }
         }}
         ondblclick={event => { editor.double_click(event.shiftKey); render(false) }}
