@@ -128,7 +128,7 @@ impl Editor {
         }).collect();
 
         if matches!(self.mode, EditorMode::SpawnNinja) || ninjas.is_empty() {
-            let past_ninja = closest_past_ninja(self.cursor_pos, &self.past_ninjas, self.show_past_ninjas_trail);
+            let past_ninja = closest_past_ninja(self.cursor_pos, &self.past_ninjas, self.entity_orientations.orientation, self.show_past_ninjas_trail);
             ninjas = vec![Ninja::from_past_ninja(&past_ninja)];
         }
 
@@ -659,6 +659,7 @@ impl Editor {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
                 modify_entity.set_orientation(self.entity_orientations.orientation);
             }
+            EditorMode::SpawnNinja |
             EditorMode::EntityPalette(_) => set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations),
             EditorMode::MoveSelection(move_selection) => move_selection.rotate_ccw(),
             _ => {}
@@ -692,6 +693,7 @@ impl Editor {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
                 modify_entity.set_orientation(self.entity_orientations.orientation);
             }
+            EditorMode::SpawnNinja |
             EditorMode::EntityPalette(_) => set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations),
             EditorMode::MoveSelection(move_selection) => move_selection.rotate_cw(),
             _ => {}
@@ -725,6 +727,7 @@ impl Editor {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
                 modify_entity.set_orientation(self.entity_orientations.orientation);
             }
+            EditorMode::SpawnNinja |
             EditorMode::EntityPalette(_) => set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations),
             EditorMode::MoveSelection(move_selection) => move_selection.flip_across_y_axis(),
             _ => {}
@@ -758,6 +761,7 @@ impl Editor {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
                 modify_entity.set_orientation(self.entity_orientations.orientation);
             }
+            EditorMode::SpawnNinja |
             EditorMode::EntityPalette(_) => set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations),
             EditorMode::MoveSelection(move_selection) => move_selection.flip_across_x_axis(),
             _ => {}
@@ -789,6 +793,7 @@ impl Editor {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
                 modify_entity.set_orientation(self.entity_orientations.orientation);
             }
+            EditorMode::SpawnNinja |
             EditorMode::EntityPalette(_) => set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations),
             EditorMode::SelectTiles(select_tiles) => {
                 let command = select_tiles.command_fill_selection(self.state.tiles(), Tile::TileE);
@@ -829,6 +834,7 @@ impl Editor {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
                 modify_entity.set_orientation(self.entity_orientations.orientation);
             }
+            EditorMode::SpawnNinja |
             EditorMode::EntityPalette(_) => set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations),
             EditorMode::SelectTiles(select_tiles) => {
                 let command = select_tiles.command_fill_selection(self.state.tiles(), Tile::TileD);
@@ -861,6 +867,7 @@ impl Editor {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
                 modify_entity.set_orientation(self.entity_orientations.orientation);
             }
+            EditorMode::SpawnNinja |
             EditorMode::EntityPalette(_) => set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations),
             _ => {}
         }
@@ -911,6 +918,7 @@ impl Editor {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
                 modify_entity.set_orientation(self.entity_orientations.orientation);
             }
+            EditorMode::SpawnNinja |
             EditorMode::EntityPalette(_) => set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations),
             EditorMode::SelectTiles(select_tiles) => {
                 let selection = &select_tiles.selection_preview();
@@ -1248,7 +1256,7 @@ impl Editor {
 
     pub fn past_ninja_bones(&self) -> Box<[f64]> {
         if let EditorMode::SpawnNinja = self.mode {
-            flatten_bones(&closest_past_ninja(self.cursor_pos, &self.past_ninjas, self.show_past_ninjas_trail).calc_ninja_position())
+            flatten_bones(&closest_past_ninja(self.cursor_pos, &self.past_ninjas, self.entity_orientations.orientation, self.show_past_ninjas_trail).calc_ninja_position())
         } else {
             Box::new([])
         }
@@ -1282,7 +1290,7 @@ impl Editor {
             EditorMode::PlaceEntity(place_entity) => place_entity.crosshair(self.cursor_pos, self.entity_fine_grid),
             EditorMode::ModifyEntity(modify_entity) => modify_entity.crosshair(self.cursor_pos, self.entity_fine_grid),
             EditorMode::SelectEntity(_) => PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid),
-            EditorMode::SpawnNinja => closest_past_ninja(self.cursor_pos, &self.past_ninjas, self.show_past_ninjas_trail).pos,
+            EditorMode::SpawnNinja => closest_past_ninja(self.cursor_pos, &self.past_ninjas, self.entity_orientations.orientation, self.show_past_ninjas_trail).pos,
             _ => DVec2::new(TILE_SIZE, TILE_SIZE),
         }
     }

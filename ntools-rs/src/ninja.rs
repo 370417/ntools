@@ -54,6 +54,7 @@ pub struct Ninja {
 #[derive(Clone)]
 pub struct PastNinja {
     pub pos: DVec2,
+    pub orientation: OrientationExt,
     pub speed: DVec2,
     pub facing: f64,
     pub anim_state: AnimState,
@@ -139,7 +140,7 @@ impl Ninja {
     }
 
     pub fn from_past_ninja(past_ninja: &PastNinja) -> Ninja {
-        let orientation = OrientationExt::N;
+        let orientation = past_ninja.orientation;
         Ninja {
             pos: past_ninja.pos,
             pos_old: past_ninja.pos,
@@ -936,6 +937,7 @@ impl Ninja {
     pub fn to_past_ninja(&self) -> PastNinja {
         PastNinja {
             pos: self.pos,
+            orientation: self.orientation,
             speed: self.speed,
             facing: self.facing,
             anim_state: self.anim_state,
