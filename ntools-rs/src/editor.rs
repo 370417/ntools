@@ -1009,7 +1009,8 @@ impl Editor {
     }
 
     pub fn press_h(&mut self) {
-        // zap drone
+        self.selected_entity_id = EntityId::ZapDrone;
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
     }
 
     pub fn press_j(&mut self) {
