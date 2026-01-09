@@ -62,6 +62,9 @@ body {
     --shove-thwump-ray: #48C1C8;
     --shove-thwump-center: #4F564D;
 
+    --zap-drone-background: #48C1C8;
+    --zap-drone-border: #202020;
+
     --time-remaining: #FECC04;
     --hardcore-time: #DF9B43;
     --empty-timebar: #707A6B;
