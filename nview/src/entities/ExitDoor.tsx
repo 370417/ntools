@@ -36,10 +36,8 @@ export function updateExitDoors([exitDoors, setExitDoors]: Signal<ExitDoorData[]
     setExitDoors(newExitDoors);
 }
 
-export function ExitDoors(props: { exitDoors: Signal<ExitDoorData[]> }) {
-    const [exitDoors] = props.exitDoors;
-
-    return <Index each={exitDoors()}>
+export function ExitDoors(props: { exitDoors: Accessor<ExitDoorData[]> }) {
+    return <Index each={props.exitDoors()}>
         {exitDoor => <ExitDoor exitDoor={exitDoor} />}
     </Index>;
 }

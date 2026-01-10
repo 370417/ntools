@@ -36,10 +36,8 @@ export function updateThwumps([thwumps, setThwumps]: Signal<ThwumpData[]>, repla
     setThwumps(newThwumps);
 }
 
-export function Thwumps(props: { thwumps: Signal<ThwumpData[]> }) {
-    const [thwumps] = props.thwumps;
-
-    return <Index each={thwumps()}>
+export function Thwumps(props: { thwumps: Accessor<ThwumpData[]> }) {
+    return <Index each={props.thwumps()}>
         {thwump => <use href="#thwump" transform={transform(thwump)} />}
     </Index>;
 }

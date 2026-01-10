@@ -147,7 +147,7 @@ impl <'a> Iterator for EntityDataParser<'a> {
             let pos = EntityPos::from_bytes(x, y);
             let orientation = Orientation::try_from(orientation_data).unwrap_or(Orientation::N);
             let orientation_ext = OrientationExt::from(orientation_data);
-            let _orientation_cardinal = OrientationCardinal::try_from(orientation_data).unwrap_or(OrientationCardinal::N);
+            let orientation_cardinal = OrientationCardinal::try_from(orientation_data).unwrap_or(OrientationCardinal::N);
             let orientation_binary = OrientationBinary::from(orientation_data);
 
             match EntityId::try_from(entity_id).ok()? {
@@ -165,7 +165,7 @@ impl <'a> Iterator for EntityDataParser<'a> {
                 EntityId::OneWay => return Some(EditorEntity::OneWay { pos, orientation }),
                 EntityId::ChainsawDrone => {}
                 EntityId::LaserDrone => {}
-                EntityId::ZapDrone => {}
+                EntityId::ZapDrone => return Some(EditorEntity::ZapDrone { pos, orientation: orientation_cardinal }),
                 EntityId::ChaseDrone => {}
                 EntityId::FloorGuard => return Some(EditorEntity::FloorGuard { pos, orientation: orientation_ext }),
                 EntityId::BounceBlock => return Some(EditorEntity::BounceBlock { pos, orientation }),

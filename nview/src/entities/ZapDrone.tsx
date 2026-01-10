@@ -50,7 +50,7 @@ export function ZapDrones(props: { zapDrones: Accessor<ZapDroneData[]> }) {
 const r = 10;
 // bevel size
 const b = 6;
-const droneThick = 4;
+const droneThick = 3;
 const droneBodyPath = `M ${-r} ${r - b} V ${b - r} L ${b - r} ${-r} H ${r - b} L ${r} ${b - r} V ${r - b} L ${r - b} ${r} H ${b - r} Z`;
 const droneBodyThick = `M 0 ${-r} H ${b - r} L ${-r} ${b - r} V ${r - b} L ${b - r} ${r} H 0`;
 

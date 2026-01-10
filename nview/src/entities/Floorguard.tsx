@@ -36,10 +36,8 @@ export function updateFloorGuards([floorGuards, setFloorGuards]: Signal<FloorGua
     setFloorGuards(newFloorGuards);
 }
 
-export function FloorGuards(props: { floorGuards: Signal<FloorGuardData[]> }) {
-    const [floorGuards] = props.floorGuards;
-
-    return <Index each={floorGuards()}>
+export function FloorGuards(props: { floorGuards: Accessor<FloorGuardData[]> }) {
+    return <Index each={props.floorGuards()}>
         {floorGuard => <FloorGuard floorGuard={floorGuard} />}
     </Index>;
 }

@@ -36,10 +36,8 @@ export function updateBounceBlocks([bounceBlocks, setBounceBlocks]: Signal<Bounc
     setBounceBlocks(newBounceBlocks);
 }
 
-export function BounceBlocks(props: { bounceBlocks: Signal<BounceBlockData[]> }) {
-    const [bounceBlocks] = props.bounceBlocks;
-
-    return <Index each={bounceBlocks()}>
+export function BounceBlocks(props: { bounceBlocks: Accessor<BounceBlockData[]> }) {
+    return <Index each={props.bounceBlocks()}>
         {bounceBlock => <use href="#bounceblock" transform={transform(bounceBlock)} />}
     </Index>;
 }

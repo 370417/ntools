@@ -38,10 +38,8 @@ export function updateBoostPads([boostPads, setBoostPads]: Signal<BoostPadData[]
     setBoostPads(newBoostPads);
 }
 
-export function BoostPads(props: { boostPads: Signal<BoostPadData[]> }) {
-    const [boostPads] = props.boostPads;
-
-    return <Index each={boostPads()}>
+export function BoostPads(props: { boostPads: Accessor<BoostPadData[]> }) {
+    return <Index each={props.boostPads()}>
         {boostPad => <use href="#boostpad" stroke={`color-mix(in srgb-linear, var(--boost-pad) ${boostPad().animProgress * 100}%, var(--boost-pad-wooshing))`} transform={transform(boostPad)} />}
     </Index>;
 }

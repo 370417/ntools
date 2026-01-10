@@ -36,10 +36,8 @@ export function updateTrapSwitches([trapSwitches, setTrapSwitches]: Signal<TrapS
     setTrapSwitches(newTrapSwitchs);
 }
 
-export function TrapSwitches(props: { trapSwitches: Signal<TrapSwitchData[]> }) {
-    const [trapSwitches] = props.trapSwitches;
-
-    return <Index each={trapSwitches()}>
+export function TrapSwitches(props: { trapSwitches: Accessor<TrapSwitchData[]> }) {
+    return <Index each={props.trapSwitches()}>
         {trapSwitch => <use href={trapSwitch().wasTouched ? "#trap-switch-touched" : "#trap-switch"} transform={transform(trapSwitch)} />}
     </Index>
 }

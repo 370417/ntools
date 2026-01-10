@@ -276,25 +276,25 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
 
 function Entities({ entities }: { entities: EntitiesProps }) {
     return <>
-        <ExitDoors exitDoors={[entities.exitDoors, () => {}]} />
-        <OneWays oneWays={[entities.oneWays, () => {}]} />
-        <Mines mines={[entities.mines, () => {}]} />
-        <RegularDoors regularDoors={[entities.regularDoors, () => {}]} />
-        <TrapDoors trapDoors={[entities.trapDoors, () => {}]} />
-        <LockedDoors lockedDoors={[entities.lockedDoors, () => {}]} />
-        <LockedSwitches lockedSwitches={[entities.lockedSwitches, () => {}]} />
-        <TrapSwitches trapSwitches={[entities.trapSwitches, () => {}]} />
+        <ExitDoors exitDoors={entities.exitDoors} />
+        <OneWays oneWays={entities.oneWays} />
+        <Mines mines={entities.mines} />
+        <RegularDoors regularDoors={entities.regularDoors} />
+        <TrapDoors trapDoors={entities.trapDoors} />
+        <LockedDoors lockedDoors={entities.lockedDoors} />
+        <LockedSwitches lockedSwitches={entities.lockedSwitches} />
+        <TrapSwitches trapSwitches={entities.trapSwitches} />
         <ExitSwitches exitSwitches={entities.exitSwitches} />
-        <LaunchPads launchPads={[entities.launchPads, () => {}]} />
+        <LaunchPads launchPads={entities.launchPads} />
         <ZapDrones zapDrones={entities.zapDrones} />
-        <FloorGuards floorGuards={[entities.floorGuards, () => {}]} />
-        <Thwumps thwumps={[entities.thwumps, () => {}]} />
+        <FloorGuards floorGuards={entities.floorGuards} />
+        <Thwumps thwumps={entities.thwumps} />
         <For each={entities.ninjas()}>
             {ninja => <Ninja class="ninja" ninja={() => ninja} bones={() => BONES_STANDING} />}
         </For>
-        <BounceBlocks bounceBlocks={[entities.bounceBlocks, () => {}]} />
-        <ShoveThwumps shoveThwumps={[entities.shoveThwumps, () => {}]} />
-        <BoostPads boostPads={[entities.boostPads, () => {}]} />
+        <BounceBlocks bounceBlocks={entities.bounceBlocks} />
+        <ShoveThwumps shoveThwumps={entities.shoveThwumps} />
+        <BoostPads boostPads={entities.boostPads} />
     </>;
 }
 

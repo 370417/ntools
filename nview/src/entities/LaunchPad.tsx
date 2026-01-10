@@ -36,10 +36,8 @@ export function updateLaunchPads([launchPads, setLaunchPads]: Signal<LaunchPadDa
     setLaunchPads(newLaunchPads);
 }
 
-export function LaunchPads(props: { launchPads: Signal<LaunchPadData[]> }) {
-    const [launchPads] = props.launchPads;
-
-    return <Index each={launchPads()}>
+export function LaunchPads(props: { launchPads: Accessor<LaunchPadData[]> }) {
+    return <Index each={props.launchPads()}>
         {launchPad => <LaunchPad launchPad={launchPad} />}
     </Index>;
 }
