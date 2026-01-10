@@ -49,8 +49,8 @@ const baseHalfLen = 7.5;
 const topHalfLen = 4.5;
 
 export function LaunchPad(props: { launchPad: Accessor<LaunchPadData> }) {
-    return <g class="launch-pad" transform={transform(props.launchPad)}>
-        <rect x="0" y={-baseHalfLen} width={thickness} height={2 * baseHalfLen} />
-        <line stroke-width={thickness} stroke-linecap="round" x1={1.5 * thickness} y1={-topHalfLen} x2={1.5 * thickness} y2={topHalfLen} />
+    return <g transform={transform(props.launchPad)}>
+        <rect fill="var(--launch-pad-long)" x="0" y={-baseHalfLen} width={thickness} height={2 * baseHalfLen} />
+        <line stroke="var(--launch-pad-short)" stroke-width={thickness} stroke-linecap="round" x1={1.5 * thickness} y1={-topHalfLen} x2={1.5 * thickness} y2={topHalfLen} />
     </g>;
 }

@@ -56,7 +56,7 @@ const bounceBlockStroke = 2 * 24 / 44;
 
 export function BounceBlockDefs() {
     return <g id="bounceblock">
-        <path id="bounceblockFill" d={bounceBlockPath} />
-        <path id="bounceblockStroke" d={bounceBlockStrokePath} fill="none" stroke-width={bounceBlockStroke} />
+        <path fill="var(--bounceblock-interior)" d={bounceBlockPath} />
+        <path stroke="var(--bounceblock-border)" d={bounceBlockStrokePath} fill="none" stroke-width={bounceBlockStroke} />
     </g>;
 }
