@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{entity::{boost_pad::BoostPad, bounce_block::BounceBlock, door::Doors, exit::Exit, floor_guard::FloorGuard, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump}, grid::{Grid, GridPos}, segment::Segment};
+use crate::{entity::{boost_pad::BoostPad, bounce_block::BounceBlock, door::Doors, exit::Exit, floor_guard::FloorGuard, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::{Grid, GridPos}, segment::Segment};
 
 pub mod boost_pad;
 pub mod bounce_block;
@@ -13,6 +13,7 @@ pub mod one_way;
 pub mod polymorphism;
 pub mod shove_thwump;
 pub mod thwump;
+pub mod zap_drone_;
 
 #[derive(Clone)]
 pub struct Entities {
@@ -26,6 +27,7 @@ pub struct Entities {
     pub floor_guards: Vec<FloorGuard>,
     pub doors: Doors,
     pub shove_thwumps: Vec<ShoveThwump>,
+    pub zap_drones: Vec<ZapDrone>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -42,6 +44,7 @@ pub enum GridEntityType {
     TrapSwitch,
     RegularDoor,
     ShoveThwump,
+    ZapDrone,
 }
 
 pub trait Entity {
@@ -64,6 +67,7 @@ impl Entities {
             floor_guards: Vec::new(),
             doors: Doors::new(),
             shove_thwumps: Vec::new(),
+            zap_drones: Vec::new(),
         }
     }
 
@@ -109,6 +113,9 @@ impl Entities {
         for (i, shove_thwump) in self.shove_thwumps.iter().enumerate() {
             grid[shove_thwump.pos].push((GridEntityType::ShoveThwump, i));
         }
+        for (i, zap_drone) in self.zap_drones.iter().enumerate() {
+            grid[zap_drone.pos].push((GridEntityType::ZapDrone, i));
+        }
         grid
     }
 }
@@ -119,6 +126,7 @@ impl GridEntityType {
             GridEntityType::BounceBlock |
             GridEntityType::Thwump |
             GridEntityType::FloorGuard |
+            GridEntityType::ZapDrone |
             GridEntityType::ShoveThwump => true,
             GridEntityType::Mine |
             GridEntityType::OneWay |

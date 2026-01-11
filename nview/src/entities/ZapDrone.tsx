@@ -22,14 +22,14 @@ function transform(zapDrone: Accessor<ZapDroneData>): string {
 
 export function updateZapDrones([zapDrones, setZapDrones]: Signal<ZapDroneData[]>, replay: Replay, partialFrame: number) {
     const oldZapDrones = zapDrones();
-    const newZapDronesLen = replay.bounce_blocks_len();
+    const newZapDronesLen = replay.zap_drones_len();
     const newZapDrones: ZapDroneData[] = [];
     for (let i = 0; i < newZapDronesLen; i++) {
         const oldZapDrone = oldZapDrones.at(i);
         const newZapDrone = {
-            x: replay.bounce_block_x(i, partialFrame),
-            y: replay.bounce_block_y(i, partialFrame),
-            deg: replay.bounce_block_deg(i),
+            x: replay.zap_drone_x(i, partialFrame),
+            y: replay.zap_drone_y(i, partialFrame),
+            deg: replay.zap_drone_deg(i),
         };
         if (oldZapDrone && equals(oldZapDrone, newZapDrone)) {
             newZapDrones.push(oldZapDrone);

@@ -1,4 +1,4 @@
-use crate::{entity::{Entities, EntityIndex, GridEntityType, bounce_block::BounceBlock, door::RegularDoor, floor_guard::FloorGuard, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, on_door_state_change, shove_thwump::ShoveThwump, thwump::Thwump}, grid::Grid, ninja::{Ninja, NinjaState}, segment::Segment};
+use crate::{entity::{Entities, EntityIndex, GridEntityType, bounce_block::BounceBlock, door::RegularDoor, floor_guard::FloorGuard, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, on_door_state_change, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::Grid, ninja::{Ninja, NinjaState}, segment::Segment};
 
 #[derive(Clone)]
 pub struct Simulation {
@@ -30,6 +30,7 @@ pub struct KeyFrame {
     trap_door_frames_since_close: Vec<Option<u32>>,
     regular_doors: Vec<RegularDoor>,
     shove_thwumps: Vec<ShoveThwump>,
+    zap_drones: Vec<ZapDrone>,
 }
 
 impl Input {
@@ -130,6 +131,7 @@ impl KeyFrame {
             trap_door_frames_since_close: sim.entities.doors.trap.iter().map(|trap_door| trap_door.frames_since_close).collect(),
             regular_doors: sim.entities.doors.regular.clone(),
             shove_thwumps: sim.entities.shove_thwumps.clone(),
+            zap_drones: sim.entities.zap_drones.clone(),
         }
     }
 
@@ -163,6 +165,8 @@ impl KeyFrame {
 
         self.shove_thwumps.clone_into(&mut sim.entities.shove_thwumps);
 
+        self.zap_drones.clone_into(&mut sim.entities.zap_drones);
+
         sim.entity_grid.drain_mobs();
         // add all mobs back into entity_grid
         for (i, bounce_block) in sim.entities.bounce_blocks.iter().enumerate() {
@@ -176,6 +180,9 @@ impl KeyFrame {
         }
         for (i, shove_thwump) in sim.entities.shove_thwumps.iter().enumerate() {
             sim.entity_grid[shove_thwump.pos].push((GridEntityType::ShoveThwump, i));
+        }
+        for (i, zap_drone) in sim.entities.zap_drones.iter().enumerate() {
+            sim.entity_grid[zap_drone.pos].push((GridEntityType::ZapDrone, i));
         }
     }
 }

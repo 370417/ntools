@@ -408,6 +408,21 @@ impl Replay {
     pub fn shove_thwump_touch(&self, i: usize) -> i32 {
         self.current_sim.entities.shove_thwumps[i].touch_as_num()
     }
+
+    pub fn zap_drones_len(&self) -> usize {
+        self.current_sim.entities.zap_drones.len()
+    }
+
+    pub fn zap_drone_x(&self, i: usize, partial_frame: f64) -> f64 {
+        self.current_sim.entities.zap_drones[i].x(partial_frame)
+    }
+
+    pub fn zap_drone_y(&self, i: usize, partial_frame: f64) -> f64 {
+        self.current_sim.entities.zap_drones[i].y(partial_frame)
+    }
+    pub fn zap_drone_deg(&self, i: usize) -> f64 {
+        self.current_sim.entities.zap_drones[i].orientation.rotation_deg()
+    }
 }
 
 // Separate impl block for functions without #[wasm_bindgen]
