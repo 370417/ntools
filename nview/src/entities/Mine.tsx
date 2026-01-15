@@ -40,10 +40,8 @@ export function updateMines([mines, setMines]: Signal<MineData[]>, replay: Repla
     setMines(newMines);
 }
 
-export function Mines(props: { mines: Signal<MineData[]> }) {
-    const [mines] = props.mines;
-
-    return <Index each={mines()}>
+export function Mines(props: { mines: Accessor<MineData[]> }) {
+    return <Index each={props.mines()}>
         {mine => <use href={["#toggled", "#untoggled", "#toggling"][mine().type]} transform={transform(mine)} />}
     </Index>
 }

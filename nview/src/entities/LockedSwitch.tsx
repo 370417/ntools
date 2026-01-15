@@ -36,10 +36,8 @@ export function updateLockedSwitches([lockedSwitches, setLockedSwitches]: Signal
     setLockedSwitches(newLockedSwitchs);
 }
 
-export function LockedSwitches(props: { lockedSwitches: Signal<LockedSwitchData[]> }) {
-    const [lockedSwitches] = props.lockedSwitches;
-
-    return <Index each={lockedSwitches()}>
+export function LockedSwitches(props: { lockedSwitches: Accessor<LockedSwitchData[]> }) {
+    return <Index each={props.lockedSwitches()}>
         {lockedSwitch => <use href={lockedSwitch().wasTouched ? "#locked-switch-touched" : "#locked-switch"} transform={transform(lockedSwitch)} />}
     </Index>
 }

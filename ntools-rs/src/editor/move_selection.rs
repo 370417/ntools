@@ -155,6 +155,12 @@ impl MoveSelection {
         Command::SetTilesAndEntities(paint_tiles, set_entities)
     }
 
+    pub fn invert_tiles(&mut self) {
+        for (_, tile) in &mut self.tiles {
+            *tile = tile.opposite();
+        }
+    }
+
     pub fn rotate_cw(&mut self) {
         for (grid_pos, tile) in &mut self.tiles {
             *grid_pos = grid_pos.rotate_cw(self.center_of_rotation);

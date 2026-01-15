@@ -20,6 +20,7 @@ import { ShoveThwumps, type ShoveThwumpData } from "./entities/ShoveThwump";
 import { EditorFooter } from "./EditorFooter";
 import { debouncedSaveMap } from "./localstorage";
 import type { Palette } from "./palette";
+import { ZapDroneDefs, ZapDrones, type ZapDroneData } from "./entities/ZapDrone";
 
 const COLS = 42;
 const ROWS = 23;
@@ -53,6 +54,7 @@ const ENTITY_LOCKED_DOOR = 6;
 const ENTITY_TRAP_DOOR = 8;
 const ENTITY_LAUNCH_PAD = 10;
 const ENTITY_ONE_WAY = 11;
+const ENTITY_ZAP_DRONE = 14;
 const ENTITY_FLOOR_GUARD = 16;
 const ENTITY_BOUNCE_BLOCK = 17;
 const ENTITY_THWUMP = 20;
@@ -98,6 +100,8 @@ type EntitiesProps = {
     setLaunchPads: Setter<LaunchPadData[]>,
     oneWays: Accessor<OneWayData[]>,
     setOneWays: Setter<OneWayData[]>,
+    zapDrones: Accessor<ZapDroneData[]>,
+    setZapDrones: Setter<ZapDroneData[]>,
     floorGuards: Accessor<FloorGuardData[]>,
     setFloorGuards: Setter<FloorGuardData[]>,
     bounceBlocks: Accessor<BounceBlockData[]>,
@@ -122,6 +126,7 @@ function createEntities(): EntitiesProps {
     const [trapSwitches, setTrapSwitches] = createSignal<TrapSwitchData[]>([]);
     const [launchPads, setLaunchPads] = createSignal<LaunchPadData[]>([]);
     const [oneWays, setOneWays] = createSignal<OneWayData[]>([]);
+    const [zapDrones, setZapDrones] = createSignal<ZapDroneData[]>([]);
     const [floorGuards, setFloorGuards] = createSignal<FloorGuardData[]>([]);
     const [bounceBlocks, setBounceBlocks] = createSignal<BounceBlockData[]>([]);
     const [thwumps, setThwumps] = createSignal<ThwumpData[]>([]);
@@ -139,6 +144,7 @@ function createEntities(): EntitiesProps {
         trapSwitches, setTrapSwitches,
         launchPads, setLaunchPads,
         oneWays, setOneWays,
+        zapDrones, setZapDrones,
         floorGuards, setFloorGuards,
         bounceBlocks, setBounceBlocks,
         thwumps, setThwumps,
@@ -159,6 +165,7 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
     const trapSwitches: TrapSwitchData[] = [];
     const launchPads: LaunchPadData[] = [];
     const oneWays: OneWayData[] = [];
+    const zapDrones: ZapDroneData[] = [];
     const floorGuards: FloorGuardData[] = [];
     const bounceBlocks: BounceBlockData[] = [];
     const thwumps: ThwumpData[] = [];
@@ -225,6 +232,8 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
             launchPads.push(entityCopy);
         } else if (entity.type_int === ENTITY_ONE_WAY) {
             oneWays.push(entityCopy);
+        } else if (entity.type_int === ENTITY_ZAP_DRONE) {
+            zapDrones.push(entityCopy);
         } else if (entity.type_int === ENTITY_FLOOR_GUARD) {
             floorGuards.push(entityCopy);
         } else if (entity.type_int === ENTITY_BOUNCE_BLOCK) {
@@ -257,6 +266,7 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
     entities.setTrapSwitches(trapSwitches);
     entities.setLaunchPads(launchPads);
     entities.setOneWays(oneWays);
+    entities.setZapDrones(zapDrones);
     entities.setFloorGuards(floorGuards);
     entities.setBounceBlocks(bounceBlocks);
     entities.setThwumps(thwumps);
@@ -266,24 +276,25 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
 
 function Entities({ entities }: { entities: EntitiesProps }) {
     return <>
-        <ExitDoors exitDoors={[entities.exitDoors, () => {}]} />
-        <OneWays oneWays={[entities.oneWays, () => {}]} />
-        <Mines mines={[entities.mines, () => {}]} />
-        <RegularDoors regularDoors={[entities.regularDoors, () => {}]} />
-        <TrapDoors trapDoors={[entities.trapDoors, () => {}]} />
-        <LockedDoors lockedDoors={[entities.lockedDoors, () => {}]} />
-        <LockedSwitches lockedSwitches={[entities.lockedSwitches, () => {}]} />
-        <TrapSwitches trapSwitches={[entities.trapSwitches, () => {}]} />
+        <ExitDoors exitDoors={entities.exitDoors} />
+        <OneWays oneWays={entities.oneWays} />
+        <Mines mines={entities.mines} />
+        <RegularDoors regularDoors={entities.regularDoors} />
+        <TrapDoors trapDoors={entities.trapDoors} />
+        <LockedDoors lockedDoors={entities.lockedDoors} />
+        <LockedSwitches lockedSwitches={entities.lockedSwitches} />
+        <TrapSwitches trapSwitches={entities.trapSwitches} />
         <ExitSwitches exitSwitches={entities.exitSwitches} />
-        <LaunchPads launchPads={[entities.launchPads, () => {}]} />
-        <FloorGuards floorGuards={[entities.floorGuards, () => {}]} />
-        <Thwumps thwumps={[entities.thwumps, () => {}]} />
+        <LaunchPads launchPads={entities.launchPads} />
+        <ZapDrones zapDrones={entities.zapDrones} />
+        <FloorGuards floorGuards={entities.floorGuards} />
+        <Thwumps thwumps={entities.thwumps} />
         <For each={entities.ninjas()}>
             {ninja => <Ninja class="ninja" ninja={() => ninja} bones={() => BONES_STANDING} />}
         </For>
-        <BounceBlocks bounceBlocks={[entities.bounceBlocks, () => {}]} />
-        <ShoveThwumps shoveThwumps={[entities.shoveThwumps, () => {}]} />
-        <BoostPads boostPads={[entities.boostPads, () => {}]} />
+        <BounceBlocks bounceBlocks={entities.bounceBlocks} />
+        <ShoveThwumps shoveThwumps={entities.shoveThwumps} />
+        <BoostPads boostPads={entities.boostPads} />
     </>;
 }
 
@@ -371,6 +382,7 @@ export function EditorApp(props: {
         else if (event.code === 'Space') change = true, editor.press_space();
         else if (event.code === 'AltLeft') change = true, editor.press_alt_left(event.shiftKey);
 
+        else if (event.code === 'KeyR') change = true, editor.press_r();
         else if (event.code === 'KeyT') change = true, editor.press_t();
         else if (event.code === 'KeyY') change = true, editor.press_y();
         else if (event.code === 'KeyU') change = true, editor.press_u();
@@ -551,6 +563,7 @@ export function EditorApp(props: {
                 <TrapSwitchDefs />
                 <BoostPadDefs />
                 <ThwumpDefs />
+                <ZapDroneDefs />
                 <path id="tilemode-crosshair" stroke-width="1.5" fill="none" d={tilemodeCrosshairPath} />
                 <path id="crosshair" stroke-width="1.5" fill="none" d={crosshairPath} />
                 <filter id="outline" filterUnits="userSpaceOnUse" x="0" y="0" width="1056" height="600">

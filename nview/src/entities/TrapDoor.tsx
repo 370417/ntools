@@ -38,10 +38,8 @@ export function updateTrapDoors([trapDoors, setTrapDoors]: Signal<TrapDoorData[]
     setTrapDoors(newTrapDoors);
 }
 
-export function TrapDoors(props: { trapDoors: Signal<TrapDoorData[]> }) {
-    const [trapDoors] = props.trapDoors;
-
-    return <Index each={trapDoors()}>
+export function TrapDoors(props: { trapDoors: Accessor<TrapDoorData[]> }) {
+    return <Index each={props.trapDoors()}>
         {trapDoor => <TrapDoor trapDoor={trapDoor} />}
     </Index>;
 }

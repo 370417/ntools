@@ -38,10 +38,8 @@ export function updateShoveThwumps([shoveThwumps, setShoveThwumps]: Signal<Shove
     setShoveThwumps(newShoveThwumps);
 }
 
-export function ShoveThwumps(props: { shoveThwumps: Signal<ShoveThwumpData[]> }) {
-    const [shoveThwumps] = props.shoveThwumps;
-
-    return <Index each={shoveThwumps()}>
+export function ShoveThwumps(props: { shoveThwumps: Accessor<ShoveThwumpData[]> }) {
+    return <Index each={props.shoveThwumps()}>
         {shoveThwump => <ShoveThwump shoveThwump={shoveThwump} />}
     </Index>;
 }

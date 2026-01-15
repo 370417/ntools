@@ -1,4 +1,4 @@
-body {
+:root {
     --main-menu-text: #ECFFDF;
     --main-menu-selected: #FECC04;
 
@@ -62,6 +62,9 @@ body {
     --shove-thwump-ray: #48C1C8;
     --shove-thwump-center: #4F564D;
 
+    --zap-drone-background: #48C1C8;
+    --zap-drone-border: #202020;
+
     --time-remaining: #FECC04;
     --hardcore-time: #DF9B43;
     --empty-timebar: #707A6B;
@@ -74,6 +77,9 @@ body {
     --tiles-selected: #C2CEB1;
     --entity-arrows: #FBC902;
     --entity-palette-reticle: #000000;
+}
+
+body {
 
     background: var(--tiles);
 
@@ -118,22 +124,6 @@ svg {
 
 .ninja.preview {
     opacity: 0.5;
-}
-
-#bounceblockFill {
-    fill: var(--bounceblock-interior);
-}
-
-#bounceblockStroke {
-    stroke: var(--bounceblock-border);
-}
-
-.launch-pad rect {
-    fill: var(--launch-pad-long);
-}
-
-.launch-pad line {
-    stroke: var(--launch-pad-short);
 }
 
 .locked-door .bar {

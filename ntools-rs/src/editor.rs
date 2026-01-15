@@ -6,7 +6,7 @@ use futures_channel::oneshot::{self, Receiver};
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{anim_data::flatten_bones, attract::Attract, editor::{editor_entity::{EditorEntity, EntityId, ExportedEntity}, editor_state::{Command, EditorState}, entity_palette::EntityPalette, modify_entity::ModifyEntity, move_selection::MoveSelection, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::PlaceEntity, select_entity::SelectEntity, select_tiles::SelectTiles, spawn_ninja::closest_past_ninja, tile_palette::TilePalette}, entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floor_guard::FloorGuard, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump}, grid::{COLS, GridPos, ROWS}, map_file::MapFile, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationBinary, OrientationCardinal, Orientations}, replay::Replay, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_HALF_SIZE, TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
+use crate::{anim_data::flatten_bones, attract::Attract, editor::{editor_entity::{EditorEntity, EntityId, ExportedEntity}, editor_state::{Command, EditorState}, entity_palette::EntityPalette, modify_entity::ModifyEntity, move_selection::MoveSelection, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::PlaceEntity, select_entity::SelectEntity, select_tiles::SelectTiles, spawn_ninja::closest_past_ninja, tile_palette::TilePalette}, entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floor_guard::FloorGuard, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::{COLS, GridPos, ROWS}, map_file::MapFile, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationBinary, OrientationCardinal, Orientations}, replay::Replay, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_HALF_SIZE, TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
 
 pub mod editor_entity;
 pub mod editor_state;
@@ -176,6 +176,9 @@ impl Editor {
                     }
                     EditorEntity::OneWay { pos, orientation } => {
                         entities.one_ways.push(OneWay::new(pos.to_world_pos(), *orientation));
+                    }
+                    EditorEntity::ZapDrone { pos, orientation } => {
+                        entities.zap_drones.push(ZapDrone::new(pos.to_world_pos(), *orientation));
                     }
                     EditorEntity::FloorGuard { pos, orientation } => {
                         entities.floor_guards.push(FloorGuard::new(pos.to_world_pos(), *orientation));
@@ -668,11 +671,11 @@ impl Editor {
             }
             EditorMode::PlaceEntity(place_entity) => {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
-                place_entity.set_orientation(self.entity_orientations.orientation);
+                place_entity.set_orientation(self.entity_orientations);
             }
             EditorMode::ModifyEntity(modify_entity) => {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
-                modify_entity.set_orientation(self.entity_orientations.orientation);
+                modify_entity.set_orientation(self.entity_orientations);
             }
             EditorMode::SpawnNinja |
             EditorMode::EntityPalette(_) => set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations),
@@ -702,11 +705,11 @@ impl Editor {
             }
             EditorMode::PlaceEntity(place_entity) => {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
-                place_entity.set_orientation(self.entity_orientations.orientation);
+                place_entity.set_orientation(self.entity_orientations);
             }
             EditorMode::ModifyEntity(modify_entity) => {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
-                modify_entity.set_orientation(self.entity_orientations.orientation);
+                modify_entity.set_orientation(self.entity_orientations);
             }
             EditorMode::SpawnNinja |
             EditorMode::EntityPalette(_) => set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations),
@@ -736,11 +739,11 @@ impl Editor {
             }
             EditorMode::PlaceEntity(place_entity) => {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
-                place_entity.set_orientation(self.entity_orientations.orientation);
+                place_entity.set_orientation(self.entity_orientations);
             }
             EditorMode::ModifyEntity(modify_entity) => {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
-                modify_entity.set_orientation(self.entity_orientations.orientation);
+                modify_entity.set_orientation(self.entity_orientations);
             }
             EditorMode::SpawnNinja |
             EditorMode::EntityPalette(_) => set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations),
@@ -770,11 +773,11 @@ impl Editor {
             }
             EditorMode::PlaceEntity(place_entity) => {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
-                place_entity.set_orientation(self.entity_orientations.orientation);
+                place_entity.set_orientation(self.entity_orientations);
             }
             EditorMode::ModifyEntity(modify_entity) => {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
-                modify_entity.set_orientation(self.entity_orientations.orientation);
+                modify_entity.set_orientation(self.entity_orientations);
             }
             EditorMode::SpawnNinja |
             EditorMode::EntityPalette(_) => set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations),
@@ -802,11 +805,11 @@ impl Editor {
             }
             EditorMode::PlaceEntity(place_entity) => {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
-                place_entity.set_orientation(self.entity_orientations.orientation);
+                place_entity.set_orientation(self.entity_orientations);
             }
             EditorMode::ModifyEntity(modify_entity) => {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
-                modify_entity.set_orientation(self.entity_orientations.orientation);
+                modify_entity.set_orientation(self.entity_orientations);
             }
             EditorMode::SpawnNinja |
             EditorMode::EntityPalette(_) => set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations),
@@ -843,11 +846,11 @@ impl Editor {
             }
             EditorMode::PlaceEntity(place_entity) => {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
-                place_entity.set_orientation(self.entity_orientations.orientation);
+                place_entity.set_orientation(self.entity_orientations);
             }
             EditorMode::ModifyEntity(modify_entity) => {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
-                modify_entity.set_orientation(self.entity_orientations.orientation);
+                modify_entity.set_orientation(self.entity_orientations);
             }
             EditorMode::SpawnNinja |
             EditorMode::EntityPalette(_) => set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations),
@@ -876,11 +879,11 @@ impl Editor {
         match &mut self.mode {
             EditorMode::PlaceEntity(place_entity) => {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
-                place_entity.set_orientation(self.entity_orientations.orientation);
+                place_entity.set_orientation(self.entity_orientations);
             }
             EditorMode::ModifyEntity(modify_entity) => {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
-                modify_entity.set_orientation(self.entity_orientations.orientation);
+                modify_entity.set_orientation(self.entity_orientations);
             }
             EditorMode::SpawnNinja |
             EditorMode::EntityPalette(_) => set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations),
@@ -927,11 +930,11 @@ impl Editor {
         match &mut self.mode {
             EditorMode::PlaceEntity(place_entity) => {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
-                place_entity.set_orientation(self.entity_orientations.orientation);
+                place_entity.set_orientation(self.entity_orientations);
             }
             EditorMode::ModifyEntity(modify_entity) => {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
-                modify_entity.set_orientation(self.entity_orientations.orientation);
+                modify_entity.set_orientation(self.entity_orientations);
             }
             EditorMode::SpawnNinja |
             EditorMode::EntityPalette(_) => set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations),
@@ -940,6 +943,15 @@ impl Editor {
                 if !selection.is_empty() {
                     self.mode = EditorMode::MoveSelection(MoveSelection::new(self.cursor_pos, selection, self.state.tiles(), self.state.entities()));
                 }
+            }
+            _ => {}
+        }
+    }
+
+    pub fn press_r(&mut self) {
+        match &mut self.mode {
+            EditorMode::MoveSelection(move_selection) => {
+                move_selection.invert_tiles();
             }
             _ => {}
         }
@@ -1006,7 +1018,8 @@ impl Editor {
     }
 
     pub fn press_h(&mut self) {
-        // zap drone
+        self.selected_entity_id = EntityId::ZapDrone;
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
     }
 
     pub fn press_j(&mut self) {

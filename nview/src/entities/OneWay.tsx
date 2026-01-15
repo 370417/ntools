@@ -36,10 +36,8 @@ export function updateOneWays([oneWays, setOneWays]: Signal<OneWayData[]>, repla
     setOneWays(newOneWays);
 }
 
-export function OneWays(props: { oneWays: Signal<OneWayData[]> }) {
-    const [oneWays] = props.oneWays;
-
-    return <Index each={oneWays()}>
+export function OneWays(props: { oneWays: Accessor<OneWayData[]> }) {
+    return <Index each={props.oneWays()}>
         {oneWay => <use href="#one-way" transform={transform(oneWay)} />}
     </Index>
 }

@@ -38,10 +38,8 @@ export function updateRegularDoors([regularDoors, setRegularDoors]: Signal<Regul
     setRegularDoors(newRegularDoors);
 }
 
-export function RegularDoors(props: { regularDoors: Signal<RegularDoorData[]> }) {
-    const [regularDoors] = props.regularDoors;
-
-    return <Index each={regularDoors()}>
+export function RegularDoors(props: { regularDoors: Accessor<RegularDoorData[]> }) {
+    return <Index each={props.regularDoors()}>
         {regularDoor => <RegularDoor regularDoor={regularDoor} />}
     </Index>;
 }

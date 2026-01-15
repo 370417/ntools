@@ -220,6 +220,8 @@ const colorVarNames = [
     '--shove-thwump-armor',
     '--shove-thwump-ray',
     '--shove-thwump-center',
+    '--zap-drone-background',
+    '--zap-drone-border',
     '--time-remaining',
     '--hardcore-time',
     '--empty-timebar',
@@ -427,6 +429,14 @@ const colorVarPaletteLocations: Record<ColorVarName, { file: PaletteFileName, in
     '--shove-thwump-center': {
         file: 'entityShoveThwomp',
         index: 0,
+    },
+    '--zap-drone-background': {
+        file: 'entityDroneZap',
+        index: 0,
+    },
+    '--zap-drone-border': {
+        file: 'entityDroneZap',
+        index: 1,
     },
     '--time-remaining': {
         file: 'timeBar',

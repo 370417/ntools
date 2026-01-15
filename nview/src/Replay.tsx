@@ -19,6 +19,7 @@ import { ExitSwitches, updateExitSwitches, type ExitSwitchData } from './entitie
 import type { GlobalEventState } from './App';
 import { BoostPadDefs, BoostPads, updateBoostPads, type BoostPadData } from './entities/BoostPad';
 import { ThwumpDefs, Thwumps, updateThwumps, type ThwumpData } from './entities/Thwump';
+import { updateZapDrones, ZapDroneDefs, ZapDrones, type ZapDroneData } from './entities/ZapDrone';
 
 export function ReplayApp(props: { replay: Replay, globalEventState: GlobalEventState }) {
     const replay = props.replay;
@@ -83,6 +84,7 @@ export function ReplayApp(props: { replay: Replay, globalEventState: GlobalEvent
     const shoveThwumps = createSignal<ShoveThwumpData[]>([]);
     const exitDoors = createSignal<ExitDoorData[]>([]);
     const exitSwitches = createSignal<ExitSwitchData[]>([]);
+    const zapDrones = createSignal<ZapDroneData[]>([]);
 
     let timeMs = performance.now();
     const fps = 60;
@@ -164,6 +166,7 @@ export function ReplayApp(props: { replay: Replay, globalEventState: GlobalEvent
         updateShoveThwumps(shoveThwumps, replay, partialFrame);
         updateExitDoors(exitDoors, replay, partialFrame);
         updateExitSwitches(exitSwitches, replay, partialFrame);
+        updateZapDrones(zapDrones, replay, partialFrame);
 
         setReplayLength(replay.replay_length());
     }
@@ -188,25 +191,27 @@ export function ReplayApp(props: { replay: Replay, globalEventState: GlobalEvent
                     <TrapSwitchDefs />
                     <BoostPadDefs />
                     <ThwumpDefs />
+                    <ZapDroneDefs />
                     <ExitDoorGradient />
                 </defs>
-                <ExitDoors exitDoors={exitDoors} />
-                <OneWays oneWays={oneWays} />
-                <Mines mines={mines} />
-                <RegularDoors regularDoors={regularDoors} />
-                <LockedDoors lockedDoors={lockedDoors} />
-                <TrapDoors trapDoors={trapDoors} />
-                <LockedSwitches lockedSwitches={lockedSwitches} />
-                <TrapSwitches trapSwitches={trapSwitches} />
+                <ExitDoors exitDoors={exitDoors[0]} />
+                <OneWays oneWays={oneWays[0]} />
+                <Mines mines={mines[0]} />
+                <RegularDoors regularDoors={regularDoors[0]} />
+                <LockedDoors lockedDoors={lockedDoors[0]} />
+                <TrapDoors trapDoors={trapDoors[0]} />
+                <LockedSwitches lockedSwitches={lockedSwitches[0]} />
+                <TrapSwitches trapSwitches={trapSwitches[0]} />
                 <ExitSwitches exitSwitches={exitSwitches[0]} />
-                <LaunchPads launchPads={launchPads} />
-                <FloorGuards floorGuards={floorGuards} />
-                <Thwumps thwumps={thwumps} />
+                <LaunchPads launchPads={launchPads[0]} />
+                <ZapDrones zapDrones={zapDrones[0]} />
+                <FloorGuards floorGuards={floorGuards[0]} />
+                <Thwumps thwumps={thwumps[0]} />
                 <Ninja class="ninja preview" ninja={ninjaPreview} bones={ninjaPreviewBones} />
                 <Ninja class="ninja" ninja={ninja} bones={ninjaBones} />
-                <BounceBlocks bounceBlocks={bounceBlocks} />
-                <ShoveThwumps shoveThwumps={shoveThwumps} />
-                <BoostPads boostPads={boostPads} />
+                <BounceBlocks bounceBlocks={bounceBlocks[0]} />
+                <ShoveThwumps shoveThwumps={shoveThwumps[0]} />
+                <BoostPads boostPads={boostPads[0]} />
                 <path id="tiles" stroke-width="2" clip-path="url(#tiles-clip)" clip-rule="evenodd" d={tilePath()} fill-rule="evenodd" />
             </svg>
             <div>

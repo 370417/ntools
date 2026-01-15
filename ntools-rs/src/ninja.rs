@@ -343,6 +343,9 @@ impl Ninja {
                         on_door_state_change(regular_door.pos, &mut entities.thwumps, &mut entities.floor_guards);
                     }
                 }
+                GridEntityType::ZapDrone => {
+                    entities.zap_drones[i].logical_collision(self);
+                }
             }
         }
 

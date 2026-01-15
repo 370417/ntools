@@ -36,10 +36,8 @@ export function updateBounceBlocks([bounceBlocks, setBounceBlocks]: Signal<Bounc
     setBounceBlocks(newBounceBlocks);
 }
 
-export function BounceBlocks(props: { bounceBlocks: Signal<BounceBlockData[]> }) {
-    const [bounceBlocks] = props.bounceBlocks;
-
-    return <Index each={bounceBlocks()}>
+export function BounceBlocks(props: { bounceBlocks: Accessor<BounceBlockData[]> }) {
+    return <Index each={props.bounceBlocks()}>
         {bounceBlock => <use href="#bounceblock" transform={transform(bounceBlock)} />}
     </Index>;
 }
@@ -56,7 +54,7 @@ const bounceBlockStroke = 2 * 24 / 44;
 
 export function BounceBlockDefs() {
     return <g id="bounceblock">
-        <path id="bounceblockFill" d={bounceBlockPath} />
-        <path id="bounceblockStroke" d={bounceBlockStrokePath} fill="none" stroke-width={bounceBlockStroke} />
+        <path fill="var(--bounceblock-interior)" d={bounceBlockPath} />
+        <path stroke="var(--bounceblock-border)" d={bounceBlockStrokePath} fill="none" stroke-width={bounceBlockStroke} />
     </g>;
 }

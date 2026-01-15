@@ -38,10 +38,8 @@ export function updateLockedDoors([lockedDoors, setLockedDoors]: Signal<LockedDo
     setLockedDoors(newLockedDoors);
 }
 
-export function LockedDoors(props: { lockedDoors: Signal<LockedDoorData[]> }) {
-    const [lockedDoors] = props.lockedDoors;
-
-    return <Index each={lockedDoors()}>
+export function LockedDoors(props: { lockedDoors: Accessor<LockedDoorData[]> }) {
+    return <Index each={props.lockedDoors()}>
         {lockedDoor => <LockedDoor lockedDoor={lockedDoor} />}
     </Index>;
 }

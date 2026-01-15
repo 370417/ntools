@@ -109,7 +109,7 @@ fn entity_pos_in_palette(entity_id: EntityId) -> Option<EntityPos> {
         EntityId::OneWay => Some(EntityPos { x: -5, y: -10 }),
         // EntityId::ChainsawDrone => Some(EntityPos { x: 10, y: -10 }),
         // EntityId::LaserDrone => Some(EntityPos { x: 10, y: -5 }),
-        // EntityId::ZapDrone => Some(EntityPos { x: 10, y: 0 }),
+        EntityId::ZapDrone => Some(EntityPos { x: 10, y: 0 }),
         // EntityId::ChaseDrone => Some(EntityPos { x: 10, y: 5 }),
         EntityId::FloorGuard => Some(EntityPos { x: -5, y: 5 }),
         EntityId::BounceBlock => Some(EntityPos { x: 0, y: 5 }),
