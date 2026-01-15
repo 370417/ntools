@@ -948,6 +948,15 @@ impl Editor {
         }
     }
 
+    pub fn press_r(&mut self) {
+        match &mut self.mode {
+            EditorMode::MoveSelection(move_selection) => {
+                move_selection.invert_tiles();
+            }
+            _ => {}
+        }
+    }
+
     pub fn press_t(&mut self) {
         match &mut self.mode {
             EditorMode::SelectEntity(select_entity) => {

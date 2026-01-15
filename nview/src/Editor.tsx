@@ -382,6 +382,7 @@ export function EditorApp(props: {
         else if (event.code === 'Space') change = true, editor.press_space();
         else if (event.code === 'AltLeft') change = true, editor.press_alt_left(event.shiftKey);
 
+        else if (event.code === 'KeyR') change = true, editor.press_r();
         else if (event.code === 'KeyT') change = true, editor.press_t();
         else if (event.code === 'KeyY') change = true, editor.press_y();
         else if (event.code === 'KeyU') change = true, editor.press_u();
