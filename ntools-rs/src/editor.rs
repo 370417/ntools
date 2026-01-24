@@ -1020,6 +1020,8 @@ impl Editor {
     pub fn press_h(&mut self) {
         self.selected_entity_id = EntityId::ZapDrone;
         self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
+        // call set_cursor_pos to correct the cursor position if it is illegal for a drone
+        self.set_cursor_pos(self.true_cursor_pos().x, self.true_cursor_pos().y, false);
     }
 
     pub fn press_j(&mut self) {
@@ -1251,6 +1253,8 @@ impl Editor {
 
     pub fn release_space(&mut self) {
         self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
+        // call set_cursor_pos to correct the cursor position if it is illegal for the selected entity
+        self.set_cursor_pos(self.true_cursor_pos().x, self.true_cursor_pos().y, false);
     }
 
     pub fn release_alt_left(&mut self) {
