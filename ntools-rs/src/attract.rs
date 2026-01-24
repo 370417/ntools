@@ -24,16 +24,16 @@ impl Attract {
             return Err("Attract input is too short".into());
         }
 
-        let map_data_len = u32::from_le_bytes(attract_bytes[0..4].try_into().map_err(|_| "Failed to read map length")?);
-        let demo_data_len = u32::from_le_bytes(attract_bytes[4..8].try_into().map_err(|_| "Failed to read demo length")?);
+        let map_data_len = u32::from_le_bytes(*attract_bytes[0..4].as_array().ok_or("Failed to read map length")?);
+        let demo_data_len = u32::from_le_bytes(*attract_bytes[4..8].as_array().ok_or("Failed to read demo length")?);
         let total_len = attract_bytes.len();
 
         if map_data_len + demo_data_len + 8 != total_len as u32 {
             return Err("Inconsistent attract input length".into());
         }
 
-        let _level_id = u32::from_le_bytes(attract_bytes[8..12].try_into().map_err(|_| "Failed to read level id")?);
-        let _game_mode = u32::from_le_bytes(attract_bytes[12..16].try_into().map_err(|_| "Failed to read game mode")?);
+        let _level_id = u32::from_le_bytes(*attract_bytes[8..12].as_array().ok_or("Failed to read level id")?);
+        let _game_mode = u32::from_le_bytes(*attract_bytes[12..16].as_array().ok_or("Failed to read game mode")?);
         let _unknown1 = &attract_bytes[16..20];
         let _unknown2 = &attract_bytes[20..38];
         let padded_level_name = &attract_bytes[38..166];
@@ -221,13 +221,13 @@ impl Attract {
             return Err("Demo input byte 0 should be 0".into());
         }
 
-        let demo_data_len_2 = u32::from_le_bytes(demo_bytes[1..5].try_into().map_err(|_| "Failed to read demo demo length 2")?);
+        let demo_data_len_2 = u32::from_le_bytes(*demo_bytes[1..5].as_array().ok_or("Failed to read demo demo length 2")?);
 
         if demo_data_len != demo_data_len_2 {
             return Err("Demo data lengths do not match".into());
         }
 
-        let frame_count = u32::from_le_bytes(demo_bytes[9..13].try_into().map_err(|_| "Failed to read frame count")?);
+        let frame_count = u32::from_le_bytes(*demo_bytes[9..13].as_array().ok_or("Failed to read frame count")?);
 
         let frames = &demo_bytes[30..];
 
