@@ -968,12 +968,22 @@ impl Editor {
                     select_entity.set_selection(crosshair_pos, self.state.entities());
                 }
             }
+            EditorMode::MoveSelection(move_selection) => {
+                move_selection.toggle_tile_visibility();
+            }
             _ => {}
         }
     }
 
     pub fn press_y(&mut self) {
-        // gauss turret
+        match &mut self.mode {
+            EditorMode::MoveSelection(move_selection) => {
+                move_selection.toggle_entity_visibility();
+            }
+            _ => {
+                // gauss turret
+            }
+        }
     }
 
     pub fn press_u(&mut self) {
