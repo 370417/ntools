@@ -51,7 +51,7 @@ impl Replay {
     pub fn tick(&mut self) {
         if (self.current_sim.frame as usize) < self.inputs.len() {
             // Save keyframe every 120 frames
-            if self.current_sim.frame % 120 == 0 && !self.keyframes.contains_key(&self.current_sim.frame) {
+            if self.current_sim.frame.is_multiple_of(120) && !self.keyframes.contains_key(&self.current_sim.frame) {
                 self.keyframes.insert(self.current_sim.frame, KeyFrame::from_sim(&self.current_sim, &self.initial_mines));
             }
 
@@ -430,7 +430,7 @@ impl Replay {
     fn tick_preview(&mut self) {
         if (self.preview_sim.frame as usize) < self.inputs.len() {
             // Save keyframe every 120 frames
-            if self.preview_sim.frame % 120 == 0 && !self.keyframes.contains_key(&self.preview_sim.frame) {
+            if self.preview_sim.frame.is_multiple_of(120) && !self.keyframes.contains_key(&self.preview_sim.frame) {
                 self.keyframes.insert(self.preview_sim.frame, KeyFrame::from_sim(&self.preview_sim, &self.initial_mines));
             }
 

@@ -75,7 +75,7 @@ impl Attract {
         if map_data.len() < tile_len + object_count_len {
             return Err("Map data too small".into());
         }
-        if object_data_bytes % 5 != 0 {
+        if !object_data_bytes.is_multiple_of(5) {
             return Err("Object data len not divisible by 5".into());
         }
 

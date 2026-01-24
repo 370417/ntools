@@ -215,7 +215,7 @@ fn read_u32(cursor: &mut Cursor<&[u8]>) -> Result<u32, std::io::Error> {
 }
 
 fn editor_entities_from_bytes(entity_counts: &[u16], entity_data: &[u8]) -> Result<EditorEntities, String> {
-    if entity_data.len() % 5 != 0 {
+    if !entity_data.len().is_multiple_of(5) {
         Err("entity_data length must be multiple of 5")?;
     }
 
