@@ -100,6 +100,12 @@ pub enum EntityId {
     ShoveThwump = 28,
 }
 
+impl EntityId {
+    pub fn is_drone(self) -> bool {
+        matches!(self, EntityId::ZapDrone | EntityId::ChainsawDrone | EntityId::LaserDrone | EntityId::MiniDrone)
+    }
+}
+
 impl TryFrom<u8> for EntityId {
     type Error = ();
 

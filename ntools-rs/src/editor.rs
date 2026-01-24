@@ -503,20 +503,22 @@ impl Editor {
     }
 
     pub fn show_half_grid(&self) -> bool {
-        match self.mode {
+        match &self.mode {
             EditorMode::PenTool(_) => self.pen_tool_fine_grid,
-            EditorMode::PlaceEntity(_) => true,
-            EditorMode::ModifyEntity(_) => true,
+            EditorMode::PlaceEntity(place_entity) => !place_entity.entity.id().is_drone(),
+            EditorMode::ModifyEntity(modify_entity) => !modify_entity.modified_entity.id().is_drone(),
             EditorMode::SelectEntity(_) => true,
+            EditorMode::EntityPalette(_) => true,
             _ => false,
         }
     }
 
     pub fn show_quarter_grid(&self) -> bool {
-        match self.mode {
-            EditorMode::PlaceEntity(_) => self.entity_fine_grid,
-            EditorMode::ModifyEntity(_) => self.entity_fine_grid,
+        match &self.mode {
+            EditorMode::PlaceEntity(place_entity) => !place_entity.entity.id().is_drone() && self.entity_fine_grid,
+            EditorMode::ModifyEntity(modify_entity) => !modify_entity.modified_entity.id().is_drone() && self.entity_fine_grid,
             EditorMode::SelectEntity(_) => self.entity_fine_grid,
+            EditorMode::EntityPalette(_) => self.entity_fine_grid,
             _ => false,
         }
     }
@@ -1020,6 +1022,8 @@ impl Editor {
     pub fn press_h(&mut self) {
         self.selected_entity_id = EntityId::ZapDrone;
         self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
+        // call set_cursor_pos to correct the cursor position if it is illegal for a drone
+        self.set_cursor_pos(self.true_cursor_pos().x, self.true_cursor_pos().y, false);
     }
 
     pub fn press_j(&mut self) {
@@ -1066,6 +1070,9 @@ impl Editor {
                 self.entity_fine_grid = !self.entity_fine_grid;
                 let crosshair_pos = PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid);
                 select_entity.set_selection(crosshair_pos, self.state.entities());
+            }
+            EditorMode::EntityPalette(_) => {
+                self.entity_fine_grid = !self.entity_fine_grid;
             }
             _ => {}
         }
@@ -1251,6 +1258,8 @@ impl Editor {
 
     pub fn release_space(&mut self) {
         self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
+        // call set_cursor_pos to correct the cursor position if it is illegal for the selected entity
+        self.set_cursor_pos(self.true_cursor_pos().x, self.true_cursor_pos().y, false);
     }
 
     pub fn release_alt_left(&mut self) {

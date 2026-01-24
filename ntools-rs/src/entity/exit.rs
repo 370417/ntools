@@ -1,5 +1,7 @@
 use glam::{DVec2, FloatExt};
 
+// TODO: reading multiple exits from map is incorrect
+
 use crate::{collision_util::overlap_circle_vs_circle, entity::boost_pad::ease_out_quad, ninja::{self, Ninja}};
 
 const DOOR_RADIUS: f64 = 12.0;
