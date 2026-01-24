@@ -30,20 +30,20 @@
     context: null,
     owner: null
   };
-  var q = null;
-  let Ye = null, yr = null, z = null, W = null, ae = null, He = 0;
+  var U = null;
+  let Ye = null, yr = null, z = null, V = null, ae = null, We = 0;
   function ke(t, e) {
-    const r = z, s = q, n = t.length === 0, i = e === void 0 ? s : e, _ = n ? jt : {
+    const r = z, s = U, n = t.length === 0, i = e === void 0 ? s : e, _ = n ? jt : {
       owned: null,
       cleanups: null,
       context: i ? i.context : null,
       owner: i
     }, o = n ? t : () => t(() => re(() => Ae(_)));
-    q = _, z = null;
+    U = _, z = null;
     try {
       return Ce(o, true);
     } finally {
-      z = r, q = s;
+      z = r, U = s;
     }
   }
   function m(t, e) {
@@ -84,9 +84,9 @@
     }
   }
   function me(t) {
-    return q === null || (q.cleanups === null ? q.cleanups = [
+    return U === null || (U.cleanups === null ? U.cleanups = [
       t
-    ] : q.cleanups.push(t)), t;
+    ] : U.cleanups.push(t)), t;
   }
   function mr(t) {
     const e = ee(t), r = ee(() => st(e()));
@@ -100,8 +100,8 @@
   function Mt() {
     if (this.sources && this.state) if (this.state === fe) Ne(this);
     else {
-      const t = W;
-      W = null, Ce(() => qe(this), false), W = t;
+      const t = V;
+      V = null, Ce(() => Ue(this), false), V = t;
     }
     if (z) {
       const t = this.observers ? this.observers.length : 0;
@@ -122,27 +122,27 @@
     return (!t.comparator || !t.comparator(s, e)) && (t.value = e, t.observers && t.observers.length && Ce(() => {
       for (let n = 0; n < t.observers.length; n += 1) {
         const i = t.observers[n], _ = Ye && Ye.running;
-        _ && Ye.disposed.has(i), (_ ? !i.tState : !i.state) && (i.pure ? W.push(i) : ae.push(i), i.observers && Bt(i)), _ || (i.state = fe);
+        _ && Ye.disposed.has(i), (_ ? !i.tState : !i.state) && (i.pure ? V.push(i) : ae.push(i), i.observers && Bt(i)), _ || (i.state = fe);
       }
-      if (W.length > 1e6) throw W = [], new Error();
+      if (V.length > 1e6) throw V = [], new Error();
     }, false)), e;
   }
   function Ne(t) {
     if (!t.fn) return;
     Ae(t);
-    const e = He;
+    const e = We;
     br(t, t.value, e);
   }
   function br(t, e, r) {
     let s;
-    const n = q, i = z;
-    z = q = t;
+    const n = U, i = z;
+    z = U = t;
     try {
       s = t.fn(e);
     } catch (_) {
       return t.pure && (t.state = fe, t.owned && t.owned.forEach(Ae), t.owned = null), t.updatedAt = r + 1, Ot(_);
     } finally {
-      z = i, q = n;
+      z = i, U = n;
     }
     (!t.updatedAt || t.updatedAt <= r) && (t.updatedAt != null && "observers" in t ? Nt(t, s) : t.value = s, t.updatedAt = r);
   }
@@ -156,69 +156,69 @@
       sourceSlots: null,
       cleanups: null,
       value: e,
-      owner: q,
-      context: q ? q.context : null,
+      owner: U,
+      context: U ? U.context : null,
       pure: r
     };
-    return q === null || q !== jt && (q.owned ? q.owned.push(i) : q.owned = [
+    return U === null || U !== jt && (U.owned ? U.owned.push(i) : U.owned = [
       i
     ]), i;
   }
-  function Ue(t) {
+  function qe(t) {
     if (t.state === 0) return;
-    if (t.state === Ge) return qe(t);
+    if (t.state === Ge) return Ue(t);
     if (t.suspense && re(t.suspense.inFallback)) return t.suspense.effects.push(t);
     const e = [
       t
     ];
-    for (; (t = t.owner) && (!t.updatedAt || t.updatedAt < He); ) t.state && e.push(t);
+    for (; (t = t.owner) && (!t.updatedAt || t.updatedAt < We); ) t.state && e.push(t);
     for (let r = e.length - 1; r >= 0; r--) if (t = e[r], t.state === fe) Ne(t);
     else if (t.state === Ge) {
-      const s = W;
-      W = null, Ce(() => qe(t, e[0]), false), W = s;
+      const s = V;
+      V = null, Ce(() => Ue(t, e[0]), false), V = s;
     }
   }
   function Ce(t, e) {
-    if (W) return t();
+    if (V) return t();
     let r = false;
-    e || (W = []), ae ? r = true : ae = [], He++;
+    e || (V = []), ae ? r = true : ae = [], We++;
     try {
       const s = t();
       return xr(r), s;
     } catch (s) {
-      r || (ae = null), W = null, Ot(s);
+      r || (ae = null), V = null, Ot(s);
     }
   }
   function xr(t) {
-    if (W && (Ct(W), W = null), t) return;
+    if (V && (Ct(V), V = null), t) return;
     const e = ae;
     ae = null, e.length && Ce(() => At(e), false);
   }
   function Ct(t) {
-    for (let e = 0; e < t.length; e++) Ue(t[e]);
+    for (let e = 0; e < t.length; e++) qe(t[e]);
   }
   function vr(t) {
     let e, r = 0;
     for (e = 0; e < t.length; e++) {
       const s = t[e];
-      s.user ? t[r++] = s : Ue(s);
+      s.user ? t[r++] = s : qe(s);
     }
-    for (e = 0; e < r; e++) Ue(t[e]);
+    for (e = 0; e < r; e++) qe(t[e]);
   }
-  function qe(t, e) {
+  function Ue(t, e) {
     t.state = 0;
     for (let r = 0; r < t.sources.length; r += 1) {
       const s = t.sources[r];
       if (s.sources) {
         const n = s.state;
-        n === fe ? s !== e && (!s.updatedAt || s.updatedAt < He) && Ue(s) : n === Ge && qe(s, e);
+        n === fe ? s !== e && (!s.updatedAt || s.updatedAt < We) && qe(s) : n === Ge && Ue(s, e);
       }
     }
   }
   function Bt(t) {
     for (let e = 0; e < t.observers.length; e += 1) {
       const r = t.observers[e];
-      r.state || (r.state = Ge, r.pure ? W.push(r) : ae.push(r), r.observers && Bt(r));
+      r.state || (r.state = Ge, r.pure ? V.push(r) : ae.push(r), r.observers && Bt(r));
     }
   }
   function Ae(t) {
@@ -249,7 +249,7 @@
       cause: t
     });
   }
-  function Ot(t, e = q) {
+  function Ot(t, e = U) {
     throw kr(t);
   }
   function st(t) {
@@ -328,7 +328,7 @@
     };
     return ee($r(() => t.each, t.children, e || void 0));
   }
-  function H(t) {
+  function W(t) {
     const e = "fallback" in t && {
       fallback: () => t.fallback
     };
@@ -452,8 +452,8 @@
     return re(() => t(e, r));
   }
   function x(t, e, r, s) {
-    if (r !== void 0 && !s && (s = []), typeof e != "function") return Ve(t, e, s, r);
-    T((n) => Ve(t, e(), n, r), s);
+    if (r !== void 0 && !s && (s = []), typeof e != "function") return He(t, e, s, r);
+    T((n) => He(t, e(), n, r), s);
   }
   function Lr(t) {
     let e = t.target;
@@ -488,7 +488,7 @@
     } else o();
     i(s);
   }
-  function Ve(t, e, r, s, n) {
+  function He(t, e, r, s, n) {
     for (; typeof r == "function"; ) r = r();
     if (e === r) return r;
     const i = typeof e, _ = s !== void 0;
@@ -503,11 +503,11 @@
       if (i === "function") return T(() => {
         let o = e();
         for (; typeof o == "function"; ) o = o();
-        r = Ve(t, o, r, s);
+        r = He(t, o, r, s);
       }), () => r;
       if (Array.isArray(e)) {
         const o = [], c = r && Array.isArray(r);
-        if (nt(o, e, r, n)) return T(() => r = Ve(t, o, r, s, true)), () => r;
+        if (nt(o, e, r, n)) return T(() => r = He(t, o, r, s, true)), () => r;
         if (o.length === 0) {
           if (r = be(t, r, s), _) return r;
         } else c ? r.length === 0 ? dt(t, o, s) : Tr(t, r, o) : (r && be(t), dt(t, o));
@@ -563,7 +563,7 @@
       n
     ];
   }
-  const Ar = "" + new URL("ntools_rs_bg-DTnQUnOG.wasm", import.meta.url).href, jr = async (t = {}, e) => {
+  const Ar = "" + new URL("ntools_rs_bg-A59PBmzH.wasm", import.meta.url).href, jr = async (t = {}, e) => {
     let r;
     if (e.startsWith("data:")) {
       const s = e.replace(/^data:.*?base64,/, "");
@@ -609,6 +609,9 @@
   function ye(t, e) {
     return t = t >>> 0, Cr(t, e);
   }
+  function Br(t, e) {
+    return t = t >>> 0, $e().subarray(t / 1, t / 1 + e);
+  }
   let we = 0;
   function Je(t, e) {
     const r = e(t.length * 1, 1) >>> 0;
@@ -617,9 +620,6 @@
   function Qe(t) {
     const e = l.__wbindgen_externrefs.get(t);
     return l.__externref_table_dealloc(t), e;
-  }
-  function Br(t, e) {
-    return t = t >>> 0, $e().subarray(t / 1, t / 1 + e);
   }
   const Le = new TextEncoder();
   "encodeInto" in Le || (Le.encodeInto = function(t, e) {
@@ -649,22 +649,22 @@
     }
     return we = _, n;
   }
-  let xe = null;
+  let Re = null;
   function Ir() {
+    return (Re === null || Re.byteLength === 0) && (Re = new Float64Array(l.memory.buffer)), Re;
+  }
+  function it(t, e) {
+    return t = t >>> 0, Ir().subarray(t / 8, t / 8 + e);
+  }
+  let xe = null;
+  function Rr() {
     return (xe === null || xe.buffer.detached === true || xe.buffer.detached === void 0 && xe.buffer !== l.memory.buffer) && (xe = new DataView(l.memory.buffer)), xe;
   }
   function ut(t, e) {
     t = t >>> 0;
-    const r = Ir(), s = [];
+    const r = Rr(), s = [];
     for (let n = t; n < t + 4 * e; n += 4) s.push(l.__wbindgen_externrefs.get(r.getUint32(n, true)));
     return l.__externref_drop_slice(t, e), s;
-  }
-  let Re = null;
-  function Rr() {
-    return (Re === null || Re.byteLength === 0) && (Re = new Float64Array(l.memory.buffer)), Re;
-  }
-  function it(t, e) {
-    return t = t >>> 0, Rr().subarray(t / 8, t / 8 + e);
   }
   const pt = typeof FinalizationRegistry > "u" ? {
     register: () => {
@@ -686,50 +686,19 @@
       const e = this.__destroy_into_raw();
       l.__wbg_editor_free(e, 0);
     }
-    static new() {
-      const e = l.editor_new();
-      return Se.__wrap(e);
-    }
-    set_anim_data(e) {
-      const r = Je(e, l.__wbindgen_malloc), s = we;
-      l.editor_set_anim_data(this.__wbg_ptr, r, s);
-    }
-    get_anim_state() {
-      return l.editor_get_anim_state(this.__wbg_ptr) >>> 0;
-    }
-    load_attract(e) {
-      const r = Je(e, l.__wbindgen_malloc), s = we, n = l.editor_load_attract(this.__wbg_ptr, r, s);
-      if (n[1]) throw Qe(n[0]);
-    }
-    load_map(e) {
-      const r = Je(e, l.__wbindgen_malloc), s = we, n = l.editor_load_map(this.__wbg_ptr, r, s);
-      if (n[1]) throw Qe(n[0]);
-    }
     export_map() {
       const e = l.editor_export_map(this.__wbg_ptr);
       var r = Br(e[0], e[1]).slice();
       return l.__wbindgen_free(e[0], e[1] * 1, 1), r;
     }
-    get_level_name() {
-      let e, r;
-      try {
-        const s = l.editor_get_level_name(this.__wbg_ptr);
-        return e = s[0], r = s[1], ye(s[0], s[1]);
-      } finally {
-        l.__wbindgen_free(e, r, 1);
-      }
+    press_dash() {
+      l.editor_press_dash(this.__wbg_ptr);
     }
-    set_level_name(e) {
-      const r = Or(e, l.__wbindgen_malloc, l.__wbindgen_realloc), s = we;
-      l.editor_set_level_name(this.__wbg_ptr, r, s);
+    press_down(e) {
+      l.editor_press_down(this.__wbg_ptr, e);
     }
-    to_replay(e) {
-      const r = l.editor_to_replay(this.__wbg_ptr, e);
-      if (r[2]) throw Qe(r[1]);
-      return Me.__wrap(r[0]);
-    }
-    mode() {
-      return l.editor_mode(this.__wbg_ptr) >>> 0;
+    press_left(e) {
+      l.editor_press_left(this.__wbg_ptr, e);
     }
     tiles_path() {
       let e, r;
@@ -740,6 +709,163 @@
         l.__wbindgen_free(e, r, 1);
       }
     }
+    crosshair_x() {
+      return l.editor_crosshair_x(this.__wbg_ptr);
+    }
+    crosshair_y() {
+      return l.editor_crosshair_y(this.__wbg_ptr);
+    }
+    cursor_down(e) {
+      l.editor_cursor_down(this.__wbg_ptr, e);
+    }
+    press_comma() {
+      l.editor_press_comma(this.__wbg_ptr);
+    }
+    press_enter() {
+      l.editor_press_enter(this.__wbg_ptr);
+    }
+    press_num_0() {
+      l.editor_press_num_0(this.__wbg_ptr);
+    }
+    press_num_1() {
+      l.editor_press_0(this.__wbg_ptr);
+    }
+    press_num_2() {
+      l.editor_press_0(this.__wbg_ptr);
+    }
+    press_num_3() {
+      l.editor_press_num_3(this.__wbg_ptr);
+    }
+    press_num_4() {
+      l.editor_press_0(this.__wbg_ptr);
+    }
+    press_num_5() {
+      l.editor_press_0(this.__wbg_ptr);
+    }
+    press_num_7() {
+      l.editor_press_num_7(this.__wbg_ptr);
+    }
+    press_right(e) {
+      l.editor_press_right(this.__wbg_ptr, e);
+    }
+    press_shift() {
+      l.editor_press_shift(this.__wbg_ptr);
+    }
+    press_slash() {
+      l.editor_press_slash(this.__wbg_ptr);
+    }
+    press_space() {
+      l.editor_press_space(this.__wbg_ptr);
+    }
+    double_click(e) {
+      l.editor_double_click(this.__wbg_ptr, e);
+    }
+    load_attract(e) {
+      const r = Je(e, l.__wbindgen_malloc), s = we, n = l.editor_load_attract(this.__wbg_ptr, r, s);
+      if (n[1]) throw Qe(n[0]);
+    }
+    past_ninja_x(e) {
+      return l.editor_past_ninja_x(this.__wbg_ptr, e);
+    }
+    past_ninja_y(e) {
+      return l.editor_past_ninja_y(this.__wbg_ptr, e);
+    }
+    press_equals() {
+      l.editor_press_equals(this.__wbg_ptr);
+    }
+    press_escape() {
+      return l.editor_press_escape(this.__wbg_ptr) !== 0;
+    }
+    release_shift() {
+      l.editor_release_shift(this.__wbg_ptr);
+    }
+    release_space() {
+      l.editor_release_space(this.__wbg_ptr);
+    }
+    set_anim_data(e) {
+      const r = Je(e, l.__wbindgen_malloc), s = we;
+      l.editor_set_anim_data(this.__wbg_ptr, r, s);
+    }
+    get_anim_state() {
+      return l.editor_get_anim_state(this.__wbg_ptr) >>> 0;
+    }
+    get_level_name() {
+      let e, r;
+      try {
+        const s = l.editor_get_level_name(this.__wbg_ptr);
+        return e = s[0], r = s[1], ye(s[0], s[1]);
+      } finally {
+        l.__wbindgen_free(e, r, 1);
+      }
+    }
+    get_show_trail() {
+      return l.editor_get_show_trail(this.__wbg_ptr) !== 0;
+    }
+    press_alt_left(e) {
+      l.editor_press_alt_left(this.__wbg_ptr, e);
+    }
+    press_backtick() {
+      l.editor_press_backtick(this.__wbg_ptr);
+    }
+    set_cursor_pos(e, r, s) {
+      return l.editor_set_cursor_pos(this.__wbg_ptr, e, r, s) !== 0;
+    }
+    set_level_name(e) {
+      const r = Or(e, l.__wbindgen_malloc, l.__wbindgen_realloc), s = we;
+      l.editor_set_level_name(this.__wbg_ptr, r, s);
+    }
+    set_show_trail(e) {
+      l.editor_set_show_trail(this.__wbg_ptr, e);
+    }
+    show_half_grid() {
+      return l.editor_show_half_grid(this.__wbg_ptr) !== 0;
+    }
+    past_ninjas_len() {
+      return l.editor_past_ninjas_len(this.__wbg_ptr) >>> 0;
+    }
+    palette_center_x() {
+      return l.editor_palette_center_x(this.__wbg_ptr);
+    }
+    palette_center_y() {
+      return l.editor_palette_center_y(this.__wbg_ptr);
+    }
+    past_ninja_bones() {
+      const e = l.editor_past_ninja_bones(this.__wbg_ptr);
+      var r = it(e[0], e[1]).slice();
+      return l.__wbindgen_free(e[0], e[1] * 8, 8), r;
+    }
+    preview_entities() {
+      const e = l.editor_preview_entities(this.__wbg_ptr);
+      var r = ut(e[0], e[1]).slice();
+      return l.__wbindgen_free(e[0], e[1] * 4, 4), r;
+    }
+    release_alt_left() {
+      l.editor_release_alt_left(this.__wbg_ptr);
+    }
+    show_quarter_grid() {
+      return l.editor_show_quarter_grid(this.__wbg_ptr) !== 0;
+    }
+    press_bracket_left() {
+      l.editor_press_bracket_left(this.__wbg_ptr);
+    }
+    tile_crosshair_col() {
+      return l.editor_tile_crosshair_col(this.__wbg_ptr);
+    }
+    tile_crosshair_row() {
+      return l.editor_tile_crosshair_row(this.__wbg_ptr);
+    }
+    palette_selection_x() {
+      return l.editor_palette_selection_x(this.__wbg_ptr);
+    }
+    palette_selection_y() {
+      return l.editor_palette_selection_y(this.__wbg_ptr);
+    }
+    press_bracket_right() {
+      l.editor_press_bracket_right(this.__wbg_ptr);
+    }
+    receive_past_ninjas() {
+      l.editor_receive_past_ninjas(this.__wbg_ptr);
+    }
     selected_tiles_path() {
       let e, r;
       try {
@@ -748,58 +874,6 @@
       } finally {
         l.__wbindgen_free(e, r, 1);
       }
-    }
-    palette_center_x() {
-      return l.editor_palette_center_x(this.__wbg_ptr);
-    }
-    palette_center_y() {
-      return l.editor_palette_center_y(this.__wbg_ptr);
-    }
-    palette_selection_x() {
-      return l.editor_palette_selection_x(this.__wbg_ptr);
-    }
-    palette_selection_y() {
-      return l.editor_palette_selection_y(this.__wbg_ptr);
-    }
-    get_show_trail() {
-      return l.editor_get_show_trail(this.__wbg_ptr) !== 0;
-    }
-    set_show_trail(e) {
-      l.editor_set_show_trail(this.__wbg_ptr, e);
-    }
-    set_cursor_pos(e, r, s) {
-      return l.editor_set_cursor_pos(this.__wbg_ptr, e, r, s) !== 0;
-    }
-    cursor_down(e) {
-      l.editor_cursor_down(this.__wbg_ptr, e);
-    }
-    cursor_up() {
-      l.editor_cursor_up(this.__wbg_ptr);
-    }
-    double_click(e) {
-      l.editor_double_click(this.__wbg_ptr, e);
-    }
-    tile_crosshair_col() {
-      return l.editor_tile_crosshair_col(this.__wbg_ptr);
-    }
-    tile_crosshair_row() {
-      return l.editor_tile_crosshair_row(this.__wbg_ptr);
-    }
-    crosshair_x() {
-      return l.editor_crosshair_x(this.__wbg_ptr);
-    }
-    crosshair_y() {
-      return l.editor_crosshair_y(this.__wbg_ptr);
-    }
-    entities() {
-      const e = l.editor_entities(this.__wbg_ptr);
-      var r = ut(e[0], e[1]).slice();
-      return l.__wbindgen_free(e[0], e[1] * 4, 4), r;
-    }
-    preview_entities() {
-      const e = l.editor_preview_entities(this.__wbg_ptr);
-      var r = ut(e[0], e[1]).slice();
-      return l.__wbindgen_free(e[0], e[1] * 4, 4), r;
     }
     selected_tile_outline_path() {
       let e, r;
@@ -810,23 +884,21 @@
         l.__wbindgen_free(e, r, 1);
       }
     }
-    show_half_grid() {
-      return l.editor_show_half_grid(this.__wbg_ptr) !== 0;
+    static new() {
+      const e = l.editor_new();
+      return Se.__wrap(e);
     }
-    show_quarter_grid() {
-      return l.editor_show_quarter_grid(this.__wbg_ptr) !== 0;
-    }
-    undo() {
-      l.editor_undo(this.__wbg_ptr);
+    mode() {
+      return l.editor_mode(this.__wbg_ptr) >>> 0;
     }
     redo() {
       l.editor_redo(this.__wbg_ptr);
     }
-    press_escape() {
-      return l.editor_press_escape(this.__wbg_ptr) !== 0;
+    undo() {
+      l.editor_undo(this.__wbg_ptr);
     }
-    press_backtick() {
-      l.editor_press_backtick(this.__wbg_ptr);
+    press_0() {
+      l.editor_press_0(this.__wbg_ptr);
     }
     press_1(e) {
       l.editor_press_1(this.__wbg_ptr, e);
@@ -855,74 +927,26 @@
     press_9() {
       l.editor_press_9(this.__wbg_ptr);
     }
-    press_0() {
-      l.editor_press_0(this.__wbg_ptr);
-    }
-    press_dash() {
-      l.editor_press_dash(this.__wbg_ptr);
-    }
-    press_equals() {
-      l.editor_press_equals(this.__wbg_ptr);
-    }
-    press_q(e) {
-      l.editor_press_q(this.__wbg_ptr, e);
-    }
-    press_w(e) {
-      l.editor_press_w(this.__wbg_ptr, e);
-    }
     press_a(e) {
       l.editor_press_a(this.__wbg_ptr, e);
-    }
-    press_s(e) {
-      l.editor_press_s(this.__wbg_ptr, e);
-    }
-    press_e() {
-      l.editor_press_e(this.__wbg_ptr);
-    }
-    press_d() {
-      l.editor_press_d(this.__wbg_ptr);
-    }
-    press_z() {
-      l.editor_press_z(this.__wbg_ptr);
-    }
-    press_x() {
-      l.editor_press_x(this.__wbg_ptr);
     }
     press_c() {
       l.editor_press_c(this.__wbg_ptr);
     }
-    press_r() {
-      l.editor_press_r(this.__wbg_ptr);
+    press_d() {
+      l.editor_press_d(this.__wbg_ptr);
     }
-    press_t() {
-      l.editor_press_t(this.__wbg_ptr);
-    }
-    press_y() {
-      l.editor_press_0(this.__wbg_ptr);
-    }
-    press_u() {
-      l.editor_press_0(this.__wbg_ptr);
-    }
-    press_i() {
-      l.editor_press_i(this.__wbg_ptr);
-    }
-    press_o() {
-      l.editor_press_o(this.__wbg_ptr);
-    }
-    press_p() {
-      l.editor_press_p(this.__wbg_ptr);
-    }
-    press_bracket_left() {
-      l.editor_press_bracket_left(this.__wbg_ptr);
-    }
-    press_bracket_right() {
-      l.editor_press_bracket_right(this.__wbg_ptr);
+    press_e() {
+      l.editor_press_e(this.__wbg_ptr);
     }
     press_f() {
       l.editor_press_f(this.__wbg_ptr);
     }
     press_h() {
       l.editor_press_h(this.__wbg_ptr);
+    }
+    press_i() {
+      l.editor_press_i(this.__wbg_ptr);
     }
     press_j() {
       l.editor_press_0(this.__wbg_ptr);
@@ -933,112 +957,88 @@
     press_l() {
       l.editor_press_0(this.__wbg_ptr);
     }
-    press_n() {
-      l.editor_press_n(this.__wbg_ptr);
-    }
     press_m() {
       l.editor_press_m(this.__wbg_ptr);
     }
-    press_comma() {
-      l.editor_press_comma(this.__wbg_ptr);
+    press_n() {
+      l.editor_press_n(this.__wbg_ptr);
     }
-    press_slash() {
-      l.editor_press_slash(this.__wbg_ptr);
+    press_o() {
+      l.editor_press_o(this.__wbg_ptr);
     }
-    press_num_0() {
-      l.editor_press_num_0(this.__wbg_ptr);
+    press_p() {
+      l.editor_press_p(this.__wbg_ptr);
     }
-    press_num_1() {
+    press_q(e) {
+      l.editor_press_q(this.__wbg_ptr, e);
+    }
+    press_r() {
+      l.editor_press_r(this.__wbg_ptr);
+    }
+    press_s(e) {
+      l.editor_press_s(this.__wbg_ptr, e);
+    }
+    press_t() {
+      l.editor_press_t(this.__wbg_ptr);
+    }
+    press_u() {
       l.editor_press_0(this.__wbg_ptr);
     }
-    press_num_2() {
+    press_w(e) {
+      l.editor_press_w(this.__wbg_ptr, e);
+    }
+    press_x() {
+      l.editor_press_x(this.__wbg_ptr);
+    }
+    press_y() {
       l.editor_press_0(this.__wbg_ptr);
     }
-    press_num_3() {
-      l.editor_press_num_3(this.__wbg_ptr);
+    press_z() {
+      l.editor_press_z(this.__wbg_ptr);
     }
-    press_num_4() {
-      l.editor_press_0(this.__wbg_ptr);
+    entities() {
+      const e = l.editor_entities(this.__wbg_ptr);
+      var r = ut(e[0], e[1]).slice();
+      return l.__wbindgen_free(e[0], e[1] * 4, 4), r;
     }
-    press_num_5() {
-      l.editor_press_0(this.__wbg_ptr);
-    }
-    press_num_7() {
-      l.editor_press_num_7(this.__wbg_ptr);
+    load_map(e) {
+      const r = Je(e, l.__wbindgen_malloc), s = we, n = l.editor_load_map(this.__wbg_ptr, r, s);
+      if (n[1]) throw Qe(n[0]);
     }
     press_up(e) {
       l.editor_press_up(this.__wbg_ptr, e);
     }
-    press_down(e) {
-      l.editor_press_down(this.__wbg_ptr, e);
-    }
-    press_left(e) {
-      l.editor_press_left(this.__wbg_ptr, e);
-    }
-    press_right(e) {
-      l.editor_press_right(this.__wbg_ptr, e);
-    }
-    press_enter() {
-      l.editor_press_enter(this.__wbg_ptr);
-    }
-    press_space() {
-      l.editor_press_space(this.__wbg_ptr);
-    }
-    press_alt_left(e) {
-      l.editor_press_alt_left(this.__wbg_ptr, e);
-    }
-    press_shift() {
-      l.editor_press_shift(this.__wbg_ptr);
-    }
-    release_q() {
-      l.editor_release_q(this.__wbg_ptr);
-    }
-    release_w() {
-      l.editor_release_w(this.__wbg_ptr);
+    cursor_up() {
+      l.editor_cursor_up(this.__wbg_ptr);
     }
     release_a() {
       l.editor_release_a(this.__wbg_ptr);
     }
-    release_s() {
-      l.editor_release_s(this.__wbg_ptr);
-    }
-    release_e() {
-      l.editor_release_e(this.__wbg_ptr);
+    release_c() {
+      l.editor_release_c(this.__wbg_ptr);
     }
     release_d() {
       l.editor_release_d(this.__wbg_ptr);
     }
+    release_e() {
+      l.editor_release_e(this.__wbg_ptr);
+    }
+    release_q() {
+      l.editor_release_q(this.__wbg_ptr);
+    }
+    release_s() {
+      l.editor_release_s(this.__wbg_ptr);
+    }
+    release_w() {
+      l.editor_release_w(this.__wbg_ptr);
+    }
     release_z() {
       l.editor_release_z(this.__wbg_ptr);
     }
-    release_c() {
-      l.editor_release_c(this.__wbg_ptr);
-    }
-    release_space() {
-      l.editor_release_space(this.__wbg_ptr);
-    }
-    release_alt_left() {
-      l.editor_release_alt_left(this.__wbg_ptr);
-    }
-    release_shift() {
-      l.editor_release_shift(this.__wbg_ptr);
-    }
-    receive_past_ninjas() {
-      l.editor_receive_past_ninjas(this.__wbg_ptr);
-    }
-    past_ninjas_len() {
-      return l.editor_past_ninjas_len(this.__wbg_ptr) >>> 0;
-    }
-    past_ninja_x(e) {
-      return l.editor_past_ninja_x(this.__wbg_ptr, e);
-    }
-    past_ninja_y(e) {
-      return l.editor_past_ninja_y(this.__wbg_ptr, e);
-    }
-    past_ninja_bones() {
-      const e = l.editor_past_ninja_bones(this.__wbg_ptr);
-      var r = it(e[0], e[1]).slice();
-      return l.__wbindgen_free(e[0], e[1] * 8, 8), r;
+    to_replay(e) {
+      const r = l.editor_to_replay(this.__wbg_ptr, e);
+      if (r[2]) throw Qe(r[1]);
+      return Me.__wrap(r[0]);
     }
   }
   Symbol.dispose && (Se.prototype[Symbol.dispose] = Se.prototype.free);
@@ -1120,32 +1120,11 @@
       const e = this.__destroy_into_raw();
       l.__wbg_replay_free(e, 0);
     }
-    send_past_ninjas() {
-      l.replay_send_past_ninjas(this.__wbg_ptr);
+    mine_state(e) {
+      return l.replay_mine_state(this.__wbg_ptr, e);
     }
-    set_input(e, r, s, n) {
-      l.replay_set_input(this.__wbg_ptr, e, r, s, n);
-    }
-    tick() {
-      l.replay_tick(this.__wbg_ptr);
-    }
-    seek(e) {
-      l.replay_seek(this.__wbg_ptr, e);
-    }
-    seek_preview(e) {
-      l.replay_seek_preview(this.__wbg_ptr, e);
-    }
-    place_ninja(e, r) {
-      l.replay_place_ninja(this.__wbg_ptr, e, r);
-    }
-    replay_length() {
-      return l.replay_replay_length(this.__wbg_ptr) >>> 0;
-    }
-    progress() {
-      return l.replay_progress(this.__wbg_ptr) >>> 0;
-    }
-    progress_preview() {
-      return l.replay_progress_preview(this.__wbg_ptr) >>> 0;
+    thwump_deg(e) {
+      return l.replay_thwump_deg(this.__wbg_ptr, e);
     }
     tiles_path() {
       let e, r;
@@ -1156,81 +1135,11 @@
         l.__wbindgen_free(e, r, 1);
       }
     }
-    ninja_x(e) {
-      return l.replay_ninja_x(this.__wbg_ptr, e);
-    }
-    ninja_y(e) {
-      return l.replay_ninja_y(this.__wbg_ptr, e);
-    }
-    ninja_preview_x(e) {
-      return l.replay_ninja_preview_x(this.__wbg_ptr, e);
-    }
-    ninja_preview_y(e) {
-      return l.replay_ninja_preview_y(this.__wbg_ptr, e);
-    }
-    ninja_bones(e) {
-      const r = l.replay_ninja_bones(this.__wbg_ptr, e);
-      var s = it(r[0], r[1]).slice();
-      return l.__wbindgen_free(r[0], r[1] * 8, 8), s;
-    }
-    ninja_preview_bones(e) {
-      const r = l.replay_ninja_preview_bones(this.__wbg_ptr, e);
-      var s = it(r[0], r[1]).slice();
-      return l.__wbindgen_free(r[0], r[1] * 8, 8), s;
-    }
-    mines_len() {
-      return l.replay_mines_len(this.__wbg_ptr) >>> 0;
-    }
-    mine_x(e) {
-      return l.replay_mine_x(this.__wbg_ptr, e);
-    }
-    mine_y(e) {
-      return l.replay_mine_y(this.__wbg_ptr, e);
-    }
-    mine_state(e) {
-      return l.replay_mine_state(this.__wbg_ptr, e);
-    }
-    bounce_blocks_len() {
-      return l.replay_bounce_blocks_len(this.__wbg_ptr) >>> 0;
-    }
-    bounce_block_x(e, r) {
-      return l.replay_bounce_block_x(this.__wbg_ptr, e, r);
-    }
-    bounce_block_y(e, r) {
-      return l.replay_bounce_block_y(this.__wbg_ptr, e, r);
-    }
-    bounce_block_deg(e) {
-      return l.replay_bounce_block_deg(this.__wbg_ptr, e);
-    }
-    one_ways_len() {
-      return l.replay_one_ways_len(this.__wbg_ptr) >>> 0;
-    }
-    one_way_x(e) {
-      return l.replay_one_way_x(this.__wbg_ptr, e);
-    }
-    one_way_y(e) {
-      return l.replay_one_way_y(this.__wbg_ptr, e);
-    }
-    one_way_deg(e) {
-      return l.replay_one_way_deg(this.__wbg_ptr, e);
-    }
-    boost_pads_len() {
-      return l.replay_boost_pads_len(this.__wbg_ptr) >>> 0;
-    }
     boost_pad_x(e) {
       return l.replay_boost_pad_x(this.__wbg_ptr, e);
     }
     boost_pad_y(e) {
       return l.replay_boost_pad_y(this.__wbg_ptr, e);
-    }
-    boost_pad_deg(e, r) {
-      return l.replay_boost_pad_deg(this.__wbg_ptr, e, r);
-    }
-    boost_pad_anim_progress(e, r) {
-      return l.replay_boost_pad_anim_progress(this.__wbg_ptr, e, r);
-    }
-    exit_doors_len() {
-      return l.replay_exit_doors_len(this.__wbg_ptr) >>> 0;
     }
     exit_door_x(e) {
       return l.replay_exit_door_x(this.__wbg_ptr, e);
@@ -1238,74 +1147,19 @@
     exit_door_y(e) {
       return l.replay_exit_door_y(this.__wbg_ptr, e);
     }
-    exit_anim_progress(e, r) {
-      return l.replay_exit_anim_progress(this.__wbg_ptr, e, r);
+    ninja_bones(e) {
+      const r = l.replay_ninja_bones(this.__wbg_ptr, e);
+      var s = it(r[0], r[1]).slice();
+      return l.__wbindgen_free(r[0], r[1] * 8, 8), s;
     }
-    exit_switch_x(e) {
-      return l.replay_exit_switch_x(this.__wbg_ptr, e);
+    one_way_deg(e) {
+      return l.replay_one_way_deg(this.__wbg_ptr, e);
     }
-    exit_switch_y(e) {
-      return l.replay_exit_switch_y(this.__wbg_ptr, e);
+    place_ninja(e, r) {
+      l.replay_place_ninja(this.__wbg_ptr, e, r);
     }
     thwumps_len() {
       return l.replay_thwumps_len(this.__wbg_ptr) >>> 0;
-    }
-    thwump_x(e, r) {
-      return l.replay_thwump_x(this.__wbg_ptr, e, r);
-    }
-    thwump_y(e, r) {
-      return l.replay_thwump_y(this.__wbg_ptr, e, r);
-    }
-    thwump_deg(e) {
-      return l.replay_thwump_deg(this.__wbg_ptr, e);
-    }
-    launch_pads_len() {
-      return l.replay_launch_pads_len(this.__wbg_ptr) >>> 0;
-    }
-    launch_pad_x(e) {
-      return l.replay_launch_pad_x(this.__wbg_ptr, e);
-    }
-    launch_pad_y(e) {
-      return l.replay_launch_pad_y(this.__wbg_ptr, e);
-    }
-    launch_pad_deg(e) {
-      return l.replay_launch_pad_deg(this.__wbg_ptr, e);
-    }
-    floor_guards_len() {
-      return l.replay_floor_guards_len(this.__wbg_ptr) >>> 0;
-    }
-    floor_guard_x(e, r) {
-      return l.replay_floor_guard_x(this.__wbg_ptr, e, r);
-    }
-    floor_guard_y(e, r) {
-      return l.replay_floor_guard_y(this.__wbg_ptr, e, r);
-    }
-    floor_guard_deg(e) {
-      return l.replay_floor_guard_deg(this.__wbg_ptr, e);
-    }
-    locked_doors_len() {
-      return l.replay_locked_doors_len(this.__wbg_ptr) >>> 0;
-    }
-    locked_door_x(e) {
-      return l.replay_locked_door_x(this.__wbg_ptr, e);
-    }
-    locked_door_y(e) {
-      return l.replay_locked_door_y(this.__wbg_ptr, e);
-    }
-    locked_door_deg(e) {
-      return l.replay_locked_door_deg(this.__wbg_ptr, e);
-    }
-    locked_door_anim_progress(e, r) {
-      return l.replay_locked_door_anim_progress(this.__wbg_ptr, e, r);
-    }
-    locked_switch_x(e) {
-      return l.replay_locked_switch_x(this.__wbg_ptr, e);
-    }
-    locked_switch_y(e) {
-      return l.replay_locked_switch_y(this.__wbg_ptr, e);
-    }
-    trap_doors_len() {
-      return l.replay_trap_doors_len(this.__wbg_ptr) >>> 0;
     }
     trap_door_x(e) {
       return l.replay_trap_door_x(this.__wbg_ptr, e);
@@ -1313,11 +1167,50 @@
     trap_door_y(e) {
       return l.replay_trap_door_y(this.__wbg_ptr, e);
     }
+    zap_drone_x(e, r) {
+      return l.replay_zap_drone_x(this.__wbg_ptr, e, r);
+    }
+    zap_drone_y(e, r) {
+      return l.replay_zap_drone_y(this.__wbg_ptr, e, r);
+    }
+    launch_pad_x(e) {
+      return l.replay_launch_pad_x(this.__wbg_ptr, e);
+    }
+    launch_pad_y(e) {
+      return l.replay_launch_pad_y(this.__wbg_ptr, e);
+    }
+    one_ways_len() {
+      return l.replay_one_ways_len(this.__wbg_ptr) >>> 0;
+    }
+    seek_preview(e) {
+      l.replay_seek_preview(this.__wbg_ptr, e);
+    }
+    boost_pad_deg(e, r) {
+      return l.replay_boost_pad_deg(this.__wbg_ptr, e, r);
+    }
+    exit_switch_x(e) {
+      return l.replay_exit_switch_x(this.__wbg_ptr, e);
+    }
+    exit_switch_y(e) {
+      return l.replay_exit_switch_y(this.__wbg_ptr, e);
+    }
+    floor_guard_x(e, r) {
+      return l.replay_floor_guard_x(this.__wbg_ptr, e, r);
+    }
+    floor_guard_y(e, r) {
+      return l.replay_floor_guard_y(this.__wbg_ptr, e, r);
+    }
+    locked_door_x(e) {
+      return l.replay_locked_door_x(this.__wbg_ptr, e);
+    }
+    locked_door_y(e) {
+      return l.replay_locked_door_y(this.__wbg_ptr, e);
+    }
+    replay_length() {
+      return l.replay_replay_length(this.__wbg_ptr) >>> 0;
+    }
     trap_door_deg(e) {
       return l.replay_trap_door_deg(this.__wbg_ptr, e);
-    }
-    trap_door_anim_progress(e, r) {
-      return l.replay_trap_door_anim_progress(this.__wbg_ptr, e, r);
     }
     trap_switch_x(e) {
       return l.replay_trap_switch_x(this.__wbg_ptr, e);
@@ -1325,8 +1218,23 @@
     trap_switch_y(e) {
       return l.replay_trap_switch_y(this.__wbg_ptr, e);
     }
-    regular_doors_len() {
-      return l.replay_regular_doors_len(this.__wbg_ptr) >>> 0;
+    zap_drone_deg(e) {
+      return l.replay_zap_drone_deg(this.__wbg_ptr, e);
+    }
+    boost_pads_len() {
+      return l.replay_boost_pads_len(this.__wbg_ptr) >>> 0;
+    }
+    bounce_block_x(e, r) {
+      return l.replay_bounce_block_x(this.__wbg_ptr, e, r);
+    }
+    bounce_block_y(e, r) {
+      return l.replay_bounce_block_y(this.__wbg_ptr, e, r);
+    }
+    exit_doors_len() {
+      return l.replay_exit_doors_len(this.__wbg_ptr) >>> 0;
+    }
+    launch_pad_deg(e) {
+      return l.replay_launch_pad_deg(this.__wbg_ptr, e);
     }
     regular_door_x(e) {
       return l.replay_regular_door_x(this.__wbg_ptr, e);
@@ -1334,38 +1242,130 @@
     regular_door_y(e) {
       return l.replay_regular_door_y(this.__wbg_ptr, e);
     }
-    regular_door_deg(e) {
-      return l.replay_regular_door_deg(this.__wbg_ptr, e);
-    }
-    regular_door_anim_progress(e, r) {
-      return l.replay_regular_door_anim_progress(this.__wbg_ptr, e, r);
-    }
-    shove_thwumps_len() {
-      return l.replay_shove_thwumps_len(this.__wbg_ptr) >>> 0;
-    }
     shove_thwump_x(e, r) {
       return l.replay_shove_thwump_x(this.__wbg_ptr, e, r);
     }
     shove_thwump_y(e, r) {
       return l.replay_shove_thwump_y(this.__wbg_ptr, e, r);
     }
-    shove_thwump_deg(e) {
-      return l.replay_shove_thwump_deg(this.__wbg_ptr, e);
-    }
-    shove_thwump_touch(e) {
-      return l.replay_shove_thwump_touch(this.__wbg_ptr, e);
+    trap_doors_len() {
+      return l.replay_trap_doors_len(this.__wbg_ptr) >>> 0;
     }
     zap_drones_len() {
       return l.replay_zap_drones_len(this.__wbg_ptr) >>> 0;
     }
-    zap_drone_x(e, r) {
-      return l.replay_zap_drone_x(this.__wbg_ptr, e, r);
+    floor_guard_deg(e) {
+      return l.replay_floor_guard_deg(this.__wbg_ptr, e);
     }
-    zap_drone_y(e, r) {
-      return l.replay_zap_drone_y(this.__wbg_ptr, e, r);
+    launch_pads_len() {
+      return l.replay_launch_pads_len(this.__wbg_ptr) >>> 0;
     }
-    zap_drone_deg(e) {
-      return l.replay_zap_drone_deg(this.__wbg_ptr, e);
+    locked_door_deg(e) {
+      return l.replay_locked_door_deg(this.__wbg_ptr, e);
+    }
+    locked_switch_x(e) {
+      return l.replay_locked_switch_x(this.__wbg_ptr, e);
+    }
+    locked_switch_y(e) {
+      return l.replay_locked_switch_y(this.__wbg_ptr, e);
+    }
+    ninja_preview_x(e) {
+      return l.replay_ninja_preview_x(this.__wbg_ptr, e);
+    }
+    ninja_preview_y(e) {
+      return l.replay_ninja_preview_y(this.__wbg_ptr, e);
+    }
+    bounce_block_deg(e) {
+      return l.replay_bounce_block_deg(this.__wbg_ptr, e);
+    }
+    floor_guards_len() {
+      return l.replay_floor_guards_len(this.__wbg_ptr) >>> 0;
+    }
+    locked_doors_len() {
+      return l.replay_locked_doors_len(this.__wbg_ptr) >>> 0;
+    }
+    progress_preview() {
+      return l.replay_progress_preview(this.__wbg_ptr) >>> 0;
+    }
+    regular_door_deg(e) {
+      return l.replay_regular_door_deg(this.__wbg_ptr, e);
+    }
+    send_past_ninjas() {
+      l.replay_send_past_ninjas(this.__wbg_ptr);
+    }
+    shove_thwump_deg(e) {
+      return l.replay_shove_thwump_deg(this.__wbg_ptr, e);
+    }
+    bounce_blocks_len() {
+      return l.replay_bounce_blocks_len(this.__wbg_ptr) >>> 0;
+    }
+    regular_doors_len() {
+      return l.replay_regular_doors_len(this.__wbg_ptr) >>> 0;
+    }
+    shove_thwumps_len() {
+      return l.replay_shove_thwumps_len(this.__wbg_ptr) >>> 0;
+    }
+    exit_anim_progress(e, r) {
+      return l.replay_exit_anim_progress(this.__wbg_ptr, e, r);
+    }
+    shove_thwump_touch(e) {
+      return l.replay_shove_thwump_touch(this.__wbg_ptr, e);
+    }
+    ninja_preview_bones(e) {
+      const r = l.replay_ninja_preview_bones(this.__wbg_ptr, e);
+      var s = it(r[0], r[1]).slice();
+      return l.__wbindgen_free(r[0], r[1] * 8, 8), s;
+    }
+    boost_pad_anim_progress(e, r) {
+      return l.replay_boost_pad_anim_progress(this.__wbg_ptr, e, r);
+    }
+    trap_door_anim_progress(e, r) {
+      return l.replay_trap_door_anim_progress(this.__wbg_ptr, e, r);
+    }
+    locked_door_anim_progress(e, r) {
+      return l.replay_locked_door_anim_progress(this.__wbg_ptr, e, r);
+    }
+    regular_door_anim_progress(e, r) {
+      return l.replay_regular_door_anim_progress(this.__wbg_ptr, e, r);
+    }
+    seek(e) {
+      l.replay_seek(this.__wbg_ptr, e);
+    }
+    tick() {
+      l.replay_tick(this.__wbg_ptr);
+    }
+    mine_x(e) {
+      return l.replay_mine_x(this.__wbg_ptr, e);
+    }
+    mine_y(e) {
+      return l.replay_mine_y(this.__wbg_ptr, e);
+    }
+    ninja_x(e) {
+      return l.replay_ninja_x(this.__wbg_ptr, e);
+    }
+    ninja_y(e) {
+      return l.replay_ninja_y(this.__wbg_ptr, e);
+    }
+    progress() {
+      return l.replay_progress(this.__wbg_ptr) >>> 0;
+    }
+    thwump_x(e, r) {
+      return l.replay_thwump_x(this.__wbg_ptr, e, r);
+    }
+    thwump_y(e, r) {
+      return l.replay_thwump_y(this.__wbg_ptr, e, r);
+    }
+    mines_len() {
+      return l.replay_mines_len(this.__wbg_ptr) >>> 0;
+    }
+    one_way_x(e) {
+      return l.replay_one_way_x(this.__wbg_ptr, e);
+    }
+    one_way_y(e) {
+      return l.replay_one_way_y(this.__wbg_ptr, e);
+    }
+    set_input(e, r, s, n) {
+      l.replay_set_input(this.__wbg_ptr, e, r, s, n);
     }
   }
   Symbol.dispose && (Me.prototype[Symbol.dispose] = Me.prototype.free);
@@ -1378,7 +1378,7 @@
   function Gr(t, e) {
     return ye(t, e);
   }
-  function Ur() {
+  function qr() {
     const t = l.__wbindgen_externrefs, e = t.grow(4);
     t.set(0, void 0), t.set(e + 0, void 0), t.set(e + 1, null), t.set(e + 2, true), t.set(e + 3, false);
   }
@@ -1387,218 +1387,218 @@
     "./ntools_rs_bg.js": {
       __wbg_exportedentity_new: zr,
       __wbg___wbindgen_throw_b855445ff6a94295: Kr,
-      __wbindgen_init_externref_table: Ur,
+      __wbindgen_init_externref_table: qr,
       __wbindgen_cast_2241b6af4c4b2941: Gr
     }
-  }, Ar), qr = a.memory, Fr = a.__wbg_editor_free, Vr = a.editor_new, Wr = a.editor_set_anim_data, Hr = a.editor_get_anim_state, Zr = a.editor_load_attract, Yr = a.editor_load_map, Xr = a.editor_export_map, Jr = a.editor_get_level_name, Qr = a.editor_set_level_name, es = a.editor_to_replay, ts = a.editor_mode, rs = a.editor_tiles_path, ss = a.editor_selected_tiles_path, os = a.editor_palette_center_x, ns = a.editor_palette_center_y, is = a.editor_palette_selection_x, _s = a.editor_palette_selection_y, ls = a.editor_get_show_trail, as = a.editor_set_show_trail, cs = a.editor_set_cursor_pos, ds = a.editor_cursor_down, us = a.editor_cursor_up, ps = a.editor_double_click, hs = a.editor_tile_crosshair_col, fs = a.editor_tile_crosshair_row, gs = a.editor_crosshair_x, ys = a.editor_crosshair_y, ws = a.editor_entities, ms = a.editor_preview_entities, bs = a.editor_selected_tile_outline_path, xs = a.editor_show_half_grid, vs = a.editor_show_quarter_grid, ks = a.editor_undo, $s = a.editor_redo, Ss = a.editor_press_escape, Ds = a.editor_press_backtick, Ts = a.editor_press_1, Ps = a.editor_press_2, Es = a.editor_press_3, Ls = a.editor_press_4, As = a.editor_press_5, js = a.editor_press_6, Ms = a.editor_press_7, Ns = a.editor_press_8, Cs = a.editor_press_9, Bs = a.editor_press_0, Os = a.editor_press_dash, Is = a.editor_press_equals, Rs = a.editor_press_q, Ks = a.editor_press_w, zs = a.editor_press_a, Gs = a.editor_press_s, Us = a.editor_press_e, qs = a.editor_press_d, Fs = a.editor_press_z, Vs = a.editor_press_x, Ws = a.editor_press_c, Hs = a.editor_press_r, Zs = a.editor_press_t, Ys = a.editor_press_i, Xs = a.editor_press_o, Js = a.editor_press_p, Qs = a.editor_press_bracket_left, eo = a.editor_press_bracket_right, to = a.editor_press_f, ro = a.editor_press_h, so = a.editor_press_n, oo = a.editor_press_m, no = a.editor_press_comma, io = a.editor_press_slash, _o = a.editor_press_num_0, lo = a.editor_press_num_3, ao = a.editor_press_num_7, co = a.editor_press_up, uo = a.editor_press_down, po = a.editor_press_left, ho = a.editor_press_right, fo = a.editor_press_enter, go = a.editor_press_space, yo = a.editor_press_alt_left, wo = a.editor_press_shift, mo = a.editor_release_q, bo = a.editor_release_w, xo = a.editor_release_a, vo = a.editor_release_s, ko = a.editor_release_e, $o = a.editor_release_d, So = a.editor_release_z, Do = a.editor_release_c, To = a.editor_release_space, Po = a.editor_release_alt_left, Eo = a.editor_release_shift, Lo = a.editor_receive_past_ninjas, Ao = a.editor_past_ninjas_len, jo = a.editor_past_ninja_x, Mo = a.editor_past_ninja_y, No = a.editor_past_ninja_bones, Co = a.__wbg_replay_free, Bo = a.replay_send_past_ninjas, Oo = a.replay_set_input, Io = a.replay_tick, Ro = a.replay_seek, Ko = a.replay_seek_preview, zo = a.replay_place_ninja, Go = a.replay_replay_length, Uo = a.replay_progress, qo = a.replay_progress_preview, Fo = a.replay_tiles_path, Vo = a.replay_ninja_x, Wo = a.replay_ninja_y, Ho = a.replay_ninja_preview_x, Zo = a.replay_ninja_preview_y, Yo = a.replay_ninja_bones, Xo = a.replay_ninja_preview_bones, Jo = a.replay_mines_len, Qo = a.replay_mine_x, en = a.replay_mine_y, tn = a.replay_mine_state, rn = a.replay_bounce_blocks_len, sn = a.replay_bounce_block_x, on = a.replay_bounce_block_y, nn = a.replay_bounce_block_deg, _n = a.replay_one_ways_len, ln = a.replay_one_way_x, an = a.replay_one_way_y, cn = a.replay_one_way_deg, dn = a.replay_boost_pads_len, un = a.replay_boost_pad_x, pn = a.replay_boost_pad_y, hn = a.replay_boost_pad_deg, fn = a.replay_boost_pad_anim_progress, gn = a.replay_exit_doors_len, yn = a.replay_exit_door_x, wn = a.replay_exit_door_y, mn = a.replay_exit_anim_progress, bn = a.replay_exit_switch_x, xn = a.replay_exit_switch_y, vn = a.replay_thwumps_len, kn = a.replay_thwump_x, $n = a.replay_thwump_y, Sn = a.replay_thwump_deg, Dn = a.replay_launch_pads_len, Tn = a.replay_launch_pad_x, Pn = a.replay_launch_pad_y, En = a.replay_launch_pad_deg, Ln = a.replay_floor_guards_len, An = a.replay_floor_guard_x, jn = a.replay_floor_guard_y, Mn = a.replay_floor_guard_deg, Nn = a.replay_locked_doors_len, Cn = a.replay_locked_door_x, Bn = a.replay_locked_door_y, On = a.replay_locked_door_deg, In = a.replay_locked_door_anim_progress, Rn = a.replay_locked_switch_x, Kn = a.replay_locked_switch_y, zn = a.replay_trap_doors_len, Gn = a.replay_trap_door_x, Un = a.replay_trap_door_y, qn = a.replay_trap_door_deg, Fn = a.replay_trap_door_anim_progress, Vn = a.replay_trap_switch_x, Wn = a.replay_trap_switch_y, Hn = a.replay_regular_doors_len, Zn = a.replay_regular_door_x, Yn = a.replay_regular_door_y, Xn = a.replay_regular_door_deg, Jn = a.replay_regular_door_anim_progress, Qn = a.replay_shove_thwumps_len, ei = a.replay_shove_thwump_x, ti = a.replay_shove_thwump_y, ri = a.replay_shove_thwump_deg, si = a.replay_shove_thwump_touch, oi = a.replay_zap_drones_len, ni = a.replay_zap_drone_x, ii = a.replay_zap_drone_y, _i = a.replay_zap_drone_deg, li = a.__wbg_exportedentity_free, ai = a.__wbg_get_exportedentity_type_int, ci = a.__wbg_set_exportedentity_type_int, di = a.__wbg_get_exportedentity_x, ui = a.__wbg_set_exportedentity_x, pi = a.__wbg_get_exportedentity_y, hi = a.__wbg_set_exportedentity_y, fi = a.__wbg_get_exportedentity_deg, gi = a.__wbg_set_exportedentity_deg, yi = a.__wbg_get_exportedentity_switch_x, wi = a.__wbg_set_exportedentity_switch_x, mi = a.__wbg_get_exportedentity_switch_y, bi = a.__wbg_set_exportedentity_switch_y, xi = a.editor_press_y, vi = a.editor_press_u, ki = a.editor_press_j, $i = a.editor_press_k, Si = a.editor_press_l, Di = a.editor_press_num_1, Ti = a.editor_press_num_2, Pi = a.editor_press_num_4, Ei = a.editor_press_num_5, Li = a.__wbindgen_externrefs, Ai = a.__wbindgen_malloc, ji = a.__externref_table_dealloc, Mi = a.__wbindgen_free, Ni = a.__wbindgen_realloc, Ci = a.__externref_drop_slice, Rt = a.__wbindgen_start, Bi = Object.freeze(Object.defineProperty({
+  }, Ar), Ur = a.memory, Fr = a.__wbg_editor_free, Hr = a.editor_crosshair_x, Vr = a.editor_crosshair_y, Wr = a.editor_cursor_down, Zr = a.editor_cursor_up, Yr = a.editor_double_click, Xr = a.editor_entities, Jr = a.editor_export_map, Qr = a.editor_get_anim_state, es = a.editor_get_level_name, ts = a.editor_get_show_trail, rs = a.editor_load_attract, ss = a.editor_load_map, os = a.editor_mode, ns = a.editor_new, is = a.editor_palette_center_x, _s = a.editor_palette_center_y, ls = a.editor_palette_selection_x, as = a.editor_palette_selection_y, cs = a.editor_past_ninja_bones, ds = a.editor_past_ninja_x, us = a.editor_past_ninja_y, ps = a.editor_past_ninjas_len, hs = a.editor_press_0, fs = a.editor_press_1, gs = a.editor_press_2, ys = a.editor_press_3, ws = a.editor_press_4, ms = a.editor_press_5, bs = a.editor_press_6, xs = a.editor_press_7, vs = a.editor_press_8, ks = a.editor_press_9, $s = a.editor_press_a, Ss = a.editor_press_alt_left, Ds = a.editor_press_backtick, Ts = a.editor_press_bracket_left, Ps = a.editor_press_bracket_right, Es = a.editor_press_c, Ls = a.editor_press_comma, As = a.editor_press_d, js = a.editor_press_dash, Ms = a.editor_press_down, Ns = a.editor_press_e, Cs = a.editor_press_enter, Bs = a.editor_press_equals, Os = a.editor_press_escape, Is = a.editor_press_f, Rs = a.editor_press_h, Ks = a.editor_press_i, zs = a.editor_press_left, Gs = a.editor_press_m, qs = a.editor_press_n, Us = a.editor_press_num_0, Fs = a.editor_press_num_3, Hs = a.editor_press_num_7, Vs = a.editor_press_o, Ws = a.editor_press_p, Zs = a.editor_press_q, Ys = a.editor_press_r, Xs = a.editor_press_right, Js = a.editor_press_s, Qs = a.editor_press_shift, eo = a.editor_press_slash, to = a.editor_press_space, ro = a.editor_press_t, so = a.editor_press_up, oo = a.editor_press_w, no = a.editor_press_x, io = a.editor_press_z, _o = a.editor_preview_entities, lo = a.editor_receive_past_ninjas, ao = a.editor_redo, co = a.editor_release_a, uo = a.editor_release_alt_left, po = a.editor_release_c, ho = a.editor_release_d, fo = a.editor_release_e, go = a.editor_release_q, yo = a.editor_release_s, wo = a.editor_release_shift, mo = a.editor_release_space, bo = a.editor_release_w, xo = a.editor_release_z, vo = a.editor_selected_tile_outline_path, ko = a.editor_selected_tiles_path, $o = a.editor_set_anim_data, So = a.editor_set_cursor_pos, Do = a.editor_set_level_name, To = a.editor_set_show_trail, Po = a.editor_show_half_grid, Eo = a.editor_show_quarter_grid, Lo = a.editor_tile_crosshair_col, Ao = a.editor_tile_crosshair_row, jo = a.editor_tiles_path, Mo = a.editor_to_replay, No = a.editor_undo, Co = a.__wbg_exportedentity_free, Bo = a.__wbg_get_exportedentity_deg, Oo = a.__wbg_get_exportedentity_switch_x, Io = a.__wbg_get_exportedentity_switch_y, Ro = a.__wbg_get_exportedentity_type_int, Ko = a.__wbg_get_exportedentity_x, zo = a.__wbg_get_exportedentity_y, Go = a.__wbg_set_exportedentity_deg, qo = a.__wbg_set_exportedentity_switch_x, Uo = a.__wbg_set_exportedentity_switch_y, Fo = a.__wbg_set_exportedentity_type_int, Ho = a.__wbg_set_exportedentity_x, Vo = a.__wbg_set_exportedentity_y, Wo = a.__wbg_replay_free, Zo = a.replay_boost_pad_anim_progress, Yo = a.replay_boost_pad_deg, Xo = a.replay_boost_pad_x, Jo = a.replay_boost_pad_y, Qo = a.replay_boost_pads_len, en = a.replay_bounce_block_deg, tn = a.replay_bounce_block_x, rn = a.replay_bounce_block_y, sn = a.replay_bounce_blocks_len, on = a.replay_exit_anim_progress, nn = a.replay_exit_door_x, _n = a.replay_exit_door_y, ln = a.replay_exit_doors_len, an = a.replay_exit_switch_x, cn = a.replay_exit_switch_y, dn = a.replay_floor_guard_deg, un = a.replay_floor_guard_x, pn = a.replay_floor_guard_y, hn = a.replay_floor_guards_len, fn = a.replay_launch_pad_deg, gn = a.replay_launch_pad_x, yn = a.replay_launch_pad_y, wn = a.replay_launch_pads_len, mn = a.replay_locked_door_anim_progress, bn = a.replay_locked_door_deg, xn = a.replay_locked_door_x, vn = a.replay_locked_door_y, kn = a.replay_locked_doors_len, $n = a.replay_locked_switch_x, Sn = a.replay_locked_switch_y, Dn = a.replay_mine_state, Tn = a.replay_mine_x, Pn = a.replay_mine_y, En = a.replay_mines_len, Ln = a.replay_ninja_bones, An = a.replay_ninja_preview_bones, jn = a.replay_ninja_preview_x, Mn = a.replay_ninja_preview_y, Nn = a.replay_ninja_x, Cn = a.replay_ninja_y, Bn = a.replay_one_way_deg, On = a.replay_one_way_x, In = a.replay_one_way_y, Rn = a.replay_one_ways_len, Kn = a.replay_place_ninja, zn = a.replay_progress, Gn = a.replay_progress_preview, qn = a.replay_regular_door_anim_progress, Un = a.replay_regular_door_deg, Fn = a.replay_regular_door_x, Hn = a.replay_regular_door_y, Vn = a.replay_regular_doors_len, Wn = a.replay_replay_length, Zn = a.replay_seek, Yn = a.replay_seek_preview, Xn = a.replay_send_past_ninjas, Jn = a.replay_set_input, Qn = a.replay_shove_thwump_deg, ei = a.replay_shove_thwump_touch, ti = a.replay_shove_thwump_x, ri = a.replay_shove_thwump_y, si = a.replay_shove_thwumps_len, oi = a.replay_thwump_deg, ni = a.replay_thwump_x, ii = a.replay_thwump_y, _i = a.replay_thwumps_len, li = a.replay_tick, ai = a.replay_tiles_path, ci = a.replay_trap_door_anim_progress, di = a.replay_trap_door_deg, ui = a.replay_trap_door_x, pi = a.replay_trap_door_y, hi = a.replay_trap_doors_len, fi = a.replay_trap_switch_x, gi = a.replay_trap_switch_y, yi = a.replay_zap_drone_deg, wi = a.replay_zap_drone_x, mi = a.replay_zap_drone_y, bi = a.replay_zap_drones_len, xi = a.editor_press_j, vi = a.editor_press_k, ki = a.editor_press_l, $i = a.editor_press_num_1, Si = a.editor_press_num_2, Di = a.editor_press_num_4, Ti = a.editor_press_num_5, Pi = a.editor_press_u, Ei = a.editor_press_y, Li = a.__wbindgen_externrefs, Ai = a.__wbindgen_free, ji = a.__wbindgen_malloc, Mi = a.__externref_table_dealloc, Ni = a.__wbindgen_realloc, Ci = a.__externref_drop_slice, Rt = a.__wbindgen_start, Bi = Object.freeze(Object.defineProperty({
     __proto__: null,
     __externref_drop_slice: Ci,
-    __externref_table_dealloc: ji,
+    __externref_table_dealloc: Mi,
     __wbg_editor_free: Fr,
-    __wbg_exportedentity_free: li,
-    __wbg_get_exportedentity_deg: fi,
-    __wbg_get_exportedentity_switch_x: yi,
-    __wbg_get_exportedentity_switch_y: mi,
-    __wbg_get_exportedentity_type_int: ai,
-    __wbg_get_exportedentity_x: di,
-    __wbg_get_exportedentity_y: pi,
-    __wbg_replay_free: Co,
-    __wbg_set_exportedentity_deg: gi,
-    __wbg_set_exportedentity_switch_x: wi,
-    __wbg_set_exportedentity_switch_y: bi,
-    __wbg_set_exportedentity_type_int: ci,
-    __wbg_set_exportedentity_x: ui,
-    __wbg_set_exportedentity_y: hi,
+    __wbg_exportedentity_free: Co,
+    __wbg_get_exportedentity_deg: Bo,
+    __wbg_get_exportedentity_switch_x: Oo,
+    __wbg_get_exportedentity_switch_y: Io,
+    __wbg_get_exportedentity_type_int: Ro,
+    __wbg_get_exportedentity_x: Ko,
+    __wbg_get_exportedentity_y: zo,
+    __wbg_replay_free: Wo,
+    __wbg_set_exportedentity_deg: Go,
+    __wbg_set_exportedentity_switch_x: qo,
+    __wbg_set_exportedentity_switch_y: Uo,
+    __wbg_set_exportedentity_type_int: Fo,
+    __wbg_set_exportedentity_x: Ho,
+    __wbg_set_exportedentity_y: Vo,
     __wbindgen_externrefs: Li,
-    __wbindgen_free: Mi,
-    __wbindgen_malloc: Ai,
+    __wbindgen_free: Ai,
+    __wbindgen_malloc: ji,
     __wbindgen_realloc: Ni,
     __wbindgen_start: Rt,
-    editor_crosshair_x: gs,
-    editor_crosshair_y: ys,
-    editor_cursor_down: ds,
-    editor_cursor_up: us,
-    editor_double_click: ps,
-    editor_entities: ws,
-    editor_export_map: Xr,
-    editor_get_anim_state: Hr,
-    editor_get_level_name: Jr,
-    editor_get_show_trail: ls,
-    editor_load_attract: Zr,
-    editor_load_map: Yr,
-    editor_mode: ts,
-    editor_new: Vr,
-    editor_palette_center_x: os,
-    editor_palette_center_y: ns,
-    editor_palette_selection_x: is,
-    editor_palette_selection_y: _s,
-    editor_past_ninja_bones: No,
-    editor_past_ninja_x: jo,
-    editor_past_ninja_y: Mo,
-    editor_past_ninjas_len: Ao,
-    editor_press_0: Bs,
-    editor_press_1: Ts,
-    editor_press_2: Ps,
-    editor_press_3: Es,
-    editor_press_4: Ls,
-    editor_press_5: As,
-    editor_press_6: js,
-    editor_press_7: Ms,
-    editor_press_8: Ns,
-    editor_press_9: Cs,
-    editor_press_a: zs,
-    editor_press_alt_left: yo,
+    editor_crosshair_x: Hr,
+    editor_crosshair_y: Vr,
+    editor_cursor_down: Wr,
+    editor_cursor_up: Zr,
+    editor_double_click: Yr,
+    editor_entities: Xr,
+    editor_export_map: Jr,
+    editor_get_anim_state: Qr,
+    editor_get_level_name: es,
+    editor_get_show_trail: ts,
+    editor_load_attract: rs,
+    editor_load_map: ss,
+    editor_mode: os,
+    editor_new: ns,
+    editor_palette_center_x: is,
+    editor_palette_center_y: _s,
+    editor_palette_selection_x: ls,
+    editor_palette_selection_y: as,
+    editor_past_ninja_bones: cs,
+    editor_past_ninja_x: ds,
+    editor_past_ninja_y: us,
+    editor_past_ninjas_len: ps,
+    editor_press_0: hs,
+    editor_press_1: fs,
+    editor_press_2: gs,
+    editor_press_3: ys,
+    editor_press_4: ws,
+    editor_press_5: ms,
+    editor_press_6: bs,
+    editor_press_7: xs,
+    editor_press_8: vs,
+    editor_press_9: ks,
+    editor_press_a: $s,
+    editor_press_alt_left: Ss,
     editor_press_backtick: Ds,
-    editor_press_bracket_left: Qs,
-    editor_press_bracket_right: eo,
-    editor_press_c: Ws,
-    editor_press_comma: no,
-    editor_press_d: qs,
-    editor_press_dash: Os,
-    editor_press_down: uo,
-    editor_press_e: Us,
-    editor_press_enter: fo,
-    editor_press_equals: Is,
-    editor_press_escape: Ss,
-    editor_press_f: to,
-    editor_press_h: ro,
-    editor_press_i: Ys,
-    editor_press_j: ki,
-    editor_press_k: $i,
-    editor_press_l: Si,
-    editor_press_left: po,
-    editor_press_m: oo,
-    editor_press_n: so,
-    editor_press_num_0: _o,
-    editor_press_num_1: Di,
-    editor_press_num_2: Ti,
-    editor_press_num_3: lo,
-    editor_press_num_4: Pi,
-    editor_press_num_5: Ei,
-    editor_press_num_7: ao,
-    editor_press_o: Xs,
-    editor_press_p: Js,
-    editor_press_q: Rs,
-    editor_press_r: Hs,
-    editor_press_right: ho,
-    editor_press_s: Gs,
-    editor_press_shift: wo,
-    editor_press_slash: io,
-    editor_press_space: go,
-    editor_press_t: Zs,
-    editor_press_u: vi,
-    editor_press_up: co,
-    editor_press_w: Ks,
-    editor_press_x: Vs,
-    editor_press_y: xi,
-    editor_press_z: Fs,
-    editor_preview_entities: ms,
-    editor_receive_past_ninjas: Lo,
-    editor_redo: $s,
-    editor_release_a: xo,
-    editor_release_alt_left: Po,
-    editor_release_c: Do,
-    editor_release_d: $o,
-    editor_release_e: ko,
-    editor_release_q: mo,
-    editor_release_s: vo,
-    editor_release_shift: Eo,
-    editor_release_space: To,
+    editor_press_bracket_left: Ts,
+    editor_press_bracket_right: Ps,
+    editor_press_c: Es,
+    editor_press_comma: Ls,
+    editor_press_d: As,
+    editor_press_dash: js,
+    editor_press_down: Ms,
+    editor_press_e: Ns,
+    editor_press_enter: Cs,
+    editor_press_equals: Bs,
+    editor_press_escape: Os,
+    editor_press_f: Is,
+    editor_press_h: Rs,
+    editor_press_i: Ks,
+    editor_press_j: xi,
+    editor_press_k: vi,
+    editor_press_l: ki,
+    editor_press_left: zs,
+    editor_press_m: Gs,
+    editor_press_n: qs,
+    editor_press_num_0: Us,
+    editor_press_num_1: $i,
+    editor_press_num_2: Si,
+    editor_press_num_3: Fs,
+    editor_press_num_4: Di,
+    editor_press_num_5: Ti,
+    editor_press_num_7: Hs,
+    editor_press_o: Vs,
+    editor_press_p: Ws,
+    editor_press_q: Zs,
+    editor_press_r: Ys,
+    editor_press_right: Xs,
+    editor_press_s: Js,
+    editor_press_shift: Qs,
+    editor_press_slash: eo,
+    editor_press_space: to,
+    editor_press_t: ro,
+    editor_press_u: Pi,
+    editor_press_up: so,
+    editor_press_w: oo,
+    editor_press_x: no,
+    editor_press_y: Ei,
+    editor_press_z: io,
+    editor_preview_entities: _o,
+    editor_receive_past_ninjas: lo,
+    editor_redo: ao,
+    editor_release_a: co,
+    editor_release_alt_left: uo,
+    editor_release_c: po,
+    editor_release_d: ho,
+    editor_release_e: fo,
+    editor_release_q: go,
+    editor_release_s: yo,
+    editor_release_shift: wo,
+    editor_release_space: mo,
     editor_release_w: bo,
-    editor_release_z: So,
-    editor_selected_tile_outline_path: bs,
-    editor_selected_tiles_path: ss,
-    editor_set_anim_data: Wr,
-    editor_set_cursor_pos: cs,
-    editor_set_level_name: Qr,
-    editor_set_show_trail: as,
-    editor_show_half_grid: xs,
-    editor_show_quarter_grid: vs,
-    editor_tile_crosshair_col: hs,
-    editor_tile_crosshair_row: fs,
-    editor_tiles_path: rs,
-    editor_to_replay: es,
-    editor_undo: ks,
-    memory: qr,
-    replay_boost_pad_anim_progress: fn,
-    replay_boost_pad_deg: hn,
-    replay_boost_pad_x: un,
-    replay_boost_pad_y: pn,
-    replay_boost_pads_len: dn,
-    replay_bounce_block_deg: nn,
-    replay_bounce_block_x: sn,
-    replay_bounce_block_y: on,
-    replay_bounce_blocks_len: rn,
-    replay_exit_anim_progress: mn,
-    replay_exit_door_x: yn,
-    replay_exit_door_y: wn,
-    replay_exit_doors_len: gn,
-    replay_exit_switch_x: bn,
-    replay_exit_switch_y: xn,
-    replay_floor_guard_deg: Mn,
-    replay_floor_guard_x: An,
-    replay_floor_guard_y: jn,
-    replay_floor_guards_len: Ln,
-    replay_launch_pad_deg: En,
-    replay_launch_pad_x: Tn,
-    replay_launch_pad_y: Pn,
-    replay_launch_pads_len: Dn,
-    replay_locked_door_anim_progress: In,
-    replay_locked_door_deg: On,
-    replay_locked_door_x: Cn,
-    replay_locked_door_y: Bn,
-    replay_locked_doors_len: Nn,
-    replay_locked_switch_x: Rn,
-    replay_locked_switch_y: Kn,
-    replay_mine_state: tn,
-    replay_mine_x: Qo,
-    replay_mine_y: en,
-    replay_mines_len: Jo,
-    replay_ninja_bones: Yo,
-    replay_ninja_preview_bones: Xo,
-    replay_ninja_preview_x: Ho,
-    replay_ninja_preview_y: Zo,
-    replay_ninja_x: Vo,
-    replay_ninja_y: Wo,
-    replay_one_way_deg: cn,
-    replay_one_way_x: ln,
-    replay_one_way_y: an,
-    replay_one_ways_len: _n,
-    replay_place_ninja: zo,
-    replay_progress: Uo,
-    replay_progress_preview: qo,
-    replay_regular_door_anim_progress: Jn,
-    replay_regular_door_deg: Xn,
-    replay_regular_door_x: Zn,
-    replay_regular_door_y: Yn,
-    replay_regular_doors_len: Hn,
-    replay_replay_length: Go,
-    replay_seek: Ro,
-    replay_seek_preview: Ko,
-    replay_send_past_ninjas: Bo,
-    replay_set_input: Oo,
-    replay_shove_thwump_deg: ri,
-    replay_shove_thwump_touch: si,
-    replay_shove_thwump_x: ei,
-    replay_shove_thwump_y: ti,
-    replay_shove_thwumps_len: Qn,
-    replay_thwump_deg: Sn,
-    replay_thwump_x: kn,
-    replay_thwump_y: $n,
-    replay_thwumps_len: vn,
-    replay_tick: Io,
-    replay_tiles_path: Fo,
-    replay_trap_door_anim_progress: Fn,
-    replay_trap_door_deg: qn,
-    replay_trap_door_x: Gn,
-    replay_trap_door_y: Un,
-    replay_trap_doors_len: zn,
-    replay_trap_switch_x: Vn,
-    replay_trap_switch_y: Wn,
-    replay_zap_drone_deg: _i,
-    replay_zap_drone_x: ni,
-    replay_zap_drone_y: ii,
-    replay_zap_drones_len: oi
+    editor_release_z: xo,
+    editor_selected_tile_outline_path: vo,
+    editor_selected_tiles_path: ko,
+    editor_set_anim_data: $o,
+    editor_set_cursor_pos: So,
+    editor_set_level_name: Do,
+    editor_set_show_trail: To,
+    editor_show_half_grid: Po,
+    editor_show_quarter_grid: Eo,
+    editor_tile_crosshair_col: Lo,
+    editor_tile_crosshair_row: Ao,
+    editor_tiles_path: jo,
+    editor_to_replay: Mo,
+    editor_undo: No,
+    memory: Ur,
+    replay_boost_pad_anim_progress: Zo,
+    replay_boost_pad_deg: Yo,
+    replay_boost_pad_x: Xo,
+    replay_boost_pad_y: Jo,
+    replay_boost_pads_len: Qo,
+    replay_bounce_block_deg: en,
+    replay_bounce_block_x: tn,
+    replay_bounce_block_y: rn,
+    replay_bounce_blocks_len: sn,
+    replay_exit_anim_progress: on,
+    replay_exit_door_x: nn,
+    replay_exit_door_y: _n,
+    replay_exit_doors_len: ln,
+    replay_exit_switch_x: an,
+    replay_exit_switch_y: cn,
+    replay_floor_guard_deg: dn,
+    replay_floor_guard_x: un,
+    replay_floor_guard_y: pn,
+    replay_floor_guards_len: hn,
+    replay_launch_pad_deg: fn,
+    replay_launch_pad_x: gn,
+    replay_launch_pad_y: yn,
+    replay_launch_pads_len: wn,
+    replay_locked_door_anim_progress: mn,
+    replay_locked_door_deg: bn,
+    replay_locked_door_x: xn,
+    replay_locked_door_y: vn,
+    replay_locked_doors_len: kn,
+    replay_locked_switch_x: $n,
+    replay_locked_switch_y: Sn,
+    replay_mine_state: Dn,
+    replay_mine_x: Tn,
+    replay_mine_y: Pn,
+    replay_mines_len: En,
+    replay_ninja_bones: Ln,
+    replay_ninja_preview_bones: An,
+    replay_ninja_preview_x: jn,
+    replay_ninja_preview_y: Mn,
+    replay_ninja_x: Nn,
+    replay_ninja_y: Cn,
+    replay_one_way_deg: Bn,
+    replay_one_way_x: On,
+    replay_one_way_y: In,
+    replay_one_ways_len: Rn,
+    replay_place_ninja: Kn,
+    replay_progress: zn,
+    replay_progress_preview: Gn,
+    replay_regular_door_anim_progress: qn,
+    replay_regular_door_deg: Un,
+    replay_regular_door_x: Fn,
+    replay_regular_door_y: Hn,
+    replay_regular_doors_len: Vn,
+    replay_replay_length: Wn,
+    replay_seek: Zn,
+    replay_seek_preview: Yn,
+    replay_send_past_ninjas: Xn,
+    replay_set_input: Jn,
+    replay_shove_thwump_deg: Qn,
+    replay_shove_thwump_touch: ei,
+    replay_shove_thwump_x: ti,
+    replay_shove_thwump_y: ri,
+    replay_shove_thwumps_len: si,
+    replay_thwump_deg: oi,
+    replay_thwump_x: ni,
+    replay_thwump_y: ii,
+    replay_thwumps_len: _i,
+    replay_tick: li,
+    replay_tiles_path: ai,
+    replay_trap_door_anim_progress: ci,
+    replay_trap_door_deg: di,
+    replay_trap_door_x: ui,
+    replay_trap_door_y: pi,
+    replay_trap_doors_len: hi,
+    replay_trap_switch_x: fi,
+    replay_trap_switch_y: gi,
+    replay_zap_drone_deg: yi,
+    replay_zap_drone_x: wi,
+    replay_zap_drone_y: mi,
+    replay_zap_drones_len: bi
   }, Symbol.toStringTag, {
     value: "Module"
   }));
@@ -1654,7 +1654,7 @@
       1
     ]
   ];
-  function We(t) {
+  function Ve(t) {
     function e() {
       const r = t.bones();
       return r ? Ri.map(([s, n]) => `M ${20 * r[s]} ${20 * r[s + 13]} ${20 * r[n]} ${20 * r[n + 13]}`).join(" ") : "";
@@ -1675,11 +1675,11 @@
   function Gi(t, e) {
     return t.x == e.x && t.y == e.y && t.animProgress === e.animProgress;
   }
-  function Ui(t) {
+  function qi(t) {
     const { x: e, y: r } = t();
     return `translate(${e},${r})`;
   }
-  function qi([t, e], r, s) {
+  function Ui([t, e], r, s) {
     const n = t(), i = r.exit_doors_len(), _ = [];
     for (let o = 0; o < i; o++) {
       const c = n.at(o), p = {
@@ -1692,7 +1692,7 @@
     e(_);
   }
   function Kt(t) {
-    return u(H, {
+    return u(W, {
       get each() {
         return t.exitDoors();
       },
@@ -1701,12 +1701,12 @@
       })
     });
   }
-  const V = 11, K = 2.5;
+  const H = 11, K = 2.5;
   function Fi(t) {
     return (() => {
       var e = Ki(), r = e.firstChild, s = r.nextSibling, n = s.nextSibling, i = n.nextSibling, _ = i.nextSibling;
       return T((o) => {
-        var c = Ui(t.exitDoor), p = -13 + 4 * (1 - t.exitDoor().animProgress), b = 26 - 8 * (1 - t.exitDoor().animProgress), f = `M ${-13 * t.exitDoor().animProgress} 0 v ${-V} h ${-V + K} l ${-K} ${K} v ${2 * (V - K)} l ${K} ${K} h ${V - K} z`, E = `M ${13 * t.exitDoor().animProgress} 0 v ${-V} h ${V - K} l ${K} ${K} v ${2 * (V - K)} l ${-K} ${K} h ${-V + K} z`, P = `M ${-13 * t.exitDoor().animProgress} 0 m 0 ${(1 - t.exitDoor().animProgress) * V} v ${t.exitDoor().animProgress * V} h ${-V + K + t.exitDoor().animProgress} l ${-K} ${-K} v ${(1 - t.exitDoor().animProgress) * (-V + K)}`, N = `M ${13 * t.exitDoor().animProgress} 0 m 0 ${(1 - t.exitDoor().animProgress) * V} v ${t.exitDoor().animProgress * V} h ${V - K - t.exitDoor().animProgress} l ${K} ${-K} v ${(1 - t.exitDoor().animProgress) * (-V + K)}`;
+        var c = qi(t.exitDoor), p = -13 + 4 * (1 - t.exitDoor().animProgress), b = 26 - 8 * (1 - t.exitDoor().animProgress), f = `M ${-13 * t.exitDoor().animProgress} 0 v ${-H} h ${-H + K} l ${-K} ${K} v ${2 * (H - K)} l ${K} ${K} h ${H - K} z`, E = `M ${13 * t.exitDoor().animProgress} 0 v ${-H} h ${H - K} l ${K} ${K} v ${2 * (H - K)} l ${-K} ${K} h ${-H + K} z`, P = `M ${-13 * t.exitDoor().animProgress} 0 m 0 ${(1 - t.exitDoor().animProgress) * H} v ${t.exitDoor().animProgress * H} h ${-H + K + t.exitDoor().animProgress} l ${-K} ${-K} v ${(1 - t.exitDoor().animProgress) * (-H + K)}`, N = `M ${13 * t.exitDoor().animProgress} 0 m 0 ${(1 - t.exitDoor().animProgress) * H} v ${t.exitDoor().animProgress * H} h ${H - K - t.exitDoor().animProgress} l ${K} ${-K} v ${(1 - t.exitDoor().animProgress) * (-H + K)}`;
         return c !== o.e && y(e, "transform", o.e = c), p !== o.t && y(r, "x", o.t = p), b !== o.a && y(r, "width", o.a = b), f !== o.o && y(s, "d", o.o = f), E !== o.i && y(n, "d", o.i = E), P !== o.n && y(i, "d", o.n = P), N !== o.s && y(_, "d", o.s = N), o;
       }, {
         e: void 0,
@@ -1719,11 +1719,11 @@
       }), e;
     })();
   }
-  function Vi() {
+  function Hi() {
     return zi();
   }
-  var Wi = v('<svg><g><path d="M 0 0 m -5 -4.5 h 10 l 2 2 v 5 l -2 2 h -10 l -2 -2 v -5 l 2 -2"></path><path stroke=var(--exit-switch-center) fill=none></path><path stroke=var(--exit-switch-center) fill=none></svg>', false, true, false);
-  function Hi(t, e) {
+  var Vi = v('<svg><g><path d="M 0 0 m -5 -4.5 h 10 l 2 2 v 5 l -2 2 h -10 l -2 -2 v -5 l 2 -2"></path><path stroke=var(--exit-switch-center) fill=none></path><path stroke=var(--exit-switch-center) fill=none></svg>', false, true, false);
+  function Wi(t, e) {
     return t.x == e.x && t.y == e.y && t.animProgress === e.animProgress;
   }
   function Zi(t) {
@@ -1738,12 +1738,12 @@
         y: r.exit_switch_y(o),
         animProgress: r.exit_anim_progress(o, s)
       };
-      c && Hi(c, p) ? _.push(c) : _.push(p);
+      c && Wi(c, p) ? _.push(c) : _.push(p);
     }
     e(_);
   }
   function zt(t) {
-    return u(H, {
+    return u(W, {
       get each() {
         return t.exitSwitches();
       },
@@ -1755,7 +1755,7 @@
   const he = 2;
   function Xi(t) {
     return (() => {
-      var e = Wi(), r = e.firstChild, s = r.nextSibling, n = s.nextSibling;
+      var e = Vi(), r = e.firstChild, s = r.nextSibling, n = s.nextSibling;
       return T((i) => {
         var _ = Zi(t.exitSwitch), o = `var(--exit-switch-background${t.exitSwitch().animProgress > 0 ? "-collected" : ""})`, c = `var(--exit-switch-border${t.exitSwitch().animProgress > 0 ? "-collected" : ""})`, p = `M ${-2 * t.exitSwitch().animProgress} ${-he} h ${-he} v ${2 * he} h ${he}`, b = `M ${2 * t.exitSwitch().animProgress} ${-he} h ${he} v ${2 * he} h ${-he}`;
         return _ !== i.e && y(e, "transform", i.e = _), o !== i.t && y(r, "fill", i.t = o), c !== i.a && y(r, "stroke", i.a = c), p !== i.o && y(s, "d", i.o = p), b !== i.i && y(n, "d", i.i = b), i;
@@ -1789,7 +1789,7 @@
     e(i);
   }
   function Gt(t) {
-    return u(H, {
+    return u(W, {
       get each() {
         return t.oneWays();
       },
@@ -1799,7 +1799,7 @@
       })()
     });
   }
-  function Ut() {
+  function qt() {
     return (() => {
       var t = Qi(), e = t.firstChild;
       return e.nextSibling, t;
@@ -1826,8 +1826,8 @@
     }
     e(i);
   }
-  function qt(t) {
-    return u(H, {
+  function Ut(t) {
+    return u(W, {
       get each() {
         return t.mines();
       },
@@ -1884,8 +1884,8 @@
     }
     e(_);
   }
-  function Vt(t) {
-    return u(H, {
+  function Ht(t) {
+    return u(W, {
       get each() {
         return t.regularDoors();
       },
@@ -1942,8 +1942,8 @@
     }
     e(_);
   }
-  function Wt(t) {
-    return u(H, {
+  function Vt(t) {
+    return u(W, {
       get each() {
         return t.lockedDoors();
       },
@@ -2035,8 +2035,8 @@
     }
     e(i);
   }
-  function Ht(t) {
-    return u(H, {
+  function Wt(t) {
+    return u(W, {
       get each() {
         return t.lockedSwitches();
       },
@@ -2086,17 +2086,17 @@
     e(_);
   }
   function Yt(t) {
-    return u(H, {
+    return u(W, {
       get each() {
         return t.trapDoors();
       },
-      children: (e) => u(U_, {
+      children: (e) => u(q_, {
         trapDoor: e
       })
     });
   }
   const z_ = 1, G_ = 12 - z_;
-  function U_(t) {
+  function q_(t) {
     function e() {
       return 6.5 * t.trapDoor().animProgress;
     }
@@ -2150,11 +2150,11 @@
       })), T(() => y(n, "transform", R_(t.trapDoor))), n;
     })();
   }
-  var q_ = v("<svg><use></svg>", false, true, false), F_ = v("<svg><g id=trap-switch><rect fill=var(--trap-switch-background) stroke=var(--trap-switch-border) x=-1.5 y=-1.5 width=3 height=3></svg>", false, true, false), V_ = v("<svg><g id=trap-switch-touched><rect fill=var(--trap-switch-background-collected) x=-1.5 y=-1.5 width=3 height=3></rect><line stroke=var(--trap-switch-border-collected) x1=-1.5 y1=-1.5 x2=1.5 y2=-1.5></line><line stroke=var(--trap-switch-border-collected) x1=-1.5 y1=1.5 x2=1.5 y2=1.5></svg>", false, true, false);
-  function W_(t, e) {
+  var U_ = v("<svg><use></svg>", false, true, false), F_ = v("<svg><g id=trap-switch><rect fill=var(--trap-switch-background) stroke=var(--trap-switch-border) x=-1.5 y=-1.5 width=3 height=3></svg>", false, true, false), H_ = v("<svg><g id=trap-switch-touched><rect fill=var(--trap-switch-background-collected) x=-1.5 y=-1.5 width=3 height=3></rect><line stroke=var(--trap-switch-border-collected) x1=-1.5 y1=-1.5 x2=1.5 y2=-1.5></line><line stroke=var(--trap-switch-border-collected) x1=-1.5 y1=1.5 x2=1.5 y2=1.5></svg>", false, true, false);
+  function V_(t, e) {
     return t.x === e.x && t.y === e.y && t.wasTouched === e.wasTouched;
   }
-  function H_(t) {
+  function W_(t) {
     const { x: e, y: r } = t();
     return `translate(${e},${r})`;
   }
@@ -2166,19 +2166,19 @@
         y: r.trap_switch_y(_),
         wasTouched: r.trap_door_anim_progress(_, 1) >= 0
       };
-      o && W_(o, c) ? i.push(o) : i.push(c);
+      o && V_(o, c) ? i.push(o) : i.push(c);
     }
     e(i);
   }
   function Xt(t) {
-    return u(H, {
+    return u(W, {
       get each() {
         return t.trapSwitches();
       },
       children: (e) => (() => {
-        var r = q_();
+        var r = U_();
         return T((s) => {
-          var n = e().wasTouched ? "#trap-switch-touched" : "#trap-switch", i = H_(e);
+          var n = e().wasTouched ? "#trap-switch-touched" : "#trap-switch", i = W_(e);
           return n !== s.e && y(r, "href", s.e = n), i !== s.t && y(r, "transform", s.t = i), s;
         }, {
           e: void 0,
@@ -2194,7 +2194,7 @@
         return t.firstChild, t;
       })(),
       (() => {
-        var t = V_(), e = t.firstChild, r = e.nextSibling;
+        var t = H_(), e = t.firstChild, r = e.nextSibling;
         return r.nextSibling, t;
       })()
     ];
@@ -2220,7 +2220,7 @@
     e(i);
   }
   function Qt(t) {
-    return u(H, {
+    return u(W, {
       get each() {
         return t.launchPads();
       },
@@ -2256,7 +2256,7 @@
     e(_);
   }
   function er(t) {
-    return u(H, {
+    return u(W, {
       get each() {
         return t.floorGuards();
       },
@@ -2292,7 +2292,7 @@
     e(_);
   }
   function tr(t) {
-    return u(H, {
+    return u(W, {
       get each() {
         return t.bounceBlocks();
       },
@@ -2330,7 +2330,7 @@
     e(_);
   }
   function sr(t) {
-    return u(H, {
+    return u(W, {
       get each() {
         return t.boostPads();
       },
@@ -2373,7 +2373,7 @@
     e(_);
   }
   function nr(t) {
-    return u(H, {
+    return u(W, {
       get each() {
         return t.thwumps();
       },
@@ -2411,7 +2411,7 @@
     e(_);
   }
   function _r(t) {
-    return u(H, {
+    return u(W, {
       get each() {
         return t.shoveThwumps();
       },
@@ -3095,15 +3095,15 @@
     "click",
     "input"
   ]);
-  var Ul = v("<svg><use href=#zapdrone></svg>", false, true, false), ql = v('<svg><g id=zapdrone><path fill=var(--zap-drone-background) stroke=var(--zap-drone-border) d="M -10 4 V -4 L -4 -10 H 4 L 10 -4 V 4 L 4 10 H -4 Z"></path><path fill=var(--zap-drone-border) d="M 10 -2 H 2 A 2 2 0 0 0 0 0 A 2 2 0 0 0 2 2 H 10 Z"></path><path fill=none stroke=var(--zap-drone-border) stroke-width=3 stroke-linecap=round d="M 0 -10 H -4 L -10 -4 V 4 L -4 10 H 0"></svg>', false, true, false);
+  var ql = v("<svg><use href=#zapdrone></svg>", false, true, false), Ul = v('<svg><g id=zapdrone><path fill=var(--zap-drone-background) stroke=var(--zap-drone-border) d="M -10 4 V -4 L -4 -10 H 4 L 10 -4 V 4 L 4 10 H -4 Z"></path><path fill=var(--zap-drone-border) d="M 10 -2 H 2 A 2 2 0 0 0 0 0 A 2 2 0 0 0 2 2 H 10 Z"></path><path fill=none stroke=var(--zap-drone-border) stroke-width=3 stroke-linecap=round d="M 0 -10 H -4 L -10 -4 V 4 L -4 10 H 0"></svg>', false, true, false);
   function Fl(t, e) {
     return t.x == e.x && t.y == e.y && t.deg == e.deg;
   }
-  function Vl(t) {
+  function Hl(t) {
     const { x: e, y: r, deg: s } = t();
     return `translate(${e},${r}) rotate(${s},0,0)`;
   }
-  function Wl([t, e], r, s) {
+  function Vl([t, e], r, s) {
     const n = t(), i = r.zap_drones_len(), _ = [];
     for (let o = 0; o < i; o++) {
       const c = n.at(o), p = {
@@ -3116,23 +3116,23 @@
     e(_);
   }
   function pr(t) {
-    return u(H, {
+    return u(W, {
       get each() {
         return t.zapDrones();
       },
       children: (e) => (() => {
-        var r = Ul();
-        return T(() => y(r, "transform", Vl(e))), r;
+        var r = ql();
+        return T(() => y(r, "transform", Hl(e))), r;
       })()
     });
   }
   function hr() {
     return (() => {
-      var t = ql(), e = t.firstChild, r = e.nextSibling;
+      var t = Ul(), e = t.firstChild, r = e.nextSibling;
       return r.nextSibling, t;
     })();
   }
-  var Hl = v('<svg><rect fill="color-mix(in srgb,var(--background) 18%,white 15%)"width=150 height=150 style=mix-blend-mode:hard-light></svg>', false, true, false), Zl = v("<svg><circle fill=none stroke=var(--entity-palette-reticle) r=16></svg>", false, true, false), Yl = v('<svg><path d="M -13 -13 V -62 H 13 V -13 H 62 V 13 H 13 V 62 H -13 V 13 H -62 V -13 H -13 M -12 -12 H 12 V 12 H -12 V -12"fill-rule=evenodd fill="color-mix(in srgb,var(--background) 18%,white 15%)"style=mix-blend-mode:hard-light></svg>', false, true, false), Xl = v("<svg><rect fill=none stroke=var(--editor-crosshair) stroke-width=2 width=26 height=26></svg>", false, true, false), Jl = v("<svg><use href=#tilemode-crosshair></svg>", false, true, false), Ql = v("<svg><use href=#crosshair></svg>", false, true, false), ea = v("<svg><polyline stroke=var(--ninja) fill=none></svg>", false, true, false), ta = v('<svg viewBox="0 0 1056 600"><defs><clipPath id=tiles-clip><use href=#tiles></use></clipPath><path id=tilemode-crosshair stroke-width=1.5 fill=none d="M -13.5 -9 V -13.5 H -9 M 9 -13.5 H 13.5 V -9 M 13.5 9 V 13.5 H 9 M -9 13.5 H -13.5 V 9"></path><path id=crosshair stroke-width=1.5 fill=none d="M -4 0 H 4 M 0 -4 V 4"></path><filter id=outline filterUnits=userSpaceOnUse x=0 y=0 width=1056 height=600><feMorphology in=SourceAlpha operator=dilate radius=0.75 result=DILATED></feMorphology><feFlood flood-color=var(--editor-crosshair) flood-opacity=1 result=COLOR></feFlood><feComposite in=COLOR in2=DILATED operator=in result=OUTLINE></feComposite><feMerge><feMergeNode in=OUTLINE></feMergeNode><feMergeNode in=SourceGraphic></feMergeNode></feMerge></filter><filter id=hollow><feMorphology in=SourceAlpha operator=dilate radius=3 result=DILATED></feMorphology><feComposite operator=out in=DILATED in2=SourceGraphic></feComposite></filter></defs><path id=tiles stroke-width=2 clip-path=url(#tiles-clip) clip-rule=evenodd fill-rule=evenodd></path><g></g><path id=selected-tiles fill-rule=evenodd></path><g><path stroke=var(--editor-crosshair) stroke-width=2 fill=none>'), bt = v("<svg><line class=fine-grid y1=24 y2=576></svg>", false, true, false), xt = v("<svg><line class=fine-grid x1=24 x2=1032></svg>", false, true, false), ra = v("<svg><line class=regular-grid y1=24 y2=576></svg>", false, true, false), sa = v("<svg><line class=regular-grid x1=24 x2=1032></svg>", false, true, false), oa = v("<svg><line class=door-switch-line></svg>", false, true, false);
+  var Wl = v('<svg><rect fill="color-mix(in srgb,var(--background) 18%,white 15%)"width=150 height=150 style=mix-blend-mode:hard-light></svg>', false, true, false), Zl = v("<svg><circle fill=none stroke=var(--entity-palette-reticle) r=16></svg>", false, true, false), Yl = v('<svg><path d="M -13 -13 V -62 H 13 V -13 H 62 V 13 H 13 V 62 H -13 V 13 H -62 V -13 H -13 M -12 -12 H 12 V 12 H -12 V -12"fill-rule=evenodd fill="color-mix(in srgb,var(--background) 18%,white 15%)"style=mix-blend-mode:hard-light></svg>', false, true, false), Xl = v("<svg><rect fill=none stroke=var(--editor-crosshair) stroke-width=2 width=26 height=26></svg>", false, true, false), Jl = v("<svg><use href=#tilemode-crosshair></svg>", false, true, false), Ql = v("<svg><use href=#crosshair></svg>", false, true, false), ea = v("<svg><polyline stroke=var(--ninja) fill=none></svg>", false, true, false), ta = v('<svg viewBox="0 0 1056 600"><defs><clipPath id=tiles-clip><use href=#tiles></use></clipPath><path id=tilemode-crosshair stroke-width=1.5 fill=none d="M -13.5 -9 V -13.5 H -9 M 9 -13.5 H 13.5 V -9 M 13.5 9 V 13.5 H 9 M -9 13.5 H -13.5 V 9"></path><path id=crosshair stroke-width=1.5 fill=none d="M -4 0 H 4 M 0 -4 V 4"></path><filter id=outline filterUnits=userSpaceOnUse x=0 y=0 width=1056 height=600><feMorphology in=SourceAlpha operator=dilate radius=0.75 result=DILATED></feMorphology><feFlood flood-color=var(--editor-crosshair) flood-opacity=1 result=COLOR></feFlood><feComposite in=COLOR in2=DILATED operator=in result=OUTLINE></feComposite><feMerge><feMergeNode in=OUTLINE></feMergeNode><feMergeNode in=SourceGraphic></feMergeNode></feMerge></filter><filter id=hollow><feMorphology in=SourceAlpha operator=dilate radius=3 result=DILATED></feMorphology><feComposite operator=out in=DILATED in2=SourceGraphic></feComposite></filter></defs><path id=tiles stroke-width=2 clip-path=url(#tiles-clip) clip-rule=evenodd fill-rule=evenodd></path><g></g><path id=selected-tiles fill-rule=evenodd></path><g><path stroke=var(--editor-crosshair) stroke-width=2 fill=none>'), bt = v("<svg><line class=fine-grid y1=24 y2=576></svg>", false, true, false), xt = v("<svg><line class=fine-grid x1=24 x2=1032></svg>", false, true, false), ra = v("<svg><line class=regular-grid y1=24 y2=576></svg>", false, true, false), sa = v("<svg><line class=regular-grid x1=24 x2=1032></svg>", false, true, false), oa = v("<svg><line class=door-switch-line></svg>", false, true, false);
   const et = 42, tt = 23, vt = 0, kt = 1, na = 3, $t = 5, ia = 6, St = 7, _a = 8, rt = 9, la = 0, aa = 1, ca = 3, da = 5, ua = 6, pa = 8, ha = 10, fa = 11, ga = 14, ya = 16, wa = 17, ma = 20, ba = 21, xa = 24, va = 28, ka = new Float64Array([
     -0.039,
     -0.0249,
@@ -3189,7 +3189,7 @@
     -0.2042
   ]), Dt = 150;
   function Tt() {
-    const [t, e] = m([]), [r, s] = m([]), [n, i] = m([]), [_, o] = m([]), [c, p] = m([]), [b, f] = m([]), [E, P] = m([]), [N, C] = m([]), [A, I] = m([]), [$, S] = m([]), [M, D] = m([]), [O, F] = m([]), [X, ce] = m([]), [te, se] = m([]), [ie, de] = m([]), [j, Z] = m([]), [Y, U] = m([]);
+    const [t, e] = m([]), [r, s] = m([]), [n, i] = m([]), [_, o] = m([]), [c, p] = m([]), [b, f] = m([]), [E, P] = m([]), [N, C] = m([]), [A, I] = m([]), [$, S] = m([]), [M, D] = m([]), [O, F] = m([]), [X, ce] = m([]), [te, se] = m([]), [ie, de] = m([]), [j, Z] = m([]), [Y, q] = m([]);
     return {
       ninjas: t,
       setNinjas: e,
@@ -3224,7 +3224,7 @@
       boostPads: j,
       setBoostPads: Z,
       shoveThwumps: Y,
-      setShoveThwumps: U
+      setShoveThwumps: q
     };
   }
   function Pt(t, e, r, s) {
@@ -3277,12 +3277,12 @@
           return t.oneWays;
         }
       }),
-      u(qt, {
+      u(Ut, {
         get mines() {
           return t.mines;
         }
       }),
-      u(Vt, {
+      u(Ht, {
         get regularDoors() {
           return t.regularDoors;
         }
@@ -3292,12 +3292,12 @@
           return t.trapDoors;
         }
       }),
-      u(Wt, {
+      u(Vt, {
         get lockedDoors() {
           return t.lockedDoors;
         }
       }),
-      u(Ht, {
+      u(Wt, {
         get lockedSwitches() {
           return t.lockedSwitches;
         }
@@ -3336,7 +3336,7 @@
         get each() {
           return t.ninjas();
         },
-        children: (e) => u(We, {
+        children: (e) => u(Ve, {
           class: "ninja",
           ninja: () => e,
           bones: () => ka
@@ -3376,19 +3376,19 @@
       let g = false;
       if (!(d.target instanceof HTMLInputElement || d.target instanceof HTMLSelectElement)) {
         if (d.ctrlKey || d.metaKey) {
-          d.code === "KeyZ" && (d.ctrlKey || d.metaKey) && d.shiftKey ? (g = true, e.redo()) : d.code === "KeyZ" && (d.ctrlKey || d.metaKey) ? (g = true, e.undo()) : d.code === "KeyY" && (d.ctrlKey || d.metaKey) && (g = true, e.redo()), g && (U(true), d.preventDefault());
+          d.code === "KeyZ" && (d.ctrlKey || d.metaKey) && d.shiftKey ? (g = true, e.redo()) : d.code === "KeyZ" && (d.ctrlKey || d.metaKey) ? (g = true, e.undo()) : d.code === "KeyY" && (d.ctrlKey || d.metaKey) && (g = true, e.redo()), g && (q(true), d.preventDefault());
           return;
         }
-        d.shiftKey && (g = true, e.press_shift()), d.code === "Enter" && e.mode() === rt ? t.setReplay(e.to_replay(t.roundCorners())) : d.code === "Backquote" ? (g = true, e.press_backtick()) : d.code === "Digit1" ? (g = true, e.press_1(d.shiftKey)) : d.code === "Digit2" ? (g = true, e.press_2(d.shiftKey)) : d.code === "Digit3" ? (g = true, e.press_3(d.shiftKey)) : d.code === "Digit4" ? (g = true, e.press_4(d.shiftKey)) : d.code === "Digit5" ? (g = true, e.press_5(d.shiftKey)) : d.code === "Digit6" ? (g = true, e.press_6(d.shiftKey)) : d.code === "Digit7" ? (g = true, e.press_7(d.shiftKey)) : d.code === "Digit8" ? (g = true, e.press_8(d.shiftKey)) : d.code === "Digit9" ? (g = true, e.press_9()) : d.code === "Digit0" ? (g = true, e.press_0()) : d.code === "Minus" ? (g = true, e.press_dash()) : d.code === "Equal" ? (g = true, e.press_equals()) : d.code === "KeyQ" ? (g = true, e.press_q(d.shiftKey)) : d.code === "KeyW" ? (g = true, e.press_w(d.shiftKey)) : d.code === "KeyA" ? (g = true, e.press_a(d.shiftKey)) : d.code === "KeyS" ? (g = true, e.press_s(d.shiftKey)) : d.code === "KeyE" ? (g = true, e.press_e()) : d.code === "KeyD" ? (g = true, e.press_d()) : d.code === "KeyZ" ? (g = true, e.press_z()) : d.code === "KeyX" ? (g = true, e.press_x()) : d.code === "KeyC" ? (g = true, e.press_c()) : d.code === "Space" ? (g = true, e.press_space()) : d.code === "AltLeft" ? (g = true, e.press_alt_left(d.shiftKey)) : d.code === "KeyR" ? (g = true, e.press_r()) : d.code === "KeyT" ? (g = true, e.press_t()) : d.code === "KeyY" ? (g = true, e.press_y()) : d.code === "KeyU" ? (g = true, e.press_u()) : d.code === "KeyI" ? (g = true, e.press_i()) : d.code === "KeyO" ? (g = true, e.press_o()) : d.code === "KeyP" ? (g = true, e.press_p()) : d.code === "BracketLeft" ? (g = true, e.press_bracket_left()) : d.code === "BracketRight" ? (g = true, e.press_bracket_right()) : d.code === "KeyF" ? (g = true, e.press_f()) : d.code === "KeyH" ? (g = true, e.press_h()) : d.code === "KeyJ" ? (g = true, e.press_j()) : d.code === "KeyK" ? (g = true, e.press_k()) : d.code === "KeyL" ? (g = true, e.press_l()) : d.code === "KeyN" ? (g = true, e.press_n()) : d.code === "KeyM" ? (g = true, e.press_m()) : d.code === "Comma" ? (g = true, e.press_comma()) : d.code === "ArrowUp" ? (g = true, e.press_up(d.shiftKey)) : d.code === "ArrowDown" ? (g = true, e.press_down(d.shiftKey)) : d.code === "ArrowLeft" ? (g = true, e.press_left(d.shiftKey)) : d.code === "ArrowRight" ? (g = true, e.press_right(d.shiftKey)) : d.code === "Enter" ? (g = true, e.press_enter()) : d.code === "Escape" ? g = e.press_escape() : d.code === "Slash" && (g = true, e.press_slash()), g && (U(true), d.preventDefault());
+        d.shiftKey && (g = true, e.press_shift()), d.code === "Enter" && e.mode() === rt ? t.setReplay(e.to_replay(t.roundCorners())) : d.code === "Backquote" ? (g = true, e.press_backtick()) : d.code === "Digit1" ? (g = true, e.press_1(d.shiftKey)) : d.code === "Digit2" ? (g = true, e.press_2(d.shiftKey)) : d.code === "Digit3" ? (g = true, e.press_3(d.shiftKey)) : d.code === "Digit4" ? (g = true, e.press_4(d.shiftKey)) : d.code === "Digit5" ? (g = true, e.press_5(d.shiftKey)) : d.code === "Digit6" ? (g = true, e.press_6(d.shiftKey)) : d.code === "Digit7" ? (g = true, e.press_7(d.shiftKey)) : d.code === "Digit8" ? (g = true, e.press_8(d.shiftKey)) : d.code === "Digit9" ? (g = true, e.press_9()) : d.code === "Digit0" ? (g = true, e.press_0()) : d.code === "Minus" ? (g = true, e.press_dash()) : d.code === "Equal" ? (g = true, e.press_equals()) : d.code === "KeyQ" ? (g = true, e.press_q(d.shiftKey)) : d.code === "KeyW" ? (g = true, e.press_w(d.shiftKey)) : d.code === "KeyA" ? (g = true, e.press_a(d.shiftKey)) : d.code === "KeyS" ? (g = true, e.press_s(d.shiftKey)) : d.code === "KeyE" ? (g = true, e.press_e()) : d.code === "KeyD" ? (g = true, e.press_d()) : d.code === "KeyZ" ? (g = true, e.press_z()) : d.code === "KeyX" ? (g = true, e.press_x()) : d.code === "KeyC" ? (g = true, e.press_c()) : d.code === "Space" ? (g = true, e.press_space()) : d.code === "AltLeft" ? (g = true, e.press_alt_left(d.shiftKey)) : d.code === "KeyR" ? (g = true, e.press_r()) : d.code === "KeyT" ? (g = true, e.press_t()) : d.code === "KeyY" ? (g = true, e.press_y()) : d.code === "KeyU" ? (g = true, e.press_u()) : d.code === "KeyI" ? (g = true, e.press_i()) : d.code === "KeyO" ? (g = true, e.press_o()) : d.code === "KeyP" ? (g = true, e.press_p()) : d.code === "BracketLeft" ? (g = true, e.press_bracket_left()) : d.code === "BracketRight" ? (g = true, e.press_bracket_right()) : d.code === "KeyF" ? (g = true, e.press_f()) : d.code === "KeyH" ? (g = true, e.press_h()) : d.code === "KeyJ" ? (g = true, e.press_j()) : d.code === "KeyK" ? (g = true, e.press_k()) : d.code === "KeyL" ? (g = true, e.press_l()) : d.code === "KeyN" ? (g = true, e.press_n()) : d.code === "KeyM" ? (g = true, e.press_m()) : d.code === "Comma" ? (g = true, e.press_comma()) : d.code === "ArrowUp" ? (g = true, e.press_up(d.shiftKey)) : d.code === "ArrowDown" ? (g = true, e.press_down(d.shiftKey)) : d.code === "ArrowLeft" ? (g = true, e.press_left(d.shiftKey)) : d.code === "ArrowRight" ? (g = true, e.press_right(d.shiftKey)) : d.code === "Enter" ? (g = true, e.press_enter()) : d.code === "Escape" ? g = e.press_escape() : d.code === "Slash" && (g = true, e.press_slash()), g && (q(true), d.preventDefault());
       }
     }, Y = (d) => {
       let g = false;
-      d.shiftKey || (g = true, e.release_shift()), d.code === "KeyQ" ? (g = true, e.release_q()) : d.code === "KeyW" ? (g = true, e.release_w()) : d.code === "KeyA" ? (g = true, e.release_a()) : d.code === "KeyS" ? (g = true, e.release_s()) : d.code === "KeyE" ? (g = true, e.release_e()) : d.code === "KeyD" ? (g = true, e.release_d()) : d.code === "KeyZ" ? (g = true, e.release_z()) : d.code === "KeyC" ? (g = true, e.release_c()) : d.code === "Space" ? (g = true, e.release_space()) : d.code === "AltLeft" && (g = true, e.release_alt_left()), g && (U(false), d.preventDefault());
+      d.shiftKey || (g = true, e.release_shift()), d.code === "KeyQ" ? (g = true, e.release_q()) : d.code === "KeyW" ? (g = true, e.release_w()) : d.code === "KeyA" ? (g = true, e.release_a()) : d.code === "KeyS" ? (g = true, e.release_s()) : d.code === "KeyE" ? (g = true, e.release_e()) : d.code === "KeyD" ? (g = true, e.release_d()) : d.code === "KeyZ" ? (g = true, e.release_z()) : d.code === "KeyC" ? (g = true, e.release_c()) : d.code === "Space" ? (g = true, e.release_space()) : d.code === "AltLeft" && (g = true, e.release_alt_left()), g && (q(false), d.preventDefault());
     };
     document.addEventListener("keydown", Z), document.addEventListener("keyup", Y), me(() => {
       document.removeEventListener("keydown", Z), document.removeEventListener("keyup", Y);
     });
-    function U(d) {
+    function q(d) {
       E(e.mode()), n(e.tiles_path()), _(e.selected_tiles_path()), N({
         row: e.tile_crosshair_row(),
         col: e.tile_crosshair_col()
@@ -3417,26 +3417,26 @@
     for (let d = 0; d < et * 2; d++) Te.push(30 + 12 * d);
     const Pe = [];
     for (let d = 0; d < tt * 2; d++) Pe.push(30 + 12 * d);
-    return U(false), [
+    return q(false), [
       (() => {
         var d = ta(), g = d.firstChild, Ee = g.firstChild, J = Ee.nextSibling;
         J.nextSibling;
         var ne = g.nextSibling, ge = ne.nextSibling, le = ge.nextSibling, k = le.nextSibling, R = k.firstChild;
         return d.$$contextmenu = (h) => {
-          e.press_escape() && (U(false), h.preventDefault());
+          e.press_escape() && (q(false), h.preventDefault());
         }, d.$$mouseup = () => {
-          e.cursor_up(), U(false);
+          e.cursor_up(), q(false);
         }, d.$$dblclick = (h) => {
-          e.double_click(h.shiftKey), U(false);
+          e.double_click(h.shiftKey), q(false);
         }, d.$$mousedown = (h) => {
-          h.buttons & 2 || (e.mode() === rt ? t.setReplay(e.to_replay(t.roundCorners())) : (e.cursor_down(h.shiftKey), U(true)));
+          h.buttons & 2 || (e.mode() === rt ? t.setReplay(e.to_replay(t.roundCorners())) : (e.cursor_down(h.shiftKey), q(true)));
         }, d.$$mousemove = function(h) {
           const { left: w, top: L, width: B, height: Q } = this.getBoundingClientRect(), pe = e.set_cursor_pos((h.clientX - w) / B * 1056, (h.clientY - L) / Q * 600, h.shiftKey);
           t.globalEventState.setMouseGamePos({
             x: (h.clientX - w) / B * 1056,
             y: (h.clientY - L) / Q * 600
-          }), pe && U(false);
-        }, x(g, u(Ft, {}), J), x(g, u(Ut, {}), J), x(g, u(rr, {}), J), x(g, u(Zt, {}), J), x(g, u(Jt, {}), J), x(g, u(or, {}), J), x(g, u(ir, {}), J), x(g, u(hr, {}), J), x(d, u(G, {
+          }), pe && q(false);
+        }, x(g, u(Ft, {}), J), x(g, u(qt, {}), J), x(g, u(rr, {}), J), x(g, u(Zt, {}), J), x(g, u(Jt, {}), J), x(g, u(or, {}), J), x(g, u(ir, {}), J), x(g, u(hr, {}), J), x(d, u(G, {
           get when() {
             return p();
           },
@@ -3481,7 +3481,7 @@
             return f() === St;
           },
           get children() {
-            var h = Hl();
+            var h = Wl();
             return T((w) => {
               var L = S().x - Dt / 2, B = S().y - Dt / 2;
               return L !== w.e && y(h, "x", w.e = L), B !== w.t && y(h, "y", w.t = B), w;
@@ -3577,7 +3577,7 @@
             return f() === rt;
           },
           get children() {
-            return u(We, {
+            return u(Ve, {
               class: "ninja",
               ninja: () => ({
                 x: C().x,
@@ -3611,7 +3611,7 @@
       })(),
       u(Gl, {
         editor: e,
-        render: U,
+        render: q,
         get levelName() {
           return t.levelName;
         },
@@ -3744,7 +3744,7 @@
       x: -50,
       y: -50,
       deg: 0
-    }), [M, D] = m(), [O, F] = m(), X = m([]), ce = m([]), te = m([]), se = m([]), ie = m([]), de = m([]), j = m([]), Z = m([]), Y = m([]), U = m([]), oe = m([]), ue = m([]), _e = m([]), De = m([]), Te = m([]), Pe = m([]);
+    }), [M, D] = m(), [O, F] = m(), X = m([]), ce = m([]), te = m([]), se = m([]), ie = m([]), de = m([]), j = m([]), Z = m([]), Y = m([]), q = m([]), oe = m([]), ue = m([]), _e = m([]), De = m([]), Te = m([]), Pe = m([]);
     let d = performance.now();
     const Ee = 1e3 / 60;
     let J = 0, ne = 0;
@@ -3780,7 +3780,7 @@
         x: e.ninja_preview_x(k),
         y: e.ninja_preview_y(k),
         deg: 0
-      }), D(e.ninja_bones(k)), E() === void 0 ? F(void 0) : F(e.ninja_preview_bones(k)), d_(X, e), cl(ce, e, k), r_(te, e), fl(se, e, k), bl(ie, e, k), Q_(de, e), ol(j, e, k), D_(Z, e, k), C_(Y, e), K_(U, e, k), Z_(oe, e), y_(ue, e, k), Sl(_e, e, k), qi(De, e, k), Yi(Te, e, k), Wl(Pe, e, k), p(e.replay_length());
+      }), D(e.ninja_bones(k)), E() === void 0 ? F(void 0) : F(e.ninja_preview_bones(k)), d_(X, e), cl(ce, e, k), r_(te, e), fl(se, e, k), bl(ie, e, k), Q_(de, e), ol(j, e, k), D_(Z, e, k), C_(Y, e), K_(q, e, k), Z_(oe, e), y_(ue, e, k), Sl(_e, e, k), Ui(De, e, k), Yi(Te, e, k), Vl(Pe, e, k), p(e.replay_length());
     }
     return [
       (() => {
@@ -3793,7 +3793,7 @@
             x: (w.clientX - L) / Q * 1056,
             y: (w.clientY - B) / pe * 600
           });
-        }, x(R, u(Ft, {}), null), x(R, u(rr, {}), null), x(R, u(Ut, {}), null), x(R, u(Zt, {}), null), x(R, u(Jt, {}), null), x(R, u(or, {}), null), x(R, u(ir, {}), null), x(R, u(hr, {}), null), x(R, u(Vi, {}), null), x(k, u(Kt, {
+        }, x(R, u(Ft, {}), null), x(R, u(rr, {}), null), x(R, u(qt, {}), null), x(R, u(Zt, {}), null), x(R, u(Jt, {}), null), x(R, u(or, {}), null), x(R, u(ir, {}), null), x(R, u(hr, {}), null), x(R, u(Hi, {}), null), x(k, u(Kt, {
           get exitDoors() {
             return De[0];
           }
@@ -3801,23 +3801,23 @@
           get oneWays() {
             return te[0];
           }
-        }), h), x(k, u(qt, {
+        }), h), x(k, u(Ut, {
           get mines() {
             return X[0];
           }
-        }), h), x(k, u(Vt, {
+        }), h), x(k, u(Ht, {
           get regularDoors() {
             return ue[0];
           }
-        }), h), x(k, u(Wt, {
+        }), h), x(k, u(Vt, {
           get lockedDoors() {
             return Z[0];
           }
         }), h), x(k, u(Yt, {
           get trapDoors() {
-            return U[0];
+            return q[0];
           }
-        }), h), x(k, u(Ht, {
+        }), h), x(k, u(Wt, {
           get lockedSwitches() {
             return Y[0];
           }
@@ -3845,11 +3845,11 @@
           get thwumps() {
             return ie[0];
           }
-        }), h), x(k, u(We, {
+        }), h), x(k, u(Ve, {
           class: "ninja preview",
           ninja: $,
           bones: O
-        }), h), x(k, u(We, {
+        }), h), x(k, u(Ve, {
           class: "ninja",
           ninja: A,
           bones: M
@@ -3944,8 +3944,8 @@
         get children() {
           var j = ja(), Z = j.firstChild, Y = Z.nextSibling;
           return Y.nextSibling, Y.addEventListener("change", function() {
-            const U = this.files;
-            if (U && U.length > 0) {
+            const q = this.files;
+            if (q && q.length > 0) {
               const oe = new FileReader();
               oe.onloadend = () => {
                 if (oe.result instanceof ArrayBuffer) {
@@ -3961,7 +3961,7 @@
                     console.error(_e), se(X);
                   }
                 }
-              }, oe.readAsArrayBuffer(U[0]);
+              }, oe.readAsArrayBuffer(q[0]);
             }
           }), x(j, u(G, {
             get when() {
