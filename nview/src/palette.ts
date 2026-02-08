@@ -222,6 +222,8 @@ const colorVarNames = [
     '--shove-thwump-center',
     '--zap-drone-background',
     '--zap-drone-border',
+    '--chaingun-drone-background',
+    '--chaingun-drone-border',
     '--time-remaining',
     '--hardcore-time',
     '--empty-timebar',
@@ -436,6 +438,14 @@ const colorVarPaletteLocations: Record<ColorVarName, { file: PaletteFileName, in
     },
     '--zap-drone-border': {
         file: 'entityDroneZap',
+        index: 1,
+    },
+    '--chaingun-drone-background': {
+        file: 'entityDroneChaingun',
+        index: 0,
+    },
+    '--chaingun-drone-border': {
+        file: 'entityDroneChaingun',
         index: 1,
     },
     '--time-remaining': {

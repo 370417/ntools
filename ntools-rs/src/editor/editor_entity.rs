@@ -39,6 +39,10 @@ pub enum EditorEntity {
         pos: EntityPos,
         orientation: Orientation,
     },
+    ChaingunDrone {
+        pos: EntityPos,
+        orientation: OrientationCardinal,
+    },
     ZapDrone {
         pos: EntityPos,
         orientation: OrientationCardinal,
@@ -81,7 +85,7 @@ pub enum EntityId {
     TrapSwitch = 9,
     LaunchPad = 10,
     OneWay = 11,
-    ChainsawDrone = 12,
+    ChaingunDrone = 12,
     LaserDrone = 13,
     ZapDrone = 14,
     ChaseDrone = 15,
@@ -102,7 +106,7 @@ pub enum EntityId {
 
 impl EntityId {
     pub fn is_drone(self) -> bool {
-        matches!(self, EntityId::ZapDrone | EntityId::ChainsawDrone | EntityId::LaserDrone | EntityId::MiniDrone)
+        matches!(self, EntityId::ZapDrone | EntityId::ChaingunDrone | EntityId::LaserDrone | EntityId::MiniDrone)
     }
 }
 
@@ -123,7 +127,7 @@ impl TryFrom<u8> for EntityId {
             9 => Ok(Self::TrapSwitch),
             10 => Ok(Self::LaunchPad),
             11 => Ok(Self::OneWay),
-            12 => Ok(Self::ChainsawDrone),
+            12 => Ok(Self::ChaingunDrone),
             13 => Ok(Self::LaserDrone),
             14 => Ok(Self::ZapDrone),
             15 => Ok(Self::ChaseDrone),
@@ -176,7 +180,7 @@ impl EditorEntity {
             EntityId::TrapDoor | EntityId::TrapSwitch => EditorEntity::TrapDoor { door_pos: pos, orientation: orientations.orientation_binary, switch_pos: pos },
             EntityId::LaunchPad => EditorEntity::LaunchPad { pos, orientation: orientations.orientation },
             EntityId::OneWay => EditorEntity::OneWay { pos, orientation: orientations.orientation },
-            EntityId::ChainsawDrone => todo!(),
+            EntityId::ChaingunDrone => EditorEntity::ChaingunDrone { pos, orientation: orientations.orientation_cardinal },
             EntityId::LaserDrone => todo!(),
             EntityId::ZapDrone => EditorEntity::ZapDrone { pos, orientation: orientations.orientation_cardinal },
             EntityId::ChaseDrone => todo!(),
@@ -218,6 +222,7 @@ impl EditorEntity {
             EditorEntity::BounceBlock { pos, .. } |
             EditorEntity::LaunchPad { pos, .. } |
             EditorEntity::ZapDrone { pos, .. } |
+            EditorEntity::ChaingunDrone { pos, .. } |
             EditorEntity::FloorGuard { pos, .. } |
             EditorEntity::BoostPad { pos } |
             EditorEntity::Thwump { pos, .. } |
@@ -238,6 +243,7 @@ impl EditorEntity {
             EditorEntity::BounceBlock { pos, .. } |
             EditorEntity::LaunchPad { pos, .. } |
             EditorEntity::ZapDrone { pos, .. } |
+            EditorEntity::ChaingunDrone { pos, .. } |
             EditorEntity::FloorGuard { pos, .. } |
             EditorEntity::BoostPad { pos } |
             EditorEntity::Thwump { pos, .. } |
@@ -279,7 +285,8 @@ impl EditorEntity {
             EditorEntity::RegularDoor { orientation, .. } |
             EditorEntity::LockedDoor { orientation, .. } |
             EditorEntity::TrapDoor { orientation, .. } => orientation.rotate_cw_mut(),
-            EditorEntity::ZapDrone { orientation, .. } => orientation.rotate_cw_mut(),
+            EditorEntity::ZapDrone { orientation, .. } |
+            EditorEntity::ChaingunDrone { orientation, .. } => orientation.rotate_cw_mut(),
             EditorEntity::Mine { .. } |
             EditorEntity::ToggleMine { .. } |
             EditorEntity::BoostPad { .. } |
@@ -299,7 +306,8 @@ impl EditorEntity {
             EditorEntity::RegularDoor { orientation, .. } |
             EditorEntity::LockedDoor { orientation, .. } |
             EditorEntity::TrapDoor { orientation, .. } => orientation.rotate_ccw_mut(),
-            EditorEntity::ZapDrone { orientation, .. } => orientation.rotate_ccw_mut(),
+            EditorEntity::ZapDrone { orientation, .. } |
+            EditorEntity::ChaingunDrone { orientation, .. } => orientation.rotate_ccw_mut(),
             EditorEntity::Mine { .. } |
             EditorEntity::ToggleMine { .. } |
             EditorEntity::BoostPad { .. } |
@@ -319,7 +327,8 @@ impl EditorEntity {
             EditorEntity::RegularDoor { orientation, .. } |
             EditorEntity::LockedDoor { orientation, .. } |
             EditorEntity::TrapDoor { orientation, .. } => orientation.flip_across_x_axis_mut(),
-            EditorEntity::ZapDrone { orientation, .. } => orientation.flip_across_x_axis_mut(),
+            EditorEntity::ZapDrone { orientation, .. } |
+            EditorEntity::ChaingunDrone { orientation, .. } => orientation.flip_across_x_axis_mut(),
             EditorEntity::Mine { .. } |
             EditorEntity::ToggleMine { .. } |
             EditorEntity::BoostPad { .. } |
@@ -339,7 +348,8 @@ impl EditorEntity {
             EditorEntity::RegularDoor { orientation, .. } |
             EditorEntity::LockedDoor { orientation, .. } |
             EditorEntity::TrapDoor { orientation, .. } => orientation.flip_across_y_axis_mut(),
-            EditorEntity::ZapDrone { orientation, .. } => orientation.flip_across_y_axis_mut(),
+            EditorEntity::ZapDrone { orientation, .. } |
+            EditorEntity::ChaingunDrone { orientation, .. } => orientation.flip_across_y_axis_mut(),
             EditorEntity::Mine { .. } |
             EditorEntity::ToggleMine { .. } |
             EditorEntity::BoostPad { .. } |
@@ -359,7 +369,8 @@ impl EditorEntity {
             EditorEntity::RegularDoor { orientation, .. } |
             EditorEntity::LockedDoor { orientation, .. } |
             EditorEntity::TrapDoor { orientation, .. } => orientation.rotation_deg(),
-            EditorEntity::ZapDrone { orientation, .. } => orientation.rotation_deg(),
+            EditorEntity::ZapDrone { orientation, .. } |
+            EditorEntity::ChaingunDrone { orientation, .. } => orientation.rotation_deg(),
             EditorEntity::Mine { .. } |
             EditorEntity::ToggleMine { .. } |
             EditorEntity::BoostPad { .. } |
@@ -377,6 +388,7 @@ impl EditorEntity {
             EditorEntity::TrapDoor { .. } => EntityId::TrapDoor,
             EditorEntity::LaunchPad { .. } => EntityId::LaunchPad,
             EditorEntity::OneWay { .. } => EntityId::OneWay,
+            EditorEntity::ChaingunDrone { .. } => EntityId::ChaingunDrone,
             EditorEntity::ZapDrone { .. } => EntityId::ZapDrone,
             EditorEntity::FloorGuard { .. } => EntityId::FloorGuard,
             EditorEntity::BounceBlock { .. } => EntityId::BounceBlock,

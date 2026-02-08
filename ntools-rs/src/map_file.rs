@@ -163,7 +163,7 @@ impl <'a> Iterator for EntityDataParser<'a> {
                 EntityId::TrapSwitch => return self.trap_doors.pop_front().map(|(door_pos, orientation)| EditorEntity::TrapDoor { door_pos, orientation, switch_pos: pos }),
                 EntityId::LaunchPad => return Some(EditorEntity::LaunchPad { pos, orientation }),
                 EntityId::OneWay => return Some(EditorEntity::OneWay { pos, orientation }),
-                EntityId::ChainsawDrone => {}
+                EntityId::ChaingunDrone => {}
                 EntityId::LaserDrone => {}
                 EntityId::ZapDrone => return Some(EditorEntity::ZapDrone { pos, orientation: orientation_cardinal }),
                 EntityId::ChaseDrone => {}
@@ -253,6 +253,7 @@ fn editor_entities_to_bytes(entities: &EditorEntities) -> Vec<u8> {
                 }
                 EditorEntity::LaunchPad { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
                 EditorEntity::OneWay { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
+                EditorEntity::ChaingunDrone { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
                 EditorEntity::ZapDrone { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
                 EditorEntity::FloorGuard { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
                 EditorEntity::BounceBlock { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),

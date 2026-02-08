@@ -21,6 +21,7 @@ import { EditorFooter } from "./EditorFooter";
 import { debouncedSaveMap } from "./localstorage";
 import type { Palette } from "./palette";
 import { ZapDroneDefs, ZapDrones, type ZapDroneData } from "./entities/ZapDrone";
+import { ChaingunDroneDefs, ChaingunDrones, type ChaingunDroneData } from "./entities/ChaingunDrone";
 
 const COLS = 42;
 const ROWS = 23;
@@ -54,7 +55,10 @@ const ENTITY_LOCKED_DOOR = 6;
 const ENTITY_TRAP_DOOR = 8;
 const ENTITY_LAUNCH_PAD = 10;
 const ENTITY_ONE_WAY = 11;
+const ENTITY_CHAINGUN_DRONE = 12;
+// const ENTITY_LASER_DRONE = 13;
 const ENTITY_ZAP_DRONE = 14;
+// const ENTITY_CHASE_DRONE = 15;
 const ENTITY_FLOOR_GUARD = 16;
 const ENTITY_BOUNCE_BLOCK = 17;
 const ENTITY_THWUMP = 20;
@@ -100,6 +104,8 @@ type EntitiesProps = {
     setLaunchPads: Setter<LaunchPadData[]>,
     oneWays: Accessor<OneWayData[]>,
     setOneWays: Setter<OneWayData[]>,
+    chaingunDrones: Accessor<ChaingunDroneData[]>,
+    setChaingunDrones: Setter<ChaingunDroneData[]>,
     zapDrones: Accessor<ZapDroneData[]>,
     setZapDrones: Setter<ZapDroneData[]>,
     floorGuards: Accessor<FloorGuardData[]>,
@@ -126,6 +132,7 @@ function createEntities(): EntitiesProps {
     const [trapSwitches, setTrapSwitches] = createSignal<TrapSwitchData[]>([]);
     const [launchPads, setLaunchPads] = createSignal<LaunchPadData[]>([]);
     const [oneWays, setOneWays] = createSignal<OneWayData[]>([]);
+    const [chaingunDrones, setChaingunDrones] = createSignal<ChaingunDroneData[]>([]);
     const [zapDrones, setZapDrones] = createSignal<ZapDroneData[]>([]);
     const [floorGuards, setFloorGuards] = createSignal<FloorGuardData[]>([]);
     const [bounceBlocks, setBounceBlocks] = createSignal<BounceBlockData[]>([]);
@@ -144,6 +151,7 @@ function createEntities(): EntitiesProps {
         trapSwitches, setTrapSwitches,
         launchPads, setLaunchPads,
         oneWays, setOneWays,
+        chaingunDrones, setChaingunDrones,
         zapDrones, setZapDrones,
         floorGuards, setFloorGuards,
         bounceBlocks, setBounceBlocks,
@@ -165,6 +173,7 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
     const trapSwitches: TrapSwitchData[] = [];
     const launchPads: LaunchPadData[] = [];
     const oneWays: OneWayData[] = [];
+    const chaingunDrones: ChaingunDroneData[] = [];
     const zapDrones: ZapDroneData[] = [];
     const floorGuards: FloorGuardData[] = [];
     const bounceBlocks: BounceBlockData[] = [];
@@ -232,6 +241,8 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
             launchPads.push(entityCopy);
         } else if (entity.type_int === ENTITY_ONE_WAY) {
             oneWays.push(entityCopy);
+        } else if (entity.type_int === ENTITY_CHAINGUN_DRONE) {
+            chaingunDrones.push(entityCopy);
         } else if (entity.type_int === ENTITY_ZAP_DRONE) {
             zapDrones.push(entityCopy);
         } else if (entity.type_int === ENTITY_FLOOR_GUARD) {
@@ -266,6 +277,7 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
     entities.setTrapSwitches(trapSwitches);
     entities.setLaunchPads(launchPads);
     entities.setOneWays(oneWays);
+    entities.setChaingunDrones(chaingunDrones);
     entities.setZapDrones(zapDrones);
     entities.setFloorGuards(floorGuards);
     entities.setBounceBlocks(bounceBlocks);
@@ -286,6 +298,7 @@ function Entities({ entities }: { entities: EntitiesProps }) {
         <TrapSwitches trapSwitches={entities.trapSwitches} />
         <ExitSwitches exitSwitches={entities.exitSwitches} />
         <LaunchPads launchPads={entities.launchPads} />
+        <ChaingunDrones chaingunDrones={entities.chaingunDrones} />
         <ZapDrones zapDrones={entities.zapDrones} />
         <FloorGuards floorGuards={entities.floorGuards} />
         <Thwumps thwumps={entities.thwumps} />
@@ -563,6 +576,7 @@ export function EditorApp(props: {
                 <TrapSwitchDefs />
                 <BoostPadDefs />
                 <ThwumpDefs />
+                <ChaingunDroneDefs />
                 <ZapDroneDefs />
                 <path id="tilemode-crosshair" stroke-width="1.5" fill="none" d={tilemodeCrosshairPath} />
                 <path id="crosshair" stroke-width="1.5" fill="none" d={crosshairPath} />

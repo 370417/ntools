@@ -74,7 +74,7 @@ const ENTITIES_IN_PALETTE: [EntityId; 24] = [
     EntityId::TrapDoor,
     EntityId::LaunchPad,
     EntityId::OneWay,
-    EntityId::ChainsawDrone,
+    EntityId::ChaingunDrone,
     EntityId::LaserDrone,
     EntityId::ZapDrone,
     EntityId::ChaseDrone,

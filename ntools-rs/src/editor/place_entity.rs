@@ -32,17 +32,20 @@ impl PlaceEntity {
     }
 
     pub fn crosshair(&self, cursor_pos: DVec2, fine_grid: bool) -> DVec2 {
-        match self.entity {
-            EditorEntity::FloorGuard { .. } => Self::round_to_grid_floorguard(cursor_pos, fine_grid),
-            EditorEntity::RegularDoor { .. } => Self::round_to_grid_door(cursor_pos, fine_grid),
-            EditorEntity::LockedDoor { .. } |
-            EditorEntity::TrapDoor { .. } => if let Some(Stage::PlaceDoor) = self.stage {
-                Self::round_to_grid_door(cursor_pos, fine_grid)
-            } else {
-                Self::round_to_grid(cursor_pos, fine_grid)
-            },
-            EditorEntity::ZapDrone { .. } => Self::round_to_grid_drone(cursor_pos, fine_grid),
-            _ => Self::round_to_grid(cursor_pos, fine_grid)
+        if self.entity.id().is_drone() {
+            Self::round_to_grid_drone(cursor_pos, fine_grid)
+        } else {
+            match self.entity {
+                EditorEntity::FloorGuard { .. } => Self::round_to_grid_floorguard(cursor_pos, fine_grid),
+                EditorEntity::RegularDoor { .. } => Self::round_to_grid_door(cursor_pos, fine_grid),
+                EditorEntity::LockedDoor { .. } |
+                EditorEntity::TrapDoor { .. } => if let Some(Stage::PlaceDoor) = self.stage {
+                    Self::round_to_grid_door(cursor_pos, fine_grid)
+                } else {
+                    Self::round_to_grid(cursor_pos, fine_grid)
+                },
+                _ => Self::round_to_grid(cursor_pos, fine_grid),
+            }
         }
     }
 
@@ -133,6 +136,7 @@ impl PlaceEntity {
             EditorEntity::BounceBlock { pos, .. } |
             EditorEntity::LaunchPad { pos, .. } |
             EditorEntity::ZapDrone { pos, .. } |
+            EditorEntity::ChaingunDrone { pos, .. } |
             EditorEntity::FloorGuard { pos, .. } |
             EditorEntity::BoostPad { pos } |
             EditorEntity::Thwump { pos, .. } |
@@ -159,7 +163,8 @@ impl PlaceEntity {
             EditorEntity::Thwump { orientation, .. } |
             EditorEntity::ShoveThwump { orientation, .. } |
             EditorEntity::BounceBlock { orientation, .. } => *orientation = orientations.orientation,
-            EditorEntity::ZapDrone { orientation, .. } => *orientation = orientations.orientation_cardinal,
+            EditorEntity::ZapDrone { orientation, .. } |
+            EditorEntity::ChaingunDrone { orientation, .. } => *orientation = orientations.orientation_cardinal,
             EditorEntity::RegularDoor { .. } |
             EditorEntity::LockedDoor { .. } |
             EditorEntity::TrapDoor { .. } |

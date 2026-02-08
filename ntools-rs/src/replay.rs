@@ -420,8 +420,25 @@ impl Replay {
     pub fn zap_drone_y(&self, i: usize, partial_frame: f64) -> f64 {
         self.current_sim.entities.zap_drones[i].y(partial_frame)
     }
+
     pub fn zap_drone_deg(&self, i: usize) -> f64 {
         self.current_sim.entities.zap_drones[i].orientation.rotation_deg()
+    }
+
+    pub fn chaingun_drones_len(&self) -> usize {
+        self.current_sim.entities.chaingun_drones.len()
+    }
+
+    pub fn chaingun_drone_x(&self, i: usize, partial_frame: f64) -> f64 {
+        self.current_sim.entities.chaingun_drones[i].x(partial_frame)
+    }
+
+    pub fn chaingun_drone_y(&self, i: usize, partial_frame: f64) -> f64 {
+        self.current_sim.entities.chaingun_drones[i].y(partial_frame)
+    }
+
+    pub fn chaingun_drone_deg(&self, i: usize) -> f64 {
+        self.current_sim.entities.chaingun_drones[i].orientation.rotation_deg()
     }
 }
 
