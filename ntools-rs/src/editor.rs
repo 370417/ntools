@@ -505,8 +505,8 @@ impl Editor {
     pub fn show_half_grid(&self) -> bool {
         match &self.mode {
             EditorMode::PenTool(_) => self.pen_tool_fine_grid,
-            EditorMode::PlaceEntity(place_entity) => !place_entity.entity.id().is_drone(),
-            EditorMode::ModifyEntity(modify_entity) => !modify_entity.modified_entity.id().is_drone(),
+            EditorMode::PlaceEntity(place_entity) => !place_entity.entity.id().is_drone() || self.entity_fine_grid,
+            EditorMode::ModifyEntity(modify_entity) => !modify_entity.modified_entity.id().is_drone() || self.entity_fine_grid,
             EditorMode::SelectEntity(_) => true,
             EditorMode::EntityPalette(_) => true,
             _ => false,

@@ -31,7 +31,7 @@ impl ModifyEntity {
             } else {
                 PlaceEntity::round_to_grid(cursor_pos, fine_grid)
             },
-            EditorEntity::ZapDrone { .. } => PlaceEntity::round_to_grid_drone(cursor_pos),
+            EditorEntity::ZapDrone { .. } => PlaceEntity::round_to_grid_drone(cursor_pos, fine_grid),
             _ => PlaceEntity::round_to_grid(cursor_pos, fine_grid)
         }
     }

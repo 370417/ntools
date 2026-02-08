@@ -41,7 +41,7 @@ impl PlaceEntity {
             } else {
                 Self::round_to_grid(cursor_pos, fine_grid)
             },
-            EditorEntity::ZapDrone { .. } => Self::round_to_grid_drone(cursor_pos),
+            EditorEntity::ZapDrone { .. } => Self::round_to_grid_drone(cursor_pos, fine_grid),
             _ => Self::round_to_grid(cursor_pos, fine_grid)
         }
     }
@@ -64,9 +64,13 @@ impl PlaceEntity {
         }
     }
 
-    pub fn round_to_grid_drone(cursor_pos: DVec2) -> DVec2 {
-        let offset = DVec2::splat(TILE_HALF_SIZE);
-        ((cursor_pos + offset) / TILE_SIZE).round() * TILE_SIZE - offset
+    pub fn round_to_grid_drone(cursor_pos: DVec2, fine_grid: bool) -> DVec2 {
+        if fine_grid {
+            Self::round_to_grid(cursor_pos, false)
+        } else {
+            let offset = DVec2::splat(TILE_HALF_SIZE);
+            ((cursor_pos + offset) / TILE_SIZE).round() * TILE_SIZE - offset
+        }
     }
 
     pub fn round_to_grid_door(cursor_pos: DVec2, fine_grid: bool) -> DVec2 {
