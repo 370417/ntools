@@ -1,14 +1,14 @@
-import { Index, type Accessor, type Signal } from "solid-js";
-import type { Replay } from "../assets/ntools_rs";
+import { Index, type Accessor } from "solid-js";
+// import type { Replay } from "../assets/ntools_rs";
 
 export type BatData = {
     x: number;
     y: number;
 };
 
-function equals(a: BatData, b: BatData): boolean {
-    return a.x === b.x && a.y === b.y;
-}
+// function equals(a: BatData, b: BatData): boolean {
+//     return a.x === b.x && a.y === b.y;
+// }
 
 function transform(bat: Accessor<BatData>): string {
     const { x, y } = bat();

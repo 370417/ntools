@@ -22,7 +22,7 @@ import { debouncedSaveMap } from "./localstorage";
 import type { Palette } from "./palette";
 import { ZapDroneDefs, ZapDrones, type ZapDroneData } from "./entities/ZapDrone";
 import { ChaingunDroneDefs, ChaingunDrones, type ChaingunDroneData } from "./entities/ChaingunDrone";
-import { BatDefs, Bats, type BatData } from "./entities/bat";
+import { BatDefs, Bats, type BatData } from "./entities/Bat";
 
 const COLS = 42;
 const ROWS = 23;
