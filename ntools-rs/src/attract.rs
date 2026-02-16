@@ -87,7 +87,7 @@ impl Attract {
         for row in 0..ROWS {
             for col in 0..COLS {
                 let i = row * COLS + col;
-                let pos = GridPos::new(col as u8 + 1, row as u8 + 1);
+                let pos = GridPos::new(col as i8 + 1, row as i8 + 1);
                 let tile = Tile::from_u8(map_data[i]).ok_or("Invalid tile")?;
                 tile.add_outer_segments_to_grid(pos, &mut grid);
             }
@@ -95,7 +95,7 @@ impl Attract {
         for row in 0..ROWS {
             for col in 0..COLS {
                 let i = row * COLS + col;
-                let pos = GridPos::new(col as u8 + 1, row as u8 + 1);
+                let pos = GridPos::new(col as i8 + 1, row as i8 + 1);
                 let tile = Tile::from_u8(map_data[i]).ok_or("Invalid tile")?;
                 tile.add_inner_segments_to_grid(pos, &mut grid);
             }
@@ -105,7 +105,7 @@ impl Attract {
         for row in 0..ROWS {
             for col in 0..COLS {
                 let i = row * COLS + col;
-                let pos = GridPos::new(col as u8 + 1, row as u8 + 1);
+                let pos = GridPos::new(col as i8 + 1, row as i8 + 1);
                 let tile = Tile::from_u8(map_data[i]).ok_or("Invalid tile")?;
                 tiles[pos] = tile;
             }

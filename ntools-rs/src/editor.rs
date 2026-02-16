@@ -466,11 +466,11 @@ impl Editor {
         }
     }
 
-    pub fn tile_crosshair_col(&self) -> u8 {
+    pub fn tile_crosshair_col(&self) -> i8 {
         self.tile_crosshair().x
     }
 
-    pub fn tile_crosshair_row(&self) -> u8 {
+    pub fn tile_crosshair_row(&self) -> i8 {
         self.tile_crosshair().y
     }
 
@@ -1357,8 +1357,8 @@ impl Editor {
             EditorMode::MoveSelection(_) => {
                 let crosshair = self.tile_crosshair();
                 let crosshair = GridPos {
-                    x: crosshair.x.saturating_add_signed(direction.vec2().x as i8),
-                    y: crosshair.y.saturating_add_signed(direction.vec2().y as i8),
+                    x: crosshair.x.saturating_add(direction.vec2().x as i8),
+                    y: crosshair.y.saturating_add(direction.vec2().y as i8),
                 };
                 let new_cursor_pos = crosshair.to_world_pos();
                 self.set_cursor_pos(new_cursor_pos.x, new_cursor_pos.y, shift);

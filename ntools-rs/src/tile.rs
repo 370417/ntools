@@ -591,7 +591,7 @@ impl Tile {
     /// Returns the outer segment of a tile in a certain direction.
     /// An outer segment is a horizontal or vertical segment that can be
     /// flush with an adjacent tile.
-    fn outer_segment(&self, pos: GridPos, direction: (i32, i32)) -> Option<Segment> {
+    fn outer_segment(&self, pos: GridPos, direction: (i8, i8)) -> Option<Segment> {
         let upper_left = pos.to_world_pos();
         let upper_right = pos.to_world_pos() + DVec2::new(TILE_SIZE, 0.0);
         let lower_left = pos.to_world_pos() + DVec2::new(0.0, TILE_SIZE);
@@ -1147,7 +1147,7 @@ impl Tiles {
         for row in 0..ROWS {
             for col in 0..COLS {
                 let i = row * COLS + col;
-                let pos = GridPos::new(col as u8 + 1, row as u8 + 1);
+                let pos = GridPos::new(col as i8 + 1, row as i8 + 1);
                 let tile = Tile::from_u8(bytes[i]).ok_or("Invalid tile")?;
                 tiles[pos] = tile;
             }
@@ -1168,7 +1168,7 @@ impl Tiles {
         for row in 0..ROWS {
             for col in 0..COLS {
                 let i = row * COLS + col;
-                let pos = GridPos::new(col as u8 + 1, row as u8 + 1);
+                let pos = GridPos::new(col as i8 + 1, row as i8 + 1);
                 let tile = self.tiles[i];
                 tile.add_outer_segments_to_grid(pos, &mut grid);
             }
@@ -1176,7 +1176,7 @@ impl Tiles {
         for row in 0..ROWS {
             for col in 0..COLS {
                 let i = row * COLS + col;
-                let pos = GridPos::new(col as u8 + 1, row as u8 + 1);
+                let pos = GridPos::new(col as i8 + 1, row as i8 + 1);
                 let tile = self.tiles[i];
                 tile.add_inner_segments_to_grid(pos, &mut grid);
             }
@@ -1196,7 +1196,7 @@ impl Tiles {
         for row in 0..ROWS {
             for col in 0..COLS {
                 let i = row * COLS + col;
-                let pos = GridPos::new(col as u8 + 1, row as u8 + 1);
+                let pos = GridPos::new(col as i8 + 1, row as i8 + 1);
                 let tile = self.tiles[i];
                 tile.add_outer_segments_to_grid_borderless(pos, &mut grid);
             }
@@ -1204,7 +1204,7 @@ impl Tiles {
         for row in 0..ROWS {
             for col in 0..COLS {
                 let i = row * COLS + col;
-                let pos = GridPos::new(col as u8 + 1, row as u8 + 1);
+                let pos = GridPos::new(col as i8 + 1, row as i8 + 1);
                 let tile = self.tiles[i];
                 tile.add_inner_segments_to_grid(pos, &mut grid);
             }

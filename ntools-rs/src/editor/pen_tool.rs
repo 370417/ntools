@@ -195,13 +195,13 @@ pub fn create_command_tiles(start: DVec2, end: DVec2, is_clockwise: bool, tiles:
         let min_y = start.y.min(end.y);
         let max_y = start.y.max(end.y);
 
-        let left_col = (start.x / TILE_SIZE - 1.0) as u8;
-        let right_col = (start.x / TILE_SIZE) as u8;
+        let left_col = (start.x / TILE_SIZE - 1.0) as i8;
+        let right_col = (start.x / TILE_SIZE) as i8;
 
         // Handle half tiles
         if min_y % TILE_SIZE != 0.0 {
-            let left_grid_pos = GridPos::new(left_col, (min_y / TILE_SIZE).floor() as u8);
-            let right_grid_pos = GridPos::new(right_col, (min_y / TILE_SIZE).floor() as u8);
+            let left_grid_pos = GridPos::new(left_col, (min_y / TILE_SIZE).floor() as i8);
+            let right_grid_pos = GridPos::new(right_col, (min_y / TILE_SIZE).floor() as i8);
 
             let (edge_to_make_closed, edge_to_make_open, cell_to_make_closed, cell_to_make_open) = if left_side_closed ^ !is_clockwise {
                 (
@@ -255,8 +255,8 @@ pub fn create_command_tiles(start: DVec2, end: DVec2, is_clockwise: bool, tiles:
         }
 
         if max_y % TILE_SIZE != 0.0 {
-            let left_grid_pos = GridPos::new(left_col, (max_y / TILE_SIZE).floor() as u8);
-            let right_grid_pos = GridPos::new(right_col, (max_y / TILE_SIZE).floor() as u8);
+            let left_grid_pos = GridPos::new(left_col, (max_y / TILE_SIZE).floor() as i8);
+            let right_grid_pos = GridPos::new(right_col, (max_y / TILE_SIZE).floor() as i8);
 
             let (edge_to_make_closed, edge_to_make_open, cell_to_make_closed, cell_to_make_open) = if left_side_closed ^ !is_clockwise {
                 (
@@ -310,8 +310,8 @@ pub fn create_command_tiles(start: DVec2, end: DVec2, is_clockwise: bool, tiles:
         }
 
         // Handle full tiles
-        let full_tile_min_row = (min_y / TILE_SIZE).ceil() as u8;
-        let full_tile_max_row = (max_y / TILE_SIZE).floor() as u8;
+        let full_tile_min_row = (min_y / TILE_SIZE).ceil() as i8;
+        let full_tile_max_row = (max_y / TILE_SIZE).floor() as i8;
         let full_tile_len = full_tile_max_row - full_tile_min_row;
 
         for i in 0..full_tile_len {
@@ -374,13 +374,13 @@ pub fn create_command_tiles(start: DVec2, end: DVec2, is_clockwise: bool, tiles:
         let min_x = start.x.min(end.x);
         let max_x = start.x.max(end.x);
 
-        let upper_row = (start.y / TILE_SIZE - 1.0) as u8;
-        let lower_row = (start.y / TILE_SIZE) as u8;
+        let upper_row = (start.y / TILE_SIZE - 1.0) as i8;
+        let lower_row = (start.y / TILE_SIZE) as i8;
 
         // Handle half tiles
         if min_x % TILE_SIZE != 0.0 {
-            let upper_grid_pos = GridPos::new((min_x / TILE_SIZE).floor() as u8, upper_row);
-            let lower_grid_pos = GridPos::new((min_x / TILE_SIZE).floor() as u8, lower_row);
+            let upper_grid_pos = GridPos::new((min_x / TILE_SIZE).floor() as i8, upper_row);
+            let lower_grid_pos = GridPos::new((min_x / TILE_SIZE).floor() as i8, lower_row);
 
             let (edge_to_make_closed, edge_to_make_open, cell_to_make_closed, cell_to_make_open) = if lower_side_closed ^ !is_clockwise {
                 (
@@ -434,8 +434,8 @@ pub fn create_command_tiles(start: DVec2, end: DVec2, is_clockwise: bool, tiles:
         }
 
         if max_x % TILE_SIZE != 0.0 {
-            let upper_grid_pos = GridPos::new((max_x / TILE_SIZE).floor() as u8, upper_row);
-            let lower_grid_pos = GridPos::new((max_x / TILE_SIZE).floor() as u8, lower_row);
+            let upper_grid_pos = GridPos::new((max_x / TILE_SIZE).floor() as i8, upper_row);
+            let lower_grid_pos = GridPos::new((max_x / TILE_SIZE).floor() as i8, lower_row);
 
             let (edge_to_make_closed, edge_to_make_open, cell_to_make_closed, cell_to_make_open) = if lower_side_closed ^ !is_clockwise {
                 (
@@ -489,8 +489,8 @@ pub fn create_command_tiles(start: DVec2, end: DVec2, is_clockwise: bool, tiles:
         }
 
         // Handle full tiles
-        let full_tile_min_col = (min_x / TILE_SIZE).ceil() as u8;
-        let full_tile_max_col = (max_x / TILE_SIZE).floor() as u8;
+        let full_tile_min_col = (min_x / TILE_SIZE).ceil() as i8;
+        let full_tile_max_col = (max_x / TILE_SIZE).floor() as i8;
         let full_tile_len = full_tile_max_col - full_tile_min_col;
 
         for i in 0..full_tile_len {

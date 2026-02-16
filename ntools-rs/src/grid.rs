@@ -74,40 +74,38 @@ impl <T: Clone> Clone for Grid<T> {
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct GridPos {
-    pub x: u8,
-    pub y: u8,
+    pub x: i8,
+    pub y: i8,
 }
 
 impl GridPos {
-    pub fn new(x: u8, y: u8) -> GridPos {
+    pub fn new(x: i8, y: i8) -> GridPos {
         GridPos { x, y }
     }
 
     pub fn from_world_pos(pos: DVec2) -> GridPos {
-        let x = if pos.x < 0.0 { 0.0 } else { pos.x };
-        let y = if pos.y < 0.0 { 0.0 } else { pos.y };
         GridPos {
-            x: (x / TILE_SIZE).floor() as u8,
-            y: (y / TILE_SIZE).floor() as u8,
+            x: (pos.x / TILE_SIZE).floor() as i8,
+            y: (pos.y / TILE_SIZE).floor() as i8,
         }
     }
 
     pub fn clamp(self) -> GridPos {
         GridPos {
-            x: self.x.clamp(1, COLS as u8),
-            y: self.y.clamp(1, ROWS as u8)
+            x: self.x.clamp(1, COLS as i8),
+            y: self.y.clamp(1, ROWS as i8)
         }
     }
 
-    pub fn plus(self, (x, y): (i32, i32)) -> GridPos {
+    pub fn plus(self, (x, y): (i8, i8)) -> GridPos {
         GridPos {
-            x: self.x.saturating_add_signed(x as i8),
-            y: self.y.saturating_add_signed(y as i8),
+            x: self.x.saturating_add(x),
+            y: self.y.saturating_add(y),
         }
     }
 
     pub fn in_bounds(self) -> bool {
-        self.x > 0 && self.y > 0 && self.x <= COLS as u8 && self.y <= ROWS as u8
+        self.x > 0 && self.y > 0 && self.x <= COLS as i8 && self.y <= ROWS as i8
     }
 
     pub fn filter_in_bounds(self) -> Option<GridPos> {
