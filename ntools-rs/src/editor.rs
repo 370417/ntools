@@ -952,6 +952,7 @@ impl Editor {
                     self.mode = EditorMode::MoveSelection(MoveSelection::new(self.cursor_pos, selection, self.state.tiles(), self.state.entities()));
                 }
             }
+            EditorMode::MoveSelection(move_selection) => move_selection.center_tiles(self.cursor_pos),
             _ => {}
         }
     }

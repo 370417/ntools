@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use glam::DVec2;
 
-use crate::{editor::{editor_entity::{EditorEntity, EntityPos}, editor_state::{Command, EditorEntities, PaintTile, SetEntityCount}, select_tiles::selection_outline_path}, grid::{GridPos, is_pos_in_bounds}, segment::extract_path, tile::{TILE_SIZE, Tile, Tiles}};
+use crate::{editor::{editor_entity::{EditorEntity, EntityPos}, editor_state::{Command, EditorEntities, PaintTile, SetEntityCount}, select_tiles::selection_outline_path}, grid::{COLS, GridPos, ROWS, is_pos_in_bounds}, segment::extract_path, tile::{TILE_SIZE, Tile, Tiles}};
 
 pub struct MoveSelection {
     /// Center of selection used for rotation.
@@ -181,6 +181,18 @@ impl MoveSelection {
         };
 
         Command::SetTilesAndEntities(paint_tiles, set_entities)
+    }
+
+    pub fn center_tiles(&mut self, current_cursor_pos: DVec2) {
+        let min_pos = self.tiles.iter().map(|(pos, _tile)| pos).cloned().reduce(GridPos::min).unwrap();
+        let max_pos = self.tiles.iter().map(|(pos, _tile)| pos).cloned().reduce(GridPos::max).unwrap();
+        let original_center = (min_pos.center() + max_pos.center()) / 2.0;
+
+        // original_center will get positioned at original_center + current_cursor_pos - original_cursor_pos.
+        // to center it, we modify orginal_cursor_pos so that original_center + current_cursor_pos - original_cursor_pos = grid center
+
+        let grid_center = DVec2::new((COLS + 1) as f64 * TILE_SIZE / 2.0, (ROWS + 1) as f64 * TILE_SIZE / 2.0);
+        self.original_cursor_pos = original_center + current_cursor_pos - grid_center;
     }
 
     pub fn invert_tiles(&mut self) {
