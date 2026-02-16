@@ -524,7 +524,7 @@ impl TryFrom<u8> for OrientationCardinal {
 
 impl From<u8> for OrientationBinary {
     fn from(value: u8) -> Self {
-        if value % 4 == 0 {
+        if value.is_multiple_of(4) {
             Self::V
         } else {
             Self::H

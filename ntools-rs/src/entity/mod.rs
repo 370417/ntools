@@ -1,9 +1,10 @@
 use glam::DVec2;
 
-use crate::{entity::{boost_pad::BoostPad, bounce_block::BounceBlock, door::Doors, exit::Exit, floor_guard::FloorGuard, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::{Grid, GridPos}, segment::Segment};
+use crate::{entity::{boost_pad::BoostPad, bounce_block::BounceBlock, chaingun_drone::ChaingunDrone, door::Doors, exit::Exit, floor_guard::FloorGuard, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::{Grid, GridPos}, segment::Segment};
 
 pub mod boost_pad;
 pub mod bounce_block;
+pub mod chaingun_drone;
 pub mod door;
 pub mod exit;
 pub mod floor_guard;
@@ -28,6 +29,7 @@ pub struct Entities {
     pub doors: Doors,
     pub shove_thwumps: Vec<ShoveThwump>,
     pub zap_drones: Vec<ZapDrone>,
+    pub chaingun_drones: Vec<ChaingunDrone>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -68,6 +70,7 @@ impl Entities {
             doors: Doors::new(),
             shove_thwumps: Vec::new(),
             zap_drones: Vec::new(),
+            chaingun_drones: Vec::new(),
         }
     }
 

@@ -163,7 +163,7 @@ impl <'a> Iterator for EntityDataParser<'a> {
                 EntityId::TrapSwitch => return self.trap_doors.pop_front().map(|(door_pos, orientation)| EditorEntity::TrapDoor { door_pos, orientation, switch_pos: pos }),
                 EntityId::LaunchPad => return Some(EditorEntity::LaunchPad { pos, orientation }),
                 EntityId::OneWay => return Some(EditorEntity::OneWay { pos, orientation }),
-                EntityId::ChainsawDrone => {}
+                EntityId::ChaingunDrone => {}
                 EntityId::LaserDrone => {}
                 EntityId::ZapDrone => return Some(EditorEntity::ZapDrone { pos, orientation: orientation_cardinal }),
                 EntityId::ChaseDrone => {}
@@ -178,7 +178,7 @@ impl <'a> Iterator for EntityDataParser<'a> {
                 EntityId::BoostPad => return Some(EditorEntity::BoostPad { pos }),
                 EntityId::DeathBall => {}
                 EntityId::MiniDrone => {}
-                EntityId::Bat => {}
+                EntityId::Bat => return Some(EditorEntity::Bat { pos }),
                 EntityId::ShoveThwump => return Some(EditorEntity::ShoveThwump { pos, orientation }),
             }
         }
@@ -215,7 +215,7 @@ fn read_u32(cursor: &mut Cursor<&[u8]>) -> Result<u32, std::io::Error> {
 }
 
 fn editor_entities_from_bytes(entity_counts: &[u16], entity_data: &[u8]) -> Result<EditorEntities, String> {
-    if entity_data.len() % 5 != 0 {
+    if !entity_data.len().is_multiple_of(5) {
         Err("entity_data length must be multiple of 5")?;
     }
 
@@ -253,12 +253,14 @@ fn editor_entities_to_bytes(entities: &EditorEntities) -> Vec<u8> {
                 }
                 EditorEntity::LaunchPad { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
                 EditorEntity::OneWay { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
+                EditorEntity::ChaingunDrone { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
                 EditorEntity::ZapDrone { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
                 EditorEntity::FloorGuard { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
                 EditorEntity::BounceBlock { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
                 EditorEntity::Thwump { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
                 EditorEntity::ToggleMine { pos } => bytes.extend([id, pos.x as u8, pos.y as u8, 0, 0]),
                 EditorEntity::BoostPad { pos } => bytes.extend([id, pos.x as u8, pos.y as u8, 0, 0]),
+                EditorEntity::Bat { pos } => bytes.extend([id, pos.x as u8, pos.y as u8, 0, 0]),
                 EditorEntity::ShoveThwump { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
             }
         }

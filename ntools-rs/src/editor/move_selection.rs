@@ -19,6 +19,7 @@ pub struct MoveSelection {
     /// Store entities with their counts
     entities: Vec<(EditorEntity, u16, SelectionType)>,
     original_cursor_pos: DVec2,
+    mode: SelectionMode,
 }
 
 #[derive(PartialEq, Eq)]
@@ -26,6 +27,12 @@ enum SelectionType {
     Pos,
     Switch,
     SwitchAndPos,
+}
+
+enum SelectionMode {
+    All,
+    TilesOnly,
+    EntitiesOnly,
 }
 
 impl MoveSelection {
@@ -54,15 +61,21 @@ impl MoveSelection {
                 }
             }).collect(),
             original_cursor_pos,
+            mode: SelectionMode::All,
         }
     }
 
     pub fn selected_tiles_path(&self, cursor_pos: DVec2) -> String {
-        let mut tiles = Tiles::default();
-        for (grid_pos, tile) in self.selected_tiles(cursor_pos) {
-            tiles[grid_pos] = tile;
+        match self.mode {
+            SelectionMode::All | SelectionMode::TilesOnly => {
+                let mut tiles = Tiles::default();
+                for (grid_pos, tile) in self.selected_tiles(cursor_pos) {
+                    tiles[grid_pos] = tile;
+                }
+                extract_path(&tiles.segments_borderless(), false)
+            }
+            SelectionMode::EntitiesOnly => String::new(),
         }
-        extract_path(&tiles.segments_borderless(), false)
     }
 
     fn selected_tiles(&self, cursor_pos: DVec2) -> impl Iterator<Item = (GridPos, Tile)> {
@@ -77,7 +90,12 @@ impl MoveSelection {
     }
 
     pub fn preview_entities(&self, cursor_pos: DVec2) -> impl Iterator<Item = EditorEntity> {
-        self.selected_entities(cursor_pos).map(|(entity, _count)| entity)
+        match self.mode {
+            SelectionMode::All | SelectionMode::EntitiesOnly => {
+                Some(self.selected_entities(cursor_pos).map(|(entity, _count)| entity))
+            }
+            SelectionMode::TilesOnly => None,
+        }.into_iter().flatten()
     }
 
     fn selected_entities(&self, cursor_pos: DVec2) -> impl Iterator<Item = (EditorEntity, u16)> {
@@ -136,21 +154,31 @@ impl MoveSelection {
     }
 
     pub fn command_paste(&self, cursor_pos: DVec2, tiles: &Tiles, entities: &EditorEntities) -> Command {
-        let paint_tiles = self.selected_tiles(cursor_pos).map(|(grid_pos, tile)| {
-            PaintTile {
-                grid_pos,
-                old: tiles[grid_pos],
-                new: tile,
+        let paint_tiles = match self.mode {
+            SelectionMode::All | SelectionMode::TilesOnly => {
+                self.selected_tiles(cursor_pos).map(|(grid_pos, tile)| {
+                    PaintTile {
+                        grid_pos,
+                        old: tiles[grid_pos],
+                        new: tile,
+                    }
+                }).collect()
             }
-        }).collect();
+            SelectionMode::EntitiesOnly => Vec::new(),
+        };
 
-        let set_entities = self.selected_entities(cursor_pos).map(|(entity, count)| {
-            SetEntityCount {
-                entity,
-                old_count: *entities.get(&entity).unwrap_or(&0),
-                new_count: count,
+        let set_entities = match self.mode {
+            SelectionMode::All | SelectionMode::EntitiesOnly => {
+                self.selected_entities(cursor_pos).map(|(entity, count)| {
+                    SetEntityCount {
+                        entity,
+                        old_count: *entities.get(&entity).unwrap_or(&0),
+                        new_count: count,
+                    }
+                }).collect()
             }
-        }).collect();
+            SelectionMode::TilesOnly => Vec::new(),
+        };
 
         Command::SetTilesAndEntities(paint_tiles, set_entities)
     }
@@ -241,6 +269,22 @@ impl MoveSelection {
                 new: tile,
             }
         }).collect())
+    }
+
+    pub fn toggle_tile_visibility(&mut self) {
+        self.mode = match self.mode {
+            SelectionMode::All => SelectionMode::EntitiesOnly,
+            SelectionMode::TilesOnly => SelectionMode::EntitiesOnly,
+            SelectionMode::EntitiesOnly => SelectionMode::All,
+        }
+    }
+
+    pub fn toggle_entity_visibility(&mut self) {
+        self.mode = match self.mode {
+            SelectionMode::All => SelectionMode::TilesOnly,
+            SelectionMode::TilesOnly => SelectionMode::All,
+            SelectionMode::EntitiesOnly => SelectionMode::TilesOnly,
+        }
     }
 }
 

@@ -6,7 +6,7 @@ use futures_channel::oneshot::{self, Receiver};
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{anim_data::flatten_bones, attract::Attract, editor::{editor_entity::{EditorEntity, EntityId, ExportedEntity}, editor_state::{Command, EditorState}, entity_palette::EntityPalette, modify_entity::ModifyEntity, move_selection::MoveSelection, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::PlaceEntity, select_entity::SelectEntity, select_tiles::SelectTiles, spawn_ninja::closest_past_ninja, tile_palette::TilePalette}, entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floor_guard::FloorGuard, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::{COLS, GridPos, ROWS}, map_file::MapFile, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationBinary, OrientationCardinal, Orientations}, replay::Replay, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_HALF_SIZE, TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
+use crate::{anim_data::flatten_bones, attract::Attract, editor::{editor_entity::{EditorEntity, EntityId, ExportedEntity}, editor_state::{Command, EditorState}, entity_palette::EntityPalette, modify_entity::ModifyEntity, move_selection::MoveSelection, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::PlaceEntity, select_entity::SelectEntity, select_tiles::SelectTiles, spawn_ninja::closest_past_ninja, tile_palette::TilePalette}, entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, chaingun_drone::ChaingunDrone, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floor_guard::FloorGuard, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::{COLS, GridPos, ROWS}, map_file::MapFile, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationBinary, OrientationCardinal, Orientations}, replay::Replay, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_HALF_SIZE, TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
 
 pub mod editor_entity;
 pub mod editor_state;
@@ -177,6 +177,9 @@ impl Editor {
                     EditorEntity::OneWay { pos, orientation } => {
                         entities.one_ways.push(OneWay::new(pos.to_world_pos(), *orientation));
                     }
+                    EditorEntity::ChaingunDrone { pos, orientation } => {
+                        entities.chaingun_drones.push(ChaingunDrone::new(pos.to_world_pos(), *orientation));
+                    }
                     EditorEntity::ZapDrone { pos, orientation } => {
                         entities.zap_drones.push(ZapDrone::new(pos.to_world_pos(), *orientation));
                     }
@@ -191,6 +194,9 @@ impl Editor {
                     }
                     EditorEntity::BoostPad { pos } => {
                         entities.boost_pads.push(BoostPad::new(pos.to_world_pos()));
+                    }
+                    EditorEntity::Bat { pos } => {
+                        // TODO: add support for bats in replays
                     }
                     EditorEntity::ShoveThwump { pos, orientation } => {
                         entities.shove_thwumps.push(ShoveThwump::new(pos.to_world_pos(), *orientation, round_corners));
@@ -505,8 +511,8 @@ impl Editor {
     pub fn show_half_grid(&self) -> bool {
         match &self.mode {
             EditorMode::PenTool(_) => self.pen_tool_fine_grid,
-            EditorMode::PlaceEntity(place_entity) => !place_entity.entity.id().is_drone(),
-            EditorMode::ModifyEntity(modify_entity) => !modify_entity.modified_entity.id().is_drone(),
+            EditorMode::PlaceEntity(place_entity) => !place_entity.entity.id().is_drone() || self.entity_fine_grid,
+            EditorMode::ModifyEntity(modify_entity) => !modify_entity.modified_entity.id().is_drone() || self.entity_fine_grid,
             EditorMode::SelectEntity(_) => true,
             EditorMode::EntityPalette(_) => true,
             _ => false,
@@ -968,12 +974,22 @@ impl Editor {
                     select_entity.set_selection(crosshair_pos, self.state.entities());
                 }
             }
+            EditorMode::MoveSelection(move_selection) => {
+                move_selection.toggle_tile_visibility();
+            }
             _ => {}
         }
     }
 
     pub fn press_y(&mut self) {
-        // gauss turret
+        match &mut self.mode {
+            EditorMode::MoveSelection(move_selection) => {
+                move_selection.toggle_entity_visibility();
+            }
+            _ => {
+                // gauss turret
+            }
+        }
     }
 
     pub fn press_u(&mut self) {
@@ -1035,7 +1051,10 @@ impl Editor {
     }
 
     pub fn press_l(&mut self) {
-        // chaingun drone
+        self.selected_entity_id = EntityId::ChaingunDrone;
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
+        // call set_cursor_pos to correct the cursor position if it is illegal for a drone
+        self.set_cursor_pos(self.true_cursor_pos().x, self.true_cursor_pos().y, false);
     }
 
     pub fn press_n(&mut self) {

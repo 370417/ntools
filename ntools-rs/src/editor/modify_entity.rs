@@ -22,17 +22,20 @@ impl ModifyEntity {
     }
 
     pub fn crosshair(&self, cursor_pos: DVec2, fine_grid: bool) -> DVec2 {
-        match self.modified_entity {
-            EditorEntity::FloorGuard { .. } => PlaceEntity::round_to_grid_floorguard(cursor_pos, fine_grid),
-            EditorEntity::RegularDoor { .. } => PlaceEntity::round_to_grid_door(cursor_pos, fine_grid),
-            EditorEntity::LockedDoor { .. } |
-            EditorEntity::TrapDoor { .. } => if let SelectionType::NotSwitch = self.selection_type {
-                PlaceEntity::round_to_grid_door(cursor_pos, fine_grid)
-            } else {
-                PlaceEntity::round_to_grid(cursor_pos, fine_grid)
-            },
-            EditorEntity::ZapDrone { .. } => PlaceEntity::round_to_grid_drone(cursor_pos),
-            _ => PlaceEntity::round_to_grid(cursor_pos, fine_grid)
+        if self.modified_entity.id().is_drone() {
+            PlaceEntity::round_to_grid_drone(cursor_pos, fine_grid)
+        } else {
+            match self.modified_entity {
+                EditorEntity::FloorGuard { .. } => PlaceEntity::round_to_grid_floorguard(cursor_pos, fine_grid),
+                EditorEntity::RegularDoor { .. } => PlaceEntity::round_to_grid_door(cursor_pos, fine_grid),
+                EditorEntity::LockedDoor { .. } |
+                EditorEntity::TrapDoor { .. } => if let SelectionType::NotSwitch = self.selection_type {
+                    PlaceEntity::round_to_grid_door(cursor_pos, fine_grid)
+                } else {
+                    PlaceEntity::round_to_grid(cursor_pos, fine_grid)
+                },
+                _ => PlaceEntity::round_to_grid(cursor_pos, fine_grid),
+            }
         }
     }
 
@@ -61,10 +64,12 @@ impl ModifyEntity {
             EditorEntity::BounceBlock { pos, .. } |
             EditorEntity::LaunchPad { pos, .. } |
             EditorEntity::ZapDrone { pos, .. } |
+            EditorEntity::ChaingunDrone { pos, .. } |
             EditorEntity::FloorGuard { pos, .. } |
             EditorEntity::BoostPad { pos } |
             EditorEntity::Thwump { pos, .. } |
             EditorEntity::ShoveThwump { pos, .. } |
+            EditorEntity::Bat { pos } |
             EditorEntity::OneWay { pos, .. } => *pos = new_pos,
             EditorEntity::Exit { exit_pos: door_pos, switch_pos } |
             EditorEntity::LockedDoor { door_pos, switch_pos, .. } |
@@ -84,13 +89,15 @@ impl ModifyEntity {
             EditorEntity::Thwump { orientation, .. } |
             EditorEntity::ShoveThwump { orientation, .. } |
             EditorEntity::BounceBlock { orientation, .. } => *orientation = orientations.orientation,
-            EditorEntity::ZapDrone { orientation, .. } => *orientation = orientations.orientation_cardinal,
+            EditorEntity::ZapDrone { orientation, .. } |
+            EditorEntity::ChaingunDrone { orientation, .. } => *orientation = orientations.orientation_cardinal,
             EditorEntity::RegularDoor { .. } |
             EditorEntity::LockedDoor { .. } |
             EditorEntity::TrapDoor { .. } |
             EditorEntity::Mine { .. } |
             EditorEntity::ToggleMine { .. } |
             EditorEntity::BoostPad { .. } |
+            EditorEntity::Bat { .. } |
             EditorEntity::Exit { .. } => {}
         }
     }
@@ -149,13 +156,14 @@ impl ModifyEntity {
     /// Calculates the new crosshair position needed in response to pressing a direction key.
     pub fn press_direction(&self, direction: OrientationCardinal, fine_grid: bool) -> DVec2 {
         let crosshair = self.selection_type.entity_pos(self.modified_entity).to_world_pos();
-        if let (EditorEntity::LockedDoor { orientation, .. }, SelectionType::NotSwitch) |
-               (EditorEntity::TrapDoor { orientation, .. }, SelectionType::NotSwitch) |
-               (EditorEntity::RegularDoor { orientation, .. }, SelectionType::NotSwitch) = (self.modified_entity, self.selection_type) {
-            if orientation.vec2().dot(direction.vec2()).abs() == 1.0 {
-                // when moving door along its axis, move it a full tile
-                return crosshair + TILE_SIZE * direction.vec2();
-            }
+        if let (
+            | EditorEntity::LockedDoor { orientation, .. }
+            | EditorEntity::TrapDoor { orientation, .. }
+            | EditorEntity::RegularDoor { orientation, .. },
+            SelectionType::NotSwitch
+        ) = (self.modified_entity, self.selection_type) && orientation.vec2().dot(direction.vec2()).abs() == 1.0 {
+            // when moving door along its axis, move it a full tile
+            return crosshair + TILE_SIZE * direction.vec2();
         }
 
         if let EditorEntity::ZapDrone { .. } = self.modified_entity {

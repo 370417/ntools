@@ -32,17 +32,20 @@ impl PlaceEntity {
     }
 
     pub fn crosshair(&self, cursor_pos: DVec2, fine_grid: bool) -> DVec2 {
-        match self.entity {
-            EditorEntity::FloorGuard { .. } => Self::round_to_grid_floorguard(cursor_pos, fine_grid),
-            EditorEntity::RegularDoor { .. } => Self::round_to_grid_door(cursor_pos, fine_grid),
-            EditorEntity::LockedDoor { .. } |
-            EditorEntity::TrapDoor { .. } => if let Some(Stage::PlaceDoor) = self.stage {
-                Self::round_to_grid_door(cursor_pos, fine_grid)
-            } else {
-                Self::round_to_grid(cursor_pos, fine_grid)
-            },
-            EditorEntity::ZapDrone { .. } => Self::round_to_grid_drone(cursor_pos),
-            _ => Self::round_to_grid(cursor_pos, fine_grid)
+        if self.entity.id().is_drone() {
+            Self::round_to_grid_drone(cursor_pos, fine_grid)
+        } else {
+            match self.entity {
+                EditorEntity::FloorGuard { .. } => Self::round_to_grid_floorguard(cursor_pos, fine_grid),
+                EditorEntity::RegularDoor { .. } => Self::round_to_grid_door(cursor_pos, fine_grid),
+                EditorEntity::LockedDoor { .. } |
+                EditorEntity::TrapDoor { .. } => if let Some(Stage::PlaceDoor) = self.stage {
+                    Self::round_to_grid_door(cursor_pos, fine_grid)
+                } else {
+                    Self::round_to_grid(cursor_pos, fine_grid)
+                },
+                _ => Self::round_to_grid(cursor_pos, fine_grid),
+            }
         }
     }
 
@@ -64,9 +67,13 @@ impl PlaceEntity {
         }
     }
 
-    pub fn round_to_grid_drone(cursor_pos: DVec2) -> DVec2 {
-        let offset = DVec2::splat(TILE_HALF_SIZE);
-        ((cursor_pos + offset) / TILE_SIZE).round() * TILE_SIZE - offset
+    pub fn round_to_grid_drone(cursor_pos: DVec2, fine_grid: bool) -> DVec2 {
+        if fine_grid {
+            Self::round_to_grid(cursor_pos, false)
+        } else {
+            let offset = DVec2::splat(TILE_HALF_SIZE);
+            ((cursor_pos + offset) / TILE_SIZE).round() * TILE_SIZE - offset
+        }
     }
 
     pub fn round_to_grid_door(cursor_pos: DVec2, fine_grid: bool) -> DVec2 {
@@ -129,10 +136,12 @@ impl PlaceEntity {
             EditorEntity::BounceBlock { pos, .. } |
             EditorEntity::LaunchPad { pos, .. } |
             EditorEntity::ZapDrone { pos, .. } |
+            EditorEntity::ChaingunDrone { pos, .. } |
             EditorEntity::FloorGuard { pos, .. } |
             EditorEntity::BoostPad { pos } |
             EditorEntity::Thwump { pos, .. } |
             EditorEntity::ShoveThwump { pos, .. } |
+            EditorEntity::Bat { pos } |
             EditorEntity::OneWay { pos, .. } => *pos = new_pos,
             EditorEntity::Exit { exit_pos: door_pos, switch_pos } |
             EditorEntity::LockedDoor { door_pos, switch_pos, .. } |
@@ -155,13 +164,15 @@ impl PlaceEntity {
             EditorEntity::Thwump { orientation, .. } |
             EditorEntity::ShoveThwump { orientation, .. } |
             EditorEntity::BounceBlock { orientation, .. } => *orientation = orientations.orientation,
-            EditorEntity::ZapDrone { orientation, .. } => *orientation = orientations.orientation_cardinal,
+            EditorEntity::ZapDrone { orientation, .. } |
+            EditorEntity::ChaingunDrone { orientation, .. } => *orientation = orientations.orientation_cardinal,
             EditorEntity::RegularDoor { .. } |
             EditorEntity::LockedDoor { .. } |
             EditorEntity::TrapDoor { .. } |
             EditorEntity::Mine { .. } |
             EditorEntity::ToggleMine { .. } |
             EditorEntity::BoostPad { .. } |
+            EditorEntity::Bat { .. } |
             EditorEntity::Exit { .. } => {}
         }
     }
@@ -211,13 +222,11 @@ impl PlaceEntity {
     /// Calculates the new crosshair position needed in response to pressing a direction key.
     pub fn press_direction(&self, direction: OrientationCardinal, cursor_pos: DVec2, fine_grid: bool) -> DVec2 {
         let crosshair = self.crosshair(cursor_pos, fine_grid);
-        if let (EditorEntity::LockedDoor { orientation, .. }, Some(Stage::PlaceDoor)) |
-               (EditorEntity::TrapDoor { orientation, .. }, Some(Stage::PlaceDoor)) |
-               (EditorEntity::RegularDoor { orientation, .. }, None) = (self.entity, self.stage) {
-            if orientation.vec2().dot(direction.vec2()).abs() == 1.0 {
-                // when moving door along its axis, move it a full tile
-                return crosshair + TILE_SIZE * direction.vec2();
-            }
+        if let (EditorEntity::LockedDoor { orientation, .. } | EditorEntity::TrapDoor { orientation, .. }, Some(Stage::PlaceDoor)) |
+               (EditorEntity::RegularDoor { orientation, .. }, None) = (self.entity, self.stage)
+               && orientation.vec2().dot(direction.vec2()).abs() == 1.0 {
+            // when moving door along its axis, move it a full tile
+            return crosshair + TILE_SIZE * direction.vec2();
         }
 
         if let EditorEntity::ZapDrone { .. } = self.entity {
