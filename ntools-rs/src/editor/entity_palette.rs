@@ -87,7 +87,7 @@ const ENTITIES_IN_PALETTE: [EntityId; 24] = [
     EntityId::EvilNinja,
     EntityId::LaserTurret,
     EntityId::BoostPad,
-    EntityId::DeathBall,
+    EntityId::Bat, // TODO: change to deathball once deathball support added
     EntityId::MiniDrone,
     EntityId::ShoveThwump,
 ];
@@ -122,7 +122,7 @@ fn entity_pos_in_palette(entity_id: EntityId) -> Option<EntityPos> {
         EntityId::BoostPad => Some(EntityPos { x: 5, y: -10 }),
         // EntityId::DeathBall => Some(EntityPos { x: -10, y: -10 }),
         // EntityId::MiniDrone => Some(EntityPos { x: 10, y: 10 }),
-        // EntityId::Bat => None,
+        EntityId::Bat => Some(EntityPos { x: -10, y: -10 }), // TODO: once deathball is added, switch this to None
         EntityId::ShoveThwump => Some(EntityPos { x: 0, y: 10 }),
         _ => None,
     }

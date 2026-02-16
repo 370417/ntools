@@ -69,6 +69,7 @@ impl ModifyEntity {
             EditorEntity::BoostPad { pos } |
             EditorEntity::Thwump { pos, .. } |
             EditorEntity::ShoveThwump { pos, .. } |
+            EditorEntity::Bat { pos } |
             EditorEntity::OneWay { pos, .. } => *pos = new_pos,
             EditorEntity::Exit { exit_pos: door_pos, switch_pos } |
             EditorEntity::LockedDoor { door_pos, switch_pos, .. } |
@@ -96,6 +97,7 @@ impl ModifyEntity {
             EditorEntity::Mine { .. } |
             EditorEntity::ToggleMine { .. } |
             EditorEntity::BoostPad { .. } |
+            EditorEntity::Bat { .. } |
             EditorEntity::Exit { .. } => {}
         }
     }

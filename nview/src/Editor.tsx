@@ -22,6 +22,7 @@ import { debouncedSaveMap } from "./localstorage";
 import type { Palette } from "./palette";
 import { ZapDroneDefs, ZapDrones, type ZapDroneData } from "./entities/ZapDrone";
 import { ChaingunDroneDefs, ChaingunDrones, type ChaingunDroneData } from "./entities/ChaingunDrone";
+import { BatDefs, Bats, type BatData } from "./entities/bat";
 
 const COLS = 42;
 const ROWS = 23;
@@ -64,6 +65,7 @@ const ENTITY_BOUNCE_BLOCK = 17;
 const ENTITY_THWUMP = 20;
 const ENTITY_TOGGLE_MINE = 21;
 const ENTITY_BOOST_PAD = 24;
+const ENTITY_BAT = 27;
 const ENTITY_SHOVE_THWUMP = 28;
 
 const BONES_STANDING = new Float64Array([-0.039, -0.0249, 0.1127, -0.1738, 0.1115, -0.1512, -0.0846, 0.0749, 0.1072, -0.0423, 0.0263, -0.1452, -0.0358, -0.075, -0.377, 0.4686, 0.4643, -0.0225, -0.0453, -0.5054, -0.4724, 0.1962, 0.2293, -0.1812, -0.2266, -0.2224]);
@@ -116,6 +118,8 @@ type EntitiesProps = {
     setThwumps: Setter<ThwumpData[]>,
     boostPads: Accessor<BoostPadData[]>,
     setBoostPads: Setter<BoostPadData[]>,
+    bats: Accessor<BatData[]>,
+    setBats: Setter<BatData[]>,
     shoveThwumps: Accessor<ShoveThwumpData[]>,
     setShoveThwumps: Setter<ShoveThwumpData[]>,
 };
@@ -138,6 +142,7 @@ function createEntities(): EntitiesProps {
     const [bounceBlocks, setBounceBlocks] = createSignal<BounceBlockData[]>([]);
     const [thwumps, setThwumps] = createSignal<ThwumpData[]>([]);
     const [boostPads, setBoostPads] = createSignal<BoostPadData[]>([]);
+    const [bats, setBats] = createSignal<BatData[]>([]);
     const [shoveThwumps, setShoveThwumps] = createSignal<ShoveThwumpData[]>([]);
     return {
         ninjas, setNinjas,
@@ -157,6 +162,7 @@ function createEntities(): EntitiesProps {
         bounceBlocks, setBounceBlocks,
         thwumps, setThwumps,
         boostPads, setBoostPads,
+        bats, setBats,
         shoveThwumps, setShoveThwumps,
     };
 }
@@ -179,6 +185,7 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
     const bounceBlocks: BounceBlockData[] = [];
     const thwumps: ThwumpData[] = [];
     const boostPads: BoostPadData[] = [];
+    const bats: BatData[] = [];
     const shoveThwumps: ShoveThwumpData[] = [];
 
     for (const entity of exportedEntities) {
@@ -256,6 +263,8 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
                 ...entityCopy,
                 animProgress: 1,
             });
+        } else if (entity.type_int === ENTITY_BAT) {
+            bats.push(entityCopy);
         } else if (entity.type_int === ENTITY_SHOVE_THWUMP) {
             shoveThwumps.push({
                 ...entityCopy,
@@ -283,6 +292,7 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
     entities.setBounceBlocks(bounceBlocks);
     entities.setThwumps(thwumps);
     entities.setBoostPads(boostPads);
+    entities.setBats(bats);
     entities.setShoveThwumps(shoveThwumps);
 }
 
@@ -301,6 +311,7 @@ function Entities({ entities }: { entities: EntitiesProps }) {
         <ChaingunDrones chaingunDrones={entities.chaingunDrones} />
         <ZapDrones zapDrones={entities.zapDrones} />
         <FloorGuards floorGuards={entities.floorGuards} />
+        <Bats bats={entities.bats} />
         <Thwumps thwumps={entities.thwumps} />
         <For each={entities.ninjas()}>
             {ninja => <Ninja class="ninja" ninja={() => ninja} bones={() => BONES_STANDING} />}
@@ -578,6 +589,7 @@ export function EditorApp(props: {
                 <ThwumpDefs />
                 <ChaingunDroneDefs />
                 <ZapDroneDefs />
+                <BatDefs />
                 <path id="tilemode-crosshair" stroke-width="1.5" fill="none" d={tilemodeCrosshairPath} />
                 <path id="crosshair" stroke-width="1.5" fill="none" d={crosshairPath} />
                 <filter id="outline" filterUnits="userSpaceOnUse" x="0" y="0" width="1056" height="600">

@@ -178,7 +178,7 @@ impl <'a> Iterator for EntityDataParser<'a> {
                 EntityId::BoostPad => return Some(EditorEntity::BoostPad { pos }),
                 EntityId::DeathBall => {}
                 EntityId::MiniDrone => {}
-                EntityId::Bat => {}
+                EntityId::Bat => return Some(EditorEntity::Bat { pos }),
                 EntityId::ShoveThwump => return Some(EditorEntity::ShoveThwump { pos, orientation }),
             }
         }
@@ -260,6 +260,7 @@ fn editor_entities_to_bytes(entities: &EditorEntities) -> Vec<u8> {
                 EditorEntity::Thwump { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
                 EditorEntity::ToggleMine { pos } => bytes.extend([id, pos.x as u8, pos.y as u8, 0, 0]),
                 EditorEntity::BoostPad { pos } => bytes.extend([id, pos.x as u8, pos.y as u8, 0, 0]),
+                EditorEntity::Bat { pos } => bytes.extend([id, pos.x as u8, pos.y as u8, 0, 0]),
                 EditorEntity::ShoveThwump { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
             }
         }

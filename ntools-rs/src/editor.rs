@@ -195,6 +195,9 @@ impl Editor {
                     EditorEntity::BoostPad { pos } => {
                         entities.boost_pads.push(BoostPad::new(pos.to_world_pos()));
                     }
+                    EditorEntity::Bat { pos } => {
+                        // TODO: add support for bats in replays
+                    }
                     EditorEntity::ShoveThwump { pos, orientation } => {
                         entities.shove_thwumps.push(ShoveThwump::new(pos.to_world_pos(), *orientation, round_corners));
                     }

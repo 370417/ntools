@@ -65,6 +65,9 @@ pub enum EditorEntity {
     BoostPad {
         pos: EntityPos,
     },
+    Bat {
+        pos: EntityPos,
+    },
     ShoveThwump {
         pos: EntityPos,
         orientation: Orientation,
@@ -195,7 +198,7 @@ impl EditorEntity {
             EntityId::BoostPad => EditorEntity::BoostPad { pos },
             EntityId::DeathBall => todo!(),
             EntityId::MiniDrone => todo!(),
-            EntityId::Bat => todo!(),
+            EntityId::Bat => EditorEntity::Bat { pos },
             EntityId::ShoveThwump => EditorEntity::ShoveThwump { pos, orientation: orientations.orientation },
         }
     }
@@ -227,6 +230,7 @@ impl EditorEntity {
             EditorEntity::BoostPad { pos } |
             EditorEntity::Thwump { pos, .. } |
             EditorEntity::ShoveThwump { pos, .. } |
+            EditorEntity::Bat { pos } |
             EditorEntity::OneWay { pos, .. } => pos,
             EditorEntity::Exit { exit_pos, .. } => exit_pos,
             EditorEntity::LockedDoor { door_pos, .. } |
@@ -248,6 +252,7 @@ impl EditorEntity {
             EditorEntity::BoostPad { pos } |
             EditorEntity::Thwump { pos, .. } |
             EditorEntity::ShoveThwump { pos, .. } |
+            EditorEntity::Bat { pos } |
             EditorEntity::OneWay { pos, .. } => pos,
             EditorEntity::Exit { exit_pos, .. } => exit_pos,
             EditorEntity::LockedDoor { door_pos, .. } |
@@ -290,6 +295,7 @@ impl EditorEntity {
             EditorEntity::Mine { .. } |
             EditorEntity::ToggleMine { .. } |
             EditorEntity::BoostPad { .. } |
+            EditorEntity::Bat { .. } |
             EditorEntity::Exit { .. } => {}
         }
     }
@@ -311,6 +317,7 @@ impl EditorEntity {
             EditorEntity::Mine { .. } |
             EditorEntity::ToggleMine { .. } |
             EditorEntity::BoostPad { .. } |
+            EditorEntity::Bat { .. } |
             EditorEntity::Exit { .. } => {}
         }
     }
@@ -332,6 +339,7 @@ impl EditorEntity {
             EditorEntity::Mine { .. } |
             EditorEntity::ToggleMine { .. } |
             EditorEntity::BoostPad { .. } |
+            EditorEntity::Bat { .. } |
             EditorEntity::Exit { .. } => {}
         }
     }
@@ -353,6 +361,7 @@ impl EditorEntity {
             EditorEntity::Mine { .. } |
             EditorEntity::ToggleMine { .. } |
             EditorEntity::BoostPad { .. } |
+            EditorEntity::Bat { .. } |
             EditorEntity::Exit { .. } => {}
         }
     }
@@ -374,6 +383,7 @@ impl EditorEntity {
             EditorEntity::Mine { .. } |
             EditorEntity::ToggleMine { .. } |
             EditorEntity::BoostPad { .. } |
+            EditorEntity::Bat { .. } |
             EditorEntity::Exit { .. } => 0.0,
         }
     }
@@ -395,6 +405,7 @@ impl EditorEntity {
             EditorEntity::Thwump { .. } => EntityId::Thwump,
             EditorEntity::ToggleMine { .. } => EntityId::ToggleMine,
             EditorEntity::BoostPad { .. } => EntityId::BoostPad,
+            EditorEntity::Bat { .. } => EntityId::Bat,
             EditorEntity::ShoveThwump { .. } => EntityId::ShoveThwump,
         }
     }
