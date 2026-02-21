@@ -165,7 +165,7 @@ impl Attract {
                 10 => entities.launch_pads.push(LaunchPad::new(6.0 * pos, orientation?)),
                 // One way
                 11 => entities.one_ways.push(OneWay::new(6.0 * pos, orientation?)),
-                // Chainsaw drone
+                // Chaingun drone
                 12 => {}
                 // Laser drone
                 13 => {}

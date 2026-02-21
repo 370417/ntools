@@ -42,6 +42,7 @@ pub enum EditorEntity {
     ChaingunDrone {
         pos: EntityPos,
         orientation: OrientationCardinal,
+        mode: DroneMode,
     },
     ZapDrone {
         pos: EntityPos,
@@ -185,7 +186,7 @@ impl EditorEntity {
             EntityId::TrapDoor | EntityId::TrapSwitch => EditorEntity::TrapDoor { door_pos: pos, orientation: orientations.orientation_binary, switch_pos: pos },
             EntityId::LaunchPad => EditorEntity::LaunchPad { pos, orientation: orientations.orientation },
             EntityId::OneWay => EditorEntity::OneWay { pos, orientation: orientations.orientation },
-            EntityId::ChaingunDrone => EditorEntity::ChaingunDrone { pos, orientation: orientations.orientation_cardinal },
+            EntityId::ChaingunDrone => EditorEntity::ChaingunDrone { pos, orientation: orientations.orientation_cardinal, mode: modes.drone_mode },
             EntityId::LaserDrone => todo!(),
             EntityId::ZapDrone => EditorEntity::ZapDrone { pos, orientation: orientations.orientation_cardinal, mode: modes.drone_mode },
             EntityId::ChaseDrone => todo!(),
@@ -221,7 +222,8 @@ impl EditorEntity {
 
     pub fn mode(self) -> u8 {
         match self {
-            EditorEntity::ZapDrone { mode, .. } => mode as u8,
+            EditorEntity::ZapDrone { mode, .. } |
+            EditorEntity::ChaingunDrone { mode, .. } => mode as u8,
             _ => 0,
         }
     }

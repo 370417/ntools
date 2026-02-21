@@ -179,8 +179,8 @@ impl PlaceEntity {
 
     pub fn set_mode(&mut self, modes: Modes) {
         match &mut self.entity {
-            EditorEntity::ZapDrone { mode, .. } => *mode = modes.drone_mode,
-            EditorEntity::ChaingunDrone { .. } => {}
+            EditorEntity::ZapDrone { mode, .. } |
+            EditorEntity::ChaingunDrone { mode, .. } => *mode = modes.drone_mode,
             EditorEntity::Ninja { .. } |
             EditorEntity::Mine { .. } |
             EditorEntity::Exit { .. } |

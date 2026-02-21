@@ -181,7 +181,7 @@ impl Editor {
                     EditorEntity::OneWay { pos, orientation } => {
                         entities.one_ways.push(OneWay::new(pos.to_world_pos(), *orientation));
                     }
-                    EditorEntity::ChaingunDrone { pos, orientation } => {
+                    EditorEntity::ChaingunDrone { pos, orientation, .. } => {
                         entities.chaingun_drones.push(ChaingunDrone::new(pos.to_world_pos(), *orientation));
                     }
                     EditorEntity::ZapDrone { pos, orientation, .. } => {

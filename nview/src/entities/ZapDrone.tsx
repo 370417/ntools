@@ -71,7 +71,7 @@ export function ZapDroneDefs() {
 }
 
 export function ModeIndicator({ entities }: { entities: EntitiesProps }) {
-    const entity = () => entities.zapDrones().at(0);
+    const entity = () => entities.zapDrones().at(0) ?? entities.chaingunDrones().at(0);
     const transform = (entity: Accessor<ZapDroneData | undefined>) => {
         const $entity = entity();
         if ($entity) {
