@@ -84,16 +84,16 @@ export function ModeIndicator({ entities }: { entities: EntitiesProps }) {
 
     return <g transform={transform(entity)}>
         <Show when={entity()?.mode === 0}>
-            <path fill="none" stroke="#fff" d="M 12 0 a 12 12 0 0 1 12 12 a 12 12 0 0 1 -12 12 l 5 -5 m 0 10 l -5 -5" />
+            <path fill="none" stroke="var(--mode-indicator)" d="M 12 0 a 12 12 0 0 1 12 12 a 12 12 0 0 1 -12 12 l 5 -5 m 0 10 l -5 -5" />
         </Show>
         <Show when={entity()?.mode === 1}>
-            <path fill="none" stroke="#fff" d="M 12 0 a 12 12 0 0 0 12 -12 a 12 12 0 0 0 -12 -12 l 5 5 m 0 -10 l -5 5" />
+            <path fill="none" stroke="var(--mode-indicator)" d="M 12 0 a 12 12 0 0 0 12 -12 a 12 12 0 0 0 -12 -12 l 5 5 m 0 -10 l -5 5" />
         </Show>
         <Show when={entity()?.mode === 2}>
-            <path fill="none" stroke="#fff" d="M 6 0 H 12 V 24 l -5 -5 m 10 0 l -5 5" />
+            <path fill="none" stroke="var(--mode-indicator)" d="M 6 0 H 12 V 24 l -5 -5 m 10 0 l -5 5" />
         </Show>
         <Show when={entity()?.mode === 3}>
-            <path fill="none" stroke="#fff" d="M 6 0 H 12 V -24 l -5 5 m 10 0 l -5 -5" />
+            <path fill="none" stroke="var(--mode-indicator)" d="M 6 0 H 12 V -24 l -5 5 m 10 0 l -5 -5" />
         </Show>
     </g>;
 }

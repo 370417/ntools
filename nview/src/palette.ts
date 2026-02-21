@@ -231,6 +231,7 @@ const colorVarNames = [
     '--empty-timebar',
     '--regular-grid',
     '--fine-grid',
+    '--mode-indicator',
     '--door-switch-line',
     '--editor-crosshair',
     '--tiles-selected',
@@ -477,6 +478,10 @@ const colorVarPaletteLocations: Record<ColorVarName, { file: PaletteFileName, in
     '--fine-grid': {
         file: 'editor',
         index: 2,
+    },
+    '--mode-indicator': {
+        file: 'editor',
+        index: 4,
     },
     '--door-switch-line': {
         file: 'editor',
