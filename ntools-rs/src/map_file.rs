@@ -2,7 +2,7 @@ use std::{collections::{BTreeMap, VecDeque}, io::{Cursor, Read}};
 
 use byte_slice_cast::{AsByteSlice, AsSliceOf};
 
-use crate::{editor::{editor_entity::{EditorEntity, EntityId, EntityPos}, editor_state::EditorEntities}, orientation::{Orientation, OrientationBinary, OrientationCardinal, OrientationExt}, tile::Tiles};
+use crate::{editor::{editor_entity::{EditorEntity, EntityId, EntityPos}, editor_state::EditorEntities}, mode::DroneMode, orientation::{Orientation, OrientationBinary, OrientationCardinal, OrientationExt}, tile::Tiles};
 
 pub struct MapFile {
     pub game_mode: u32,
@@ -127,7 +127,7 @@ impl <'a> Iterator for EntityDataParser<'a> {
             let x = self.entity_data[self.i + 1];
             let y = self.entity_data[self.i + 2];
             let orientation_data = self.entity_data[self.i + 3];
-            let _mode = self.entity_data[self.i + 4];
+            let mode = self.entity_data[self.i + 4];
 
             self.i += 5;
 
@@ -149,6 +149,7 @@ impl <'a> Iterator for EntityDataParser<'a> {
             let orientation_ext = OrientationExt::from(orientation_data);
             let orientation_cardinal = OrientationCardinal::try_from(orientation_data).unwrap_or(OrientationCardinal::N);
             let orientation_binary = OrientationBinary::from(orientation_data);
+            let drone_mode = DroneMode::from(mode);
 
             match EntityId::try_from(entity_id).ok()? {
                 EntityId::Ninja => return Some(EditorEntity::Ninja { pos, orientation: orientation_ext }),
@@ -165,7 +166,7 @@ impl <'a> Iterator for EntityDataParser<'a> {
                 EntityId::OneWay => return Some(EditorEntity::OneWay { pos, orientation }),
                 EntityId::ChaingunDrone => {}
                 EntityId::LaserDrone => {}
-                EntityId::ZapDrone => return Some(EditorEntity::ZapDrone { pos, orientation: orientation_cardinal }),
+                EntityId::ZapDrone => return Some(EditorEntity::ZapDrone { pos, orientation: orientation_cardinal, mode: drone_mode }),
                 EntityId::ChaseDrone => {}
                 EntityId::FloorGuard => return Some(EditorEntity::FloorGuard { pos, orientation: orientation_ext }),
                 EntityId::BounceBlock => return Some(EditorEntity::BounceBlock { pos, orientation }),
@@ -254,7 +255,7 @@ fn editor_entities_to_bytes(entities: &EditorEntities) -> Vec<u8> {
                 EditorEntity::LaunchPad { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
                 EditorEntity::OneWay { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
                 EditorEntity::ChaingunDrone { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
-                EditorEntity::ZapDrone { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
+                EditorEntity::ZapDrone { pos, orientation, mode } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, mode as u8]),
                 EditorEntity::FloorGuard { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
                 EditorEntity::BounceBlock { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
                 EditorEntity::Thwump { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),

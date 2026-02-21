@@ -1,19 +1,19 @@
 use float_ord::FloatOrd;
 use glam::DVec2;
 
-use crate::{editor::editor_entity::{EditorEntity, EntityId, EntityPos}, grid::GridPos, orientation::{OrientationCardinal, Orientations}};
+use crate::{editor::editor_entity::{EditorEntity, EntityId, EntityPos}, grid::GridPos, mode::Modes, orientation::{OrientationCardinal, Orientations}};
 
 pub struct EntityPalette {
     pub center: GridPos,
 }
 
 impl EntityPalette {
-    pub fn preview_entities(&self, orientations: Orientations, selected_entity_id: EntityId) -> impl Iterator<Item = EditorEntity> {
-        let selected_entity = EditorEntity::from_parts(selected_entity_id, EntityPos::from_world_pos(self.center.center()), orientations);
+    pub fn preview_entities(&self, orientations: Orientations, modes: Modes, selected_entity_id: EntityId) -> impl Iterator<Item = EditorEntity> {
+        let selected_entity = EditorEntity::from_parts(selected_entity_id, EntityPos::from_world_pos(self.center.center()), orientations, modes);
         let palette_entities = ENTITIES_IN_PALETTE.iter().filter_map(move |&entity_id| {
             entity_pos_in_palette(entity_id).map(|pos| {
                 let pos = EntityPos::from_world_pos(self.center.center() + pos.to_world_pos());
-                EditorEntity::from_parts(entity_id, pos, orientations)
+                EditorEntity::from_parts(entity_id, pos, orientations, modes)
             })
         });
         std::iter::once(selected_entity).chain(palette_entities)

@@ -20,7 +20,7 @@ import { ShoveThwumps, type ShoveThwumpData } from "./entities/ShoveThwump";
 import { EditorFooter } from "./EditorFooter";
 import { debouncedSaveMap } from "./localstorage";
 import type { Palette } from "./palette";
-import { ZapDroneDefs, ZapDrones, type ZapDroneData } from "./entities/ZapDrone";
+import { ModeIndicator, ZapDroneDefs, ZapDrones, type ZapDroneData } from "./entities/ZapDrone";
 import { ChaingunDroneDefs, ChaingunDrones, type ChaingunDroneData } from "./entities/ChaingunDrone";
 import { BatDefs, Bats, type BatData } from "./entities/Bat";
 
@@ -40,7 +40,7 @@ const MODE_PAINT_TILES = 0;
 const MODE_TILE_PALETTE = 1;
 // const MODE_SELECT_TILES = 2;
 const MODE_MOVE_SELECTION = 3;
-// const MODE_PLACE_ENTITY = 4;
+const MODE_PLACE_ENTITY = 4;
 const MODE_SELECT_ENTITY = 5;
 const MODE_MODIFY_ENTITY = 6;
 const MODE_ENTITY_PALETTE = 7;
@@ -83,7 +83,7 @@ type Line = {
     y2: number;
 };
 
-type EntitiesProps = {
+export type EntitiesProps = {
     ninjas: Accessor<NinjaData[]>,
     setNinjas: Setter<NinjaData[]>,
     mines: Accessor<MineData[]>,
@@ -195,6 +195,7 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
             x: entity.x,
             y: entity.y,
             deg: entity.deg,
+            mode: entity.mode,
             animProgress: 0,
         };
         const entitySwitch = {
@@ -627,6 +628,9 @@ export function EditorApp(props: {
             <g filter={[MODE_MOVE_SELECTION, MODE_SELECT_ENTITY, MODE_MODIFY_ENTITY].includes(mode()) ? "url(#outline)" : ""}>
                 <Entities entities={previewEntities} />
             </g>
+            <Show when={[MODE_SELECT_ENTITY, MODE_MODIFY_ENTITY, MODE_PLACE_ENTITY].includes(mode())}>
+                <ModeIndicator entities={previewEntities} />
+            </Show>
             <Show when={mode() === MODE_ENTITY_PALETTE}>
                 <circle fill="none" stroke="var(--entity-palette-reticle)" cx={paletteSelection().x} cy={paletteSelection().y} r={ENTITY_PALETTE_RETICLE_RADIUS} />
             </Show>

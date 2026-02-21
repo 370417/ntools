@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{editor::{editor_entity::{EditorEntity, EntityPos, ExportedEntity}, editor_state::{Command, EditorEntities, SetEntityCount}, place_entity::PlaceEntity, select_entity::SelectionType}, orientation::{OrientationBinary, OrientationCardinal, Orientations}, tile::{TILE_HALF_SIZE, TILE_SIZE}};
+use crate::{editor::{editor_entity::{EditorEntity, EntityPos, ExportedEntity}, editor_state::{Command, EditorEntities, SetEntityCount}, place_entity::PlaceEntity, select_entity::SelectionType}, mode::Modes, orientation::{OrientationBinary, OrientationCardinal, Orientations}, tile::{TILE_HALF_SIZE, TILE_SIZE}};
 
 pub struct ModifyEntity {
     pub original_entity: EditorEntity,
@@ -99,6 +99,28 @@ impl ModifyEntity {
             EditorEntity::BoostPad { .. } |
             EditorEntity::Bat { .. } |
             EditorEntity::Exit { .. } => {}
+        }
+    }
+
+    pub fn set_mode(&mut self, modes: Modes) {
+        match &mut self.modified_entity {
+            EditorEntity::ZapDrone { mode, .. } => *mode = modes.drone_mode,
+            EditorEntity::ChaingunDrone { .. } => {}
+            EditorEntity::Ninja { .. } |
+            EditorEntity::Mine { .. } |
+            EditorEntity::Exit { .. } |
+            EditorEntity::RegularDoor { .. } |
+            EditorEntity::LockedDoor { .. } |
+            EditorEntity::TrapDoor { .. } |
+            EditorEntity::LaunchPad { .. } |
+            EditorEntity::OneWay { .. } |
+            EditorEntity::FloorGuard { .. } |
+            EditorEntity::BounceBlock { .. } |
+            EditorEntity::Thwump { .. } |
+            EditorEntity::ToggleMine { .. } |
+            EditorEntity::BoostPad { .. } |
+            EditorEntity::Bat { .. } |
+            EditorEntity::ShoveThwump { .. } => {}
         }
     }
 

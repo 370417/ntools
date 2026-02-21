@@ -1,7 +1,7 @@
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{editor::{place_entity::Stage, select_entity::SelectionType}, grid::GridPos, orientation::{Orientation, OrientationBinary, OrientationCardinal, OrientationExt, Orientations}};
+use crate::{editor::{place_entity::Stage, select_entity::SelectionType}, grid::GridPos, mode::{DroneMode, Modes}, orientation::{Orientation, OrientationBinary, OrientationCardinal, OrientationExt, Orientations}};
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(debug_assertions, derive(Debug))]
@@ -46,6 +46,7 @@ pub enum EditorEntity {
     ZapDrone {
         pos: EntityPos,
         orientation: OrientationCardinal,
+        mode: DroneMode,
     },
     FloorGuard {
         pos: EntityPos,
@@ -169,10 +170,11 @@ pub struct ExportedEntity {
     pub deg: f64,
     pub switch_x: f64,
     pub switch_y: f64,
+    pub mode: u8,
 }
 
 impl EditorEntity {
-    pub fn from_parts(id: EntityId, pos: EntityPos, orientations: Orientations) -> EditorEntity {
+    pub fn from_parts(id: EntityId, pos: EntityPos, orientations: Orientations, modes: Modes) -> EditorEntity {
         match id {
             EntityId::Ninja => EditorEntity::Ninja { pos, orientation: orientations.orientation.into() },
             EntityId::Mine => EditorEntity::Mine { pos },
@@ -185,7 +187,7 @@ impl EditorEntity {
             EntityId::OneWay => EditorEntity::OneWay { pos, orientation: orientations.orientation },
             EntityId::ChaingunDrone => EditorEntity::ChaingunDrone { pos, orientation: orientations.orientation_cardinal },
             EntityId::LaserDrone => todo!(),
-            EntityId::ZapDrone => EditorEntity::ZapDrone { pos, orientation: orientations.orientation_cardinal },
+            EntityId::ZapDrone => EditorEntity::ZapDrone { pos, orientation: orientations.orientation_cardinal, mode: modes.drone_mode },
             EntityId::ChaseDrone => todo!(),
             EntityId::FloorGuard => EditorEntity::FloorGuard { pos, orientation: orientations.orientation.into() },
             EntityId::BounceBlock => EditorEntity::BounceBlock { pos, orientation: orientations.orientation },
@@ -213,6 +215,14 @@ impl EditorEntity {
             deg: self.rotation_deg(),
             switch_x: switch_pos.x,
             switch_y: switch_pos.y,
+            mode: self.mode(),
+        }
+    }
+
+    pub fn mode(self) -> u8 {
+        match self {
+            EditorEntity::ZapDrone { mode, .. } => mode as u8,
+            _ => 0,
         }
     }
 
