@@ -366,10 +366,13 @@ impl EditorEntity {
             EditorEntity::RegularDoor { orientation, .. } |
             EditorEntity::LockedDoor { orientation, .. } |
             EditorEntity::TrapDoor { orientation, .. } => orientation.flip_across_x_axis_mut(),
-            EditorEntity::ZapDrone { orientation, .. } |
-            EditorEntity::ChaseDrone { orientation, .. } |
-            EditorEntity::LaserDrone { orientation, .. } |
-            EditorEntity::ChaingunDrone { orientation, .. } => orientation.flip_across_x_axis_mut(),
+            EditorEntity::ZapDrone { orientation, mode, .. } |
+            EditorEntity::ChaseDrone { orientation, mode, .. } |
+            EditorEntity::LaserDrone { orientation, mode, .. } |
+            EditorEntity::ChaingunDrone { orientation, mode, .. } => {
+                orientation.flip_across_x_axis_mut();
+                mode.flip_mut();
+            }
             EditorEntity::Mine { .. } |
             EditorEntity::ToggleMine { .. } |
             EditorEntity::BoostPad { .. } |
@@ -390,10 +393,13 @@ impl EditorEntity {
             EditorEntity::RegularDoor { orientation, .. } |
             EditorEntity::LockedDoor { orientation, .. } |
             EditorEntity::TrapDoor { orientation, .. } => orientation.flip_across_y_axis_mut(),
-            EditorEntity::ZapDrone { orientation, .. } |
-            EditorEntity::ChaseDrone { orientation, .. } |
-            EditorEntity::LaserDrone { orientation, .. } |
-            EditorEntity::ChaingunDrone { orientation, .. } => orientation.flip_across_y_axis_mut(),
+            EditorEntity::ZapDrone { orientation, mode, .. } |
+            EditorEntity::ChaseDrone { orientation, mode, .. } |
+            EditorEntity::LaserDrone { orientation, mode, .. } |
+            EditorEntity::ChaingunDrone { orientation, mode, .. } => {
+                orientation.flip_across_y_axis_mut();
+                mode.flip_mut();
+            }
             EditorEntity::Mine { .. } |
             EditorEntity::ToggleMine { .. } |
             EditorEntity::BoostPad { .. } |

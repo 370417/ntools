@@ -7,6 +7,21 @@ pub enum DroneMode {
     WanderCCW,
 }
 
+impl DroneMode {
+    pub fn flip_mut(&mut self) {
+        *self = self.flip();
+    }
+
+    fn flip(self) -> Self {
+        match self {
+            Self::FollowWallCW => Self::FollowWallCCW,
+            Self::FollowWallCCW => Self::FollowWallCW,
+            Self::WanderCW => Self::WanderCCW,
+            Self::WanderCCW => Self::WanderCW,
+        }
+    }
+}
+
 impl From<u8> for DroneMode {
     fn from(value: u8) -> Self {
         match value % 4 {
