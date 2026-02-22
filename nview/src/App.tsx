@@ -3,7 +3,7 @@ import { Editor, Replay } from './assets/ntools_rs';
 import { EditorApp } from './Editor.tsx';
 import { ReplayApp } from './Replay.tsx';
 import { debouncedSavePalette, loadAnimData, loadMap, loadPalette, saveAnimData } from './localstorage.ts';
-import { loadStandardPalettes, updatePaletteCss } from './palette.ts';
+import { getPaletteColors, loadStandardPalettes, updatePaletteCss } from './palette.ts';
 
 export type GlobalEventState = {
     isJump1Pressed: Accessor<boolean>,
@@ -119,13 +119,23 @@ export function App() {
     // for the user to see an error message before interacating with the page.
     const [animState, setAnimState] = createSignal(editor.get_anim_state() == ANIM_VALID ? ANIM_VALID : ANIM_MISSING);
 
-    loadStandardPalettes();
     const [palette, setPalette] = createSignal(loadPalette());
     createEffect(() => {
         const paletteObj = palette();
         if (paletteObj) {
             updatePaletteCss(paletteObj.colors);
             debouncedSavePalette(paletteObj);
+        }
+    });
+
+    loadStandardPalettes().then(() => {
+        // Update saved palette once palettes are loaded because
+        // saved palette might not include newly added/changed palette colors.
+        const paletteObj = palette();
+        if (paletteObj) {
+            const colors = getPaletteColors(paletteObj.name);
+            if (colors) { paletteObj.colors = colors; }
+            setPalette(paletteObj);
         }
     });
 
