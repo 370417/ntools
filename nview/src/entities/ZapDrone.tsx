@@ -1,5 +1,6 @@
-import { Index, type Accessor, type Signal } from "solid-js";
+import { Index, Show, type Accessor, type Signal } from "solid-js";
 import type { Replay } from "../assets/ntools_rs";
+import type { EntitiesProps } from "../Editor";
 
 // Unimplemented drone animation:
 // - eye retracts and extends in the new direction
@@ -9,6 +10,7 @@ export type ZapDroneData = {
     x: number;
     y: number;
     deg: number;
+    mode: number;
 };
 
 function equals(a: ZapDroneData, b: ZapDroneData): boolean {
@@ -30,6 +32,7 @@ export function updateZapDrones([zapDrones, setZapDrones]: Signal<ZapDroneData[]
             x: replay.zap_drone_x(i, partialFrame),
             y: replay.zap_drone_y(i, partialFrame),
             deg: replay.zap_drone_deg(i),
+            mode: oldZapDrone?.mode ?? 0,
         };
         if (oldZapDrone && equals(oldZapDrone, newZapDrone)) {
             newZapDrones.push(oldZapDrone);
@@ -64,5 +67,33 @@ export function ZapDroneDefs() {
         <path fill="var(--zap-drone-background)" stroke="var(--zap-drone-border)" d={droneBodyPath} />
         <path fill="var(--zap-drone-border)" d={zapDroneEye} />
         <path fill="none" stroke="var(--zap-drone-border)" stroke-width={droneThick} stroke-linecap="round" d={droneBodyThick} />
+    </g>;
+}
+
+export function ModeIndicator({ entities }: { entities: EntitiesProps }) {
+    const entity = () => entities.zapDrones().at(0) ?? entities.chaseDrones().at(0) ?? entities.chaingunDrones().at(0) ?? entities.laserDrones().at(0);
+    const transform = (entity: Accessor<ZapDroneData | undefined>) => {
+        const $entity = entity();
+        if ($entity) {
+            const { x, y, deg } = $entity;
+            return `translate(${x},${y}) rotate(${deg},0,0)`;
+        } else {
+            return '';
+        }
+    };
+
+    return <g transform={transform(entity)}>
+        <Show when={entity()?.mode === 0}>
+            <path fill="none" stroke="var(--mode-indicator)" d="M 12 0 a 12 12 0 0 1 12 12 a 12 12 0 0 1 -12 12 l 5 -5 m 0 10 l -5 -5" />
+        </Show>
+        <Show when={entity()?.mode === 1}>
+            <path fill="none" stroke="var(--mode-indicator)" d="M 12 0 a 12 12 0 0 0 12 -12 a 12 12 0 0 0 -12 -12 l 5 5 m 0 -10 l -5 5" />
+        </Show>
+        <Show when={entity()?.mode === 2}>
+            <path fill="none" stroke="var(--mode-indicator)" d="M 6 0 H 12 V 24 l -5 -5 m 10 0 l -5 5" />
+        </Show>
+        <Show when={entity()?.mode === 3}>
+            <path fill="none" stroke="var(--mode-indicator)" d="M 6 0 H 12 V -24 l -5 5 m 10 0 l -5 -5" />
+        </Show>
     </g>;
 }

@@ -5,6 +5,7 @@ mod editor;
 mod entity;
 mod grid;
 mod map_file;
+mod mode;
 mod ninja;
 mod orientation;
 mod replay;

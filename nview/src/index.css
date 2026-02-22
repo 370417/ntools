@@ -65,8 +65,16 @@
     --zap-drone-background: #48C1C8;
     --zap-drone-border: #202020;
 
+    --chase-drone-background: #48C1C8;
+    --chase-drone-border: #202020;
+
     --chaingun-drone-background: #707070;
     --chaingun-drone-border: #000000;
+
+    --laser-drone-border: #000000;
+    --laser-drone-laser1: #910A46;
+    --laser-drone-laser2: #670732;
+    --laser-drone-aim: #910A46;
 
     --bat-body: #FFFFFF;
     --bat-eye: #FFFFFF;
@@ -77,6 +85,7 @@
 
     --regular-grid: #A6AAA3;
     --fine-grid: #949B8F;
+    --mode-indicator: #FBC902;
     --door-switch-line: #FFFFFF;
 
     --editor-crosshair: #FFFFFF;

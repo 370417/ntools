@@ -440,6 +440,38 @@ impl Replay {
     pub fn chaingun_drone_deg(&self, i: usize) -> f64 {
         self.current_sim.entities.chaingun_drones[i].orientation.rotation_deg()
     }
+
+    pub fn laser_drones_len(&self) -> usize {
+        self.current_sim.entities.laser_drones.len()
+    }
+
+    pub fn laser_drone_x(&self, i: usize, partial_frame: f64) -> f64 {
+        self.current_sim.entities.laser_drones[i].x(partial_frame)
+    }
+
+    pub fn laser_drone_y(&self, i: usize, partial_frame: f64) -> f64 {
+        self.current_sim.entities.laser_drones[i].y(partial_frame)
+    }
+
+    pub fn laser_drone_deg(&self, i: usize) -> f64 {
+        self.current_sim.entities.laser_drones[i].orientation.rotation_deg()
+    }
+
+    pub fn chase_drones_len(&self) -> usize {
+        self.current_sim.entities.chase_drones.len()
+    }
+
+    pub fn chase_drone_x(&self, i: usize, partial_frame: f64) -> f64 {
+        self.current_sim.entities.chase_drones[i].x(partial_frame)
+    }
+
+    pub fn chase_drone_y(&self, i: usize, partial_frame: f64) -> f64 {
+        self.current_sim.entities.chase_drones[i].y(partial_frame)
+    }
+
+    pub fn chase_drone_deg(&self, i: usize) -> f64 {
+        self.current_sim.entities.chase_drones[i].orientation.rotation_deg()
+    }
 }
 
 // Separate impl block for functions without #[wasm_bindgen]

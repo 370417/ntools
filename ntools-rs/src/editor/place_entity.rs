@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{editor::{editor_entity::{EditorEntity, EntityId, EntityPos}, editor_state::{Command, EditorEntities, SetEntityCount}}, orientation::{OrientationBinary, OrientationCardinal, Orientations}, tile::{TILE_HALF_SIZE, TILE_SIZE}};
+use crate::{editor::{editor_entity::{EditorEntity, EntityId, EntityPos}, editor_state::{Command, EditorEntities, SetEntityCount}}, mode::Modes, orientation::{OrientationBinary, OrientationCardinal, Orientations}, tile::{TILE_HALF_SIZE, TILE_SIZE}};
 
 pub struct PlaceEntity {
     pub entity: EditorEntity,
@@ -16,12 +16,12 @@ pub enum Stage {
 }
 
 impl PlaceEntity {
-    pub fn new(id: EntityId, cursor_pos: DVec2, fine_grid: bool, mut orientations: Orientations) -> PlaceEntity {
+    pub fn new(id: EntityId, cursor_pos: DVec2, fine_grid: bool, mut orientations: Orientations, modes: Modes) -> PlaceEntity {
         let rounded_pos = PlaceEntity::round_to_grid(cursor_pos, fine_grid);
         let pos = EntityPos::from_world_pos(rounded_pos);
         orientations.orientation_binary = PlaceEntity::door_orientation_from_pos(rounded_pos, orientations.orientation_binary);
         PlaceEntity {
-            entity: EditorEntity::from_parts(id, pos, orientations),
+            entity: EditorEntity::from_parts(id, pos, orientations, modes),
             stage: match id {
                 EntityId::ExitDoor |
                 EntityId::LockedDoor |
@@ -136,6 +136,8 @@ impl PlaceEntity {
             EditorEntity::BounceBlock { pos, .. } |
             EditorEntity::LaunchPad { pos, .. } |
             EditorEntity::ZapDrone { pos, .. } |
+            EditorEntity::ChaseDrone { pos, .. } |
+            EditorEntity::LaserDrone { pos, .. } |
             EditorEntity::ChaingunDrone { pos, .. } |
             EditorEntity::FloorGuard { pos, .. } |
             EditorEntity::BoostPad { pos } |
@@ -165,6 +167,8 @@ impl PlaceEntity {
             EditorEntity::ShoveThwump { orientation, .. } |
             EditorEntity::BounceBlock { orientation, .. } => *orientation = orientations.orientation,
             EditorEntity::ZapDrone { orientation, .. } |
+            EditorEntity::ChaseDrone { orientation, .. } |
+            EditorEntity::LaserDrone { orientation, .. } |
             EditorEntity::ChaingunDrone { orientation, .. } => *orientation = orientations.orientation_cardinal,
             EditorEntity::RegularDoor { .. } |
             EditorEntity::LockedDoor { .. } |
@@ -174,6 +178,30 @@ impl PlaceEntity {
             EditorEntity::BoostPad { .. } |
             EditorEntity::Bat { .. } |
             EditorEntity::Exit { .. } => {}
+        }
+    }
+
+    pub fn set_mode(&mut self, modes: Modes) {
+        match &mut self.entity {
+            EditorEntity::ZapDrone { mode, .. } |
+            EditorEntity::ChaseDrone { mode, .. } |
+            EditorEntity::LaserDrone { mode, .. } |
+            EditorEntity::ChaingunDrone { mode, .. } => *mode = modes.drone_mode,
+            EditorEntity::Ninja { .. } |
+            EditorEntity::Mine { .. } |
+            EditorEntity::Exit { .. } |
+            EditorEntity::RegularDoor { .. } |
+            EditorEntity::LockedDoor { .. } |
+            EditorEntity::TrapDoor { .. } |
+            EditorEntity::LaunchPad { .. } |
+            EditorEntity::OneWay { .. } |
+            EditorEntity::FloorGuard { .. } |
+            EditorEntity::BounceBlock { .. } |
+            EditorEntity::Thwump { .. } |
+            EditorEntity::ToggleMine { .. } |
+            EditorEntity::BoostPad { .. } |
+            EditorEntity::Bat { .. } |
+            EditorEntity::ShoveThwump { .. } => {}
         }
     }
 

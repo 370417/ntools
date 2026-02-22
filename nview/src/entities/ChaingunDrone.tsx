@@ -5,6 +5,7 @@ export type ChaingunDroneData = {
     x: number;
     y: number;
     deg: number;
+    mode: number;
 };
 
 function equals(a: ChaingunDroneData, b: ChaingunDroneData): boolean {
@@ -26,6 +27,7 @@ export function updateChaingunDrones([chaingunDrones, setChaingunDrones]: Signal
             x: replay.chaingun_drone_x(i, partialFrame),
             y: replay.chaingun_drone_y(i, partialFrame),
             deg: replay.chaingun_drone_deg(i),
+            mode: oldChaingunDrone?.mode ?? 0,
         };
         if (oldChaingunDrone && equals(oldChaingunDrone, newChaingunDrone)) {
             newChaingunDrones.push(oldChaingunDrone);

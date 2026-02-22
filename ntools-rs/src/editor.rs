@@ -6,7 +6,7 @@ use futures_channel::oneshot::{self, Receiver};
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{anim_data::flatten_bones, attract::Attract, editor::{editor_entity::{EditorEntity, EntityId, ExportedEntity}, editor_state::{Command, EditorState}, entity_palette::EntityPalette, modify_entity::ModifyEntity, move_selection::MoveSelection, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::PlaceEntity, select_entity::SelectEntity, select_tiles::SelectTiles, spawn_ninja::closest_past_ninja, tile_palette::TilePalette}, entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, chaingun_drone::ChaingunDrone, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floor_guard::FloorGuard, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::{COLS, GridPos, ROWS}, map_file::MapFile, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationBinary, OrientationCardinal, Orientations}, replay::Replay, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_HALF_SIZE, TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
+use crate::{anim_data::flatten_bones, attract::Attract, editor::{editor_entity::{EditorEntity, EntityId, ExportedEntity}, editor_state::{Command, EditorState}, entity_palette::EntityPalette, modify_entity::ModifyEntity, move_selection::MoveSelection, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::PlaceEntity, select_entity::SelectEntity, select_tiles::SelectTiles, spawn_ninja::closest_past_ninja, tile_palette::TilePalette}, entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, chaingun_drone::ChaingunDrone, chase_drone::ChaseDrone, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floor_guard::FloorGuard, laser_drone::LaserDrone, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::{COLS, GridPos, ROWS}, map_file::MapFile, mode::{DroneMode, Modes}, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationBinary, OrientationCardinal, Orientations}, replay::Replay, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_HALF_SIZE, TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
 
 pub mod editor_entity;
 pub mod editor_state;
@@ -40,6 +40,7 @@ pub struct Editor {
     pen_tool_fine_grid: bool,
     entity_fine_grid: bool,
     entity_orientations: Orientations,
+    entity_modes: Modes,
     /// Keep track of the orientation key that is currently pressed
     /// to allow for inputing secondary diagonals by pressing two orientation
     /// keys at once.
@@ -84,6 +85,9 @@ impl Editor {
                 orientation: Orientation::N,
                 orientation_cardinal: OrientationCardinal::N,
                 orientation_binary: OrientationBinary::V,
+            },
+            entity_modes: Modes {
+                drone_mode: DroneMode::FollowWallCW,
             },
             pressed_orientation: None,
             past_ninjas: Vec::new(),
@@ -177,11 +181,17 @@ impl Editor {
                     EditorEntity::OneWay { pos, orientation } => {
                         entities.one_ways.push(OneWay::new(pos.to_world_pos(), *orientation));
                     }
-                    EditorEntity::ChaingunDrone { pos, orientation } => {
+                    EditorEntity::ChaingunDrone { pos, orientation, .. } => {
                         entities.chaingun_drones.push(ChaingunDrone::new(pos.to_world_pos(), *orientation));
                     }
-                    EditorEntity::ZapDrone { pos, orientation } => {
+                    EditorEntity::LaserDrone { pos, orientation, .. } => {
+                        entities.laser_drones.push(LaserDrone::new(pos.to_world_pos(), *orientation));
+                    }
+                    EditorEntity::ZapDrone { pos, orientation, .. } => {
                         entities.zap_drones.push(ZapDrone::new(pos.to_world_pos(), *orientation));
+                    }
+                    EditorEntity::ChaseDrone { pos, orientation, .. } => {
+                        entities.chase_drones.push(ChaseDrone::new(pos.to_world_pos(), *orientation));
                     }
                     EditorEntity::FloorGuard { pos, orientation } => {
                         entities.floor_guards.push(FloorGuard::new(pos.to_world_pos(), *orientation));
@@ -466,11 +476,11 @@ impl Editor {
         }
     }
 
-    pub fn tile_crosshair_col(&self) -> u8 {
+    pub fn tile_crosshair_col(&self) -> i8 {
         self.tile_crosshair().x
     }
 
-    pub fn tile_crosshair_row(&self) -> u8 {
+    pub fn tile_crosshair_row(&self) -> i8 {
         self.tile_crosshair().y
     }
 
@@ -495,7 +505,7 @@ impl Editor {
             EditorMode::ModifyEntity(modify_entity) => Box::new([modify_entity.modified_entity.export()]),
             EditorMode::MoveSelection(move_selection) => move_selection.preview_entities(self.cursor_pos).map(|entity| entity.export()).collect(),
             EditorMode::SelectEntity(select_entity) => select_entity.get_selection_exported().into_iter().collect(),
-            EditorMode::EntityPalette(entity_palette) => entity_palette.preview_entities(self.entity_orientations, self.selected_entity_id).map(|entity| entity.export().without_switch()).collect(),
+            EditorMode::EntityPalette(entity_palette) => entity_palette.preview_entities(self.entity_orientations, self.entity_modes, self.selected_entity_id).map(|entity| entity.export().without_switch()).collect(),
             _ => Box::new([]),
         }
     }
@@ -643,7 +653,7 @@ impl Editor {
 
     pub fn press_9(&mut self) {
         self.selected_entity_id = EntityId::Ninja;
-        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations, self.entity_modes));
     }
 
     pub fn press_0(&mut self) {
@@ -652,12 +662,12 @@ impl Editor {
 
     pub fn press_dash(&mut self) {
         self.selected_entity_id = EntityId::BounceBlock;
-        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations, self.entity_modes));
     }
 
     pub fn press_equals(&mut self) {
         self.selected_entity_id = EntityId::LaunchPad;
-        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations, self.entity_modes));
     }
 
     pub fn press_q(&mut self, shift: bool) {
@@ -680,10 +690,18 @@ impl Editor {
             EditorMode::PlaceEntity(place_entity) => {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
                 place_entity.set_orientation(self.entity_orientations);
+                if place_entity.entity.id().is_drone() {
+                    self.entity_modes.drone_mode = DroneMode::FollowWallCCW;
+                    place_entity.set_mode(self.entity_modes);
+                }
             }
             EditorMode::ModifyEntity(modify_entity) => {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
                 modify_entity.set_orientation(self.entity_orientations);
+                if modify_entity.modified_entity.id().is_drone() {
+                    self.entity_modes.drone_mode = DroneMode::FollowWallCCW;
+                    modify_entity.set_mode(self.entity_modes);
+                }
             }
             EditorMode::SpawnNinja |
             EditorMode::EntityPalette(_) => set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations),
@@ -814,10 +832,18 @@ impl Editor {
             EditorMode::PlaceEntity(place_entity) => {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
                 place_entity.set_orientation(self.entity_orientations);
+                if place_entity.entity.id().is_drone() {
+                    self.entity_modes.drone_mode = DroneMode::FollowWallCW;
+                    place_entity.set_mode(self.entity_modes);
+                }
             }
             EditorMode::ModifyEntity(modify_entity) => {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
                 modify_entity.set_orientation(self.entity_orientations);
+                if modify_entity.modified_entity.id().is_drone() {
+                    self.entity_modes.drone_mode = DroneMode::FollowWallCW;
+                    modify_entity.set_mode(self.entity_modes);
+                }
             }
             EditorMode::SpawnNinja |
             EditorMode::EntityPalette(_) => set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations),
@@ -888,10 +914,18 @@ impl Editor {
             EditorMode::PlaceEntity(place_entity) => {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
                 place_entity.set_orientation(self.entity_orientations);
+                if place_entity.entity.id().is_drone() {
+                    self.entity_modes.drone_mode = DroneMode::WanderCCW;
+                    place_entity.set_mode(self.entity_modes);
+                }
             }
             EditorMode::ModifyEntity(modify_entity) => {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
                 modify_entity.set_orientation(self.entity_orientations);
+                if modify_entity.modified_entity.id().is_drone() {
+                    self.entity_modes.drone_mode = DroneMode::WanderCCW;
+                    modify_entity.set_mode(self.entity_modes);
+                }
             }
             EditorMode::SpawnNinja |
             EditorMode::EntityPalette(_) => set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations),
@@ -939,10 +973,18 @@ impl Editor {
             EditorMode::PlaceEntity(place_entity) => {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
                 place_entity.set_orientation(self.entity_orientations);
+                if place_entity.entity.id().is_drone() {
+                    self.entity_modes.drone_mode = DroneMode::WanderCW;
+                    place_entity.set_mode(self.entity_modes);
+                }
             }
             EditorMode::ModifyEntity(modify_entity) => {
                 set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations);
                 modify_entity.set_orientation(self.entity_orientations);
+                if modify_entity.modified_entity.id().is_drone() {
+                    self.entity_modes.drone_mode = DroneMode::WanderCW;
+                    modify_entity.set_mode(self.entity_modes);
+                }
             }
             EditorMode::SpawnNinja |
             EditorMode::EntityPalette(_) => set_orientation(&mut self.pressed_orientation, &mut self.entity_orientations),
@@ -952,6 +994,7 @@ impl Editor {
                     self.mode = EditorMode::MoveSelection(MoveSelection::new(self.cursor_pos, selection, self.state.tiles(), self.state.entities()));
                 }
             }
+            EditorMode::MoveSelection(move_selection) => move_selection.center_tiles(self.cursor_pos),
             _ => {}
         }
     }
@@ -998,38 +1041,38 @@ impl Editor {
 
     pub fn press_i(&mut self) {
         self.selected_entity_id = EntityId::RegularDoor;
-        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations, self.entity_modes));
         // call set_cursor_pos to correct the cursor position if it is illegal for a door
         self.set_cursor_pos(self.true_cursor_pos().x, self.true_cursor_pos().y, false);
     }
 
     pub fn press_o(&mut self) {
         self.selected_entity_id = EntityId::LockedDoor;
-        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations, self.entity_modes));
         // call set_cursor_pos to correct the cursor position if it is illegal for a door
         self.set_cursor_pos(self.true_cursor_pos().x, self.true_cursor_pos().y, false);
     }
 
     pub fn press_p(&mut self) {
         self.selected_entity_id = EntityId::TrapDoor;
-        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations, self.entity_modes));
         // call set_cursor_pos to correct the cursor position if it is illegal for a door
         self.set_cursor_pos(self.true_cursor_pos().x, self.true_cursor_pos().y, false);
     }
 
     pub fn press_bracket_left(&mut self) {
         self.selected_entity_id = EntityId::OneWay;
-        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations, self.entity_modes));
     }
 
     pub fn press_bracket_right(&mut self) {
         self.selected_entity_id = EntityId::ExitDoor;
-        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations, self.entity_modes));
     }
 
     pub fn press_f(&mut self) {
         if let EditorMode::SelectEntity(_) = self.mode {
-            self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
+            self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations, self.entity_modes));
         } else {
             self.mode = EditorMode::SelectEntity(SelectEntity::new(self.cursor_pos, self.state.entities(), self.entity_fine_grid));
         }
@@ -1037,39 +1080,45 @@ impl Editor {
 
     pub fn press_h(&mut self) {
         self.selected_entity_id = EntityId::ZapDrone;
-        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations, self.entity_modes));
         // call set_cursor_pos to correct the cursor position if it is illegal for a drone
         self.set_cursor_pos(self.true_cursor_pos().x, self.true_cursor_pos().y, false);
     }
 
     pub fn press_j(&mut self) {
-        // chase drone
+        self.selected_entity_id = EntityId::ChaseDrone;
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations, self.entity_modes));
+        // call set_cursor_pos to correct the cursor position if it is illegal for a drone
+        self.set_cursor_pos(self.true_cursor_pos().x, self.true_cursor_pos().y, false);
     }
 
     pub fn press_k(&mut self) {
-        // laser drone
+        self.selected_entity_id = EntityId::LaserDrone;
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations, self.entity_modes));
+        // call set_cursor_pos to correct the cursor position if it is illegal for a drone
+        self.set_cursor_pos(self.true_cursor_pos().x, self.true_cursor_pos().y, false);
     }
 
     pub fn press_l(&mut self) {
         self.selected_entity_id = EntityId::ChaingunDrone;
-        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations, self.entity_modes));
         // call set_cursor_pos to correct the cursor position if it is illegal for a drone
         self.set_cursor_pos(self.true_cursor_pos().x, self.true_cursor_pos().y, false);
     }
 
     pub fn press_n(&mut self) {
         self.selected_entity_id = EntityId::FloorGuard;
-        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations, self.entity_modes));
     }
 
     pub fn press_m(&mut self) {
         self.selected_entity_id = EntityId::Mine;
-        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations, self.entity_modes));
     }
 
     pub fn press_comma(&mut self) {
         self.selected_entity_id = EntityId::Thwump;
-        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations, self.entity_modes));
     }
 
     pub fn press_slash(&mut self) {
@@ -1099,7 +1148,7 @@ impl Editor {
 
     pub fn press_num_0(&mut self) {
         self.selected_entity_id = EntityId::ToggleMine;
-        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations, self.entity_modes));
     }
 
     pub fn press_num_1(&mut self) {
@@ -1112,7 +1161,7 @@ impl Editor {
 
     pub fn press_num_3(&mut self) {
         self.selected_entity_id = EntityId::BoostPad;
-        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations, self.entity_modes));
     }
 
     pub fn press_num_4(&mut self) {
@@ -1125,7 +1174,7 @@ impl Editor {
 
     pub fn press_num_7(&mut self) {
         self.selected_entity_id = EntityId::ShoveThwump;
-        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations, self.entity_modes));
     }
 
     pub fn press_up(&mut self, shift: bool) {
@@ -1276,7 +1325,7 @@ impl Editor {
     }
 
     pub fn release_space(&mut self) {
-        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations));
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations, self.entity_modes));
         // call set_cursor_pos to correct the cursor position if it is illegal for the selected entity
         self.set_cursor_pos(self.true_cursor_pos().x, self.true_cursor_pos().y, false);
     }
@@ -1357,8 +1406,8 @@ impl Editor {
             EditorMode::MoveSelection(_) => {
                 let crosshair = self.tile_crosshair();
                 let crosshair = GridPos {
-                    x: crosshair.x.saturating_add_signed(direction.vec2().x as i8),
-                    y: crosshair.y.saturating_add_signed(direction.vec2().y as i8),
+                    x: crosshair.x.saturating_add(direction.vec2().x as i8),
+                    y: crosshair.y.saturating_add(direction.vec2().y as i8),
                 };
                 let new_cursor_pos = crosshair.to_world_pos();
                 self.set_cursor_pos(new_cursor_pos.x, new_cursor_pos.y, shift);
