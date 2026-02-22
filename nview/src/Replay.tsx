@@ -21,6 +21,8 @@ import { BoostPadDefs, BoostPads, updateBoostPads, type BoostPadData } from './e
 import { ThwumpDefs, Thwumps, updateThwumps, type ThwumpData } from './entities/Thwump';
 import { updateZapDrones, ZapDroneDefs, ZapDrones, type ZapDroneData } from './entities/ZapDrone';
 import { ChaingunDroneDefs, ChaingunDrones, updateChaingunDrones, type ChaingunDroneData } from './entities/ChaingunDrone';
+import { ChaseDroneDefs, ChaseDrones, updateChaseDrones, type ChaseDroneData } from './entities/ChaseDrone';
+import { LaserDroneDefs, LaserDrones, updateLaserDrones, type LaserDroneData } from './entities/LaserDrone';
 
 export function ReplayApp(props: { replay: Replay, globalEventState: GlobalEventState }) {
     const replay = props.replay;
@@ -86,7 +88,9 @@ export function ReplayApp(props: { replay: Replay, globalEventState: GlobalEvent
     const exitDoors = createSignal<ExitDoorData[]>([]);
     const exitSwitches = createSignal<ExitSwitchData[]>([]);
     const zapDrones = createSignal<ZapDroneData[]>([]);
+    const chaseDrones = createSignal<ChaseDroneData[]>([]);
     const chaingunDrones = createSignal<ChaingunDroneData[]>([]);
+    const laserDrones = createSignal<LaserDroneData[]>([]);
 
     let timeMs = performance.now();
     const fps = 60;
@@ -169,7 +173,9 @@ export function ReplayApp(props: { replay: Replay, globalEventState: GlobalEvent
         updateExitDoors(exitDoors, replay, partialFrame);
         updateExitSwitches(exitSwitches, replay, partialFrame);
         updateZapDrones(zapDrones, replay, partialFrame);
+        updateChaseDrones(chaseDrones, replay, partialFrame);
         updateChaingunDrones(chaingunDrones, replay, partialFrame);
+        updateLaserDrones(laserDrones, replay, partialFrame);
 
         setReplayLength(replay.replay_length());
     }
@@ -195,7 +201,9 @@ export function ReplayApp(props: { replay: Replay, globalEventState: GlobalEvent
                     <BoostPadDefs />
                     <ThwumpDefs />
                     <ChaingunDroneDefs />
+                    <LaserDroneDefs />
                     <ZapDroneDefs />
+                    <ChaseDroneDefs />
                     <ExitDoorGradient />
                 </defs>
                 <ExitDoors exitDoors={exitDoors[0]} />
@@ -209,7 +217,9 @@ export function ReplayApp(props: { replay: Replay, globalEventState: GlobalEvent
                 <ExitSwitches exitSwitches={exitSwitches[0]} />
                 <LaunchPads launchPads={launchPads[0]} />
                 <ChaingunDrones chaingunDrones={chaingunDrones[0]} />
+                <LaserDrones laserDrones={laserDrones[0]} />
                 <ZapDrones zapDrones={zapDrones[0]} />
+                <ChaseDrones chaseDrones={chaseDrones[0]} />
                 <FloorGuards floorGuards={floorGuards[0]} />
                 <Thwumps thwumps={thwumps[0]} />
                 <Ninja class="ninja preview" ninja={ninjaPreview} bones={ninjaPreviewBones} />

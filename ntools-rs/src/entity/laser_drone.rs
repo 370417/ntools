@@ -3,14 +3,14 @@ use glam::DVec2;
 use crate::orientation::OrientationCardinal;
 
 #[derive(Clone)]
-pub struct ChaingunDrone {
+pub struct LaserDrone {
     pub pos: DVec2,
     pub orientation: OrientationCardinal,
 }
 
-impl ChaingunDrone {
-    pub fn new(pos: DVec2, orientation: OrientationCardinal) -> ChaingunDrone {
-        ChaingunDrone {
+impl LaserDrone {
+    pub fn new(pos: DVec2, orientation: OrientationCardinal) -> LaserDrone {
+        LaserDrone {
             pos,
             orientation,
         }

@@ -65,6 +65,8 @@ impl ModifyEntity {
             EditorEntity::LaunchPad { pos, .. } |
             EditorEntity::ZapDrone { pos, .. } |
             EditorEntity::ChaingunDrone { pos, .. } |
+            EditorEntity::LaserDrone { pos, .. } |
+            EditorEntity::ChaseDrone { pos, .. } |
             EditorEntity::FloorGuard { pos, .. } |
             EditorEntity::BoostPad { pos } |
             EditorEntity::Thwump { pos, .. } |
@@ -90,6 +92,8 @@ impl ModifyEntity {
             EditorEntity::ShoveThwump { orientation, .. } |
             EditorEntity::BounceBlock { orientation, .. } => *orientation = orientations.orientation,
             EditorEntity::ZapDrone { orientation, .. } |
+            EditorEntity::LaserDrone { orientation, .. } |
+            EditorEntity::ChaseDrone { orientation, .. } |
             EditorEntity::ChaingunDrone { orientation, .. } => *orientation = orientations.orientation_cardinal,
             EditorEntity::RegularDoor { .. } |
             EditorEntity::LockedDoor { .. } |
@@ -105,6 +109,8 @@ impl ModifyEntity {
     pub fn set_mode(&mut self, modes: Modes) {
         match &mut self.modified_entity {
             EditorEntity::ZapDrone { mode, .. } |
+            EditorEntity::ChaseDrone { mode, .. } |
+            EditorEntity::LaserDrone { mode, .. } |
             EditorEntity::ChaingunDrone { mode, .. } => *mode = modes.drone_mode,
             EditorEntity::Ninja { .. } |
             EditorEntity::Mine { .. } |

@@ -23,6 +23,8 @@ import type { Palette } from "./palette";
 import { ModeIndicator, ZapDroneDefs, ZapDrones, type ZapDroneData } from "./entities/ZapDrone";
 import { ChaingunDroneDefs, ChaingunDrones, type ChaingunDroneData } from "./entities/ChaingunDrone";
 import { BatDefs, Bats, type BatData } from "./entities/Bat";
+import { LaserDroneDefs, LaserDrones, type LaserDroneData } from "./entities/LaserDrone";
+import { ChaseDroneDefs, ChaseDrones, type ChaseDroneData } from "./entities/ChaseDrone";
 
 const COLS = 42;
 const ROWS = 23;
@@ -57,9 +59,9 @@ const ENTITY_TRAP_DOOR = 8;
 const ENTITY_LAUNCH_PAD = 10;
 const ENTITY_ONE_WAY = 11;
 const ENTITY_CHAINGUN_DRONE = 12;
-// const ENTITY_LASER_DRONE = 13;
+const ENTITY_LASER_DRONE = 13;
 const ENTITY_ZAP_DRONE = 14;
-// const ENTITY_CHASE_DRONE = 15;
+const ENTITY_CHASE_DRONE = 15;
 const ENTITY_FLOOR_GUARD = 16;
 const ENTITY_BOUNCE_BLOCK = 17;
 const ENTITY_THWUMP = 20;
@@ -108,8 +110,12 @@ export type EntitiesProps = {
     setOneWays: Setter<OneWayData[]>,
     chaingunDrones: Accessor<ChaingunDroneData[]>,
     setChaingunDrones: Setter<ChaingunDroneData[]>,
+    laserDrones: Accessor<LaserDroneData[]>,
+    setLaserDrones: Setter<LaserDroneData[]>,
     zapDrones: Accessor<ZapDroneData[]>,
     setZapDrones: Setter<ZapDroneData[]>,
+    chaseDrones: Accessor<ChaseDroneData[]>,
+    setChaseDrones: Setter<ChaseDroneData[]>,
     floorGuards: Accessor<FloorGuardData[]>,
     setFloorGuards: Setter<FloorGuardData[]>,
     bounceBlocks: Accessor<BounceBlockData[]>,
@@ -137,7 +143,9 @@ function createEntities(): EntitiesProps {
     const [launchPads, setLaunchPads] = createSignal<LaunchPadData[]>([]);
     const [oneWays, setOneWays] = createSignal<OneWayData[]>([]);
     const [chaingunDrones, setChaingunDrones] = createSignal<ChaingunDroneData[]>([]);
+    const [laserDrones, setLaserDrones] = createSignal<LaserDroneData[]>([]);
     const [zapDrones, setZapDrones] = createSignal<ZapDroneData[]>([]);
+    const [chaseDrones, setChaseDrones] = createSignal<ChaseDroneData[]>([]);
     const [floorGuards, setFloorGuards] = createSignal<FloorGuardData[]>([]);
     const [bounceBlocks, setBounceBlocks] = createSignal<BounceBlockData[]>([]);
     const [thwumps, setThwumps] = createSignal<ThwumpData[]>([]);
@@ -157,7 +165,9 @@ function createEntities(): EntitiesProps {
         launchPads, setLaunchPads,
         oneWays, setOneWays,
         chaingunDrones, setChaingunDrones,
+        laserDrones, setLaserDrones,
         zapDrones, setZapDrones,
+        chaseDrones, setChaseDrones,
         floorGuards, setFloorGuards,
         bounceBlocks, setBounceBlocks,
         thwumps, setThwumps,
@@ -180,7 +190,9 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
     const launchPads: LaunchPadData[] = [];
     const oneWays: OneWayData[] = [];
     const chaingunDrones: ChaingunDroneData[] = [];
+    const laserDrones: LaserDroneData[] = [];
     const zapDrones: ZapDroneData[] = [];
+    const chaseDrones: ChaseDroneData[] = [];
     const floorGuards: FloorGuardData[] = [];
     const bounceBlocks: BounceBlockData[] = [];
     const thwumps: ThwumpData[] = [];
@@ -251,8 +263,12 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
             oneWays.push(entityCopy);
         } else if (entity.type_int === ENTITY_CHAINGUN_DRONE) {
             chaingunDrones.push(entityCopy);
+        } else if (entity.type_int === ENTITY_LASER_DRONE) {
+            laserDrones.push(entityCopy);
         } else if (entity.type_int === ENTITY_ZAP_DRONE) {
             zapDrones.push(entityCopy);
+        } else if (entity.type_int === ENTITY_CHASE_DRONE) {
+            chaseDrones.push(entityCopy);
         } else if (entity.type_int === ENTITY_FLOOR_GUARD) {
             floorGuards.push(entityCopy);
         } else if (entity.type_int === ENTITY_BOUNCE_BLOCK) {
@@ -288,7 +304,9 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
     entities.setLaunchPads(launchPads);
     entities.setOneWays(oneWays);
     entities.setChaingunDrones(chaingunDrones);
+    entities.setLaserDrones(laserDrones);
     entities.setZapDrones(zapDrones);
+    entities.setChaseDrones(chaseDrones);
     entities.setFloorGuards(floorGuards);
     entities.setBounceBlocks(bounceBlocks);
     entities.setThwumps(thwumps);
@@ -310,7 +328,9 @@ function Entities({ entities }: { entities: EntitiesProps }) {
         <ExitSwitches exitSwitches={entities.exitSwitches} />
         <LaunchPads launchPads={entities.launchPads} />
         <ChaingunDrones chaingunDrones={entities.chaingunDrones} />
+        <LaserDrones laserDrones={entities.laserDrones} />
         <ZapDrones zapDrones={entities.zapDrones} />
+        <ChaseDrones chaseDrones={entities.chaseDrones} />
         <FloorGuards floorGuards={entities.floorGuards} />
         <Bats bats={entities.bats} />
         <Thwumps thwumps={entities.thwumps} />
@@ -589,7 +609,9 @@ export function EditorApp(props: {
                 <BoostPadDefs />
                 <ThwumpDefs />
                 <ChaingunDroneDefs />
+                <LaserDroneDefs />
                 <ZapDroneDefs />
+                <ChaseDroneDefs />
                 <BatDefs />
                 <path id="tilemode-crosshair" stroke-width="1.5" fill="none" d={tilemodeCrosshairPath} />
                 <path id="crosshair" stroke-width="1.5" fill="none" d={crosshairPath} />

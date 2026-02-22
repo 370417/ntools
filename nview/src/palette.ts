@@ -1,3 +1,6 @@
+// Palette location on macOS:
+// ~/Library/Application Support/Steam/steamapps/common/N++/N++.app/Contents/Resources/NPP/Palettes
+
 import paletteUrl from './assets/palette.png';
 
 export type Palette = {
@@ -222,8 +225,14 @@ const colorVarNames = [
     '--shove-thwump-center',
     '--zap-drone-background',
     '--zap-drone-border',
+    '--chase-drone-background',
+    '--chase-drone-border',
     '--chaingun-drone-background',
     '--chaingun-drone-border',
+    '--laser-drone-border',
+    '--laser-drone-laser1',
+    '--laser-drone-laser2',
+    '--laser-drone-aim',
     '--bat-body',
     '--bat-eye',
     '--time-remaining',
@@ -443,6 +452,14 @@ const colorVarPaletteLocations: Record<ColorVarName, { file: PaletteFileName, in
         file: 'entityDroneZap',
         index: 1,
     },
+    '--chase-drone-background': {
+        file: 'entityDroneChaser',
+        index: 0,
+    },
+    '--chase-drone-border': {
+        file: 'entityDroneChaser',
+        index: 1,
+    },
     '--chaingun-drone-background': {
         file: 'entityDroneChaingun',
         index: 0,
@@ -450,6 +467,22 @@ const colorVarPaletteLocations: Record<ColorVarName, { file: PaletteFileName, in
     '--chaingun-drone-border': {
         file: 'entityDroneChaingun',
         index: 1,
+    },
+    '--laser-drone-border': {
+        file: 'entityDroneLaser',
+        index: 2,
+    },
+    '--laser-drone-laser1': {
+        file: 'entityDroneLaser',
+        index: 0,
+    },
+    '--laser-drone-laser2': {
+        file: 'entityDroneLaser',
+        index: 1,
+    },
+    '--laser-drone-aim': {
+        file: 'entityDroneLaser',
+        index: 3,
     },
     '--bat-body': {
         file: 'entityBat',
