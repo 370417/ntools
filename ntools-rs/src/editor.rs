@@ -187,8 +187,8 @@ impl Editor {
                     EditorEntity::LaserDrone { pos, orientation, .. } => {
                         entities.laser_drones.push(LaserDrone::new(pos.to_world_pos(), *orientation));
                     }
-                    EditorEntity::ZapDrone { pos, orientation, .. } => {
-                        entities.zap_drones.push(ZapDrone::new(pos.to_world_pos(), *orientation));
+                    EditorEntity::ZapDrone { pos, orientation, mode } => {
+                        entities.zap_drones.push(ZapDrone::new(pos.to_world_pos(), *orientation, *mode));
                     }
                     EditorEntity::ChaseDrone { pos, orientation, .. } => {
                         entities.chase_drones.push(ChaseDrone::new(pos.to_world_pos(), *orientation));
