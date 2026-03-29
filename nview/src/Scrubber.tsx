@@ -11,6 +11,7 @@ type ScrubberProps = {
     seek(frame: number): void,
     previewProgress: Accessor<number | undefined>,
     previewSeek(frame: number | undefined): void,
+    attract(): Uint8Array,
 };
 
 export function Scrubber(props: ScrubberProps) {
@@ -130,6 +131,20 @@ export function Scrubber(props: ScrubberProps) {
             <div class="progress" style={{ width: progressWidth() }}></div>
             <div class="previewProgress" style={{ left: previewProgressSize().left, width: previewProgressSize().width }}></div>
             <div class="thumb" style={{ left: progressWidth() }}></div>
+        </div>
+        <div>
+            <a href="#" download="1234" style={{
+                color: 'var(--main-menu-selected)',
+                "margin-left": '1em'
+            }} onclick={function(this: HTMLAnchorElement) {
+                const attract = props.attract();
+                const blob = new Blob([attract.buffer as ArrayBuffer], { type: 'application/octet-stream' });
+                const downloadUrl = URL.createObjectURL(blob);
+                this.href = downloadUrl;
+                setTimeout(() => URL.revokeObjectURL(downloadUrl), 100);
+            }}>
+                Export attract
+            </a>
         </div>
     </div>;
 }

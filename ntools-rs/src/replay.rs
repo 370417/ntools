@@ -4,7 +4,7 @@ use futures_channel::oneshot::Sender;
 use glam::{DVec2, FloatExt};
 use wasm_bindgen::prelude::*;
 
-use crate::{anim_data::flatten_bones, entity::mine::Mine, grid::{COLS, Grid, ROWS}, ninja::{Ninja, PastNinja}, orientation::OrientationExt, segment::{Segment, extract_path}, simulation::{Input, KeyFrame, Simulation}, tile::TILE_SIZE};
+use crate::{anim_data::flatten_bones, editor::Editor, entity::mine::Mine, grid::{COLS, Grid, ROWS}, map_file::MapFile, ninja::{Ninja, PastNinja}, orientation::OrientationExt, segment::{Segment, extract_path}, simulation::{Input, KeyFrame, Simulation}, tile::TILE_SIZE};
 
 #[wasm_bindgen]
 pub struct Replay {
@@ -471,6 +471,10 @@ impl Replay {
 
     pub fn chase_drone_deg(&self, i: usize) -> f64 {
         self.current_sim.entities.chase_drones[i].orientation.rotation_deg()
+    }
+
+    pub fn export_attract(&self, editor: &Editor) -> Box<[u8]> {
+        MapFile::to_attract(&editor.export_map(), &self.inputs).into()
     }
 }
 

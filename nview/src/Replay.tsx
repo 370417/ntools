@@ -1,5 +1,5 @@
 import { createSignal, onCleanup, Show } from 'solid-js';
-import { Replay } from './assets/ntools_rs';
+import { Editor, Replay } from './assets/ntools_rs';
 import { Scrubber } from './Scrubber';
 // import Stats from 'stats-js';
 import { LaunchPads, updateLaunchPads, type LaunchPadData } from './entities/LaunchPad';
@@ -24,7 +24,7 @@ import { ChaingunDroneDefs, ChaingunDrones, updateChaingunDrones, type ChaingunD
 import { ChaseDroneDefs, ChaseDrones, updateChaseDrones, type ChaseDroneData } from './entities/ChaseDrone';
 import { LaserDroneDefs, LaserDrones, updateLaserDrones, type LaserDroneData } from './entities/LaserDrone';
 
-export function ReplayApp(props: { replay: Replay, globalEventState: GlobalEventState }) {
+export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventState: GlobalEventState }) {
     const replay = props.replay;
 
     const [recording, setRecording] = createSignal(true);
@@ -253,6 +253,7 @@ export function ReplayApp(props: { replay: Replay, globalEventState: GlobalEvent
                                 renderFrame(1);
                             }
                         }}
+                        attract={() => replay.export_attract(props.editor)}
                     />
                 </Show>
             </div>

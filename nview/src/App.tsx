@@ -195,7 +195,7 @@ export function App() {
             />
         </Show>
         <Show when={animState() == ANIM_VALID && !!replay()} keyed>
-            <ReplayApp replay={replay()!} globalEventState={globalEventState} />
+            <ReplayApp replay={replay()!} editor={editor} globalEventState={globalEventState} />
         </Show>
     </>;
 }
