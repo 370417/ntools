@@ -82,6 +82,7 @@ impl Simulation {
         move_entities(&mut self.entities.bounce_blocks, &mut self.entity_grid, segments, &self.entities.doors);
         move_entities(&mut self.entities.thwumps, &mut self.entity_grid, segments, &self.entities.doors);
         move_entities(&mut self.entities.floor_guards, &mut self.entity_grid, segments, &self.entities.doors);
+        move_entities(&mut self.entities.zap_drones, &mut self.entity_grid, segments, &self.entities.doors);
         // Apparently boost pad logic is called as a move method.
         // I'd expect it to go in logical_collision, but in case the order matters,
         // I'll leave it here.
