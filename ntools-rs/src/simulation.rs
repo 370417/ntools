@@ -1,4 +1,4 @@
-use crate::{entity::{Entities, EntityIndex, GridEntityType, bounce_block::BounceBlock, door::RegularDoor, floor_guard::FloorGuard, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, on_door_state_change, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::Grid, ninja::{Ninja, NinjaState}, segment::Segment};
+use crate::{entity::{Entities, EntityIndex, GridEntityType, bounce_block::BounceBlock, door::RegularDoor, floor_guard::FloorGuard, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, on_door_state_change, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::Grid, ninja::{AnimState, Ninja, NinjaState}, segment::Segment};
 
 #[derive(Clone)]
 pub struct Simulation {
@@ -114,6 +114,11 @@ impl Simulation {
             self.ninja.post_collision(&mut collision_state, &mut self.entities, &self.entity_grid, segments);
             self.ninja.think(input.jump, hor_input);
             self.ninja.update_graphics(hor_input);
+        }
+
+        if self.ninja.state == NinjaState::Dead {
+            self.ninja.anim_frame = 105;
+            self.ninja.anim_state = AnimState::Dead;
         }
     }
 }

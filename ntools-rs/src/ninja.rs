@@ -40,11 +40,11 @@ pub struct Ninja {
     launch_pad_boost_normal: DVec2,
     floor_unit_normal: DVec2,
     ceiling_unit_normal: DVec2,
-    anim_state: AnimState,
+    pub anim_state: AnimState,
     facing: f64,
     tilt: DVec2,
     anim_rate: f64,
-    anim_frame: usize,
+    pub anim_frame: usize,
     frame_residual: f64,
     dance_end: usize,
     run_cycle: usize,
@@ -85,6 +85,7 @@ pub enum AnimState {
     Airborne,
     WallSliding,
     Celebrating,
+    Dead,
 }
 
 pub struct CollisionState {
@@ -414,7 +415,7 @@ impl Ninja {
                 // do nothing
             }
             _ => {
-                // TODO
+                self.state = NinjaState::Dead;
             }
         }
     }
@@ -750,6 +751,7 @@ impl Ninja {
                     self.anim_frame = dance.0;
                     self.dance_end = dance.1;
                 }
+                AnimState::Dead => {}
             }
         }
 
