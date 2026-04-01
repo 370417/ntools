@@ -214,10 +214,10 @@ impl <'a> Iterator for EntityDataParser<'a> {
                 EntityId::TrapSwitch => return self.trap_doors.pop_front().map(|(door_pos, orientation)| EditorEntity::TrapDoor { door_pos, orientation, switch_pos: pos }),
                 EntityId::LaunchPad => return Some(EditorEntity::LaunchPad { pos, orientation }),
                 EntityId::OneWay => return Some(EditorEntity::OneWay { pos, orientation }),
-                EntityId::ChaingunDrone => {}
-                EntityId::LaserDrone => {}
+                EntityId::ChaingunDrone => return Some(EditorEntity::ChaingunDrone { pos, orientation: orientation_cardinal, mode: drone_mode }),
+                EntityId::LaserDrone => return Some(EditorEntity::LaserDrone { pos, orientation: orientation_cardinal, mode: drone_mode }),
                 EntityId::ZapDrone => return Some(EditorEntity::ZapDrone { pos, orientation: orientation_cardinal, mode: drone_mode }),
-                EntityId::ChaseDrone => {}
+                EntityId::ChaseDrone => return Some(EditorEntity::ChaseDrone { pos, orientation: orientation_cardinal, mode: drone_mode }),
                 EntityId::FloorGuard => return Some(EditorEntity::FloorGuard { pos, orientation: orientation_ext }),
                 EntityId::BounceBlock => return Some(EditorEntity::BounceBlock { pos, orientation }),
                 EntityId::RocketTurret => {}
