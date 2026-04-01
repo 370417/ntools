@@ -136,6 +136,10 @@ impl Replay {
         self.preview_sim.frame
     }
 
+    pub fn score(&self) -> u32 {
+        self.current_sim.score
+    }
+
     pub fn tiles_path(&self) -> String {
         extract_path(&self.segments, true)
     }

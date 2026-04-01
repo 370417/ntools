@@ -35,6 +35,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
     const [replayLength, setReplayLength] = createSignal(0);
     const [progress, setProgress] = createSignal(0);
     const [previewProgress, setPreviewProgress] = createSignal<number | undefined>(undefined);
+    const [score, setScore] = createSignal(90 * 60);
 
     const keydownListener = (event: KeyboardEvent) => {
         if (event.code === 'Enter') {
@@ -49,6 +50,20 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
             } else {
                 setIsPlaying(true);
                 setRecording(true);
+            }
+        } else if (event.code === 'Comma') {
+            if (!isPlaying() && progress() > 0) {
+                setProgress(progress() - 1);
+                replay.seek(progress());
+                renderFrame(1);
+            }
+        } else if (event.code === 'Period') {
+            if (!isPlaying()) {
+                let { isJump1Pressed, isJump2Pressed, isRightPressed, isLeftPressed, isSuicidePressed } = props.globalEventState;
+                replay.set_input(isJump1Pressed() || isJump2Pressed(), isRightPressed(), isLeftPressed(), isSuicidePressed());
+                replay.tick();
+                setProgress(replay.progress());
+                renderFrame(1);
             }
         }
     };
@@ -140,6 +155,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
     });
 
     function renderFrame(partialFrame: number) {
+        setScore(replay.score());
         setNinja({
             x: replay.ninja_x(partialFrame),
             y: replay.ninja_y(partialFrame),
@@ -182,6 +198,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
 
     return (
         <>
+            <span>{(score() / 60).toFixed(3)}</span>
             <svg viewBox="0 0 1056 600" onmousemove={function(this: SVGElement, event) {
                 const { left, top, width, height } = this.getBoundingClientRect();
                 props.globalEventState.setMouseGamePos({

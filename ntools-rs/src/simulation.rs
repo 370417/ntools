@@ -4,6 +4,7 @@ use crate::{entity::{Entities, EntityIndex, GridEntityType, bounce_block::Bounce
 pub struct Simulation {
     pub frame: u32,
     pub ninja: Ninja,
+    pub score: u32,
     pub entities: Entities,
     pub entity_grid: Grid<EntityIndex>,
 }
@@ -19,6 +20,7 @@ pub struct Input {
 pub struct KeyFrame {
     frame: u32,
     ninja: Ninja,
+    score: u32,
     mine_state_diffs: Vec<(usize, MineState)>,
     // We could save some memory by not storing bounce block origin because
     // it is constant across frames. For now we just store the entire bounce block.
@@ -63,6 +65,7 @@ impl Simulation {
         Ok(Simulation {
             frame: 0,
             ninja: ninjas.into_iter().next().ok_or("Map has no ninja")?,
+            score: 90 * 60,
             entity_grid: entities.grid(),
             entities,
         })
@@ -116,6 +119,8 @@ impl Simulation {
             self.ninja.update_graphics(hor_input);
         }
 
+        self.score = self.score.saturating_sub(1);
+
         if self.ninja.state == NinjaState::Dead {
             self.ninja.anim_frame = 105;
             self.ninja.anim_state = AnimState::Dead;
@@ -128,6 +133,7 @@ impl KeyFrame {
         KeyFrame {
             frame: sim.frame,
             ninja: sim.ninja.clone(),
+            score: sim.score,
             mine_state_diffs: mine_diffs(initial_mines, &sim.entities.mines),
             bounce_blocks: sim.entities.bounce_blocks.clone(),
             exit_frames_since_open: sim.entities.exits.iter().map(|exit| exit.frames_since_door_open).collect(),
@@ -146,6 +152,7 @@ impl KeyFrame {
     pub fn hydrate_into(&self, sim: &mut Simulation, initial_mines: &[Mine]) {
         sim.frame = self.frame;
         sim.ninja = self.ninja.clone();
+        sim.score = self.score;
 
         sim.entities.mines = mines_from_diff(initial_mines, &self.mine_state_diffs);
 
