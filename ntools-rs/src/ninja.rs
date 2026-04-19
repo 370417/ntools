@@ -39,6 +39,7 @@ pub struct Ninja {
     launch_pad_buffer: Option<u8>,
     launch_pad_boost_normal: DVec2,
     floor_unit_normal: DVec2,
+    avg_slide: DVec2,
     ceiling_unit_normal: DVec2,
     pub anim_state: AnimState,
     facing: f64,
@@ -97,6 +98,8 @@ pub struct CollisionState {
     pub is_crushable: bool,
     pub crush: DVec2,
     pub crush_len: f64,
+    pub slide_count: u32,
+    pub net_slide: DVec2,
 }
 
 impl NinjaState {
@@ -126,6 +129,7 @@ impl Ninja {
             launch_pad_buffer: None,
             launch_pad_boost_normal: orientation.vec2(),
             floor_unit_normal: orientation.vec2(),
+            avg_slide: DVec2::ZERO,
             ceiling_unit_normal: -orientation.vec2(),
             anim_state: AnimState::Standing,
             facing: 1.0,
@@ -161,6 +165,7 @@ impl Ninja {
             launch_pad_buffer: None,
             launch_pad_boost_normal: orientation.vec2(),
             floor_unit_normal: orientation.vec2(),
+            avg_slide: DVec2::ZERO,
             ceiling_unit_normal: -orientation.vec2(),
             anim_state: past_ninja.anim_state,
             facing: past_ninja.facing,
@@ -192,11 +197,12 @@ impl Ninja {
             is_crushable: false,
             crush: DVec2::ZERO,
             crush_len: 0.0,
+            slide_count: 0,
+            net_slide: DVec2::ZERO,
         }
     }
 
     /// Gather all entities in neighbourhood and apply physical collisions if possible.
-    // TODO: adjust for gravity
     pub fn collide_vs_objects(&mut self, collision_state: &mut CollisionState, entities: &mut Entities, entity_grid: &Grid<EntityIndex>) {
         for &entity_index in entity_grid.iter_neighborhood(self.pos) {
             let Some(depen) = physical_collisions(entities, entity_index, self) else { continue };
@@ -224,7 +230,18 @@ impl Ninja {
                 // Adjust floor variables if ninja collides with floor
                 collision_state.floor_count += 1;
                 collision_state.floor_normal += depen.depen_unit_normal;
+
+                if let Some(slide) = depen.slide {
+                    collision_state.slide_count += 1;
+                    collision_state.net_slide += slide;
+                }
             }
+        }
+
+        if collision_state.slide_count > 0 {
+            self.avg_slide = collision_state.net_slide / collision_state.slide_count as f64;
+        } else {
+            self.avg_slide = DVec2::ZERO;
         }
     }
 
@@ -558,15 +575,22 @@ impl Ninja {
         }
 
         if !self.airborne {
+            // speed that matches the surface ninja is standing on
+            let surface_speed = if self.speed.length() > 0.01 {
+                self.avg_slide.project_onto(self.speed)
+            } else {
+                self.avg_slide
+            };
+
             let speed_horiz_new = self.grav_get_horiz(self.speed) + GROUND_ACCEL * hor_input;
-            if speed_horiz_new.abs() < MAX_HOR_SPEED {
+            if (speed_horiz_new - self.grav_get_horiz(surface_speed)).abs() < MAX_HOR_SPEED {
                 self.speed = self.grav_set_horiz(self.speed, speed_horiz_new);
             }
             if !self.state.is_grounded() {
                 if self.state == NinjaState::Jumping {
                     self.applied_gravity = GRAVITY_FALL;
                 }
-                self.state = if self.grav_get_horiz(self.speed) * hor_input <= 0.0 {
+                self.state = if self.grav_get_horiz(self.speed - surface_speed) * hor_input <= 0.0 {
                     NinjaState::Skidding
                 } else {
                     NinjaState::Running
@@ -576,10 +600,14 @@ impl Ninja {
                 // if not jumping
                 self.state = match self.state {
                     NinjaState::Skidding => {
-                        let projection = self.speed.perp_dot(self.floor_unit_normal).abs();
-                        if hor_input * projection * self.grav_get_horiz(self.speed) > 0.0 {
+                        let projection = (self.speed - surface_speed).perp_dot(self.floor_unit_normal).abs();
+                        if hor_input * projection * self.grav_get_horiz(self.speed - surface_speed) > 0.0 {
                             NinjaState::Running
-                        } else if projection < 0.1 && self.grav_eq_abs_horiz(self.floor_unit_normal, 0.0) {
+                        } else if projection < 0.1 && self.grav_eq_abs_horiz(self.floor_unit_normal - surface_speed, 0.0) {
+                            NinjaState::Standing
+                        } else if projection < 0.1 && surface_speed.dot(self.speed - surface_speed) < 0.0 {
+                            // static friction
+                            self.speed = surface_speed;
                             NinjaState::Standing
                         } else if self.speed.y < 0.0 && !self.grav_eq_abs_horiz(self.floor_unit_normal, 0.0) {
                             // Up slope friction formula
@@ -589,17 +617,20 @@ impl Ninja {
                             self.speed = self.speed / speed_scalar * fric_force2;
                             NinjaState::Skidding
                         } else {
-                            self.speed = self.grav_mul_horiz(self.speed, FRICTION_GROUND);
+                            let excess_speed = self.speed - surface_speed;
+                            let excess_after_friction = self.grav_mul_horiz(excess_speed, FRICTION_GROUND);
+                            self.speed = surface_speed + excess_after_friction;
+
                             NinjaState::Skidding
                         }
                     }
                     NinjaState::Running => {
                         let projection = self.speed.perp_dot(self.floor_unit_normal).abs();
-                        if hor_input * projection * self.grav_get_horiz(self.speed) > 0.0 {
-                            if hor_input * self.grav_get_horiz(self.floor_unit_normal) >= 0.0 {
+                        if hor_input * projection * self.grav_get_horiz(self.speed - surface_speed) > 0.0 {
+                            if hor_input * self.grav_get_horiz(self.floor_unit_normal - surface_speed) >= 0.0 {
                                 // if holding inputs in downhill direction or flat ground
                                 // do nothing
-                            } else if speed_horiz_new.abs() < MAX_HOR_SPEED {
+                            } else if (speed_horiz_new - self.grav_get_horiz(surface_speed)).abs() < MAX_HOR_SPEED {
                                 let boost = GROUND_ACCEL / 2.0 * hor_input;
                                 let boost = boost * self.grav_get_vert(self.floor_unit_normal) * -self.floor_unit_normal.perp();
                                 self.speed += boost;
@@ -613,9 +644,16 @@ impl Ninja {
                         if hor_input != 0.0 {
                             NinjaState::Running
                         } else {
-                            let projection = self.speed.perp_dot(self.floor_unit_normal).abs();
+                            let projection = (self.speed - surface_speed).perp_dot(self.floor_unit_normal).abs();
                             if projection < 0.1 {
-                                self.speed = self.grav_mul_horiz(self.speed, FRICTION_GROUND_SLOW);
+                                if surface_speed.dot(self.speed - surface_speed) < 0.0 {
+                                    // static friction
+                                    self.speed = surface_speed;
+                                } else {
+                                    let excess_speed = self.speed - surface_speed;
+                                    let excess_after_friction = self.grav_mul_horiz(excess_speed, FRICTION_GROUND_SLOW);
+                                    self.speed = surface_speed + excess_after_friction;
+                                }
                                 state
                             } else {
                                 NinjaState::Skidding
@@ -692,14 +730,14 @@ impl Ninja {
                 NinjaState::Standing => self.anim_state = AnimState::Standing,
                 NinjaState::Running => {
                     self.anim_state = AnimState::Running;
-                    self.anim_rate = self.speed.perp_dot(self.floor_unit_normal).abs();
+                    self.anim_rate = (self.speed - self.avg_slide).perp_dot(self.floor_unit_normal).abs();
                     if hor_input != 0.0 {
                         self.facing = hor_input;
                     }
                 }
                 NinjaState::Skidding => {
                     self.anim_state = AnimState::Skidding;
-                    self.anim_rate = self.speed.perp_dot(self.floor_unit_normal).abs();
+                    self.anim_rate = (self.speed - self.avg_slide).perp_dot(self.floor_unit_normal).abs();
                 }
                 NinjaState::Celebrating => self.anim_state = AnimState::Celebrating,
                 _ => {}
@@ -718,8 +756,8 @@ impl Ninja {
         }
         #[allow(clippy::collapsible_if)]
         if self.state != NinjaState::WallSliding {
-            if self.speed.x.abs() > 0.01 {
-                self.facing = self.grav_get_horiz(self.speed).signum();
+            if self.grav_get_horiz(self.speed - self.avg_slide).abs() > 0.01 {
+                self.facing = self.grav_get_horiz(self.speed - self.avg_slide).signum();
             }
         }
 

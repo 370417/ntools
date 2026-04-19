@@ -116,7 +116,14 @@ impl Thwump {
         match self.corners {
             Corners::Round => penetration_square_vs_circle_with_orientation(self.pos, SEMI_SIDE, ninja.pos, ninja::RADIUS, self.orientation),
             Corners::Square => penetration_square_vs_circle_with_orientation(self.pos, SEMI_SIDE + ninja::RADIUS, ninja.pos, 0.0, self.orientation),
-        }
+        }.map(|mut depenetration| {
+            depenetration.slide = match self.state {
+                ThwumpState::Waiting => None,
+                ThwumpState::Forward => Some((self.orientation.vec2() * FORWARD_SPEED).reject_from(depenetration.depen_unit_normal)),
+                ThwumpState::Backward => Some((-self.orientation.vec2() * BACKWARD_SPEED).reject_from(depenetration.depen_unit_normal)),
+            };
+            depenetration
+        })
     }
 
     pub fn logical_collision(&self, ninja: &mut Ninja) -> Option<f64> {
