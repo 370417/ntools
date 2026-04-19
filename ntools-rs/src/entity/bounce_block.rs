@@ -56,7 +56,7 @@ impl BounceBlock {
                 depen_unit_normal: depen.depen_unit_normal,
                 depen_dist: depen.depen_dist * STRENGTH,
                 depen_perp_dist: depen.depen_perp_dist,
-                slide: None,
+                slide: Some(self.speed.reject_from(depen.depen_unit_normal)),
             }
         })
     }

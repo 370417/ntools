@@ -41,6 +41,7 @@ pub struct Ninja {
     floor_unit_normal: DVec2,
     avg_slide: DVec2,
     ceiling_unit_normal: DVec2,
+    avg_wall_slide: f64,
     pub anim_state: AnimState,
     facing: f64,
     tilt: DVec2,
@@ -100,6 +101,8 @@ pub struct CollisionState {
     pub crush_len: f64,
     pub slide_count: u32,
     pub net_slide: DVec2,
+    pub wall_slide_count: u32,
+    pub net_wall_slide: f64,
 }
 
 impl NinjaState {
@@ -131,6 +134,7 @@ impl Ninja {
             floor_unit_normal: orientation.vec2(),
             avg_slide: DVec2::ZERO,
             ceiling_unit_normal: -orientation.vec2(),
+            avg_wall_slide: 0.0,
             anim_state: AnimState::Standing,
             facing: 1.0,
             tilt: orientation.vec2().perp(),
@@ -167,6 +171,7 @@ impl Ninja {
             floor_unit_normal: orientation.vec2(),
             avg_slide: DVec2::ZERO,
             ceiling_unit_normal: -orientation.vec2(),
+            avg_wall_slide: 0.0,
             anim_state: past_ninja.anim_state,
             facing: past_ninja.facing,
             tilt: past_ninja.tilt,
@@ -199,6 +204,8 @@ impl Ninja {
             crush_len: 0.0,
             slide_count: 0,
             net_slide: DVec2::ZERO,
+            wall_slide_count: 0,
+            net_wall_slide: 0.0,
         }
     }
 
@@ -238,11 +245,11 @@ impl Ninja {
             }
         }
 
-        if collision_state.slide_count > 0 {
-            self.avg_slide = collision_state.net_slide / collision_state.slide_count as f64;
+        self.avg_slide = if collision_state.slide_count > 0 {
+            collision_state.net_slide / collision_state.slide_count as f64
         } else {
-            self.avg_slide = DVec2::ZERO;
-        }
+            DVec2::ZERO
+        };
     }
 
     /// Gather all tile segments in neighbourhood and handle collisions with those.
@@ -302,6 +309,10 @@ impl Ninja {
                 GridEntityType::BounceBlock => {
                     let new_wall_normal = entities.bounce_blocks[i].logical_collision(self);
                     if wall_normal.is_none() { wall_normal = new_wall_normal }
+                    if new_wall_normal.is_some() {
+                        collision_state.wall_slide_count += 1;
+                        collision_state.net_wall_slide += self.grav_get_vert(entities.bounce_blocks[i].speed);
+                    }
                 }
                 GridEntityType::OneWay => {
                     let new_wall_normal = entities.one_ways[i].logical_collision(self);
@@ -314,8 +325,15 @@ impl Ninja {
                     entities.exits[i].switch_logical_collision(self.pos);
                 }
                 GridEntityType::Thwump => {
-                    let new_wall_normal = entities.thwumps[i].logical_collision(self);
+                    let thwump = &entities.thwumps[i];
+                    let new_wall_normal = thwump.logical_collision(self);
                     if wall_normal.is_none() { wall_normal = new_wall_normal }
+                    if new_wall_normal.is_some() {
+                        if let Some(wall_slide) = thwump.wall_slide() {
+                            collision_state.wall_slide_count += 1;
+                            collision_state.net_wall_slide += self.grav_get_vert(wall_slide);
+                        }
+                    }
                 }
                 GridEntityType::ShoveThwump => {
                     let new_wall_normal = entities.shove_thwumps[i].logical_collision(self);
@@ -366,6 +384,12 @@ impl Ninja {
                 }
             }
         }
+
+        // Store wall slide (vertical velocity of moving walls that the ninja is touching).
+        // Wall slide needs to be calculated from logical entity collision instead of physical collision like floor slide
+        // because gravity doesn't push the ninja into the wall every frame, so the ninja doesn't physically collide
+        // with the walls when sliding.
+        self.avg_wall_slide = collision_state.net_wall_slide / collision_state.wall_slide_count as f64;
 
         // Check if the ninja can interact with walls from nearby tile segments.
         let rad = RADIUS + 0.1;
@@ -648,7 +672,7 @@ impl Ninja {
                             if projection < 0.1 {
                                 if surface_speed.dot(self.speed - surface_speed) < 0.0 {
                                     // static friction
-                                    self.speed = surface_speed;
+                                    self.speed = self.grav_set_horiz(self.speed, self.grav_get_horiz(surface_speed));
                                 } else {
                                     let excess_speed = self.speed - surface_speed;
                                     let excess_after_friction = self.grav_mul_horiz(excess_speed, FRICTION_GROUND_SLOW);
@@ -703,11 +727,14 @@ impl Ninja {
                 }
             } else if self.state == NinjaState::WallSliding {
                 if hor_input * self.wall_normal <= 0.0 {
-                    self.speed = self.grav_mul_vert(self.speed, FRICTION_WALL);
+                    let wall_slide = self.grav_vec(DVec2::new(0.0, self.avg_wall_slide));
+                    let excess_speed = self.speed - wall_slide;
+                    let excess_after_friction = self.grav_mul_vert(excess_speed, FRICTION_WALL);
+                    self.speed = wall_slide + excess_after_friction;
                 } else {
                     self.state = NinjaState::Falling;
                 }
-            } else if self.grav_get_vert(self.speed) > 0.0 && hor_input * self.wall_normal < 0.0 {
+            } else if self.grav_get_vert(self.speed) > self.avg_wall_slide && hor_input * self.wall_normal < 0.0 {
                 if self.state == NinjaState::Jumping {
                     self.applied_gravity = GRAVITY_FALL;
                 }

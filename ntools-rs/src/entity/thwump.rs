@@ -117,13 +117,27 @@ impl Thwump {
             Corners::Round => penetration_square_vs_circle_with_orientation(self.pos, SEMI_SIDE, ninja.pos, ninja::RADIUS, self.orientation),
             Corners::Square => penetration_square_vs_circle_with_orientation(self.pos, SEMI_SIDE + ninja::RADIUS, ninja.pos, 0.0, self.orientation),
         }.map(|mut depenetration| {
-            depenetration.slide = match self.state {
-                ThwumpState::Waiting => None,
-                ThwumpState::Forward => Some((self.orientation.vec2() * FORWARD_SPEED).reject_from(depenetration.depen_unit_normal)),
-                ThwumpState::Backward => Some((-self.orientation.vec2() * BACKWARD_SPEED).reject_from(depenetration.depen_unit_normal)),
-            };
+            if self.is_moving {
+                depenetration.slide = match self.state {
+                    ThwumpState::Waiting => None,
+                    ThwumpState::Forward => Some((self.orientation.vec2() * FORWARD_SPEED).reject_from(depenetration.depen_unit_normal)),
+                    ThwumpState::Backward => Some((-self.orientation.vec2() * BACKWARD_SPEED).reject_from(depenetration.depen_unit_normal)),
+                };
+            }
             depenetration
         })
+    }
+
+    pub fn wall_slide(&self) -> Option<DVec2> {
+        if self.is_moving {
+            match self.state {
+                ThwumpState::Waiting => None,
+                ThwumpState::Forward => Some(self.orientation.vec2() * FORWARD_SPEED),
+                ThwumpState::Backward => Some(-self.orientation.vec2() * BACKWARD_SPEED),
+            }
+        } else {
+            None
+        }
     }
 
     pub fn logical_collision(&self, ninja: &mut Ninja) -> Option<f64> {
