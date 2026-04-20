@@ -2,7 +2,7 @@ use glam::{DMat2, DVec2};
 use rand::{seq::IndexedRandom, RngCore, SeedableRng};
 use rand_xoshiro::{SplitMix64, Xoroshiro64StarStar};
 
-use crate::{anim_data::{Bones, DANCES, get_anim_frame}, collision_util::{get_single_closest_point, sweep_circle_vs_tiles}, entity::{Entities, EntityIndex, GridEntityType, door::Doors, on_door_state_change, polymorphism::physical_collisions}, grid::Grid, orientation::OrientationExt, segment::Segment};
+use crate::{anim_data::{Bones, DANCES, get_anim_frame}, collision_util::{get_single_closest_point, sweep_circle_vs_tiles}, entity::{Entities, EntityIndex, GridEntityType, bounce_block, door::Doors, on_door_state_change, polymorphism::physical_collisions}, grid::Grid, orientation::OrientationExt, segment::Segment};
 
 const GRAVITY_FALL: f64 = 0.06666666666666665;
 const GRAVITY_JUMP: f64 = 0.01111111111111111;
@@ -100,9 +100,50 @@ pub struct CollisionState {
     pub crush: DVec2,
     pub crush_len: f64,
     pub slide_count: u32,
+    // sum of speed vectors for every moving floor the ninja touches
     pub net_slide: DVec2,
     pub wall_slide_count: u32,
+    // sum of vertical components of speed for every moving wall the ninja touches
     pub net_wall_slide: f64,
+    pub floor_collision_type: CollisionType,
+    pub ceiling_collision_type: CollisionType,
+}
+
+pub enum CollisionType {
+    None,
+    BounceBlock {
+        count: u32,
+        net_speed: DVec2,
+    },
+    Thwump {
+        thwump_speed: DVec2,
+    },
+    Other,
+}
+
+impl CollisionType {
+    fn register_solid(&mut self) {
+        *self = Self::Other;
+    }
+
+    fn register_bounce_block(&mut self, speed: DVec2) {
+        match *self {
+            Self::None => *self = Self::BounceBlock { count: 1, net_speed: speed },
+            Self::BounceBlock { count, net_speed } => *self = Self::BounceBlock {
+                count: count + 1,
+                net_speed: net_speed + speed,
+            },
+            _ => *self = Self::Other,
+        }
+    }
+
+    fn register_thwump(&mut self, speed: DVec2) {
+        match *self {
+            Self::None => *self = Self::Thwump { thwump_speed: speed },
+            Self::Thwump { thwump_speed } if thwump_speed == speed => {}, // no-op
+            _ => *self = Self::Other,
+        }
+    }
 }
 
 impl NinjaState {
@@ -206,6 +247,8 @@ impl Ninja {
             net_slide: DVec2::ZERO,
             wall_slide_count: 0,
             net_wall_slide: 0.0,
+            floor_collision_type: CollisionType::None,
+            ceiling_collision_type: CollisionType::None,
         }
     }
 
@@ -233,6 +276,17 @@ impl Ninja {
                 // Adjust ceiling variables if ninja collides with ceiling (or wall!)
                 collision_state.ceiling_count += 1;
                 collision_state.ceiling_normal += depen.depen_unit_normal;
+
+                // Update ceiling collision type
+                match entity_type {
+                    GridEntityType::BounceBlock => collision_state.ceiling_collision_type.register_bounce_block(
+                        entities.bounce_blocks[entity_index.1].speed,
+                    ),
+                    GridEntityType::Thwump => collision_state.ceiling_collision_type.register_thwump(
+                        entities.thwumps[entity_index.1].wall_slide().unwrap_or(DVec2::ZERO),
+                    ),
+                    _ => collision_state.ceiling_collision_type.register_solid(),
+                }
             } else {
                 // Adjust floor variables if ninja collides with floor
                 collision_state.floor_count += 1;
@@ -241,6 +295,17 @@ impl Ninja {
                 if let Some(slide) = depen.slide {
                     collision_state.slide_count += 1;
                     collision_state.net_slide += slide;
+                }
+
+                // Update floor collision type
+                match entity_type {
+                    GridEntityType::BounceBlock => collision_state.floor_collision_type.register_bounce_block(
+                        entities.bounce_blocks[entity_index.1].speed,
+                    ),
+                    GridEntityType::Thwump => collision_state.floor_collision_type.register_thwump(
+                        entities.thwumps[entity_index.1].wall_slide().unwrap_or(DVec2::ZERO),
+                    ),
+                    _ => collision_state.floor_collision_type.register_solid(),
                 }
             }
         }
@@ -287,10 +352,16 @@ impl Ninja {
                 // Adjust ceiling variables if ninja collides with ceiling (or wall!)
                 collision_state.ceiling_count += 1;
                 collision_state.ceiling_normal += delta / dist;
+
+                // Update ceiling collision type
+                collision_state.ceiling_collision_type.register_solid();
             } else {
                 // Adjust floor variables if ninja collides with floor
                 collision_state.floor_count += 1;
                 collision_state.floor_normal += delta / dist;
+
+                // Update floor collision type
+                collision_state.floor_collision_type.register_solid();
             }
         }
     }
@@ -420,7 +491,14 @@ impl Ninja {
             self.floor_unit_normal = collision_state.floor_normal.normalize_or(self.orientation.vec2());
             if self.state != NinjaState::Celebrating && airborne_old {
                 // Check if died from impact
-                let impact_vel = -self.floor_unit_normal.dot(collision_state.speed_old);
+
+                let collision_speed = match collision_state.floor_collision_type {
+                    CollisionType::None | CollisionType::Other => DVec2::ZERO,
+                    CollisionType::BounceBlock { count, net_speed } => net_speed / count as f64,
+                    CollisionType::Thwump { thwump_speed } => thwump_speed,
+                };
+
+                let impact_vel = -self.floor_unit_normal.dot(collision_state.speed_old - collision_speed);
                 if impact_vel > MAX_SURVIVABLE_IMPACT - 4.0 / 3.0 * self.grav_get_vert(self.floor_unit_normal).abs() {
                     self.speed = collision_state.speed_old;
                     self.kill(1, self.pos, self.speed * 0.5);
@@ -433,7 +511,14 @@ impl Ninja {
             self.ceiling_unit_normal = collision_state.ceiling_normal.normalize_or(-self.orientation.vec2());
             if self.state != NinjaState::Celebrating {
                 // Check if died from impact
-                let impact_vel = -self.ceiling_unit_normal.dot(collision_state.speed_old);
+
+                let collision_speed = match collision_state.ceiling_collision_type {
+                    CollisionType::None | CollisionType::Other => DVec2::ZERO,
+                    CollisionType::BounceBlock { count, net_speed } => net_speed / count as f64,
+                    CollisionType::Thwump { thwump_speed } => thwump_speed,
+                };
+
+                let impact_vel = -self.ceiling_unit_normal.dot(collision_state.speed_old - collision_speed);
                 if impact_vel > MAX_SURVIVABLE_IMPACT - 4.0 / 3.0 * self.grav_get_vert(self.ceiling_unit_normal).abs() {
                     self.speed = collision_state.speed_old;
                     self.kill(1, self.pos, self.speed * 0.5);
