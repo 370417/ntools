@@ -689,11 +689,7 @@ impl Ninja {
 
         if !self.airborne {
             // speed that matches the surface ninja is standing on
-            let surface_speed = if self.speed.length() > 0.01 {
-                self.avg_slide.project_onto(self.speed)
-            } else {
-                self.avg_slide
-            };
+            let surface_speed = self.avg_slide;
 
             let speed_horiz_new = self.grav_get_horiz(self.speed) + GROUND_ACCEL * hor_input;
             if (speed_horiz_new - self.grav_get_horiz(surface_speed)).abs() < MAX_HOR_SPEED {
