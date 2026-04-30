@@ -354,6 +354,8 @@ export function EditorApp(props: {
     setRoundCorners: Setter<boolean>,
     palette: Accessor<Palette | undefined>,
     setPalette: Setter<Palette | undefined>,
+    dynamicFriction: Accessor<boolean>,
+    setDynamicFriction: Setter<boolean>,
 }) {
     const { editor, pastNinjas } = props;
 
@@ -398,7 +400,7 @@ export function EditorApp(props: {
         if (event.shiftKey) change = true, editor.press_shift();
         // Note: no else
 
-        if (event.code === 'Enter' && editor.mode() === MODE_SPAWN_NINJA) props.setReplay(editor.to_replay(props.roundCorners()));
+        if (event.code === 'Enter' && editor.mode() === MODE_SPAWN_NINJA) props.setReplay(editor.to_replay(props.roundCorners(), props.dynamicFriction()));
         else if (event.code ==='Backquote') change = true, editor.press_backtick();
         else if (event.code === 'Digit1') change = true, editor.press_1(event.shiftKey);
         else if (event.code === 'Digit2') change = true, editor.press_2(event.shiftKey);
@@ -587,7 +589,7 @@ export function EditorApp(props: {
             } else {
                 // primary click
                 if (editor.mode() === MODE_SPAWN_NINJA) {
-                    props.setReplay(editor.to_replay(props.roundCorners()));
+                    props.setReplay(editor.to_replay(props.roundCorners(), props.dynamicFriction()));
                 } else {
                     editor.cursor_down(event.shiftKey);
                     render(true);
@@ -693,6 +695,8 @@ export function EditorApp(props: {
             setPalette={props.setPalette}
             showTrail={showTrail}
             setShowTrail={setShowTrail}
+            dynamicFriction={props.dynamicFriction}
+            setDynamicFriction={props.setDynamicFriction}
         />
     </>;
 }

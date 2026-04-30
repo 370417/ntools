@@ -584,7 +584,7 @@ mod tests {
             let mut segments = tile_segments;
             entities.doors.populate_grid(&mut segments);
 
-            let current_sim = Simulation::new(ninjas, entities)?;
+            let current_sim = Simulation::new(ninjas, entities, false)?;
 
             let mut keyframes = BTreeMap::new();
             keyframes.insert(0, KeyFrame::from_sim(&current_sim, &current_sim.entities.mines));

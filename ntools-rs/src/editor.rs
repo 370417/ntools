@@ -136,7 +136,7 @@ impl Editor {
     }
 
     #[allow(clippy::wrong_self_convention)]
-    pub fn to_replay(&mut self, round_corners: bool) -> Result<Replay, String> {
+    pub fn to_replay(&mut self, round_corners: bool, dynamic_friction: bool) -> Result<Replay, String> {
 
         let mut ninjas: Vec<_> = self.state.entities().iter().filter_map(|(entity, _)| {
             match entity {
@@ -218,7 +218,7 @@ impl Editor {
         let mut segments = self.state.tiles().segments().clone();
         entities.doors.populate_grid(&mut segments);
 
-        let current_sim = Simulation::new(ninjas, entities)?;
+        let current_sim = Simulation::new(ninjas, entities, dynamic_friction)?;
 
         let mut keyframes = BTreeMap::new();
         keyframes.insert(0, KeyFrame::from_sim(&current_sim, &current_sim.entities.mines));

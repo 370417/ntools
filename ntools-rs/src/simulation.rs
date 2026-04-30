@@ -7,6 +7,7 @@ pub struct Simulation {
     pub score: u32,
     pub entities: Entities,
     pub entity_grid: Grid<EntityIndex>,
+    dynamic_friction: bool,
 }
 
 #[derive(Clone, Copy)]
@@ -60,7 +61,7 @@ impl Input {
 }
 
 impl Simulation {
-    pub fn new(ninjas: Vec<Ninja>, entities: Entities) -> Result<Simulation, String> {
+    pub fn new(ninjas: Vec<Ninja>, entities: Entities, dynamic_friction: bool) -> Result<Simulation, String> {
 
         Ok(Simulation {
             frame: 0,
@@ -68,6 +69,7 @@ impl Simulation {
             score: 90 * 60,
             entity_grid: entities.grid(),
             entities,
+            dynamic_friction,
         })
     }
 
@@ -111,10 +113,10 @@ impl Simulation {
             self.ninja.integrate();
             let mut collision_state = self.ninja.pre_collision();
             for _ in 0..4 {
-                self.ninja.collide_vs_objects(&mut collision_state, &mut self.entities, &self.entity_grid);
+                self.ninja.collide_vs_objects(&mut collision_state, &mut self.entities, &self.entity_grid, self.dynamic_friction);
                 self.ninja.collide_vs_tiles(&mut collision_state, segments, &self.entities.doors);
             }
-            self.ninja.post_collision(&mut collision_state, &mut self.entities, &self.entity_grid, segments);
+            self.ninja.post_collision(&mut collision_state, &mut self.entities, &self.entity_grid, segments, self.dynamic_friction);
             self.ninja.think(input.jump, hor_input);
             self.ninja.update_graphics(hor_input);
         }

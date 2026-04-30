@@ -198,7 +198,9 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
 
     return (
         <>
-            <span>{(score() / 60).toFixed(3)}</span>
+            <span style={{
+                position: 'absolute',
+            }} >{(score() / 60).toFixed(3)}</span>
             <svg viewBox="0 0 1056 600" onmousemove={function(this: SVGElement, event) {
                 const { left, top, width, height } = this.getBoundingClientRect();
                 props.globalEventState.setMouseGamePos({

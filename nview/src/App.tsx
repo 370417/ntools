@@ -20,6 +20,7 @@ export function App() {
     const [replay, setReplay] = createSignal<Replay>();
     const [levelName, setLevelName] = createSignal('');
     const [roundCorners, setRoundCorners] = createSignal(false);
+    const [dynamicFriction, setDynamicFriction] = createSignal(false);
 
     // manage past ninja state here so that we can better control when it gets updated
     const [pastNinjas, setPastNinjas] = createSignal<{ x: number, y: number }[]>([]);
@@ -82,7 +83,7 @@ export function App() {
                 $replay.free();
                 updatePastNinjas();
             } else {
-                setReplay(editor.to_replay(roundCorners()));
+                setReplay(editor.to_replay(roundCorners(), dynamicFriction()));
             }
             event.preventDefault();
         }
@@ -192,6 +193,8 @@ export function App() {
                 setRoundCorners={setRoundCorners}
                 palette={palette}
                 setPalette={setPalette}
+                dynamicFriction={dynamicFriction}
+                setDynamicFriction={setDynamicFriction}
             />
         </Show>
         <Show when={animState() == ANIM_VALID && !!replay()} keyed>

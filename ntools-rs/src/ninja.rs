@@ -253,7 +253,7 @@ impl Ninja {
     }
 
     /// Gather all entities in neighbourhood and apply physical collisions if possible.
-    pub fn collide_vs_objects(&mut self, collision_state: &mut CollisionState, entities: &mut Entities, entity_grid: &Grid<EntityIndex>) {
+    pub fn collide_vs_objects(&mut self, collision_state: &mut CollisionState, entities: &mut Entities, entity_grid: &Grid<EntityIndex>, dynamic_friction: bool) {
         for &entity_index in entity_grid.iter_neighborhood(self.pos) {
             let Some(depen) = physical_collisions(entities, entity_index, self) else { continue };
             let pop = depen.depen_unit_normal * depen.depen_dist;
@@ -310,7 +310,7 @@ impl Ninja {
             }
         }
 
-        self.avg_slide = if collision_state.slide_count > 0 {
+        self.avg_slide = if dynamic_friction && collision_state.slide_count > 0 {
             collision_state.net_slide / collision_state.slide_count as f64
         } else {
             DVec2::ZERO
@@ -368,7 +368,7 @@ impl Ninja {
 
     /// Perform logical collisions with entities, check for airborne state,
     /// check for walled state, calculate floor normals, check for impact or crush death.
-    pub fn post_collision(&mut self, collision_state: &mut CollisionState, entities: &mut Entities, entity_grid: &Grid<EntityIndex>, segments: &Grid<Segment>) {
+    pub fn post_collision(&mut self, collision_state: &mut CollisionState, entities: &mut Entities, entity_grid: &Grid<EntityIndex>, segments: &Grid<Segment>, dynamic_friction: bool) {
         // Perform LOGICAL collisions between the ninja and nearby entities.
         // Also check if the ninja can interact with the walls of entities when applicable.
         let mut wall_normal = None;
@@ -460,7 +460,11 @@ impl Ninja {
         // Wall slide needs to be calculated from logical entity collision instead of physical collision like floor slide
         // because gravity doesn't push the ninja into the wall every frame, so the ninja doesn't physically collide
         // with the walls when sliding.
-        self.avg_wall_slide = collision_state.net_wall_slide / collision_state.wall_slide_count as f64;
+        self.avg_wall_slide = if dynamic_friction {
+            collision_state.net_wall_slide / collision_state.wall_slide_count as f64
+        } else {
+            0.0
+        };
 
         // Check if the ninja can interact with walls from nearby tile segments.
         let rad = RADIUS + 0.1;
