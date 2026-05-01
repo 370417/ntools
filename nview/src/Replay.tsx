@@ -56,6 +56,9 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
             if (!isPlaying() && progress() > 0) {
                 setProgress(progress() - 1);
                 replay.seek(progress());
+                replay.seek_preview(replay.progress() + 120);
+                setPreviewProgress(replay.progress_preview());
+                updatePastNinjas();
                 renderFrame(1);
             }
         } else if (event.code === 'Period') {
@@ -64,6 +67,9 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                 replay.set_input(isJump1Pressed() || isJump2Pressed(), isRightPressed(), isLeftPressed(), isSuicidePressed());
                 replay.tick();
                 setProgress(replay.progress());
+                replay.seek_preview(replay.progress() + 120);
+                setPreviewProgress(replay.progress_preview());
+                updatePastNinjas();
                 renderFrame(1);
             }
         }
@@ -108,6 +114,19 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
     const chaseDrones = createSignal<ChaseDroneData[]>([]);
     const chaingunDrones = createSignal<ChaingunDroneData[]>([]);
     const laserDrones = createSignal<LaserDroneData[]>([]);
+
+    const [pastNinjas, setPastNinjas] = createSignal<{ x: number, y: number }[]>([]);
+    function updatePastNinjas() {
+        const pastNinjas: { x: number, y: number }[] = [];
+        const len = replay.past_ninjas_len();
+        for (let i = 0; i < len; i++) {
+            pastNinjas.push({
+                x: replay.past_ninja_x(i),
+                y: replay.past_ninja_y(i),
+            });
+        }
+        setPastNinjas(pastNinjas);
+    }
 
     let timeMs = performance.now();
     const fps = 60;
@@ -252,6 +271,9 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                 <ShoveThwumps shoveThwumps={shoveThwumps[0]} />
                 <BoostPads boostPads={boostPads[0]} />
                 <path id="tiles" stroke-width="2" clip-path="url(#tiles-clip)" clip-rule="evenodd" d={tilePath()} fill-rule="evenodd" />
+                <Show when={!isPlaying()}>
+                    <polyline stroke="var(--ninja)" fill="none" points={pastNinjas().slice(progress(), previewProgress() || 0).map(({ x, y }) => `${x},${y}`).join(' ')} />
+                </Show>
             </svg>
             <div>
                 <Show when={!recording() || !isPlaying()}>
@@ -270,6 +292,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                         }}
                         previewSeek={frame => {
                             setPreviewProgress(frame);
+                            updatePastNinjas();
                             if (replay) {
                                 if (frame !== undefined && dragStart() === undefined) {
                                     replay.seek_preview(frame);
