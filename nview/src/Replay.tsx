@@ -24,6 +24,7 @@ import { ChaingunDroneDefs, ChaingunDrones, updateChaingunDrones, type ChaingunD
 import { ChaseDroneDefs, ChaseDrones, updateChaseDrones, type ChaseDroneData } from './entities/ChaseDrone';
 import { LaserDroneDefs, LaserDrones, updateLaserDrones, type LaserDroneData } from './entities/LaserDrone';
 import { GoldDefs, Golds, updateGolds, type GoldData } from './entities/Gold';
+import { InputDisplay } from './InputDisplay';
 
 export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventState: GlobalEventState }) {
     const replay = props.replay;
@@ -54,10 +55,12 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
             }
         } else if (event.code === 'Comma') {
             if (!isPlaying() && progress() > 0) {
+                // let { isJump1Pressed, isJump2Pressed, isRightPressed, isLeftPressed, isSuicidePressed } = props.globalEventState;
                 setProgress(progress() - 1);
                 replay.seek(progress());
                 replay.seek_preview(replay.progress() + 120);
                 setPreviewProgress(replay.progress_preview());
+                updateInputs();
                 updatePastNinjas();
                 renderFrame(1);
             }
@@ -69,6 +72,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                 setProgress(replay.progress());
                 replay.seek_preview(replay.progress() + 120);
                 setPreviewProgress(replay.progress_preview());
+                updateInputs();
                 updatePastNinjas();
                 renderFrame(1);
             }
@@ -128,6 +132,21 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
         setPastNinjas(pastNinjas);
     }
 
+    // 42 inputs, 21 before current sim and 21 after
+    const [inputs, setInputs] = createSignal<number[]>([]);
+    function updateInputs() {
+        const inputs = [];
+        for (let i = -21; i < 21; i++) {
+            const frame = i + replay.progress();
+            if (frame < 0 || frame >= replay.inputs_len()) {
+                inputs.push(NaN);
+            } else {
+                inputs.push(replay.input(frame));
+            }
+        }
+        setInputs(inputs);
+    }
+
     let timeMs = performance.now();
     const fps = 60;
     const msPerTick = 1000 / fps;
@@ -154,6 +173,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                         $replay.set_input(isJump1Pressed() || isJump2Pressed(), isRightPressed(), isLeftPressed(), isSuicidePressed());
                     }
                     $replay.tick();
+                    updateInputs();
                     accumulator -= msPerTick;
                 }
                 partialFrame = accumulator / msPerTick;
@@ -273,6 +293,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                 <path id="tiles" stroke-width="2" clip-path="url(#tiles-clip)" clip-rule="evenodd" d={tilePath()} fill-rule="evenodd" />
                 <Show when={!isPlaying()}>
                     <polyline stroke="var(--ninja)" fill="none" points={pastNinjas().slice(progress(), previewProgress() || 0).map(({ x, y }) => `${x},${y}`).join(' ')} />
+                    <InputDisplay inputs={inputs} />
                 </Show>
             </svg>
             <div>
@@ -288,6 +309,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                         seek={frame => {
                             setProgress(frame);
                             replay.seek(frame);
+                            updateInputs();
                             renderFrame(1);
                         }}
                         previewSeek={frame => {

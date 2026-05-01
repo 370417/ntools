@@ -186,6 +186,14 @@ impl Replay {
         self.past_ninjas[i].pos.y
     }
 
+    pub fn inputs_len(&self) -> usize {
+        self.inputs.len()
+    }
+
+    pub fn input(&self, i: isize) -> u8 {
+        self.inputs.get(i as usize).cloned().unwrap_or_default()
+    }
+
     pub fn mines_len(&self) -> usize {
         self.current_sim.entities.mines.len()
     }
