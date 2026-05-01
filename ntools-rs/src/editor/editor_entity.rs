@@ -67,11 +67,17 @@ pub enum EditorEntity {
         pos: EntityPos,
         orientation: Orientation,
     },
+    RocketTurret {
+        pos: EntityPos,
+    },
     Thwump {
         pos: EntityPos,
         orientation: Orientation,
     },
     ToggleMine {
+        pos: EntityPos,
+    },
+    EvilNinja {
         pos: EntityPos,
     },
     BoostPad {
@@ -202,11 +208,11 @@ impl EditorEntity {
             EntityId::ChaseDrone => EditorEntity::ChaseDrone { pos, orientation: orientations.orientation_cardinal, mode: modes.drone_mode },
             EntityId::FloorGuard => EditorEntity::FloorGuard { pos, orientation: orientations.orientation.into() },
             EntityId::BounceBlock => EditorEntity::BounceBlock { pos, orientation: orientations.orientation },
-            EntityId::RocketTurret => todo!(),
+            EntityId::RocketTurret => EditorEntity::RocketTurret { pos },
             EntityId::GaussTurret => todo!(),
             EntityId::Thwump => EditorEntity::Thwump { pos, orientation: orientations.orientation },
             EntityId::ToggleMine => EditorEntity::ToggleMine { pos },
-            EntityId::EvilNinja => todo!(),
+            EntityId::EvilNinja => EditorEntity::EvilNinja { pos },
             EntityId::LaserTurret => todo!(),
             EntityId::BoostPad => EditorEntity::BoostPad { pos },
             EntityId::DeathBall => todo!(),
@@ -257,6 +263,8 @@ impl EditorEntity {
             EditorEntity::Thwump { pos, .. } |
             EditorEntity::ShoveThwump { pos, .. } |
             EditorEntity::Bat { pos } |
+            EditorEntity::RocketTurret { pos } |
+            EditorEntity::EvilNinja { pos } |
             EditorEntity::OneWay { pos, .. } => pos,
             EditorEntity::Exit { exit_pos, .. } => exit_pos,
             EditorEntity::LockedDoor { door_pos, .. } |
@@ -281,6 +289,8 @@ impl EditorEntity {
             EditorEntity::Thwump { pos, .. } |
             EditorEntity::ShoveThwump { pos, .. } |
             EditorEntity::Bat { pos } |
+            EditorEntity::RocketTurret { pos } |
+            EditorEntity::EvilNinja { pos } |
             EditorEntity::OneWay { pos, .. } => pos,
             EditorEntity::Exit { exit_pos, .. } => exit_pos,
             EditorEntity::LockedDoor { door_pos, .. } |
@@ -326,6 +336,8 @@ impl EditorEntity {
             EditorEntity::ToggleMine { .. } |
             EditorEntity::BoostPad { .. } |
             EditorEntity::Bat { .. } |
+            EditorEntity::RocketTurret { .. } |
+            EditorEntity::EvilNinja { .. } |
             EditorEntity::Exit { .. } => {}
         }
     }
@@ -350,6 +362,8 @@ impl EditorEntity {
             EditorEntity::ToggleMine { .. } |
             EditorEntity::BoostPad { .. } |
             EditorEntity::Bat { .. } |
+            EditorEntity::RocketTurret { .. } |
+            EditorEntity::EvilNinja { .. } |
             EditorEntity::Exit { .. } => {}
         }
     }
@@ -377,6 +391,8 @@ impl EditorEntity {
             EditorEntity::ToggleMine { .. } |
             EditorEntity::BoostPad { .. } |
             EditorEntity::Bat { .. } |
+            EditorEntity::RocketTurret { .. } |
+            EditorEntity::EvilNinja { .. } |
             EditorEntity::Exit { .. } => {}
         }
     }
@@ -404,6 +420,8 @@ impl EditorEntity {
             EditorEntity::ToggleMine { .. } |
             EditorEntity::BoostPad { .. } |
             EditorEntity::Bat { .. } |
+            EditorEntity::RocketTurret { .. } |
+            EditorEntity::EvilNinja { .. } |
             EditorEntity::Exit { .. } => {}
         }
     }
@@ -428,6 +446,8 @@ impl EditorEntity {
             EditorEntity::ToggleMine { .. } |
             EditorEntity::BoostPad { .. } |
             EditorEntity::Bat { .. } |
+            EditorEntity::RocketTurret { .. } |
+            EditorEntity::EvilNinja { .. } |
             EditorEntity::Exit { .. } => 0.0,
         }
     }
@@ -449,7 +469,9 @@ impl EditorEntity {
             EditorEntity::FloorGuard { .. } => EntityId::FloorGuard,
             EditorEntity::BounceBlock { .. } => EntityId::BounceBlock,
             EditorEntity::Thwump { .. } => EntityId::Thwump,
+            EditorEntity::RocketTurret { .. } => EntityId::RocketTurret,
             EditorEntity::ToggleMine { .. } => EntityId::ToggleMine,
+            EditorEntity::EvilNinja { .. } => EntityId::EvilNinja,
             EditorEntity::BoostPad { .. } => EntityId::BoostPad,
             EditorEntity::Bat { .. } => EntityId::Bat,
             EditorEntity::ShoveThwump { .. } => EntityId::ShoveThwump,

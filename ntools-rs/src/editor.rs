@@ -199,8 +199,14 @@ impl Editor {
                     EditorEntity::BounceBlock { pos, orientation } => {
                         entities.bounce_blocks.push(BounceBlock::new(pos.to_world_pos(), *orientation, round_corners));
                     }
+                    EditorEntity::RocketTurret { pos } => {
+                        // not supported in replays
+                    }
                     EditorEntity::Thwump { pos, orientation } => {
                         entities.thwumps.push(Thwump::new(pos.to_world_pos(), *orientation, round_corners));
+                    }
+                    EditorEntity::EvilNinja { pos } => {
+                        // not supported in replays
                     }
                     EditorEntity::BoostPad { pos } => {
                         entities.boost_pads.push(BoostPad::new(pos.to_world_pos()));

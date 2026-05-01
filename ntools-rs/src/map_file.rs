@@ -220,11 +220,11 @@ impl <'a> Iterator for EntityDataParser<'a> {
                 EntityId::ChaseDrone => return Some(EditorEntity::ChaseDrone { pos, orientation: orientation_cardinal, mode: drone_mode }),
                 EntityId::FloorGuard => return Some(EditorEntity::FloorGuard { pos, orientation: orientation_ext }),
                 EntityId::BounceBlock => return Some(EditorEntity::BounceBlock { pos, orientation }),
-                EntityId::RocketTurret => {}
+                EntityId::RocketTurret => return Some(EditorEntity::RocketTurret { pos }),
                 EntityId::GaussTurret => {}
                 EntityId::Thwump => return Some(EditorEntity::Thwump { pos, orientation }),
                 EntityId::ToggleMine => return Some(EditorEntity::ToggleMine { pos }),
-                EntityId::EvilNinja => {}
+                EntityId::EvilNinja => return Some(EditorEntity::EvilNinja { pos }),
                 EntityId::LaserTurret => {}
                 EntityId::BoostPad => return Some(EditorEntity::BoostPad { pos }),
                 EntityId::DeathBall => {}
@@ -310,8 +310,10 @@ fn editor_entities_to_bytes(entities: &EditorEntities) -> Vec<u8> {
                 EditorEntity::ChaseDrone { pos, orientation, mode } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, mode as u8]),
                 EditorEntity::FloorGuard { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
                 EditorEntity::BounceBlock { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
+                EditorEntity::RocketTurret { pos } => bytes.extend([id, pos.x as u8, pos.y as u8, 0, 0]),
                 EditorEntity::Thwump { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
                 EditorEntity::ToggleMine { pos } => bytes.extend([id, pos.x as u8, pos.y as u8, 0, 0]),
+                EditorEntity::EvilNinja { pos } => bytes.extend([id, pos.x as u8, pos.y as u8, 0, 0]),
                 EditorEntity::BoostPad { pos } => bytes.extend([id, pos.x as u8, pos.y as u8, 0, 0]),
                 EditorEntity::Bat { pos } => bytes.extend([id, pos.x as u8, pos.y as u8, 0, 0]),
                 EditorEntity::ShoveThwump { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),

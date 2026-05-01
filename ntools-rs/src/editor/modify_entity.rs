@@ -72,6 +72,8 @@ impl ModifyEntity {
             EditorEntity::Thwump { pos, .. } |
             EditorEntity::ShoveThwump { pos, .. } |
             EditorEntity::Bat { pos } |
+            EditorEntity::RocketTurret { pos } |
+            EditorEntity::EvilNinja { pos } |
             EditorEntity::OneWay { pos, .. } => *pos = new_pos,
             EditorEntity::Exit { exit_pos: door_pos, switch_pos } |
             EditorEntity::LockedDoor { door_pos, switch_pos, .. } |
@@ -102,6 +104,8 @@ impl ModifyEntity {
             EditorEntity::ToggleMine { .. } |
             EditorEntity::BoostPad { .. } |
             EditorEntity::Bat { .. } |
+            EditorEntity::RocketTurret { .. } |
+            EditorEntity::EvilNinja { .. } |
             EditorEntity::Exit { .. } => {}
         }
     }
@@ -126,6 +130,8 @@ impl ModifyEntity {
             EditorEntity::ToggleMine { .. } |
             EditorEntity::BoostPad { .. } |
             EditorEntity::Bat { .. } |
+            EditorEntity::RocketTurret { .. } |
+            EditorEntity::EvilNinja { .. } |
             EditorEntity::ShoveThwump { .. } => {}
         }
     }
