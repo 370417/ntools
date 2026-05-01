@@ -23,6 +23,7 @@ import { updateZapDrones, ZapDroneDefs, ZapDrones, type ZapDroneData } from './e
 import { ChaingunDroneDefs, ChaingunDrones, updateChaingunDrones, type ChaingunDroneData } from './entities/ChaingunDrone';
 import { ChaseDroneDefs, ChaseDrones, updateChaseDrones, type ChaseDroneData } from './entities/ChaseDrone';
 import { LaserDroneDefs, LaserDrones, updateLaserDrones, type LaserDroneData } from './entities/LaserDrone';
+import { GoldDefs, Golds, updateGolds, type GoldData } from './entities/Gold';
 
 export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventState: GlobalEventState }) {
     const replay = props.replay;
@@ -88,6 +89,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
     const [ninjaPreviewBones, setNinjaPreviewBones] = createSignal<Float64Array<ArrayBufferLike>>();
 
     const mines = createSignal<MineData[]>([]);
+    const golds = createSignal<GoldData[]>([]);
     const bounceBlocks = createSignal<BounceBlockData[]>([]);
     const oneWays = createSignal<OneWayData[]>([]);
     const boostPads = createSignal<BoostPadData[]>([]);
@@ -174,6 +176,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
         }
 
         updateMines(mines, replay);
+        updateGolds(golds, replay);
         updateBounceBlocks(bounceBlocks, replay, partialFrame);
         updateOneWays(oneWays, replay);
         updateBoostPads(boostPads, replay, partialFrame);
@@ -213,6 +216,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                         <use href="#tiles" />
                     </clipPath>
                     <MineDefs />
+                    <GoldDefs />
                     <BounceBlockDefs />
                     <OneWayDefs />
                     <LockedSwitchDefs />
@@ -233,6 +237,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                 <TrapDoors trapDoors={trapDoors[0]} />
                 <LockedSwitches lockedSwitches={lockedSwitches[0]} />
                 <TrapSwitches trapSwitches={trapSwitches[0]} />
+                <Golds golds={golds[0]} />
                 <ExitSwitches exitSwitches={exitSwitches[0]} />
                 <LaunchPads launchPads={launchPads[0]} />
                 <ChaingunDrones chaingunDrones={chaingunDrones[0]} />

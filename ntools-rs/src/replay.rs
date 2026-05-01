@@ -191,6 +191,22 @@ impl Replay {
         }
     }
 
+    pub fn golds_len(&self) -> usize {
+        self.current_sim.entities.golds.len()
+    }
+
+    pub fn gold_x(&self, i: usize) -> f64 {
+        self.current_sim.entities.golds[i].pos.x
+    }
+
+    pub fn gold_y(&self, i: usize) -> f64 {
+        self.current_sim.entities.golds[i].pos.y
+    }
+
+    pub fn gold_collected(&self, i: usize) -> bool {
+        self.current_sim.entities.golds[i].collected
+    }
+
     pub fn bounce_blocks_len(&self) -> usize {
         self.current_sim.entities.bounce_blocks.len()
     }

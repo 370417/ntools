@@ -89,6 +89,12 @@ impl EditorState {
             }).or_default();
             *count = count.saturating_add(1);
         }
+        for gold in &attract.entities.golds {
+            let count: &mut u16 = entities.entry(EditorEntity::Gold {
+                pos: EntityPos::from_world_pos(gold.pos),
+            }).or_default();
+            *count = count.saturating_add(1);
+        }
         for exit in &attract.entities.exits {
             let count: &mut u16 = entities.entry(EditorEntity::Exit {
                 exit_pos: EntityPos::from_world_pos(exit.door_pos),

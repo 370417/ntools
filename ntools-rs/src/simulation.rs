@@ -1,4 +1,4 @@
-use crate::{entity::{Entities, EntityIndex, GridEntityType, bounce_block::BounceBlock, door::RegularDoor, floor_guard::FloorGuard, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, on_door_state_change, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::Grid, ninja::{AnimState, Ninja, NinjaState}, segment::Segment};
+use crate::{entity::{Entities, EntityIndex, GridEntityType, bounce_block::BounceBlock, door::RegularDoor, floor_guard::FloorGuard, gold::collected_golds, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, on_door_state_change, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::Grid, ninja::{AnimState, Ninja, NinjaState}, segment::Segment};
 
 #[derive(Clone)]
 pub struct Simulation {
@@ -23,6 +23,7 @@ pub struct KeyFrame {
     ninja: Ninja,
     score: u32,
     mine_state_diffs: Vec<(usize, MineState)>,
+    collected_golds: Vec<usize>,
     // We could save some memory by not storing bounce block origin because
     // it is constant across frames. For now we just store the entire bounce block.
     bounce_blocks: Vec<BounceBlock>,
@@ -116,7 +117,7 @@ impl Simulation {
                 self.ninja.collide_vs_objects(&mut collision_state, &mut self.entities, &self.entity_grid, self.dynamic_friction);
                 self.ninja.collide_vs_tiles(&mut collision_state, segments, &self.entities.doors);
             }
-            self.ninja.post_collision(&mut collision_state, &mut self.entities, &self.entity_grid, segments, self.dynamic_friction);
+            self.ninja.post_collision(&mut collision_state, &mut self.entities, &self.entity_grid, segments, self.dynamic_friction, &mut self.score);
             self.ninja.think(input.jump, hor_input);
             self.ninja.update_graphics(hor_input);
         }
@@ -137,6 +138,7 @@ impl KeyFrame {
             ninja: sim.ninja.clone(),
             score: sim.score,
             mine_state_diffs: mine_diffs(initial_mines, &sim.entities.mines),
+            collected_golds: collected_golds(&sim.entities.golds),
             bounce_blocks: sim.entities.bounce_blocks.clone(),
             exit_frames_since_open: sim.entities.exits.iter().map(|exit| exit.frames_since_door_open).collect(),
             thwumps: sim.entities.thwumps.clone(),
@@ -157,6 +159,13 @@ impl KeyFrame {
         sim.score = self.score;
 
         sim.entities.mines = mines_from_diff(initial_mines, &self.mine_state_diffs);
+
+        for gold in &mut sim.entities.golds {
+            gold.collected = false;
+        }
+        for &gold_i in &self.collected_golds {
+            sim.entities.golds[gold_i].collected = true;
+        }
 
         self.bounce_blocks.clone_into(&mut sim.entities.bounce_blocks);
 

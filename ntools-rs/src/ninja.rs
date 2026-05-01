@@ -368,7 +368,7 @@ impl Ninja {
 
     /// Perform logical collisions with entities, check for airborne state,
     /// check for walled state, calculate floor normals, check for impact or crush death.
-    pub fn post_collision(&mut self, collision_state: &mut CollisionState, entities: &mut Entities, entity_grid: &Grid<EntityIndex>, segments: &Grid<Segment>, dynamic_friction: bool) {
+    pub fn post_collision(&mut self, collision_state: &mut CollisionState, entities: &mut Entities, entity_grid: &Grid<EntityIndex>, segments: &Grid<Segment>, dynamic_friction: bool, score: &mut u32) {
         // Perform LOGICAL collisions between the ninja and nearby entities.
         // Also check if the ninja can interact with the walls of entities when applicable.
         let mut wall_normal = None;
@@ -376,6 +376,9 @@ impl Ninja {
             match entity_type {
                 GridEntityType::Mine => {
                     entities.mines[i].logical_collision(self);
+                }
+                GridEntityType::Gold => {
+                    entities.golds[i].logical_collision(self, score);
                 }
                 GridEntityType::BounceBlock => {
                     let new_wall_normal = entities.bounce_blocks[i].logical_collision(self);

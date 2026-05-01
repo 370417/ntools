@@ -185,6 +185,9 @@ const colorVarNames = [
     '--mine-interior',
     '--toggle-mine',
     '--toggling-mine',
+    '--gold-interior',
+    '--gold-exterior',
+    '--gold-shine',
     '--bounceblock-interior',
     '--bounceblock-border',
     '--oneway-long',
@@ -291,6 +294,18 @@ const colorVarPaletteLocations: Record<ColorVarName, { file: PaletteFileName, in
     '--toggling-mine': {
         file: 'entityMine',
         index: 3,
+    },
+    '--gold-interior': {
+        file: 'entityGold',
+        index: 0,
+    },
+    '--gold-exterior': {
+        file: 'entityGold',
+        index: 1,
+    },
+    '--gold-shine': {
+        file: 'entityGold',
+        index: 2,
     },
     '--bounceblock-interior': {
         file: 'entityBounceBlock',
