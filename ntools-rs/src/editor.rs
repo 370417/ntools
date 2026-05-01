@@ -163,6 +163,9 @@ impl Editor {
                     EditorEntity::ToggleMine { pos } => {
                         entities.mines.push(Mine::new_untoggled(pos.to_world_pos()));
                     }
+                    EditorEntity::Gold { pos } => {
+                        // not supported in replays
+                    }
                     EditorEntity::Exit { exit_pos, switch_pos } => {
                         entities.exits.push(Exit::new(exit_pos.to_world_pos(), switch_pos.to_world_pos()));
                     }
@@ -202,14 +205,26 @@ impl Editor {
                     EditorEntity::RocketTurret { pos } => {
                         // not supported in replays
                     }
+                    EditorEntity::GaussTurret { pos } => {
+                        // not supported in replays
+                    }
                     EditorEntity::Thwump { pos, orientation } => {
                         entities.thwumps.push(Thwump::new(pos.to_world_pos(), *orientation, round_corners));
                     }
                     EditorEntity::EvilNinja { pos } => {
                         // not supported in replays
                     }
+                    EditorEntity::LaserTurret { pos, orientation } => {
+                        // not supported in replays
+                    }
                     EditorEntity::BoostPad { pos } => {
                         entities.boost_pads.push(BoostPad::new(pos.to_world_pos()));
+                    }
+                    EditorEntity::DeathBall { pos } => {
+                        // not supported in replays
+                    }
+                    EditorEntity::MiniDrone { pos, orientation, mode } => {
+                        // not supported in replays
                     }
                     EditorEntity::Bat { pos } => {
                         // TODO: add support for bats in replays

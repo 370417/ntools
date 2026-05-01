@@ -74,6 +74,11 @@ impl ModifyEntity {
             EditorEntity::Bat { pos } |
             EditorEntity::RocketTurret { pos } |
             EditorEntity::EvilNinja { pos } |
+            EditorEntity::Gold { pos } |
+            EditorEntity::GaussTurret { pos } |
+            EditorEntity::DeathBall { pos } |
+            EditorEntity::LaserTurret { pos, .. } |
+            EditorEntity::MiniDrone { pos, .. } |
             EditorEntity::OneWay { pos, .. } => *pos = new_pos,
             EditorEntity::Exit { exit_pos: door_pos, switch_pos } |
             EditorEntity::LockedDoor { door_pos, switch_pos, .. } |
@@ -92,21 +97,14 @@ impl ModifyEntity {
             EditorEntity::LaunchPad { orientation, .. } |
             EditorEntity::Thwump { orientation, .. } |
             EditorEntity::ShoveThwump { orientation, .. } |
+            EditorEntity::LaserTurret { orientation, .. } |
             EditorEntity::BounceBlock { orientation, .. } => *orientation = orientations.orientation,
             EditorEntity::ZapDrone { orientation, .. } |
             EditorEntity::LaserDrone { orientation, .. } |
             EditorEntity::ChaseDrone { orientation, .. } |
+            EditorEntity::MiniDrone { orientation, .. } |
             EditorEntity::ChaingunDrone { orientation, .. } => *orientation = orientations.orientation_cardinal,
-            EditorEntity::RegularDoor { .. } |
-            EditorEntity::LockedDoor { .. } |
-            EditorEntity::TrapDoor { .. } |
-            EditorEntity::Mine { .. } |
-            EditorEntity::ToggleMine { .. } |
-            EditorEntity::BoostPad { .. } |
-            EditorEntity::Bat { .. } |
-            EditorEntity::RocketTurret { .. } |
-            EditorEntity::EvilNinja { .. } |
-            EditorEntity::Exit { .. } => {}
+            _ => {}
         }
     }
 
@@ -115,24 +113,9 @@ impl ModifyEntity {
             EditorEntity::ZapDrone { mode, .. } |
             EditorEntity::ChaseDrone { mode, .. } |
             EditorEntity::LaserDrone { mode, .. } |
+            EditorEntity::MiniDrone { mode, .. } |
             EditorEntity::ChaingunDrone { mode, .. } => *mode = modes.drone_mode,
-            EditorEntity::Ninja { .. } |
-            EditorEntity::Mine { .. } |
-            EditorEntity::Exit { .. } |
-            EditorEntity::RegularDoor { .. } |
-            EditorEntity::LockedDoor { .. } |
-            EditorEntity::TrapDoor { .. } |
-            EditorEntity::LaunchPad { .. } |
-            EditorEntity::OneWay { .. } |
-            EditorEntity::FloorGuard { .. } |
-            EditorEntity::BounceBlock { .. } |
-            EditorEntity::Thwump { .. } |
-            EditorEntity::ToggleMine { .. } |
-            EditorEntity::BoostPad { .. } |
-            EditorEntity::Bat { .. } |
-            EditorEntity::RocketTurret { .. } |
-            EditorEntity::EvilNinja { .. } |
-            EditorEntity::ShoveThwump { .. } => {}
+            _ => {}
         }
     }
 

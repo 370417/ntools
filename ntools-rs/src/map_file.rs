@@ -204,7 +204,7 @@ impl <'a> Iterator for EntityDataParser<'a> {
             match EntityId::try_from(entity_id).ok()? {
                 EntityId::Ninja => return Some(EditorEntity::Ninja { pos, orientation: orientation_ext }),
                 EntityId::Mine => return Some(EditorEntity::Mine { pos }),
-                EntityId::Gold => {}
+                EntityId::Gold => return Some(EditorEntity::Gold { pos }),
                 EntityId::ExitDoor => self.exit_doors.push_back(pos),
                 EntityId::ExitSwitch => return self.exit_doors.pop_front().map(|exit_pos| EditorEntity::Exit { exit_pos, switch_pos: pos }),
                 EntityId::RegularDoor => return Some(EditorEntity::RegularDoor { pos, orientation: orientation_binary }),
@@ -221,14 +221,14 @@ impl <'a> Iterator for EntityDataParser<'a> {
                 EntityId::FloorGuard => return Some(EditorEntity::FloorGuard { pos, orientation: orientation_ext }),
                 EntityId::BounceBlock => return Some(EditorEntity::BounceBlock { pos, orientation }),
                 EntityId::RocketTurret => return Some(EditorEntity::RocketTurret { pos }),
-                EntityId::GaussTurret => {}
+                EntityId::GaussTurret => return Some(EditorEntity::GaussTurret { pos }),
                 EntityId::Thwump => return Some(EditorEntity::Thwump { pos, orientation }),
                 EntityId::ToggleMine => return Some(EditorEntity::ToggleMine { pos }),
                 EntityId::EvilNinja => return Some(EditorEntity::EvilNinja { pos }),
-                EntityId::LaserTurret => {}
+                EntityId::LaserTurret => return Some(EditorEntity::LaserTurret { pos, orientation }),
                 EntityId::BoostPad => return Some(EditorEntity::BoostPad { pos }),
-                EntityId::DeathBall => {}
-                EntityId::MiniDrone => {}
+                EntityId::DeathBall => return Some(EditorEntity::DeathBall { pos }),
+                EntityId::MiniDrone => return Some(EditorEntity::MiniDrone { pos, orientation: orientation_cardinal, mode: drone_mode }),
                 EntityId::Bat => return Some(EditorEntity::Bat { pos }),
                 EntityId::ShoveThwump => return Some(EditorEntity::ShoveThwump { pos, orientation }),
             }
@@ -289,6 +289,7 @@ fn editor_entities_to_bytes(entities: &EditorEntities) -> Vec<u8> {
             match entity {
                 EditorEntity::Ninja { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
                 EditorEntity::Mine { pos } => bytes.extend([id, pos.x as u8, pos.y as u8, 0, 0]),
+                EditorEntity::Gold { pos } => bytes.extend([id, pos.x as u8, pos.y as u8, 0, 0]),
                 EditorEntity::Exit { exit_pos, switch_pos } => {
                     bytes.extend([3, exit_pos.x as u8, exit_pos.y as u8, 0, 0]);
                     bytes.extend([4, switch_pos.x as u8, switch_pos.y as u8, 0, 0]);
@@ -311,10 +312,14 @@ fn editor_entities_to_bytes(entities: &EditorEntities) -> Vec<u8> {
                 EditorEntity::FloorGuard { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
                 EditorEntity::BounceBlock { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
                 EditorEntity::RocketTurret { pos } => bytes.extend([id, pos.x as u8, pos.y as u8, 0, 0]),
+                EditorEntity::GaussTurret { pos } => bytes.extend([id, pos.x as u8, pos.y as u8, 0, 0]),
                 EditorEntity::Thwump { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
                 EditorEntity::ToggleMine { pos } => bytes.extend([id, pos.x as u8, pos.y as u8, 0, 0]),
                 EditorEntity::EvilNinja { pos } => bytes.extend([id, pos.x as u8, pos.y as u8, 0, 0]),
+                EditorEntity::LaserTurret { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
                 EditorEntity::BoostPad { pos } => bytes.extend([id, pos.x as u8, pos.y as u8, 0, 0]),
+                EditorEntity::DeathBall { pos } => bytes.extend([id, pos.x as u8, pos.y as u8, 0, 0]),
+                EditorEntity::MiniDrone { pos, orientation, mode } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, mode as u8]),
                 EditorEntity::Bat { pos } => bytes.extend([id, pos.x as u8, pos.y as u8, 0, 0]),
                 EditorEntity::ShoveThwump { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
             }
