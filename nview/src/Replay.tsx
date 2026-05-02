@@ -61,6 +61,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                 replay.seek_preview(replay.progress() + 120);
                 setPreviewProgress(replay.progress_preview());
                 updateInputs();
+                updatePastNinjaBones();
                 updatePastNinjas();
                 renderFrame(1);
             }
@@ -73,6 +74,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                 replay.seek_preview(replay.progress() + 120);
                 setPreviewProgress(replay.progress_preview());
                 updateInputs();
+                updatePastNinjaBones();
                 updatePastNinjas();
                 renderFrame(1);
             }
@@ -131,6 +133,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
         }
         setPastNinjas(pastNinjas);
     }
+    updatePastNinjas();
 
     // 42 inputs, 21 before current sim and 21 after
     const [inputs, setInputs] = createSignal<number[]>([]);
@@ -146,6 +149,19 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
         }
         setInputs(inputs);
     }
+    updateInputs();
+
+    // 41 elements, 20 before current sim, 1 at current sim, 20 after
+    const [pastNinjaBones, setPastNinjaBones] = createSignal<Float64Array<ArrayBufferLike>[]>([]);
+    function updatePastNinjaBones() {
+        const bones = [];
+        for (let i = -20; i <= 20; i++) {
+            const frame = i + replay.progress();
+            bones.push(replay.past_ninja_bones(frame));
+        }
+        setPastNinjaBones(bones);
+    }
+    updatePastNinjaBones();
 
     let timeMs = performance.now();
     const fps = 60;
@@ -293,7 +309,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                 <path id="tiles" stroke-width="2" clip-path="url(#tiles-clip)" clip-rule="evenodd" d={tilePath()} fill-rule="evenodd" />
                 <Show when={!isPlaying()}>
                     <polyline stroke="var(--ninja)" fill="none" points={pastNinjas().slice(progress(), previewProgress() || 0).map(({ x, y }) => `${x},${y}`).join(' ')} />
-                    <InputDisplay inputs={inputs} />
+                    <InputDisplay inputs={inputs} pastNinjas={pastNinjaBones} />
                 </Show>
             </svg>
             <div>
@@ -310,6 +326,8 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                             setProgress(frame);
                             replay.seek(frame);
                             updateInputs();
+                            updatePastNinjaBones();
+                            updatePastNinjas();
                             renderFrame(1);
                         }}
                         previewSeek={frame => {

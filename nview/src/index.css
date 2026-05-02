@@ -145,6 +145,10 @@ svg {
     opacity: 0.5;
 }
 
+.central-ninja {
+    stroke: var(--main-menu-text);
+}
+
 .locked-door .bar {
     stroke: var(--locked-door-bar);
 }

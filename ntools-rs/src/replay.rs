@@ -186,6 +186,14 @@ impl Replay {
         self.past_ninjas[i].pos.y
     }
 
+    pub fn past_ninja_bones(&self, i: isize) -> Box<[f64]> {
+        if i < 0 || i >= self.past_ninjas.len() as isize || i > self.inputs.len() as isize {
+            Box::new([])
+        } else {
+            flatten_bones(&self.past_ninjas[i as usize].calc_ninja_position(&self.anim_data))
+        }
+    }
+
     pub fn inputs_len(&self) -> usize {
         self.inputs.len()
     }
