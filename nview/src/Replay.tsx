@@ -49,6 +49,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
             if (isPlaying()) {
                 setIsPlaying(false);
                 setRecording(false);
+                updatePausedInfo();
             } else {
                 setIsPlaying(true);
                 setRecording(true);
@@ -58,11 +59,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                 // let { isJump1Pressed, isJump2Pressed, isRightPressed, isLeftPressed, isSuicidePressed } = props.globalEventState;
                 setProgress(progress() - 1);
                 replay.seek(progress());
-                replay.seek_preview(replay.progress() + 120);
-                setPreviewProgress(replay.progress_preview());
-                updateInputs();
-                updatePastNinjaBones();
-                updatePastNinjas();
+                updatePausedInfo();
                 renderFrame(1);
             }
         } else if (event.code === 'Period') {
@@ -71,15 +68,19 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                 replay.set_input(isJump1Pressed() || isJump2Pressed(), isRightPressed(), isLeftPressed(), isSuicidePressed());
                 replay.tick();
                 setProgress(replay.progress());
-                replay.seek_preview(replay.progress() + 120);
-                setPreviewProgress(replay.progress_preview());
-                updateInputs();
-                updatePastNinjaBones();
-                updatePastNinjas();
+                updatePausedInfo();
                 renderFrame(1);
             }
         }
     };
+
+    function updatePausedInfo() {
+        replay.seek_preview(replay.progress() + 120);
+        setPreviewProgress(replay.progress_preview());
+        updateInputs();
+        updatePastNinjaBones();
+        updatePastNinjas();
+    }
 
     document.addEventListener('keydown', keydownListener);
 

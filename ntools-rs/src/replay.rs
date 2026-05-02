@@ -546,7 +546,7 @@ impl Replay {
             self.past_ninjas.push(self.preview_sim.ninja.to_past_ninja());
         }
 
-        let input = Input::from_byte(self.inputs.get(self.preview_sim.frame as usize).cloned().unwrap_or_default());
+        let input = Input::from_byte(self.inputs.get(self.preview_sim.frame as usize).or(self.inputs.last()).cloned().unwrap_or_default());
         self.preview_sim.tick(input, &self.segments);
     }
 }
