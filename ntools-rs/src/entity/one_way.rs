@@ -35,6 +35,7 @@ impl OneWay {
                             depen_unit_normal: normal,
                             depen_dist: ninja::RADIUS - normal_dist,
                             depen_perp_dist: 0.0,
+                            slide: None,
                         });
                     }
                 }

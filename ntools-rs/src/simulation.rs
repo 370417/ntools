@@ -1,11 +1,13 @@
-use crate::{entity::{Entities, EntityIndex, GridEntityType, bounce_block::BounceBlock, door::RegularDoor, floor_guard::FloorGuard, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, on_door_state_change, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::Grid, ninja::{Ninja, NinjaState}, segment::Segment};
+use crate::{entity::{Entities, EntityIndex, GridEntityType, bounce_block::BounceBlock, door::RegularDoor, floor_guard::FloorGuard, gold::collected_golds, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, on_door_state_change, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::Grid, ninja::{AnimState, Ninja, NinjaState}, segment::Segment};
 
 #[derive(Clone)]
 pub struct Simulation {
     pub frame: u32,
     pub ninja: Ninja,
+    pub score: u32,
     pub entities: Entities,
     pub entity_grid: Grid<EntityIndex>,
+    dynamic_friction: bool,
 }
 
 #[derive(Clone, Copy)]
@@ -19,7 +21,9 @@ pub struct Input {
 pub struct KeyFrame {
     frame: u32,
     ninja: Ninja,
+    score: u32,
     mine_state_diffs: Vec<(usize, MineState)>,
+    collected_golds: Vec<usize>,
     // We could save some memory by not storing bounce block origin because
     // it is constant across frames. For now we just store the entire bounce block.
     bounce_blocks: Vec<BounceBlock>,
@@ -58,13 +62,15 @@ impl Input {
 }
 
 impl Simulation {
-    pub fn new(ninjas: Vec<Ninja>, entities: Entities) -> Result<Simulation, String> {
+    pub fn new(ninjas: Vec<Ninja>, entities: Entities, dynamic_friction: bool) -> Result<Simulation, String> {
 
         Ok(Simulation {
             frame: 0,
             ninja: ninjas.into_iter().next().ok_or("Map has no ninja")?,
+            score: 90 * 60,
             entity_grid: entities.grid(),
             entities,
+            dynamic_friction,
         })
     }
 
@@ -108,12 +114,19 @@ impl Simulation {
             self.ninja.integrate();
             let mut collision_state = self.ninja.pre_collision();
             for _ in 0..4 {
-                self.ninja.collide_vs_objects(&mut collision_state, &mut self.entities, &self.entity_grid);
+                self.ninja.collide_vs_objects(&mut collision_state, &mut self.entities, &self.entity_grid, self.dynamic_friction);
                 self.ninja.collide_vs_tiles(&mut collision_state, segments, &self.entities.doors);
             }
-            self.ninja.post_collision(&mut collision_state, &mut self.entities, &self.entity_grid, segments);
+            self.ninja.post_collision(&mut collision_state, &mut self.entities, &self.entity_grid, segments, self.dynamic_friction, &mut self.score);
             self.ninja.think(input.jump, hor_input);
             self.ninja.update_graphics(hor_input);
+        }
+
+        self.score = self.score.saturating_sub(1);
+
+        if self.ninja.state == NinjaState::Dead {
+            self.ninja.anim_frame = 105;
+            self.ninja.anim_state = AnimState::Dead;
         }
     }
 }
@@ -123,7 +136,9 @@ impl KeyFrame {
         KeyFrame {
             frame: sim.frame,
             ninja: sim.ninja.clone(),
+            score: sim.score,
             mine_state_diffs: mine_diffs(initial_mines, &sim.entities.mines),
+            collected_golds: collected_golds(&sim.entities.golds),
             bounce_blocks: sim.entities.bounce_blocks.clone(),
             exit_frames_since_open: sim.entities.exits.iter().map(|exit| exit.frames_since_door_open).collect(),
             thwumps: sim.entities.thwumps.clone(),
@@ -141,8 +156,16 @@ impl KeyFrame {
     pub fn hydrate_into(&self, sim: &mut Simulation, initial_mines: &[Mine]) {
         sim.frame = self.frame;
         sim.ninja = self.ninja.clone();
+        sim.score = self.score;
 
         sim.entities.mines = mines_from_diff(initial_mines, &self.mine_state_diffs);
+
+        for gold in &mut sim.entities.golds {
+            gold.collected = false;
+        }
+        for &gold_i in &self.collected_golds {
+            sim.entities.golds[gold_i].collected = true;
+        }
 
         self.bounce_blocks.clone_into(&mut sim.entities.bounce_blocks);
 

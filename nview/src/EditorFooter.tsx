@@ -14,6 +14,8 @@ export function EditorFooter(props: {
     setPalette: Setter<Palette | undefined>,
     showTrail: Accessor<boolean>,
     setShowTrail: Setter<boolean>,
+    dynamicFriction: Accessor<boolean>,
+    setDynamicFriction: Setter<boolean>,
 }) {
     return <div style={{
         padding: '0 1.2em',
@@ -64,6 +66,10 @@ export function EditorFooter(props: {
             <option selected={!props.roundCorners()}>square</option>
             <option selected={props.roundCorners()}>rounded</option>
         </select>
+        {" | "}
+        <label>Friction mod <input type="checkbox" checked={props.dynamicFriction()} onchange={e => {
+            props.setDynamicFriction(e.currentTarget.checked);
+        }} /></label>
         {" | "}
         <select onchange={e => {
             const colors = getPaletteColors(e.currentTarget.value);

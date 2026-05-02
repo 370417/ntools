@@ -23,6 +23,8 @@ import { updateZapDrones, ZapDroneDefs, ZapDrones, type ZapDroneData } from './e
 import { ChaingunDroneDefs, ChaingunDrones, updateChaingunDrones, type ChaingunDroneData } from './entities/ChaingunDrone';
 import { ChaseDroneDefs, ChaseDrones, updateChaseDrones, type ChaseDroneData } from './entities/ChaseDrone';
 import { LaserDroneDefs, LaserDrones, updateLaserDrones, type LaserDroneData } from './entities/LaserDrone';
+import { GoldDefs, Golds, updateGolds, type GoldData } from './entities/Gold';
+import { InputDisplay } from './InputDisplay';
 
 export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventState: GlobalEventState }) {
     const replay = props.replay;
@@ -35,6 +37,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
     const [replayLength, setReplayLength] = createSignal(0);
     const [progress, setProgress] = createSignal(0);
     const [previewProgress, setPreviewProgress] = createSignal<number | undefined>(undefined);
+    const [score, setScore] = createSignal(90 * 60);
 
     const keydownListener = (event: KeyboardEvent) => {
         if (event.code === 'Enter') {
@@ -46,12 +49,55 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
             if (isPlaying()) {
                 setIsPlaying(false);
                 setRecording(false);
+                updatePausedInfo();
             } else {
                 setIsPlaying(true);
                 setRecording(true);
             }
+        } else if (event.code === 'Comma') {
+            if (!isPlaying() && progress() > 0) {
+                setProgress(progress() - 1);
+                replay.seek(progress());
+
+                let { isJump1Pressed, isJump2Pressed, isRightPressed, isLeftPressed, isDownPressed, isSuicidePressed } = props.globalEventState;
+                if (isJump1Pressed() || isJump2Pressed() || isRightPressed() || isLeftPressed() || isSuicidePressed()) {
+                    replay.set_input(isJump1Pressed() || isJump2Pressed(), isRightPressed(), isLeftPressed(), isSuicidePressed());
+                } else if (isDownPressed()) {
+                    // set neutral input if down is pressed
+                    replay.set_input(false, false, false, false);
+                } else {
+                    // don't change existing input if nothing is pressed
+                }
+
+                updatePausedInfo();
+                renderFrame(1);
+            }
+        } else if (event.code === 'Period') {
+            if (!isPlaying()) {
+                let { isJump1Pressed, isJump2Pressed, isRightPressed, isLeftPressed, isDownPressed, isSuicidePressed } = props.globalEventState;
+                if (isJump1Pressed() || isJump2Pressed() || isRightPressed() || isLeftPressed() || isSuicidePressed()) {
+                    replay.set_input(isJump1Pressed() || isJump2Pressed(), isRightPressed(), isLeftPressed(), isSuicidePressed());
+                } else if (isDownPressed() || replay.inputs_len() === replay.progress()) {
+                    // set neutral input if down is pressed or if there is no existing input
+                    replay.set_input(false, false, false, false);
+                } else {
+                    // don't change existing input if nothing is pressed
+                }
+                replay.tick();
+                setProgress(replay.progress());
+                updatePausedInfo();
+                renderFrame(1);
+            }
         }
     };
+
+    function updatePausedInfo() {
+        replay.seek_preview(replay.progress() + 120);
+        setPreviewProgress(replay.progress_preview());
+        updateInputs();
+        updatePastNinjaBones();
+        updatePastNinjas();
+    }
 
     document.addEventListener('keydown', keydownListener);
 
@@ -73,6 +119,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
     const [ninjaPreviewBones, setNinjaPreviewBones] = createSignal<Float64Array<ArrayBufferLike>>();
 
     const mines = createSignal<MineData[]>([]);
+    const golds = createSignal<GoldData[]>([]);
     const bounceBlocks = createSignal<BounceBlockData[]>([]);
     const oneWays = createSignal<OneWayData[]>([]);
     const boostPads = createSignal<BoostPadData[]>([]);
@@ -91,6 +138,48 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
     const chaseDrones = createSignal<ChaseDroneData[]>([]);
     const chaingunDrones = createSignal<ChaingunDroneData[]>([]);
     const laserDrones = createSignal<LaserDroneData[]>([]);
+
+    const [pastNinjas, setPastNinjas] = createSignal<{ x: number, y: number }[]>([]);
+    function updatePastNinjas() {
+        const pastNinjas: { x: number, y: number }[] = [];
+        const len = replay.past_ninjas_len();
+        for (let i = 0; i < len; i++) {
+            pastNinjas.push({
+                x: replay.past_ninja_x(i),
+                y: replay.past_ninja_y(i),
+            });
+        }
+        setPastNinjas(pastNinjas);
+    }
+    updatePastNinjas();
+
+    // 42 inputs, 21 before current sim and 21 after
+    const [inputs, setInputs] = createSignal<number[]>([]);
+    function updateInputs() {
+        const inputs = [];
+        for (let i = -21; i < 21; i++) {
+            const frame = i + replay.progress();
+            if (frame < 0 || frame >= replay.inputs_len()) {
+                inputs.push(NaN);
+            } else {
+                inputs.push(replay.input(frame));
+            }
+        }
+        setInputs(inputs);
+    }
+    updateInputs();
+
+    // 41 elements, 20 before current sim, 1 at current sim, 20 after
+    const [pastNinjaBones, setPastNinjaBones] = createSignal<Float64Array<ArrayBufferLike>[]>([]);
+    function updatePastNinjaBones() {
+        const bones = [];
+        for (let i = -20; i <= 20; i++) {
+            const frame = i + replay.progress();
+            bones.push(replay.past_ninja_bones(frame));
+        }
+        setPastNinjaBones(bones);
+    }
+    updatePastNinjaBones();
 
     let timeMs = performance.now();
     const fps = 60;
@@ -118,6 +207,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                         $replay.set_input(isJump1Pressed() || isJump2Pressed(), isRightPressed(), isLeftPressed(), isSuicidePressed());
                     }
                     $replay.tick();
+                    updateInputs();
                     accumulator -= msPerTick;
                 }
                 partialFrame = accumulator / msPerTick;
@@ -140,6 +230,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
     });
 
     function renderFrame(partialFrame: number) {
+        setScore(replay.score());
         setNinja({
             x: replay.ninja_x(partialFrame),
             y: replay.ninja_y(partialFrame),
@@ -158,6 +249,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
         }
 
         updateMines(mines, replay);
+        updateGolds(golds, replay);
         updateBounceBlocks(bounceBlocks, replay, partialFrame);
         updateOneWays(oneWays, replay);
         updateBoostPads(boostPads, replay, partialFrame);
@@ -182,6 +274,9 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
 
     return (
         <>
+            <span style={{
+                position: 'absolute',
+            }} >{(score() / 60).toFixed(3)}</span>
             <svg viewBox="0 0 1056 600" onmousemove={function(this: SVGElement, event) {
                 const { left, top, width, height } = this.getBoundingClientRect();
                 props.globalEventState.setMouseGamePos({
@@ -194,6 +289,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                         <use href="#tiles" />
                     </clipPath>
                     <MineDefs />
+                    <GoldDefs />
                     <BounceBlockDefs />
                     <OneWayDefs />
                     <LockedSwitchDefs />
@@ -214,6 +310,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                 <TrapDoors trapDoors={trapDoors[0]} />
                 <LockedSwitches lockedSwitches={lockedSwitches[0]} />
                 <TrapSwitches trapSwitches={trapSwitches[0]} />
+                <Golds golds={golds[0]} />
                 <ExitSwitches exitSwitches={exitSwitches[0]} />
                 <LaunchPads launchPads={launchPads[0]} />
                 <ChaingunDrones chaingunDrones={chaingunDrones[0]} />
@@ -228,6 +325,10 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                 <ShoveThwumps shoveThwumps={shoveThwumps[0]} />
                 <BoostPads boostPads={boostPads[0]} />
                 <path id="tiles" stroke-width="2" clip-path="url(#tiles-clip)" clip-rule="evenodd" d={tilePath()} fill-rule="evenodd" />
+                <Show when={!isPlaying()}>
+                    <polyline stroke="var(--ninja)" fill="none" points={pastNinjas().slice(progress(), previewProgress() || 0).map(({ x, y }) => `${x},${y}`).join(' ')} />
+                    <InputDisplay inputs={inputs} pastNinjas={pastNinjaBones} />
+                </Show>
             </svg>
             <div>
                 <Show when={!recording() || !isPlaying()}>
@@ -242,10 +343,14 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                         seek={frame => {
                             setProgress(frame);
                             replay.seek(frame);
+                            updateInputs();
+                            updatePastNinjaBones();
+                            updatePastNinjas();
                             renderFrame(1);
                         }}
                         previewSeek={frame => {
                             setPreviewProgress(frame);
+                            updatePastNinjas();
                             if (replay) {
                                 if (frame !== undefined && dragStart() === undefined) {
                                     replay.seek_preview(frame);

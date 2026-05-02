@@ -25,6 +25,7 @@ import { ChaingunDroneDefs, ChaingunDrones, type ChaingunDroneData } from "./ent
 import { BatDefs, Bats, type BatData } from "./entities/Bat";
 import { LaserDroneDefs, LaserDrones, type LaserDroneData } from "./entities/LaserDrone";
 import { ChaseDroneDefs, ChaseDrones, type ChaseDroneData } from "./entities/ChaseDrone";
+import { GoldDefs, Golds, type GoldData } from "./entities/Gold";
 
 const COLS = 42;
 const ROWS = 23;
@@ -51,7 +52,7 @@ const MODE_SPAWN_NINJA = 9;
 
 const ENTITY_NINJA = 0;
 const ENTITY_MINE = 1;
-// const ENTITY_GOLD = 2;
+const ENTITY_GOLD = 2;
 const ENTITY_EXIT = 3;
 const ENTITY_REGULAR_DOOR = 5;
 const ENTITY_LOCKED_DOOR = 6;
@@ -90,6 +91,8 @@ export type EntitiesProps = {
     setNinjas: Setter<NinjaData[]>,
     mines: Accessor<MineData[]>,
     setMines: Setter<MineData[]>,
+    golds: Accessor<GoldData[]>,
+    setGolds: Setter<GoldData[]>,
     exitDoors: Accessor<ExitDoorData[]>,
     setExitDoors: Setter<ExitDoorData[]>,
     exitSwitches: Accessor<ExitSwitchData[]>,
@@ -133,6 +136,7 @@ export type EntitiesProps = {
 function createEntities(): EntitiesProps {
     const [ninjas, setNinjas] = createSignal<NinjaData[]>([]);
     const [mines, setMines] = createSignal<MineData[]>([]);
+    const [golds, setGolds] = createSignal<GoldData[]>([]);
     const [exitDoors, setExitDoors] = createSignal<ExitDoorData[]>([]);
     const [exitSwitches, setExitSwitches] = createSignal<ExitSwitchData[]>([]);
     const [regularDoors, setRegularDoors] = createSignal<RegularDoorData[]>([]);
@@ -155,6 +159,7 @@ function createEntities(): EntitiesProps {
     return {
         ninjas, setNinjas,
         mines, setMines,
+        golds, setGolds,
         exitDoors, setExitDoors,
         exitSwitches, setExitSwitches,
         regularDoors, setRegularDoors,
@@ -180,6 +185,7 @@ function createEntities(): EntitiesProps {
 function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities: ExportedEntity[], isPreview: boolean) {
     const ninjas: NinjaData[] = [];
     const mines: MineData[] = [];
+    const golds: GoldData[] = [];
     const exitDoors: ExitDoorData[] = [];
     const exitSwitches: ExitSwitchData[] = [];
     const regularDoors: RegularDoorData[] = [];
@@ -233,6 +239,11 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
             mines.push({
                 ...entityCopy,
                 type: MINE_UNTOGGLED,
+            });
+        } else if (entity.type_int === ENTITY_GOLD) {
+            golds.push({
+                ...entityCopy,
+                collected: false,
             });
         } else if (entity.type_int === ENTITY_EXIT) {
             exitDoors.push(entityCopy);
@@ -294,6 +305,7 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
 
     entities.setNinjas(ninjas);
     entities.setMines(mines);
+    entities.setGolds(golds);
     entities.setExitDoors(exitDoors);
     entities.setExitSwitches(exitSwitches);
     entities.setRegularDoors(regularDoors);
@@ -325,6 +337,7 @@ function Entities({ entities }: { entities: EntitiesProps }) {
         <LockedDoors lockedDoors={entities.lockedDoors} />
         <LockedSwitches lockedSwitches={entities.lockedSwitches} />
         <TrapSwitches trapSwitches={entities.trapSwitches} />
+        <Golds golds={entities.golds} />
         <ExitSwitches exitSwitches={entities.exitSwitches} />
         <LaunchPads launchPads={entities.launchPads} />
         <ChaingunDrones chaingunDrones={entities.chaingunDrones} />
@@ -354,6 +367,8 @@ export function EditorApp(props: {
     setRoundCorners: Setter<boolean>,
     palette: Accessor<Palette | undefined>,
     setPalette: Setter<Palette | undefined>,
+    dynamicFriction: Accessor<boolean>,
+    setDynamicFriction: Setter<boolean>,
 }) {
     const { editor, pastNinjas } = props;
 
@@ -398,7 +413,7 @@ export function EditorApp(props: {
         if (event.shiftKey) change = true, editor.press_shift();
         // Note: no else
 
-        if (event.code === 'Enter' && editor.mode() === MODE_SPAWN_NINJA) props.setReplay(editor.to_replay(props.roundCorners()));
+        if (event.code === 'Enter' && editor.mode() === MODE_SPAWN_NINJA) props.setReplay(editor.to_replay(props.roundCorners(), props.dynamicFriction()));
         else if (event.code ==='Backquote') change = true, editor.press_backtick();
         else if (event.code === 'Digit1') change = true, editor.press_1(event.shiftKey);
         else if (event.code === 'Digit2') change = true, editor.press_2(event.shiftKey);
@@ -587,7 +602,7 @@ export function EditorApp(props: {
             } else {
                 // primary click
                 if (editor.mode() === MODE_SPAWN_NINJA) {
-                    props.setReplay(editor.to_replay(props.roundCorners()));
+                    props.setReplay(editor.to_replay(props.roundCorners(), props.dynamicFriction()));
                 } else {
                     editor.cursor_down(event.shiftKey);
                     render(true);
@@ -602,6 +617,7 @@ export function EditorApp(props: {
                     <use href="#tiles" />
                 </clipPath>
                 <MineDefs />
+                <GoldDefs />
                 <OneWayDefs />
                 <BounceBlockDefs />
                 <LockedSwitchDefs />
@@ -693,6 +709,8 @@ export function EditorApp(props: {
             setPalette={props.setPalette}
             showTrail={showTrail}
             setShowTrail={setShowTrail}
+            dynamicFriction={props.dynamicFriction}
+            setDynamicFriction={props.setDynamicFriction}
         />
     </>;
 }

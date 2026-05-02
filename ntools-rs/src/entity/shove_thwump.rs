@@ -268,12 +268,14 @@ fn penetration_shwump(corners: Corners, pos: DVec2, orientation: Orientation, to
                     depen_unit_normal: DVec2::new(0.0, 1.0),
                     depen_dist: line_y + ninja_radius - ninja_pos_rel_shwump.y,
                     depen_perp_dist: 0.0,
+                    slide: None,
                 })
             } else {
                 Some(Depenetration {
                     depen_unit_normal: DVec2::new(0.0, -1.0),
                     depen_dist: ninja_pos_rel_shwump.y - (line_y - ninja_radius),
                     depen_perp_dist: 0.0,
+                    slide: None,
                 })
             }
         } else {
@@ -292,12 +294,14 @@ fn penetration_shwump(corners: Corners, pos: DVec2, orientation: Orientation, to
                     depen_unit_normal: DVec2::new(1.0, 0.0),
                     depen_dist: line_x + ninja_radius - ninja_pos_rel_shwump.x,
                     depen_perp_dist: 0.0,
+                    slide: None,
                 })
             } else {
                 Some(Depenetration {
                     depen_unit_normal: DVec2::new(-1.0, 0.0),
                     depen_dist: ninja_pos_rel_shwump.x - (line_x - ninja_radius),
                     depen_perp_dist: 0.0,
+                    slide: None,
                 })
             }
         } else {

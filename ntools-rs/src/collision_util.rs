@@ -135,6 +135,9 @@ pub struct Depenetration {
     pub depen_dist: f64,
     /// Distance needed to depenetrate perpendicular to depen_unit_normal?
     pub depen_perp_dist: f64,
+    /// if entity is moving, projection of the entity's velocity along the tangent vec of collision.
+    /// if entity is not moving, this is none
+    pub slide: Option<DVec2>,
 }
 
 /// If a point is inside an orthogonal square, return the orientation of the shortest vector
@@ -156,6 +159,7 @@ fn penetration_square_vs_point(square_pos: DVec2, point_pos: DVec2, semi_side: f
                 },
                 depen_dist: pen_y,
                 depen_perp_dist: pen_x,
+                slide: None,
             })
         } else {
             Some(Depenetration {
@@ -166,6 +170,7 @@ fn penetration_square_vs_point(square_pos: DVec2, point_pos: DVec2, semi_side: f
                 },
                 depen_dist: pen_x,
                 depen_perp_dist: pen_y,
+                slide: None,
             })
         }
     } else {
@@ -241,6 +246,7 @@ pub fn penetration_circle_vs_point(circle_pos: DVec2, point_pos: DVec2, radius: 
             depen_unit_normal: normal,
             depen_dist: radius - len,
             depen_perp_dist: 0.0,
+            slide: None,
         })
     }
 }

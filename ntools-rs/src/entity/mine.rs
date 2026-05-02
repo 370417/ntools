@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{collision_util::overlap_circle_vs_circle, ninja::{self, Ninja, NinjaState}};
+use crate::{collision_util::overlap_circle_vs_circle, entity::gold::Gold, ninja::{self, Ninja, NinjaState}};
 
 #[derive(Clone)]
 pub struct Mine {

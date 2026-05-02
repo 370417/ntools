@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{entity::{boost_pad::BoostPad, bounce_block::BounceBlock, chaingun_drone::ChaingunDrone, chase_drone::ChaseDrone, door::Doors, exit::Exit, floor_guard::FloorGuard, laser_drone::LaserDrone, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::{Grid, GridPos}, segment::Segment};
+use crate::{entity::{boost_pad::BoostPad, bounce_block::BounceBlock, chaingun_drone::ChaingunDrone, chase_drone::ChaseDrone, door::Doors, exit::Exit, floor_guard::FloorGuard, gold::Gold, laser_drone::LaserDrone, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::{Grid, GridPos}, segment::Segment};
 
 pub mod boost_pad;
 pub mod bounce_block;
@@ -9,6 +9,7 @@ pub mod chase_drone;
 pub mod door;
 pub mod exit;
 pub mod floor_guard;
+pub mod gold;
 pub mod laser_drone;
 pub mod launch_pad;
 pub mod mine;
@@ -21,6 +22,7 @@ pub mod zap_drone_;
 #[derive(Clone)]
 pub struct Entities {
     pub mines: Vec<Mine>,
+    pub golds: Vec<Gold>,
     pub bounce_blocks: Vec<BounceBlock>,
     pub one_ways: Vec<OneWay>,
     pub boost_pads: Vec<BoostPad>,
@@ -39,6 +41,7 @@ pub struct Entities {
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum GridEntityType {
     Mine,
+    Gold,
     BounceBlock,
     OneWay,
     ExitDoor,
@@ -64,6 +67,7 @@ impl Entities {
     pub fn new() -> Entities {
         Entities {
             mines: Vec::new(),
+            golds: Vec::new(),
             bounce_blocks: Vec::new(),
             one_ways: Vec::new(),
             boost_pads: Vec::new(),
@@ -85,6 +89,9 @@ impl Entities {
         let mut grid = Grid::new();
         for (i, mine) in self.mines.iter().enumerate() {
             grid[mine.pos].push((GridEntityType::Mine, i));
+        }
+        for (i, gold) in self.golds.iter().enumerate() {
+            grid[gold.pos].push((GridEntityType::Gold, i));
         }
         for (i, bounce_block) in self.bounce_blocks.iter().enumerate() {
             grid[bounce_block.pos].push((GridEntityType::BounceBlock, i));
@@ -138,6 +145,7 @@ impl GridEntityType {
             GridEntityType::ZapDrone |
             GridEntityType::ShoveThwump => true,
             GridEntityType::Mine |
+            GridEntityType::Gold |
             GridEntityType::OneWay |
             GridEntityType::ExitDoor |
             GridEntityType::ExitSwitch |

@@ -97,7 +97,7 @@ fn entity_pos_in_palette(entity_id: EntityId) -> Option<EntityPos> {
     match entity_id {
         EntityId::Ninja => None,
         EntityId::Mine => Some(EntityPos { x: -10, y: 0 }),
-        // EntityId::Gold => Some(EntityPos { x: 5, y: 0 }),
+        EntityId::Gold => Some(EntityPos { x: 5, y: 0 }),
         EntityId::ExitDoor => Some(EntityPos { x: 0, y: -10 }),
         EntityId::ExitSwitch => None,
         EntityId::RegularDoor => Some(EntityPos { x: -10, y: -5 }),
