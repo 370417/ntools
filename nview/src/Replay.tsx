@@ -56,16 +56,33 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
             }
         } else if (event.code === 'Comma') {
             if (!isPlaying() && progress() > 0) {
-                // let { isJump1Pressed, isJump2Pressed, isRightPressed, isLeftPressed, isSuicidePressed } = props.globalEventState;
                 setProgress(progress() - 1);
                 replay.seek(progress());
+
+                let { isJump1Pressed, isJump2Pressed, isRightPressed, isLeftPressed, isDownPressed, isSuicidePressed } = props.globalEventState;
+                if (isJump1Pressed() || isJump2Pressed() || isRightPressed() || isLeftPressed() || isSuicidePressed()) {
+                    replay.set_input(isJump1Pressed() || isJump2Pressed(), isRightPressed(), isLeftPressed(), isSuicidePressed());
+                } else if (isDownPressed()) {
+                    // set neutral input if down is pressed
+                    replay.set_input(false, false, false, false);
+                } else {
+                    // don't change existing input if nothing is pressed
+                }
+
                 updatePausedInfo();
                 renderFrame(1);
             }
         } else if (event.code === 'Period') {
             if (!isPlaying()) {
-                let { isJump1Pressed, isJump2Pressed, isRightPressed, isLeftPressed, isSuicidePressed } = props.globalEventState;
-                replay.set_input(isJump1Pressed() || isJump2Pressed(), isRightPressed(), isLeftPressed(), isSuicidePressed());
+                let { isJump1Pressed, isJump2Pressed, isRightPressed, isLeftPressed, isDownPressed, isSuicidePressed } = props.globalEventState;
+                if (isJump1Pressed() || isJump2Pressed() || isRightPressed() || isLeftPressed() || isSuicidePressed()) {
+                    replay.set_input(isJump1Pressed() || isJump2Pressed(), isRightPressed(), isLeftPressed(), isSuicidePressed());
+                } else if (isDownPressed() || replay.inputs_len() === replay.progress()) {
+                    // set neutral input if down is pressed or if there is no existing input
+                    replay.set_input(false, false, false, false);
+                } else {
+                    // don't change existing input if nothing is pressed
+                }
                 replay.tick();
                 setProgress(replay.progress());
                 updatePausedInfo();

@@ -11,6 +11,7 @@ export type GlobalEventState = {
     isRightPressed: Accessor<boolean>,
     isLeftPressed: Accessor<boolean>,
     isSuicidePressed: Accessor<boolean>,
+    isDownPressed: Accessor<boolean>,
     mouseGamePos: Accessor<{ x: number, y: number }>,
     setMouseGamePos: Setter<{ x: number, y: number }>,
 };
@@ -43,6 +44,7 @@ export function App() {
     const [isRightPressed, setIsRightPressed] = createSignal(false);
     const [isLeftPressed, setIsLeftPressed] = createSignal(false);
     const [isSuicidePressed, setIsSuicidePressed] = createSignal(false);
+    const [isDownPressed, setIsDownPressed] = createSignal(false);
     // units are in game units, not pixels
     // same as svg units
     const [mouseGamePos, setMouseGamePos] = createSignal({ x: 36, y: 36 });
@@ -53,6 +55,7 @@ export function App() {
         isRightPressed,
         isLeftPressed,
         isSuicidePressed,
+        isDownPressed,
         mouseGamePos,
         setMouseGamePos,
     };
@@ -92,6 +95,7 @@ export function App() {
         else if (event.code === 'ArrowUp') setIsJump2Pressed(true);
         else if (event.code === 'ArrowRight') setIsRightPressed(true);
         else if (event.code === 'ArrowLeft') setIsLeftPressed(true);
+        else if (event.code === 'ArrowDown') setIsDownPressed(true);
         else if (event.code === 'KeyV') setIsSuicidePressed(true);
     });
 
@@ -100,6 +104,7 @@ export function App() {
         else if (event.code === 'ArrowUp') setIsJump2Pressed(false);
         else if (event.code === 'ArrowRight') setIsRightPressed(false);
         else if (event.code === 'ArrowLeft') setIsLeftPressed(false);
+        else if (event.code === 'ArrowDown') setIsDownPressed(false);
         else if (event.code === 'KeyV') setIsSuicidePressed(false);
     });
 
@@ -109,6 +114,7 @@ export function App() {
         setIsRightPressed(false);
         setIsLeftPressed(false);
         setIsSuicidePressed(false);
+        setIsDownPressed(false);
     });
 
     loadAnimData(editor);
