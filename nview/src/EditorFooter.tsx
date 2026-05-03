@@ -1,10 +1,11 @@
 import type { Accessor, Setter } from "solid-js";
-import type { Editor } from "./assets/ntools_rs";
+import type { Editor, Replay } from "./assets/ntools_rs";
 import { debouncedSaveMap } from "./localstorage";
 import { getPaletteColors, themes, type Palette } from "./palette";
 
 export function EditorFooter(props: {
     editor: Editor,
+    setReplay: Setter<Replay | undefined>,
     render(save: boolean): void,
     levelName: Accessor<string>,
     setLevelName: Setter<string>,
@@ -36,6 +37,30 @@ export function EditorFooter(props: {
                             props.editor.load_map(new Uint8Array(fileReader.result));
                             props.render(true);
                             props.setLevelName(props.editor.get_level_name());
+                        }
+                    };
+                    fileReader.readAsArrayBuffer(files[0]);
+                }
+            }}
+            />
+        </label>
+        /
+        <label style={{
+            color: 'var(--main-menu-selected)',
+            cursor: 'pointer',
+            'text-decoration': 'underline',
+        }}>
+            attract
+            <input type="file" style={{ display: 'none' }} onchange={function(this: HTMLInputElement) {
+                const files = this.files;
+                if (files && files.length > 0) {
+                    const fileReader = new FileReader();
+                    fileReader.onloadend = () => {
+                        if (fileReader.result instanceof ArrayBuffer) {
+                            const replay = props.editor.load_attract(new Uint8Array(fileReader.result), props.roundCorners(), props.dynamicFriction());
+                            props.render(true);
+                            props.setLevelName(props.editor.get_level_name());
+                            props.setReplay(replay);
                         }
                     };
                     fileReader.readAsArrayBuffer(files[0]);

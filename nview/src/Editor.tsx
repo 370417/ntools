@@ -700,6 +700,7 @@ export function EditorApp(props: {
         </svg>
         <EditorFooter
             editor={editor}
+            setReplay={props.setReplay}
             render={render}
             levelName={props.levelName}
             setLevelName={props.setLevelName}

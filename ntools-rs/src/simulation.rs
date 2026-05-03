@@ -1,4 +1,4 @@
-use crate::{entity::{Entities, EntityIndex, GridEntityType, bounce_block::BounceBlock, door::RegularDoor, floor_guard::FloorGuard, gold::collected_golds, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, on_door_state_change, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::Grid, ninja::{AnimState, Ninja, NinjaState}, segment::Segment};
+use crate::{entity::{Entities, EntityIndex, GridEntityType, boost_pad::BoostPad, bounce_block::BounceBlock, door::RegularDoor, floor_guard::FloorGuard, gold::collected_golds, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, on_door_state_change, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::Grid, ninja::{AnimState, Ninja, NinjaState}, segment::Segment};
 
 #[derive(Clone)]
 pub struct Simulation {
@@ -24,6 +24,7 @@ pub struct KeyFrame {
     score: u32,
     mine_state_diffs: Vec<(usize, MineState)>,
     collected_golds: Vec<usize>,
+    boost_pads: Vec<BoostPad>,
     // We could save some memory by not storing bounce block origin because
     // it is constant across frames. For now we just store the entire bounce block.
     bounce_blocks: Vec<BounceBlock>,
@@ -139,6 +140,7 @@ impl KeyFrame {
             score: sim.score,
             mine_state_diffs: mine_diffs(initial_mines, &sim.entities.mines),
             collected_golds: collected_golds(&sim.entities.golds),
+            boost_pads: sim.entities.boost_pads.clone(),
             bounce_blocks: sim.entities.bounce_blocks.clone(),
             exit_frames_since_open: sim.entities.exits.iter().map(|exit| exit.frames_since_door_open).collect(),
             thwumps: sim.entities.thwumps.clone(),
@@ -166,6 +168,8 @@ impl KeyFrame {
         for &gold_i in &self.collected_golds {
             sim.entities.golds[gold_i].collected = true;
         }
+
+        self.boost_pads.clone_into(&mut sim.entities.boost_pads);
 
         self.bounce_blocks.clone_into(&mut sim.entities.bounce_blocks);
 
