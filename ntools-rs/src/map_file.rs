@@ -259,7 +259,7 @@ fn calc_entity_counts(entities: &EditorEntities) -> [u16; 40] {
     entity_counts
 }
 
-fn read_u32(cursor: &mut Cursor<&[u8]>) -> Result<u32, std::io::Error> {
+pub fn read_u32(cursor: &mut Cursor<&[u8]>) -> Result<u32, std::io::Error> {
     let mut bytes = [0_u8; 4];
     cursor.read_exact(&mut bytes)?;
     Ok(u32::from_le_bytes(bytes))

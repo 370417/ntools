@@ -19,10 +19,15 @@ pub struct Replay {
     pub(crate) keyframes: BTreeMap<u32, KeyFrame>,
     pub(crate) sender: Option<Sender<Vec<PastNinja>>>,
     pub(crate) anim_data: Box<[u8]>,
+    pub(crate) is_from_attract: bool,
 }
 
 #[wasm_bindgen]
 impl Replay {
+    pub fn is_from_attract(&self) -> bool {
+        self.is_from_attract
+    }
+
     pub fn send_past_ninjas(&mut self) {
         if let Some(sender) = self.sender.take() {
             let _ = sender.send(std::mem::take(&mut self.past_ninjas));
@@ -675,6 +680,7 @@ mod tests {
                 keyframes,
                 sender: None,
                 anim_data: Box::new([]),
+                is_from_attract: true,
             })
         }
     }

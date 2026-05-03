@@ -30,7 +30,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
     const replay = props.replay;
 
     const [recording, setRecording] = createSignal(true);
-    const [isPlaying, setIsPlaying] = createSignal(true);
+    const [isPlaying, setIsPlaying] = createSignal(!replay.is_from_attract());
     // If dragging dragStart is the progress value (frame) that the drag started at.
     // If not dragging, dragStart is undefined.
     const [dragStart, setDragStart] = createSignal<number | undefined>(undefined);
