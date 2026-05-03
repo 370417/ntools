@@ -12,7 +12,7 @@ export function InputDisplay(props: {
                     <circle r="1.5" fill="var(--background)" opacity={Number.isNaN(input()) ? 0.3 : 1} />
                 </Show>
                 <Show when={input() > 0}>
-                    <path d="M -3 1 L 0 -3 L 3 1 L 0 -1 Z" stroke="var(--background)" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M -3 1 L 0 -3 L 3 1 L 0 -1 Z" stroke={`oklch(60% 80% ${hueDeg(input())}deg)`} fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
                 </Show>
             </g>}
         </Index>
@@ -45,6 +45,32 @@ function rotationDeg(input: number): number {
         // left and right and jump
         case 7:
             return -45;
+        default:
+            return 180;
+    }
+}
+
+function hueDeg(input: number): number {
+    switch (input) {
+        // jump
+        case 1:
+            return 140;
+        // right
+        case 2:
+            return 270;
+        // jump and right
+        case 3:
+            return 200;
+        // left
+        case 4:
+        // left and right
+        case 6:
+            return 0;
+        // left and jump
+        case 5:
+        // left and right and jump
+        case 7:
+            return 100;
         default:
             return 180;
     }
