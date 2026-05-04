@@ -49,6 +49,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
             if (isPlaying()) {
                 setIsPlaying(false);
                 setRecording(false);
+                setPreviewProgress(undefined);
                 updatePausedInfo();
             } else {
                 setIsPlaying(true);
