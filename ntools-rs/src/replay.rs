@@ -4,7 +4,7 @@ use futures_channel::oneshot::Sender;
 use glam::{DVec2, FloatExt};
 use wasm_bindgen::prelude::*;
 
-use crate::{anim_data::flatten_bones, editor::Editor, entity::mine::Mine, grid::{COLS, Grid, ROWS}, map_file::MapFile, ninja::{Ninja, NinjaState, PastNinja}, orientation::OrientationExt, segment::{Segment, extract_path}, simulation::{Input, KeyFrame, Simulation}, tile::TILE_SIZE};
+use crate::{anim_data::flatten_bones, attract::to_attract_bytes, editor::Editor, entity::mine::Mine, grid::{COLS, Grid, ROWS}, map_file::MapFile, ninja::{Ninja, NinjaState, PastNinja}, orientation::OrientationExt, segment::{Segment, extract_path}, simulation::{Input, KeyFrame, Simulation}, tile::TILE_SIZE};
 
 #[wasm_bindgen]
 pub struct Replay {
@@ -530,8 +530,22 @@ impl Replay {
         self.current_sim.entities.chase_drones[i].orientation.rotation_deg()
     }
 
+    pub fn deathballs_len(&self) -> usize {
+        self.current_sim.entities.deathballs.len()
+    }
+
+    pub fn deathball_x(&self, i: usize, partial_frame: f64) -> f64 {
+        let deathball = &self.current_sim.entities.deathballs[i];
+        (deathball.pos.x - deathball.speed.x).lerp(deathball.pos.x, partial_frame)
+    }
+
+    pub fn deathball_y(&self, i: usize, partial_frame: f64) -> f64 {
+        let deathball = &self.current_sim.entities.deathballs[i];
+        (deathball.pos.y - deathball.speed.y).lerp(deathball.pos.y, partial_frame)
+    }
+
     pub fn export_attract(&self, editor: &Editor) -> Box<[u8]> {
-        MapFile::to_attract(&editor.export_map(), &self.inputs).into()
+        to_attract_bytes(&editor.export_map(), &self.inputs).into()
     }
 }
 
@@ -558,8 +572,6 @@ impl Replay {
 
 #[cfg(test)]
 mod tests {
-    use crate::attract::Attract;
-
     use super::*;
 
     #[test]
@@ -658,30 +670,8 @@ mod tests {
 
     impl Replay {
         fn from_attract(attract_bytes: &[u8]) -> Result<Replay, String> {
-            let Attract { level_name, author_name, tile_segments, ninjas, entities, inputs, .. } = Attract::from_bytes(attract_bytes)?;
-
-            let mut segments = tile_segments;
-            entities.doors.populate_grid(&mut segments);
-
-            let current_sim = Simulation::new(ninjas, entities, false)?;
-
-            let mut keyframes = BTreeMap::new();
-            keyframes.insert(0, KeyFrame::from_sim(&current_sim, &current_sim.entities.mines));
-
-            Ok(Replay {
-                _level_name: level_name,
-                _author_name: Some(author_name),
-                segments,
-                inputs,
-                past_ninjas: Vec::new(),
-                initial_mines: current_sim.entities.mines.clone(),
-                preview_sim: current_sim.clone(),
-                current_sim,
-                keyframes,
-                sender: None,
-                anim_data: Box::new([]),
-                is_from_attract: true,
-            })
+            let mut editor = Editor::new();
+            editor.load_attract(attract_bytes, false, false)
         }
     }
 }

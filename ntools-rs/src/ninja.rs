@@ -456,6 +456,9 @@ impl Ninja {
                 GridEntityType::ZapDrone => {
                     entities.zap_drones[i].logical_collision(self);
                 }
+                GridEntityType::Deathball => {
+                    entities.deathballs[i].logical_collision(self);
+                }
             }
         }
 

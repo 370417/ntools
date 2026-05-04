@@ -76,7 +76,7 @@ impl ModifyEntity {
             EditorEntity::EvilNinja { pos } |
             EditorEntity::Gold { pos } |
             EditorEntity::GaussTurret { pos } |
-            EditorEntity::DeathBall { pos } |
+            EditorEntity::Deathball { pos } |
             EditorEntity::LaserTurret { pos, .. } |
             EditorEntity::MiniDrone { pos, .. } |
             EditorEntity::OneWay { pos, .. } => *pos = new_pos,

@@ -26,6 +26,7 @@ import { BatDefs, Bats, type BatData } from "./entities/Bat";
 import { LaserDroneDefs, LaserDrones, type LaserDroneData } from "./entities/LaserDrone";
 import { ChaseDroneDefs, ChaseDrones, type ChaseDroneData } from "./entities/ChaseDrone";
 import { GoldDefs, Golds, type GoldData } from "./entities/Gold";
+import { DeathballDefs, Deathballs, type DeathballData } from "./entities/Deathball";
 
 const COLS = 42;
 const ROWS = 23;
@@ -68,6 +69,7 @@ const ENTITY_BOUNCE_BLOCK = 17;
 const ENTITY_THWUMP = 20;
 const ENTITY_TOGGLE_MINE = 21;
 const ENTITY_BOOST_PAD = 24;
+const ENTITY_DEATHBALL = 25;
 const ENTITY_BAT = 27;
 const ENTITY_SHOVE_THWUMP = 28;
 
@@ -127,6 +129,8 @@ export type EntitiesProps = {
     setThwumps: Setter<ThwumpData[]>,
     boostPads: Accessor<BoostPadData[]>,
     setBoostPads: Setter<BoostPadData[]>,
+    deathballs: Accessor<DeathballData[]>,
+    setDeathballs: Setter<DeathballData[]>,
     bats: Accessor<BatData[]>,
     setBats: Setter<BatData[]>,
     shoveThwumps: Accessor<ShoveThwumpData[]>,
@@ -154,6 +158,7 @@ function createEntities(): EntitiesProps {
     const [bounceBlocks, setBounceBlocks] = createSignal<BounceBlockData[]>([]);
     const [thwumps, setThwumps] = createSignal<ThwumpData[]>([]);
     const [boostPads, setBoostPads] = createSignal<BoostPadData[]>([]);
+    const [deathballs, setDeathballs] = createSignal<DeathballData[]>([]);
     const [bats, setBats] = createSignal<BatData[]>([]);
     const [shoveThwumps, setShoveThwumps] = createSignal<ShoveThwumpData[]>([]);
     return {
@@ -177,6 +182,7 @@ function createEntities(): EntitiesProps {
         bounceBlocks, setBounceBlocks,
         thwumps, setThwumps,
         boostPads, setBoostPads,
+        deathballs, setDeathballs,
         bats, setBats,
         shoveThwumps, setShoveThwumps,
     };
@@ -203,6 +209,7 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
     const bounceBlocks: BounceBlockData[] = [];
     const thwumps: ThwumpData[] = [];
     const boostPads: BoostPadData[] = [];
+    const deathballs: DeathballData[] = [];
     const bats: BatData[] = [];
     const shoveThwumps: ShoveThwumpData[] = [];
 
@@ -291,6 +298,8 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
                 ...entityCopy,
                 animProgress: 1,
             });
+        } else if (entity.type_int === ENTITY_DEATHBALL) {
+            deathballs.push(entityCopy);
         } else if (entity.type_int === ENTITY_BAT) {
             bats.push(entityCopy);
         } else if (entity.type_int === ENTITY_SHOVE_THWUMP) {
@@ -323,30 +332,37 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
     entities.setBounceBlocks(bounceBlocks);
     entities.setThwumps(thwumps);
     entities.setBoostPads(boostPads);
+    entities.setDeathballs(deathballs);
     entities.setBats(bats);
     entities.setShoveThwumps(shoveThwumps);
 }
 
 function Entities({ entities }: { entities: EntitiesProps }) {
     return <>
-        <ExitDoors exitDoors={entities.exitDoors} />
-        <OneWays oneWays={entities.oneWays} />
-        <Mines mines={entities.mines} />
-        <RegularDoors regularDoors={entities.regularDoors} />
         <TrapDoors trapDoors={entities.trapDoors} />
         <LockedDoors lockedDoors={entities.lockedDoors} />
         <LockedSwitches lockedSwitches={entities.lockedSwitches} />
         <TrapSwitches trapSwitches={entities.trapSwitches} />
+        <ExitDoors exitDoors={entities.exitDoors} />
+        <OneWays oneWays={entities.oneWays} />
+        <Mines mines={entities.mines} />
         <Golds golds={entities.golds} />
         <ExitSwitches exitSwitches={entities.exitSwitches} />
+        <RegularDoors regularDoors={entities.regularDoors} />
         <LaunchPads launchPads={entities.launchPads} />
-        <ChaingunDrones chaingunDrones={entities.chaingunDrones} />
         <LaserDrones laserDrones={entities.laserDrones} />
+        <ChaingunDrones chaingunDrones={entities.chaingunDrones} />
         <ZapDrones zapDrones={entities.zapDrones} />
         <ChaseDrones chaseDrones={entities.chaseDrones} />
         <FloorGuards floorGuards={entities.floorGuards} />
+        {/* micro drone */}
         <Bats bats={entities.bats} />
+        <Deathballs deathballs={entities.deathballs} />
+        {/* gauss */}
+        {/* rocket */}
+        {/* laser turret */}
         <Thwumps thwumps={entities.thwumps} />
+        {/* evil ninja */}
         <For each={entities.ninjas()}>
             {ninja => <Ninja class="ninja" ninja={() => ninja} bones={() => BONES_STANDING} />}
         </For>
@@ -629,6 +645,7 @@ export function EditorApp(props: {
                 <ZapDroneDefs />
                 <ChaseDroneDefs />
                 <BatDefs />
+                <DeathballDefs />
                 <path id="tilemode-crosshair" stroke-width="1.5" fill="none" d={tilemodeCrosshairPath} />
                 <path id="crosshair" stroke-width="1.5" fill="none" d={crosshairPath} />
                 <filter id="outline" filterUnits="userSpaceOnUse" x="0" y="0" width="1056" height="600">

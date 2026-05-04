@@ -83,6 +83,10 @@
     --bat-body: #FFFFFF;
     --bat-eye: #FFFFFF;
 
+    --deathball-outer: #9100A4;
+    --deathball-middle: #5F0D6B;
+    --deathball-inner: #3F1CB2;
+
     --time-remaining: #FECC04;
     --hardcore-time: #DF9B43;
     --empty-timebar: #707A6B;

@@ -93,7 +93,7 @@ pub enum EditorEntity {
     BoostPad {
         pos: EntityPos,
     },
-    DeathBall {
+    Deathball {
         pos: EntityPos,
     },
     MiniDrone {
@@ -137,7 +137,7 @@ pub enum EntityId {
     EvilNinja = 22,
     LaserTurret = 23,
     BoostPad = 24,
-    DeathBall = 25,
+    Deathball = 25,
     MiniDrone = 26,
     Bat = 27,
     ShoveThwump = 28,
@@ -179,7 +179,7 @@ impl TryFrom<u8> for EntityId {
             22 => Ok(Self::EvilNinja),
             23 => Ok(Self::LaserTurret),
             24 => Ok(Self::BoostPad),
-            25 => Ok(Self::DeathBall),
+            25 => Ok(Self::Deathball),
             26 => Ok(Self::MiniDrone),
             27 => Ok(Self::Bat),
             28 => Ok(Self::ShoveThwump),
@@ -233,7 +233,7 @@ impl EditorEntity {
             EntityId::EvilNinja => EditorEntity::EvilNinja { pos },
             EntityId::LaserTurret => EditorEntity::LaserTurret { pos, orientation: orientations.orientation },
             EntityId::BoostPad => EditorEntity::BoostPad { pos },
-            EntityId::DeathBall => EditorEntity::DeathBall { pos },
+            EntityId::Deathball => EditorEntity::Deathball { pos },
             EntityId::MiniDrone => EditorEntity::MiniDrone { pos, orientation: orientations.orientation_cardinal, mode: modes.drone_mode },
             EntityId::Bat => EditorEntity::Bat { pos },
             EntityId::ShoveThwump => EditorEntity::ShoveThwump { pos, orientation: orientations.orientation },
@@ -285,7 +285,7 @@ impl EditorEntity {
             EditorEntity::EvilNinja { pos } |
             EditorEntity::Gold { pos } |
             EditorEntity::GaussTurret { pos } |
-            EditorEntity::DeathBall { pos } |
+            EditorEntity::Deathball { pos } |
             EditorEntity::LaserTurret { pos, .. } |
             EditorEntity::MiniDrone { pos, .. } |
             EditorEntity::OneWay { pos, .. } => pos,
@@ -316,7 +316,7 @@ impl EditorEntity {
             EditorEntity::EvilNinja { pos } |
             EditorEntity::Gold { pos } |
             EditorEntity::GaussTurret { pos } |
-            EditorEntity::DeathBall { pos } |
+            EditorEntity::Deathball { pos } |
             EditorEntity::LaserTurret { pos, .. } |
             EditorEntity::MiniDrone { pos, .. } |
             EditorEntity::OneWay { pos, .. } => pos,
@@ -484,8 +484,8 @@ impl EditorEntity {
             EditorEntity::EvilNinja { .. } => EntityId::EvilNinja,
             EditorEntity::LaserTurret { .. } => EntityId::LaserTurret,
             EditorEntity::BoostPad { .. } => EntityId::BoostPad,
-            EditorEntity::DeathBall { .. } => EntityId::DeathBall,
-            EditorEntity::MiniDrone { .. } => EntityId::DeathBall,
+            EditorEntity::Deathball { .. } => EntityId::Deathball,
+            EditorEntity::MiniDrone { .. } => EntityId::Deathball,
             EditorEntity::Bat { .. } => EntityId::Bat,
             EditorEntity::ShoveThwump { .. } => EntityId::ShoveThwump,
         }

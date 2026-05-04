@@ -1,4 +1,4 @@
-use crate::{entity::{Entities, EntityIndex, GridEntityType, boost_pad::BoostPad, bounce_block::BounceBlock, door::RegularDoor, floor_guard::FloorGuard, gold::collected_golds, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, on_door_state_change, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::Grid, ninja::{AnimState, Ninja, NinjaState}, segment::Segment};
+use crate::{entity::{Entities, EntityIndex, GridEntityType, boost_pad::BoostPad, bounce_block::BounceBlock, deathball::Deathball, door::RegularDoor, floor_guard::FloorGuard, gold::collected_golds, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, on_door_state_change, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::Grid, ninja::{AnimState, Ninja, NinjaState}, segment::Segment};
 
 #[derive(Clone)]
 pub struct Simulation {
@@ -36,6 +36,7 @@ pub struct KeyFrame {
     regular_doors: Vec<RegularDoor>,
     shove_thwumps: Vec<ShoveThwump>,
     zap_drones: Vec<ZapDrone>,
+    deathballs: Vec<Deathball>,
 }
 
 impl Input {
@@ -109,7 +110,13 @@ impl Simulation {
         for mine in &mut self.entities.mines { mine.think(&self.ninja) }
         for thwump in &mut self.entities.thwumps { thwump.think(&self.ninja, segments, &self.entities.doors) }
         for floor_guard in &mut self.entities.floor_guards { floor_guard.think(&self.ninja, segments, &self.entities.doors) }
-        for (i, shove_thwump) in self.entities.shove_thwumps.iter_mut().enumerate() {  shove_thwump.think(i, &mut self.entity_grid, segments, &self.entities.doors) }
+        for (i, shove_thwump) in self.entities.shove_thwumps.iter_mut().enumerate() { shove_thwump.think(i, &mut self.entity_grid, segments, &self.entities.doors) }
+        for i in 0..self.entities.deathballs.len() {
+            let (deathball, other_deathballs) = self.entities.deathballs[i..].split_at_mut(1);
+            deathball[0].think(&self.ninja, other_deathballs, segments, &self.entities.doors);
+        }
+        // call move_entities right after think for deathballs to get them in the correct grid cell since they get moved in the think function.
+        move_entities(&mut self.entities.deathballs, &mut self.entity_grid, segments, &self.entities.doors);
 
         if self.ninja.state != NinjaState::Disabled {
             self.ninja.integrate();
@@ -150,6 +157,7 @@ impl KeyFrame {
             regular_doors: sim.entities.doors.regular.clone(),
             shove_thwumps: sim.entities.shove_thwumps.clone(),
             zap_drones: sim.entities.zap_drones.clone(),
+            deathballs: sim.entities.deathballs.clone(),
         }
     }
 
@@ -194,6 +202,8 @@ impl KeyFrame {
         self.shove_thwumps.clone_into(&mut sim.entities.shove_thwumps);
 
         self.zap_drones.clone_into(&mut sim.entities.zap_drones);
+
+        self.deathballs.clone_into(&mut sim.entities.deathballs);
 
         sim.entity_grid.drain_mobs();
         // add all mobs back into entity_grid

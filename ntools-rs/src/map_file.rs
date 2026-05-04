@@ -59,56 +59,6 @@ impl MapFile {
         })
     }
 
-    // TODO: attract.rs is old -- refactor
-    pub fn to_attract(map_bytes: &[u8], input_bytes: &[u8]) -> Vec<u8> {
-        let mut bytes = Vec::new();
-
-        // first 8 bytes aren't included in demo
-        let map_bytes = &map_bytes[8..];
-
-        // First 4 bytes are map data length
-        bytes.extend((map_bytes.len() as u32).to_le_bytes());
-
-        // Next 4 bytes are demo length
-        let demo_len = (30 + input_bytes.len()) as u32;
-        bytes.extend(demo_len.to_le_bytes());
-
-        // Next is map data
-        bytes.extend(map_bytes);
-
-        // Demo data starts with 0
-        bytes.extend([0]);
-
-        // Then data length
-        bytes.extend(demo_len.to_le_bytes());
-
-        // Then 4 bytes set to 1
-        bytes.extend(1_u32.to_le_bytes());
-
-        // Then frame count
-        bytes.extend((input_bytes.len() as u32).to_le_bytes());
-
-        // Then level id
-        bytes.extend(1234_u32.to_le_bytes());
-
-        // Then game mode
-        bytes.extend(0_u32.to_le_bytes());
-
-        // Then 4 bytes of 0
-        bytes.extend(0_u32.to_le_bytes());
-
-        // Then a 1 or 3
-        bytes.extend([1]);
-
-        // Then max int
-        bytes.extend(std::u32::MAX.to_le_bytes());
-
-        // Then inputs
-        bytes.extend(input_bytes);
-
-        bytes.to_vec()
-    }
-
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::new();
 
@@ -227,7 +177,7 @@ impl <'a> Iterator for EntityDataParser<'a> {
                 EntityId::EvilNinja => return Some(EditorEntity::EvilNinja { pos }),
                 EntityId::LaserTurret => return Some(EditorEntity::LaserTurret { pos, orientation }),
                 EntityId::BoostPad => return Some(EditorEntity::BoostPad { pos }),
-                EntityId::DeathBall => return Some(EditorEntity::DeathBall { pos }),
+                EntityId::Deathball => return Some(EditorEntity::Deathball { pos }),
                 EntityId::MiniDrone => return Some(EditorEntity::MiniDrone { pos, orientation: orientation_cardinal, mode: drone_mode }),
                 EntityId::Bat => return Some(EditorEntity::Bat { pos }),
                 EntityId::ShoveThwump => return Some(EditorEntity::ShoveThwump { pos, orientation }),
@@ -318,7 +268,7 @@ fn editor_entities_to_bytes(entities: &EditorEntities) -> Vec<u8> {
                 EditorEntity::EvilNinja { pos } => bytes.extend([id, pos.x as u8, pos.y as u8, 0, 0]),
                 EditorEntity::LaserTurret { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
                 EditorEntity::BoostPad { pos } => bytes.extend([id, pos.x as u8, pos.y as u8, 0, 0]),
-                EditorEntity::DeathBall { pos } => bytes.extend([id, pos.x as u8, pos.y as u8, 0, 0]),
+                EditorEntity::Deathball { pos } => bytes.extend([id, pos.x as u8, pos.y as u8, 0, 0]),
                 EditorEntity::MiniDrone { pos, orientation, mode } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, mode as u8]),
                 EditorEntity::Bat { pos } => bytes.extend([id, pos.x as u8, pos.y as u8, 0, 0]),
                 EditorEntity::ShoveThwump { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),

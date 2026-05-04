@@ -148,7 +148,7 @@ impl PlaceEntity {
             EditorEntity::EvilNinja { pos } |
             EditorEntity::Gold { pos } |
             EditorEntity::GaussTurret { pos } |
-            EditorEntity::DeathBall { pos } |
+            EditorEntity::Deathball { pos } |
             EditorEntity::LaserTurret { pos, .. } |
             EditorEntity::MiniDrone { pos, .. } |
             EditorEntity::OneWay { pos, .. } => *pos = new_pos,
@@ -232,6 +232,10 @@ impl PlaceEntity {
         match self.entity {
             EditorEntity::Mine { pos } => self.entity = EditorEntity::ToggleMine { pos },
             EditorEntity::ToggleMine { pos } => self.entity = EditorEntity::Mine { pos },
+            EditorEntity::ZapDrone { pos, orientation, mode } => self.entity = EditorEntity::ChaseDrone { pos, orientation, mode },
+            EditorEntity::ChaseDrone { pos, orientation, mode } => self.entity = EditorEntity::ZapDrone { pos, orientation, mode },
+            EditorEntity::Deathball { pos } => self.entity = EditorEntity::Bat { pos },
+            EditorEntity::Bat { pos } => self.entity = EditorEntity::Deathball { pos },
             _ => {}
         }
     }

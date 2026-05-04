@@ -1,11 +1,12 @@
 use glam::DVec2;
 
-use crate::{entity::{boost_pad::BoostPad, bounce_block::BounceBlock, chaingun_drone::ChaingunDrone, chase_drone::ChaseDrone, door::Doors, exit::Exit, floor_guard::FloorGuard, gold::Gold, laser_drone::LaserDrone, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::{Grid, GridPos}, segment::Segment};
+use crate::{entity::{boost_pad::BoostPad, bounce_block::BounceBlock, chaingun_drone::ChaingunDrone, chase_drone::ChaseDrone, deathball::Deathball, door::Doors, exit::Exit, floor_guard::FloorGuard, gold::Gold, laser_drone::LaserDrone, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::{Grid, GridPos}, segment::Segment};
 
 pub mod boost_pad;
 pub mod bounce_block;
 pub mod chaingun_drone;
 pub mod chase_drone;
+pub mod deathball;
 pub mod door;
 pub mod exit;
 pub mod floor_guard;
@@ -24,6 +25,7 @@ pub struct Entities {
     pub mines: Vec<Mine>,
     pub golds: Vec<Gold>,
     pub bounce_blocks: Vec<BounceBlock>,
+    pub deathballs: Vec<Deathball>,
     pub one_ways: Vec<OneWay>,
     pub boost_pads: Vec<BoostPad>,
     pub exits: Vec<Exit>,
@@ -54,6 +56,7 @@ pub enum GridEntityType {
     RegularDoor,
     ShoveThwump,
     ZapDrone,
+    Deathball,
 }
 
 pub trait Entity {
@@ -69,6 +72,7 @@ impl Entities {
             mines: Vec::new(),
             golds: Vec::new(),
             bounce_blocks: Vec::new(),
+            deathballs: Vec::new(),
             one_ways: Vec::new(),
             boost_pads: Vec::new(),
             exits: Vec::new(),
@@ -95,6 +99,9 @@ impl Entities {
         }
         for (i, bounce_block) in self.bounce_blocks.iter().enumerate() {
             grid[bounce_block.pos].push((GridEntityType::BounceBlock, i));
+        }
+        for (i, deathball) in self.deathballs.iter().enumerate() {
+            grid[deathball.pos].push((GridEntityType::Deathball, i));
         }
         for (i, one_way) in self.one_ways.iter().enumerate() {
             grid[one_way.pos].push((GridEntityType::OneWay, i));
@@ -143,6 +150,7 @@ impl GridEntityType {
             GridEntityType::Thwump |
             GridEntityType::FloorGuard |
             GridEntityType::ZapDrone |
+            GridEntityType::Deathball |
             GridEntityType::ShoveThwump => true,
             GridEntityType::Mine |
             GridEntityType::Gold |

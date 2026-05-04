@@ -238,6 +238,9 @@ const colorVarNames = [
     '--laser-drone-aim',
     '--bat-body',
     '--bat-eye',
+    '--deathball-outer',
+    '--deathball-middle',
+    '--deathball-inner',
     '--time-remaining',
     '--hardcore-time',
     '--empty-timebar',
@@ -506,6 +509,18 @@ const colorVarPaletteLocations: Record<ColorVarName, { file: PaletteFileName, in
     '--bat-eye': {
         file: 'entityBat',
         index: 1,
+    },
+    '--deathball-outer': {
+        file: 'entityBat',
+        index: 2,
+    },
+    '--deathball-middle': {
+        file: 'entityBat',
+        index: 1,
+    },
+    '--deathball-inner': {
+        file: 'entityBat',
+        index: 0,
     },
     '--time-remaining': {
         file: 'timeBar',

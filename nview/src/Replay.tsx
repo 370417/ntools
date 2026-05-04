@@ -25,6 +25,7 @@ import { ChaseDroneDefs, ChaseDrones, updateChaseDrones, type ChaseDroneData } f
 import { LaserDroneDefs, LaserDrones, updateLaserDrones, type LaserDroneData } from './entities/LaserDrone';
 import { GoldDefs, Golds, updateGolds, type GoldData } from './entities/Gold';
 import { InputDisplay } from './InputDisplay';
+import { DeathballDefs, Deathballs, updateDeathballs, type DeathballData } from './entities/Deathball';
 
 export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventState: GlobalEventState }) {
     const replay = props.replay;
@@ -49,6 +50,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
             if (isPlaying()) {
                 setIsPlaying(false);
                 setRecording(false);
+                setPreviewProgress(undefined);
                 updatePausedInfo();
             } else {
                 setIsPlaying(true);
@@ -138,6 +140,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
     const chaseDrones = createSignal<ChaseDroneData[]>([]);
     const chaingunDrones = createSignal<ChaingunDroneData[]>([]);
     const laserDrones = createSignal<LaserDroneData[]>([]);
+    const deathballs = createSignal<DeathballData[]>([]);
 
     const [pastNinjas, setPastNinjas] = createSignal<{ x: number, y: number }[]>([]);
     function updatePastNinjas() {
@@ -268,6 +271,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
         updateChaseDrones(chaseDrones, replay, partialFrame);
         updateChaingunDrones(chaingunDrones, replay, partialFrame);
         updateLaserDrones(laserDrones, replay, partialFrame);
+        updateDeathballs(deathballs, replay, partialFrame);
 
         setReplayLength(replay.replay_length());
     }
@@ -300,24 +304,26 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                     <LaserDroneDefs />
                     <ZapDroneDefs />
                     <ChaseDroneDefs />
+                    <DeathballDefs />
                     <ExitDoorGradient />
                 </defs>
+                <TrapDoors trapDoors={trapDoors[0]} />
+                <LockedDoors lockedDoors={lockedDoors[0]} />
+                <LockedSwitches lockedSwitches={lockedSwitches[0]} />
+                <TrapSwitches trapSwitches={trapSwitches[0]} />
                 <ExitDoors exitDoors={exitDoors[0]} />
                 <OneWays oneWays={oneWays[0]} />
                 <Mines mines={mines[0]} />
-                <RegularDoors regularDoors={regularDoors[0]} />
-                <LockedDoors lockedDoors={lockedDoors[0]} />
-                <TrapDoors trapDoors={trapDoors[0]} />
-                <LockedSwitches lockedSwitches={lockedSwitches[0]} />
-                <TrapSwitches trapSwitches={trapSwitches[0]} />
                 <Golds golds={golds[0]} />
                 <ExitSwitches exitSwitches={exitSwitches[0]} />
+                <RegularDoors regularDoors={regularDoors[0]} />
                 <LaunchPads launchPads={launchPads[0]} />
-                <ChaingunDrones chaingunDrones={chaingunDrones[0]} />
                 <LaserDrones laserDrones={laserDrones[0]} />
+                <ChaingunDrones chaingunDrones={chaingunDrones[0]} />
                 <ZapDrones zapDrones={zapDrones[0]} />
                 <ChaseDrones chaseDrones={chaseDrones[0]} />
                 <FloorGuards floorGuards={floorGuards[0]} />
+                <Deathballs deathballs={deathballs[0]} />
                 <Thwumps thwumps={thwumps[0]} />
                 <Ninja class="ninja preview" ninja={ninjaPreview} bones={ninjaPreviewBones} />
                 <Ninja class="ninja" ninja={ninja} bones={ninjaBones} />
