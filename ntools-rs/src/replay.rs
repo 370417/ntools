@@ -530,6 +530,20 @@ impl Replay {
         self.current_sim.entities.chase_drones[i].orientation.rotation_deg()
     }
 
+    pub fn deathballs_len(&self) -> usize {
+        self.current_sim.entities.deathballs.len()
+    }
+
+    pub fn deathball_x(&self, i: usize, partial_frame: f64) -> f64 {
+        let deathball = &self.current_sim.entities.deathballs[i];
+        (deathball.pos.x - deathball.speed.x).lerp(deathball.pos.x, partial_frame)
+    }
+
+    pub fn deathball_y(&self, i: usize, partial_frame: f64) -> f64 {
+        let deathball = &self.current_sim.entities.deathballs[i];
+        (deathball.pos.y - deathball.speed.y).lerp(deathball.pos.y, partial_frame)
+    }
+
     pub fn export_attract(&self, editor: &Editor) -> Box<[u8]> {
         to_attract_bytes(&editor.export_map(), &self.inputs).into()
     }
