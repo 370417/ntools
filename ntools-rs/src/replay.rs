@@ -668,6 +668,47 @@ mod tests {
         }
     }
 
+    #[test]
+    fn test_a_deadly_dance() {
+        let mut replay = Replay::from_attract(include_bytes!("testfiles/a_deadly_dance")).unwrap();
+
+        // Each line contains two pairs of positions separated by spaces, x0 y0 x1 y1
+        // Positions are for deathballs.
+        // One line per frame.
+        let nsim_pos_log = include_str!("testfiles/a_deadly_dance_poslog.txt");
+        let nsim_pos_log = nsim_pos_log
+            .split_terminator('\n')
+            .map(|string| string
+                .split_ascii_whitespace()
+                .map(|string| string.parse::<f64>().unwrap())
+                .collect::<Vec<f64>>())
+            .collect::<Vec<Vec<f64>>>();
+
+        for i in 0..replay.inputs.len() {
+            replay.tick();
+            if i < nsim_pos_log.len() {
+                let x0 = replay.current_sim.entities.deathballs[0].pos.x;
+                let y0 = replay.current_sim.entities.deathballs[0].pos.y;
+                let x1 = replay.current_sim.entities.deathballs[1].pos.x;
+                let y1 = replay.current_sim.entities.deathballs[1].pos.y;
+
+                let nsim_x0 = nsim_pos_log[i][0];
+                let nsim_y0 = nsim_pos_log[i][1];
+                let nsim_x1 = nsim_pos_log[i][2];
+                let nsim_y1 = nsim_pos_log[i][3];
+
+                let dx0 = x0 - nsim_x0;
+                let dy0 = y0 - nsim_y0;
+
+                let dx1 = x1 - nsim_x1;
+                let dy1 = y1 - nsim_y1;
+
+                assert!(dx0.abs() < 0.000001 && dy0.abs() < 0.000001, "first deathball, frame {i}");
+                assert!(dx1.abs() < 0.000001 && dy1.abs() < 0.000001, "second deathball, frame {i}");
+            }
+        }
+    }
+
     impl Replay {
         fn from_attract(attract_bytes: &[u8]) -> Result<Replay, String> {
             let mut editor = Editor::new();
