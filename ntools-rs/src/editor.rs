@@ -50,6 +50,10 @@ pub struct Editor {
     show_past_ninjas_trail: bool,
     receiver: Option<Receiver<Vec<PastNinja>>>,
     anim_data: Box<[u8]>,
+    // Normally, pressing tab to start playing starts playing the game in real time,
+    // but if the game was paused before switching to the editor, we want to keep
+    // the game paused when switching out of the editor.
+    start_replay_paused: bool,
 }
 
 pub enum EditorMode {
@@ -94,6 +98,7 @@ impl Editor {
             show_past_ninjas_trail: false,
             receiver: None,
             anim_data: Box::new([]),
+            start_replay_paused: false,
         }
     }
 
@@ -107,6 +112,10 @@ impl Editor {
             477572 => 0, // valid
             _ => 1, // invalid
         }
+    }
+
+    pub fn set_start_replay_paused(&mut self, start_replay_paused: bool) {
+        self.start_replay_paused = start_replay_paused;
     }
 
     pub fn load_attract(&mut self, attract_bytes: &[u8], round_corners: bool, dynamic_friction: bool) -> Result<Replay, String> {
@@ -264,7 +273,7 @@ impl Editor {
             keyframes,
             sender: Some(sender),
             anim_data: self.anim_data.clone(),
-            is_from_attract: false,
+            is_from_attract: self.start_replay_paused,
         })
     }
 

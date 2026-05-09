@@ -4,7 +4,7 @@ use futures_channel::oneshot::Sender;
 use glam::{DVec2, FloatExt};
 use wasm_bindgen::prelude::*;
 
-use crate::{anim_data::flatten_bones, attract::to_attract_bytes, editor::Editor, entity::mine::Mine, grid::{COLS, Grid, ROWS}, map_file::MapFile, ninja::{Ninja, NinjaState, PastNinja}, orientation::OrientationExt, segment::{Segment, extract_path}, simulation::{Input, KeyFrame, Simulation}, tile::TILE_SIZE};
+use crate::{anim_data::flatten_bones, attract::to_attract_bytes, editor::Editor, entity::mine::Mine, grid::{COLS, Grid, ROWS}, ninja::{Ninja, NinjaState, PastNinja}, orientation::OrientationExt, segment::{Segment, extract_path}, simulation::{Input, KeyFrame, Simulation}, tile::TILE_SIZE};
 
 #[wasm_bindgen]
 pub struct Replay {

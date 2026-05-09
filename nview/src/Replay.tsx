@@ -52,9 +52,11 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                 setRecording(false);
                 setPreviewProgress(undefined);
                 updatePausedInfo();
+                props.editor.set_start_replay_paused(true);
             } else {
                 setIsPlaying(true);
                 setRecording(true);
+                props.editor.set_start_replay_paused(false);
             }
         } else if (event.code === 'Comma') {
             if (!isPlaying() && progress() > 0) {
@@ -275,6 +277,8 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
 
         setReplayLength(replay.replay_length());
     }
+
+    renderFrame(1);
 
     return (
         <>
