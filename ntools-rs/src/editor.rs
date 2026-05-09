@@ -257,7 +257,7 @@ impl Editor {
             _author_name: None,
             segments,
             inputs: Vec::new(),
-            past_ninjas: vec![current_sim.ninja.to_past_ninja()],
+            past_ninjas: vec![current_sim.ninja.to_past_ninja(0)],
             initial_mines: current_sim.entities.mines.clone(),
             preview_sim: current_sim.clone(),
             current_sim,

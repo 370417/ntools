@@ -63,6 +63,7 @@ pub struct PastNinja {
     pub anim_frame: usize,
     pub run_cycle: usize,
     pub tilt: DVec2,
+    pub prev_input: u8,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -1095,7 +1096,7 @@ impl Ninja {
         }
     }
 
-    pub fn to_past_ninja(&self) -> PastNinja {
+    pub fn to_past_ninja(&self, prev_input: u8) -> PastNinja {
         PastNinja {
             pos: self.pos,
             orientation: self.orientation,
@@ -1105,6 +1106,7 @@ impl Ninja {
             anim_frame: self.anim_frame,
             run_cycle: self.run_cycle,
             tilt: self.tilt,
+            prev_input,
         }
     }
 }
