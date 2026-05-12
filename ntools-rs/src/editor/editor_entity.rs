@@ -485,7 +485,7 @@ impl EditorEntity {
             EditorEntity::LaserTurret { .. } => EntityId::LaserTurret,
             EditorEntity::BoostPad { .. } => EntityId::BoostPad,
             EditorEntity::Deathball { .. } => EntityId::Deathball,
-            EditorEntity::MiniDrone { .. } => EntityId::Deathball,
+            EditorEntity::MiniDrone { .. } => EntityId::MiniDrone,
             EditorEntity::Bat { .. } => EntityId::Bat,
             EditorEntity::ShoveThwump { .. } => EntityId::ShoveThwump,
         }
