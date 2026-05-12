@@ -261,11 +261,17 @@ impl Editor {
         let (sender, receiver) = oneshot::channel();
         self.receiver = Some(receiver);
 
+        let inputs = if self.start_replay_paused {
+            self.past_ninjas.iter().skip(1).map(|past_ninja| past_ninja.prev_input).collect()
+        } else {
+            Vec::new()
+        };
+
         Ok(Replay {
             _level_name: String::new(),
             _author_name: None,
             segments,
-            inputs: Vec::new(),
+            inputs,
             past_ninjas: vec![current_sim.ninja.to_past_ninja(0)],
             initial_mines: current_sim.entities.mines.clone(),
             preview_sim: current_sim.clone(),
