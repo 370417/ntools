@@ -1,6 +1,6 @@
 use glam::{DMat2, DVec2};
 
-use crate::{collision_util::{Depenetration, penetration_square_vs_circle_with_orientation}, entity::{Entity, GridEntityType, Mob, door::Doors}, grid::{Grid, GridPos}, ninja::{self, Ninja}, orientation::Orientation, segment::{Curvature, Segment}, tile::{TILE_HALF_SIZE, TILE_SIZE}};
+use crate::{collision_util::{Depenetration, overlap_circle_vs_segment, penetration_square_vs_circle_with_orientation}, entity::{Entity, GridEntityType, Mob, door::Doors}, grid::{Grid, GridPos}, ninja::{self, Ninja}, orientation::Orientation, segment::{Curvature, Segment}, tile::{TILE_HALF_SIZE, TILE_SIZE}};
 
 const SEMI_SIDE: f64 = 9.0;
 const FORWARD_SPEED: f64 = 20.0 / 7.0;
@@ -146,8 +146,13 @@ impl Thwump {
             Corners::Square => penetration_square_vs_circle_with_orientation(self.pos, SEMI_SIDE + ninja::RADIUS + 0.1, ninja.pos, 0.0, self.orientation),
         };
         if let Some(depen) = depen {
-            // TODO: kill ninja if touching spicy part
-            // overlap_circle_vs_segment();
+            // kill ninja if touching spicy part
+            let point1 = self.pos + (SEMI_SIDE + 2.0) * self.orientation.vec2() + (SEMI_SIDE + 2.0) * self.orientation.rotate_cw().vec2();
+            let point2 = self.pos + (SEMI_SIDE + 2.0) * self.orientation.vec2() - (SEMI_SIDE + 2.0) * self.orientation.rotate_cw().vec2();
+            if overlap_circle_vs_segment(self.pos, ninja::RADIUS + 2.0, point1, point2) {
+                ninja.kill(0, DVec2::ZERO, DVec2::ZERO);
+            }
+
             if ninja.grav_eq_abs_horiz(depen.depen_unit_normal, 1.0) {
                 return Some(ninja.grav_get_horiz(depen.depen_unit_normal));
             }
