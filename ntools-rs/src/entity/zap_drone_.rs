@@ -123,6 +123,7 @@ fn choose_next_direction_and_goal(
     false
 }
 
+// TODO: drone movement doesn't respect rounded tiles
 fn test_next_direction_and_goal(
     pos: DVec2,
     orientation: OrientationCardinal,

@@ -1,4 +1,4 @@
-use crate::{entity::{Entities, EntityIndex, GridEntityType, boost_pad::BoostPad, bounce_block::BounceBlock, deathball::Deathball, door::RegularDoor, floor_guard::FloorGuard, gold::collected_golds, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, on_door_state_change, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::Grid, ninja::{AnimState, Ninja, NinjaState}, segment::Segment};
+use crate::{entity::{Entities, EntityIndex, GridEntityType, boost_pad::BoostPad, bounce_block::BounceBlock, chase_drone::ChaseDrone, deathball::Deathball, door::RegularDoor, floor_guard::FloorGuard, gold::collected_golds, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, on_door_state_change, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::Grid, ninja::{AnimState, Ninja, NinjaState}, segment::Segment};
 
 #[derive(Clone)]
 pub struct Simulation {
@@ -36,6 +36,7 @@ pub struct KeyFrame {
     regular_doors: Vec<RegularDoor>,
     shove_thwumps: Vec<ShoveThwump>,
     zap_drones: Vec<ZapDrone>,
+    chase_drones: Vec<ChaseDrone>,
     deathballs: Vec<Deathball>,
 }
 
@@ -91,6 +92,7 @@ impl Simulation {
         move_entities(&mut self.entities.thwumps, &mut self.entity_grid, segments, &self.entities.doors);
         move_entities(&mut self.entities.floor_guards, &mut self.entity_grid, segments, &self.entities.doors);
         move_entities(&mut self.entities.zap_drones, &mut self.entity_grid, segments, &self.entities.doors);
+        move_entities(&mut self.entities.chase_drones, &mut self.entity_grid, segments, &self.entities.doors);
         // Apparently boost pad logic is called as a move method.
         // I'd expect it to go in logical_collision, but in case the order matters,
         // I'll leave it here.
@@ -157,6 +159,7 @@ impl KeyFrame {
             regular_doors: sim.entities.doors.regular.clone(),
             shove_thwumps: sim.entities.shove_thwumps.clone(),
             zap_drones: sim.entities.zap_drones.clone(),
+            chase_drones: sim.entities.chase_drones.clone(),
             deathballs: sim.entities.deathballs.clone(),
         }
     }
@@ -202,6 +205,8 @@ impl KeyFrame {
         self.shove_thwumps.clone_into(&mut sim.entities.shove_thwumps);
 
         self.zap_drones.clone_into(&mut sim.entities.zap_drones);
+
+        self.chase_drones.clone_into(&mut sim.entities.chase_drones);
 
         self.deathballs.clone_into(&mut sim.entities.deathballs);
 

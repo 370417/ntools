@@ -199,4 +199,16 @@ impl ModifyEntity {
     pub fn export_entities(&self, entities: &EditorEntities) -> Box<[ExportedEntity]> {
         entities.keys().filter(|&&entity| entity != self.original_entity).map(|entity| entity.export()).collect()
     }
+
+    pub fn command_delete(&self, entities: &EditorEntities) -> Option<Command> {
+        entities
+            .get(&self.original_entity)
+            .map(|count| (self.original_entity, count))
+            .filter(|&(_entity, count)| *count > 0)
+            .map(|(entity, &count)| Command::SetEntityCount(SetEntityCount {
+                entity,
+                old_count: count,
+                new_count: count - 1,
+            }))
+    }
 }

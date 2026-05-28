@@ -207,8 +207,8 @@ impl Editor {
                     EditorEntity::ZapDrone { pos, orientation, mode } => {
                         entities.zap_drones.push(ZapDrone::new(pos.to_world_pos(), *orientation, *mode));
                     }
-                    EditorEntity::ChaseDrone { pos, orientation, .. } => {
-                        entities.chase_drones.push(ChaseDrone::new(pos.to_world_pos(), *orientation));
+                    EditorEntity::ChaseDrone { pos, orientation, mode } => {
+                        entities.chase_drones.push(ChaseDrone::new(pos.to_world_pos(), *orientation, *mode));
                     }
                     EditorEntity::FloorGuard { pos, orientation } => {
                         entities.floor_guards.push(FloorGuard::new(pos.to_world_pos(), *orientation));
@@ -1058,6 +1058,12 @@ impl Editor {
                     self.state.apply(command);
                     let crosshair_pos = PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid);
                     select_entity.set_selection(crosshair_pos, self.state.entities());
+                }
+            }
+            EditorMode::ModifyEntity(modify_entity) => {
+                if let Some(command) = modify_entity.command_delete(self.state.entities()) {
+                    self.state.apply(command);
+                    self.mode = EditorMode::SelectEntity(SelectEntity::new(self.cursor_pos, self.state.entities(), self.entity_fine_grid));
                 }
             }
             EditorMode::MoveSelection(move_selection) => {

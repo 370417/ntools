@@ -56,6 +56,7 @@ pub enum GridEntityType {
     RegularDoor,
     ShoveThwump,
     ZapDrone,
+    ChaseDrone,
     Deathball,
 }
 
@@ -139,6 +140,9 @@ impl Entities {
         for (i, zap_drone) in self.zap_drones.iter().enumerate() {
             grid[zap_drone.pos].push((GridEntityType::ZapDrone, i));
         }
+        for (i, chase_drone) in self.chase_drones.iter().enumerate() {
+            grid[chase_drone.pos].push((GridEntityType::ChaseDrone, i));
+        }
         grid
     }
 }
@@ -150,6 +154,7 @@ impl GridEntityType {
             GridEntityType::Thwump |
             GridEntityType::FloorGuard |
             GridEntityType::ZapDrone |
+            GridEntityType::ChaseDrone |
             GridEntityType::Deathball |
             GridEntityType::ShoveThwump => true,
             GridEntityType::Mine |
