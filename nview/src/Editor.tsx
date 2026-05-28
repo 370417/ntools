@@ -27,6 +27,7 @@ import { LaserDroneDefs, LaserDrones, type LaserDroneData } from "./entities/Las
 import { ChaseDroneDefs, ChaseDrones, type ChaseDroneData } from "./entities/ChaseDrone";
 import { GoldDefs, Golds, type GoldData } from "./entities/Gold";
 import { DeathballDefs, Deathballs, type DeathballData } from "./entities/Deathball";
+import { EVIL_NINJA_UNTOUCHED, EvilNinjaDefs, EvilNinjas, type EvilNinjaData } from "./entities/EvilNinja";
 
 const COLS = 42;
 const ROWS = 23;
@@ -67,6 +68,7 @@ const ENTITY_CHASE_DRONE = 15;
 const ENTITY_FLOOR_GUARD = 16;
 const ENTITY_BOUNCE_BLOCK = 17;
 const ENTITY_THWUMP = 20;
+const ENTITY_EVIL_NINJA = 22;
 const ENTITY_TOGGLE_MINE = 21;
 const ENTITY_BOOST_PAD = 24;
 const ENTITY_DEATHBALL = 25;
@@ -127,6 +129,8 @@ export type EntitiesProps = {
     setBounceBlocks: Setter<BounceBlockData[]>,
     thwumps: Accessor<ThwumpData[]>,
     setThwumps: Setter<ThwumpData[]>,
+    evilNinjas: Accessor<EvilNinjaData[]>,
+    setEvilNinjas: Setter<EvilNinjaData[]>,
     boostPads: Accessor<BoostPadData[]>,
     setBoostPads: Setter<BoostPadData[]>,
     deathballs: Accessor<DeathballData[]>,
@@ -157,6 +161,7 @@ function createEntities(): EntitiesProps {
     const [floorGuards, setFloorGuards] = createSignal<FloorGuardData[]>([]);
     const [bounceBlocks, setBounceBlocks] = createSignal<BounceBlockData[]>([]);
     const [thwumps, setThwumps] = createSignal<ThwumpData[]>([]);
+    const [evilNinjas, setEvilNinjas] = createSignal<EvilNinjaData[]>([]);
     const [boostPads, setBoostPads] = createSignal<BoostPadData[]>([]);
     const [deathballs, setDeathballs] = createSignal<DeathballData[]>([]);
     const [bats, setBats] = createSignal<BatData[]>([]);
@@ -181,6 +186,7 @@ function createEntities(): EntitiesProps {
         floorGuards, setFloorGuards,
         bounceBlocks, setBounceBlocks,
         thwumps, setThwumps,
+        evilNinjas, setEvilNinjas,
         boostPads, setBoostPads,
         deathballs, setDeathballs,
         bats, setBats,
@@ -208,6 +214,7 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
     const floorGuards: FloorGuardData[] = [];
     const bounceBlocks: BounceBlockData[] = [];
     const thwumps: ThwumpData[] = [];
+    const evilNinjas: EvilNinjaData[] = [];
     const boostPads: BoostPadData[] = [];
     const deathballs: DeathballData[] = [];
     const bats: BatData[] = [];
@@ -293,6 +300,12 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
             bounceBlocks.push(entityCopy);
         } else if (entity.type_int === ENTITY_THWUMP) {
             thwumps.push(entityCopy);
+        } else if (entity.type_int === ENTITY_EVIL_NINJA) {
+            evilNinjas.push({
+                ...entityCopy,
+                type: EVIL_NINJA_UNTOUCHED,
+                scale: 1,
+            });
         } else if (entity.type_int === ENTITY_BOOST_PAD) {
             boostPads.push({
                 ...entityCopy,
@@ -308,7 +321,6 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
                 touch: 16,
             });
         }
-        // Do I need this?
         entity.free();
     }
 
@@ -331,6 +343,7 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
     entities.setFloorGuards(floorGuards);
     entities.setBounceBlocks(bounceBlocks);
     entities.setThwumps(thwumps);
+    entities.setEvilNinjas(evilNinjas);
     entities.setBoostPads(boostPads);
     entities.setDeathballs(deathballs);
     entities.setBats(bats);
@@ -362,7 +375,7 @@ function Entities({ entities }: { entities: EntitiesProps }) {
         {/* rocket */}
         {/* laser turret */}
         <Thwumps thwumps={entities.thwumps} />
-        {/* evil ninja */}
+        <EvilNinjas evilNinjas={entities.evilNinjas} />
         <For each={entities.ninjas()}>
             {ninja => <Ninja class="ninja" ninja={() => ninja} bones={() => BONES_STANDING} />}
         </For>
@@ -640,6 +653,7 @@ export function EditorApp(props: {
                 <TrapSwitchDefs />
                 <BoostPadDefs />
                 <ThwumpDefs />
+                <EvilNinjaDefs />
                 <ChaingunDroneDefs />
                 <LaserDroneDefs />
                 <ZapDroneDefs />
