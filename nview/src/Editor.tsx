@@ -499,6 +499,8 @@ export function EditorApp(props: {
 
         else if (event.code === 'Slash') change = true, editor.press_slash();
 
+        // else if (event.code === 'KeyG') change = true, editor.fill_with_mines();
+
         if (change) {
             render(true);
             event.preventDefault();

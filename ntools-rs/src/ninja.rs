@@ -463,6 +463,9 @@ impl Ninja {
                 GridEntityType::Deathball => {
                     entities.deathballs[i].logical_collision(self);
                 }
+                GridEntityType::EvilNinja => {
+                    
+                }
             }
         }
 

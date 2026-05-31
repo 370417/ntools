@@ -6,7 +6,7 @@ use futures_channel::oneshot::{self, Receiver};
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{anim_data::flatten_bones, attract::from_attract_bytes, editor::{editor_entity::{EditorEntity, EntityId, ExportedEntity}, editor_state::{Command, EditorState}, entity_palette::EntityPalette, modify_entity::ModifyEntity, move_selection::MoveSelection, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::PlaceEntity, select_entity::SelectEntity, select_tiles::SelectTiles, spawn_ninja::closest_past_ninja, tile_palette::TilePalette}, entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, chaingun_drone::ChaingunDrone, chase_drone::ChaseDrone, deathball::Deathball, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floor_guard::FloorGuard, gold::Gold, laser_drone::LaserDrone, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::{COLS, GridPos, ROWS}, map_file::MapFile, mode::{DroneMode, Modes}, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationBinary, OrientationCardinal, Orientations}, replay::Replay, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_HALF_SIZE, TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
+use crate::{anim_data::flatten_bones, attract::from_attract_bytes, editor::{editor_entity::{EditorEntity, EntityId, EntityPos, ExportedEntity}, editor_state::{Command, EditorState, SetEntityCount}, entity_palette::EntityPalette, modify_entity::ModifyEntity, move_selection::MoveSelection, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::PlaceEntity, select_entity::SelectEntity, select_tiles::SelectTiles, spawn_ninja::closest_past_ninja, tile_palette::TilePalette}, entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, chaingun_drone::ChaingunDrone, chase_drone::ChaseDrone, deathball::Deathball, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floor_guard::FloorGuard, gold::Gold, laser_drone::LaserDrone, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::{COLS, GridPos, ROWS}, map_file::MapFile, mode::{DroneMode, Modes}, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationBinary, OrientationCardinal, Orientations}, replay::Replay, replay_file::from_outte_replay_bytes, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_HALF_SIZE, TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
 
 pub mod editor_entity;
 pub mod editor_state;
@@ -122,11 +122,21 @@ impl Editor {
         let (map, inputs) = from_attract_bytes(attract_bytes)?;
         self.set_level_name(&map.level_name);
         self.state = EditorState::from_map(map);
+        self.start_replay_paused = true;
 
         let mut replay = self.to_replay(round_corners, dynamic_friction)?;
         replay.is_from_attract = true;
         replay.inputs = inputs;
 
+        Ok(replay)
+    }
+
+    pub fn load_outte_replay(&mut self, replay_bytes: &[u8], round_corners: bool, dynamic_friction: bool) -> Result<Replay, String> {
+        let inputs = from_outte_replay_bytes(replay_bytes)?;
+        self.start_replay_paused = true;
+        let mut replay = self.to_replay(round_corners, dynamic_friction)?;
+        replay.is_from_attract = true;
+        replay.inputs = inputs;
         Ok(replay)
     }
 
@@ -1414,6 +1424,26 @@ impl Editor {
             flatten_bones(&closest_past_ninja(self.cursor_pos, &self.past_ninjas, self.entity_orientations.orientation, self.show_past_ninjas_trail).calc_ninja_position(&self.anim_data))
         } else {
             Box::new([])
+        }
+    }
+
+    pub fn fill_with_mines(&mut self) {
+        for x in 0..=(COLS * 4) {
+            'row: for y in 0..=(ROWS * 4) {
+                let pos = DVec2::new(24.0 + x as f64 * 6.0, 24.0 + y as f64 * 6.0);
+
+                for past_ninja in &self.past_ninjas {
+                    if past_ninja.pos.distance(pos) <= 14.0 {
+                        continue 'row;
+                    }
+                }
+
+                self.state.apply(Command::SetEntityCount(SetEntityCount {
+                    entity: EditorEntity::Mine { pos: EntityPos::from_world_pos(pos) },
+                    old_count: 0,
+                    new_count: 1,
+                }));
+            }
         }
     }
 }

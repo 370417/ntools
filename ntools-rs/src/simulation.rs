@@ -117,8 +117,11 @@ impl Simulation {
             let (deathball, other_deathballs) = self.entities.deathballs[i..].split_at_mut(1);
             deathball[0].think(&self.ninja, other_deathballs, segments, &self.entities.doors);
         }
+        for evil_ninja in &mut self.entities.evil_ninjas { evil_ninja.think(); }
         // call move_entities right after think for deathballs to get them in the correct grid cell since they get moved in the think function.
         move_entities(&mut self.entities.deathballs, &mut self.entity_grid, segments, &self.entities.doors);
+        // call move_entities right after think for evil ninjas to get them in the correct grid cell since they get moved in the think function.
+        move_entities(&mut self.entities.evil_ninjas, &mut self.entity_grid, segments, &self.entities.doors);
 
         if self.ninja.state != NinjaState::Disabled {
             self.ninja.integrate();
