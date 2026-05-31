@@ -103,7 +103,7 @@ impl Entity for EvilNinja {
 
 impl Mob for EvilNinja {
     fn grid_pos(&self) -> GridPos {
-        GridPos::from_world_pos(self.pos)
+        GridPos::from_world_pos(self.old_pos)
     }
 
     fn set_grid_pos(&mut self, grid_pos: GridPos) {

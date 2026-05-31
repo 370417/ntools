@@ -242,13 +242,13 @@ impl KeyFrame {
             sim.entity_grid[zap_drone.pos].push((GridEntityType::ZapDrone, i));
         }
         for (i, chase_drone) in sim.entities.chase_drones.iter().enumerate() {
-            sim.entity_grid[chase_drone.pos].push((GridEntityType::ZapDrone, i));
+            sim.entity_grid[chase_drone.pos].push((GridEntityType::ChaseDrone, i));
         }
         for (i, deathball) in sim.entities.deathballs.iter().enumerate() {
-            sim.entity_grid[deathball.pos].push((GridEntityType::ZapDrone, i));
+            sim.entity_grid[deathball.pos].push((GridEntityType::Deathball, i));
         }
         for (i, evil_ninja) in sim.entities.evil_ninjas.iter().enumerate() {
-            sim.entity_grid[evil_ninja.pos].push((GridEntityType::ZapDrone, i));
+            sim.entity_grid[evil_ninja.pos].push((GridEntityType::EvilNinja, i));
         }
     }
 }

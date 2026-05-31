@@ -726,6 +726,19 @@ mod tests {
         }
     }
 
+    #[test]
+    fn test_yourobouros_rewind() {
+        let mut editor = Editor::new();
+        editor.load_map(include_bytes!("testfiles/MET-_!-P")).unwrap();
+        let mut replay = editor.to_replay(false, false).unwrap();
+
+        replay.tick();
+        replay.seek_preview(121);
+
+        replay.seek(0);
+        replay.seek_preview(120);
+    }
+
     impl Replay {
         fn from_attract(attract_bytes: &[u8]) -> Result<Replay, String> {
             let mut editor = Editor::new();
