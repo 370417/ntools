@@ -959,6 +959,10 @@ impl Ninja {
         bones
     }
 
+    pub fn calc_past_ninja_bones(past_ninja: &PastNinja, anim_data: &[u8]) -> Bones {
+        Ninja::calc_ninja_position_inner(past_ninja.anim_frame, past_ninja.anim_state, past_ninja.run_cycle, past_ninja.facing, past_ninja.tilt, anim_data)
+    }
+
     fn calc_ninja_position_inner(anim_frame: usize, anim_state: AnimState, run_cycle: usize, facing: f64, tilt: DVec2, anim_data: &[u8]) -> Bones {
         let mut bones = get_anim_frame(anim_frame, anim_data);
         if anim_state == AnimState::Running {

@@ -1,5 +1,6 @@
 import { Index, Match, Switch, type Accessor, type Signal } from "solid-js";
 import type { Replay } from "../assets/ntools_rs";
+import { Ninja } from "./Ninja";
 
 export type EvilNinjaData = {
     x: number;
@@ -36,10 +37,10 @@ export function updateEvilNinjas([evilNinjas, setEvilNinjas]: Signal<EvilNinjaDa
         const newEvilNinja = {
             x: replay.evil_ninja_x(i, partialFrame),
             y: replay.evil_ninja_y(i, partialFrame),
-            type: 0 as const,
-            deg: 0,
-            scale: 1,
-            // type: replay.evil_ninja_state(i) as 0 | 1 | 2,
+            deg: replay.evil_ninja_deg(i, partialFrame),
+            scale: replay.evil_ninja_scale(i),
+            bones: replay.evil_ninja_bones(i),
+            type: replay.evil_ninja_type(i) as 0 | 1 | 2,
         };
         if (oldEvilNinja && equals(oldEvilNinja, newEvilNinja)) {
             newEvilNinjas.push(oldEvilNinja);
@@ -54,13 +55,13 @@ export function EvilNinjas(props: { evilNinjas: Accessor<EvilNinjaData[]> }) {
     return <Index each={props.evilNinjas()}>
         {evilNinja => <Switch>
             <Match when={evilNinja().type === EVIL_NINJA_UNTOUCHED}>
-                <use href="#evilninja" transform={transform(evilNinja)} stroke="black" />
+                <use href="#evilninja" transform={transform(evilNinja)} stroke="var(--evil-ninja)" />
             </Match>
             <Match when={evilNinja().type === EVIL_NINJA_ACTIVATING}>
-                <use href="#evilninja" transform={transform(evilNinja)} stroke="white" />
+                <use href="#evilninja" transform={transform(evilNinja)} stroke="var(--ninja)" />
             </Match>
             <Match when={evilNinja().type === EVIL_NINJA_ACTIVE}>
-                <use href="#evilninja" transform={transform(evilNinja)} stroke="black" />
+                <Ninja class="ninja preview" ninja={evilNinja} bones={() => evilNinja().bones} />
             </Match>
         </Switch>}
     </Index>

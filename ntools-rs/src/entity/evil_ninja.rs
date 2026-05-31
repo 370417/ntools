@@ -1,9 +1,11 @@
-use glam::DVec2;
+use glam::{DVec2, FloatExt};
 
-use crate::{collision_util::overlap_circle_vs_circle, entity::{Entity, GridEntityType, Mob, door::Doors}, grid::{Grid, GridPos}, ninja::{self, Ninja, PastNinja}, segment::Segment};
+use crate::{anim_data::flatten_bones, collision_util::overlap_circle_vs_circle, entity::{Entity, GridEntityType, Mob, door::Doors}, grid::{Grid, GridPos}, ninja::{self, Ninja, PastNinja}, segment::Segment};
 
 const SPAWNER_RADIUS: f64 = 10.0;
 const EVIL_NINJA_RADIUS: f64 = 6.0;
+// degrees per frame
+const VISUAL_ROTATION_RATE: f64 = 1.5;
 
 #[derive(Clone)]
 pub struct EvilNinja {
@@ -87,6 +89,49 @@ impl EvilNinja {
                     ninja.kill(0, DVec2::ZERO, DVec2::ZERO);
                 }
             }
+        }
+    }
+
+    pub fn rotation_deg(&self, frame: u32, partial_frame: f64) -> f64 {
+        match self.state {
+            EvilNinjaState::Activating { first_active_frame, delay_frames } => {
+                let touched_frame = first_active_frame - delay_frames;
+                let frames_since_touched = (frame - touched_frame) as f64 - 1.0 + partial_frame;
+                frames_since_touched * VISUAL_ROTATION_RATE
+            }
+            _ => 0.0,
+        }
+    }
+
+    pub fn type_u32(&self) -> u32 {
+        match self.state {
+            EvilNinjaState::Untouched => 0,
+            EvilNinjaState::JustTouched |
+            EvilNinjaState::Activating { .. } => 1,
+            EvilNinjaState::Active { .. } => 2,
+        }
+    }
+
+    pub fn scale(&self, frame: u32) -> f64 {
+        match self.state {
+            EvilNinjaState::Activating { first_active_frame, delay_frames } if frame + 120 > first_active_frame => {
+                // lerp scale as the evil ninja is about to spawn
+                let t = (frame + 120 - first_active_frame) as f64 / 120.0;
+                let t = t.clamp(0.0, 1.0);
+                1.0.lerp(0.2, t)
+            }
+            _ => 1.0,
+        }
+    }
+
+    pub fn bones(&self, frame: u32, past_ninjas: &[PastNinja], anim_data: &[u8]) -> Option<Box<[f64]>> {
+        match self.state {
+            EvilNinjaState::Active { delay_frames } => {
+                let past_ninja = &past_ninjas[(frame - delay_frames) as usize];
+                let bones = Ninja::calc_past_ninja_bones(past_ninja, anim_data);
+                Some(flatten_bones(&bones))
+            }
+            _ => None,
         }
     }
 }

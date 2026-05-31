@@ -177,7 +177,7 @@ impl Replay {
 
     pub fn ninja_preview_bones(&self, partial_frame: f64) -> Box<[f64]> {
         let prev = &self.past_ninjas[self.current_sim.frame.saturating_sub(1) as usize];
-        flatten_bones(&self.preview_sim.ninja.calc_ninja_position(prev,partial_frame, &self.anim_data))
+        flatten_bones(&self.preview_sim.ninja.calc_ninja_position(prev, partial_frame, &self.anim_data))
     }
 
     pub fn past_ninjas_len(&self) -> usize {
@@ -557,6 +557,22 @@ impl Replay {
     pub fn evil_ninja_y(&self, i: usize, partial_frame: f64) -> f64 {
         let evil_ninja = &self.current_sim.entities.evil_ninjas[i];
         evil_ninja.old_pos.y.lerp(evil_ninja.pos.y, partial_frame)
+    }
+
+    pub fn evil_ninja_deg(&self, i: usize, partial_frame: f64) -> f64 {
+        self.current_sim.entities.evil_ninjas[i].rotation_deg(self.current_sim.frame, partial_frame)
+    }
+
+    pub fn evil_ninja_type(&self, i: usize) -> u32 {
+        self.current_sim.entities.evil_ninjas[i].type_u32()
+    }
+
+    pub fn evil_ninja_scale(&self, i: usize) -> f64 {
+        self.current_sim.entities.evil_ninjas[i].scale(self.current_sim.frame)
+    }
+
+    pub fn evil_ninja_bones(&self, i: usize) -> Option<Box<[f64]>> {
+        self.current_sim.entities.evil_ninjas[i].bones(self.current_sim.frame, &self.past_ninjas, &self.anim_data)
     }
 
     pub fn export_attract(&self, editor: &Editor) -> Box<[u8]> {
