@@ -27,25 +27,28 @@ function transform(evilNinja: Accessor<EvilNinjaData>): string {
     return `translate(${x},${y}) rotate(${deg},0,0) scale(${scale})`;
 }
 
-// export function updateEvilNinjas([evilNinjas, setEvilNinjas]: Signal<EvilNinjaData[]>, replay: Replay) {
-//     const oldEvilNinjas = evilNinjas();
-//     const newEvilNinjasLen = replay.evil_ninjas_len();
-//     const newEvilNinjas: EvilNinjaData[] = [];
-//     for (let i = 0; i < newEvilNinjasLen; i++) {
-//         const oldEvilNinja = oldEvilNinjas.at(i);
-//         const newEvilNinja = {
-//             x: replay.evil_ninja_x(i),
-//             y: replay.evil_ninja_y(i),
-//             type: replay.evil_ninja_state(i) as 0 | 1 | 2,
-//         };
-//         if (oldEvilNinja && equals(oldEvilNinja, newEvilNinja)) {
-//             newEvilNinjas.push(oldEvilNinja);
-//         } else {
-//             newEvilNinjas.push(newEvilNinja);
-//         }
-//     }
-//     setEvilNinjas(newEvilNinjas);
-// }
+export function updateEvilNinjas([evilNinjas, setEvilNinjas]: Signal<EvilNinjaData[]>, replay: Replay, partialFrame: number) {
+    const oldEvilNinjas = evilNinjas();
+    const newEvilNinjasLen = replay.evil_ninjas_len();
+    const newEvilNinjas: EvilNinjaData[] = [];
+    for (let i = 0; i < newEvilNinjasLen; i++) {
+        const oldEvilNinja = oldEvilNinjas.at(i);
+        const newEvilNinja = {
+            x: replay.evil_ninja_x(i, partialFrame),
+            y: replay.evil_ninja_y(i, partialFrame),
+            type: 0 as const,
+            deg: 0,
+            scale: 1,
+            // type: replay.evil_ninja_state(i) as 0 | 1 | 2,
+        };
+        if (oldEvilNinja && equals(oldEvilNinja, newEvilNinja)) {
+            newEvilNinjas.push(oldEvilNinja);
+        } else {
+            newEvilNinjas.push(newEvilNinja);
+        }
+    }
+    setEvilNinjas(newEvilNinjas);
+}
 
 export function EvilNinjas(props: { evilNinjas: Accessor<EvilNinjaData[]> }) {
     return <Index each={props.evilNinjas()}>

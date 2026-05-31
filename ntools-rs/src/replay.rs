@@ -68,7 +68,7 @@ impl Replay {
             let input_byte = self.inputs[self.current_sim.frame as usize];
             let input = Input::from_byte(input_byte);
 
-            self.current_sim.tick(input, &self.segments);
+            self.current_sim.tick(input, &self.segments, &self.past_ninjas);
 
             if let Some(past_ninja) = self.past_ninjas.get_mut(self.current_sim.frame as usize) {
                 *past_ninja = self.current_sim.ninja.to_past_ninja(input_byte);
@@ -545,6 +545,20 @@ impl Replay {
         (deathball.pos.y - deathball.speed.y).lerp(deathball.pos.y, partial_frame)
     }
 
+    pub fn evil_ninjas_len(&self) -> usize {
+        self.current_sim.entities.evil_ninjas.len()
+    }
+
+    pub fn evil_ninja_x(&self, i: usize, partial_frame: f64) -> f64 {
+        let evil_ninja = &self.current_sim.entities.evil_ninjas[i];
+        evil_ninja.old_pos.x.lerp(evil_ninja.pos.x, partial_frame)
+    }
+
+    pub fn evil_ninja_y(&self, i: usize, partial_frame: f64) -> f64 {
+        let evil_ninja = &self.current_sim.entities.evil_ninjas[i];
+        evil_ninja.old_pos.y.lerp(evil_ninja.pos.y, partial_frame)
+    }
+
     pub fn export_attract(&self, editor: &Editor) -> Box<[u8]> {
         to_attract_bytes(&editor.export_map(), &self.inputs).into()
     }
@@ -563,7 +577,7 @@ impl Replay {
         let input_bytes = self.inputs.get(self.preview_sim.frame as usize).or(self.inputs.last()).cloned().unwrap_or_default();
         let input = Input::from_byte(input_bytes);
 
-        self.preview_sim.tick(input, &self.segments);
+        self.preview_sim.tick(input, &self.segments, &self.past_ninjas);
 
         if let Some(past_ninja) = self.past_ninjas.get_mut(self.preview_sim.frame as usize) {
             *past_ninja = self.preview_sim.ninja.to_past_ninja(input_bytes);
