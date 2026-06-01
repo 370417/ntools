@@ -1,4 +1,4 @@
-use crate::{entity::{Entities, EntityIndex, GridEntityType, boost_pad::BoostPad, bounce_block::BounceBlock, deathball::Deathball, door::RegularDoor, floor_guard::FloorGuard, gold::collected_golds, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, on_door_state_change, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::Grid, ninja::{AnimState, Ninja, NinjaState}, segment::Segment};
+use crate::{entity::{Entities, EntityIndex, GridEntityType, boost_pad::BoostPad, bounce_block::BounceBlock, chase_drone::ChaseDrone, deathball::Deathball, door::RegularDoor, evil_ninja::EvilNinja, floor_guard::FloorGuard, gold::collected_golds, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, on_door_state_change, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::Grid, ninja::{AnimState, Ninja, NinjaState, PastNinja}, segment::Segment};
 
 #[derive(Clone)]
 pub struct Simulation {
@@ -8,6 +8,7 @@ pub struct Simulation {
     pub entities: Entities,
     pub entity_grid: Grid<EntityIndex>,
     dynamic_friction: bool,
+    latest_evil_ninja_activation_frame: Option<u32>,
 }
 
 #[derive(Clone, Copy)]
@@ -22,6 +23,7 @@ pub struct KeyFrame {
     frame: u32,
     ninja: Ninja,
     score: u32,
+    latest_evil_ninja_activation_frame: Option<u32>,
     mine_state_diffs: Vec<(usize, MineState)>,
     collected_golds: Vec<usize>,
     boost_pads: Vec<BoostPad>,
@@ -36,7 +38,9 @@ pub struct KeyFrame {
     regular_doors: Vec<RegularDoor>,
     shove_thwumps: Vec<ShoveThwump>,
     zap_drones: Vec<ZapDrone>,
+    chase_drones: Vec<ChaseDrone>,
     deathballs: Vec<Deathball>,
+    evil_ninjas: Vec<EvilNinja>,
 }
 
 impl Input {
@@ -70,13 +74,14 @@ impl Simulation {
             frame: 0,
             ninja: ninjas.into_iter().next().ok_or("Map has no ninja")?,
             score: 90 * 60,
+            latest_evil_ninja_activation_frame: None,
             entity_grid: entities.grid(),
             entities,
             dynamic_friction,
         })
     }
 
-    pub fn tick(&mut self, input: Input, segments: &Grid<Segment>) {
+    pub fn tick(&mut self, input: Input, segments: &Grid<Segment>, past_ninjas: &[PastNinja]) {
         self.frame += 1;
 
         // set ninja input
@@ -91,6 +96,7 @@ impl Simulation {
         move_entities(&mut self.entities.thwumps, &mut self.entity_grid, segments, &self.entities.doors);
         move_entities(&mut self.entities.floor_guards, &mut self.entity_grid, segments, &self.entities.doors);
         move_entities(&mut self.entities.zap_drones, &mut self.entity_grid, segments, &self.entities.doors);
+        move_entities(&mut self.entities.chase_drones, &mut self.entity_grid, segments, &self.entities.doors);
         // Apparently boost pad logic is called as a move method.
         // I'd expect it to go in logical_collision, but in case the order matters,
         // I'll leave it here.
@@ -115,8 +121,13 @@ impl Simulation {
             let (deathball, other_deathballs) = self.entities.deathballs[i..].split_at_mut(1);
             deathball[0].think(&self.ninja, other_deathballs, segments, &self.entities.doors);
         }
+        for evil_ninja in &mut self.entities.evil_ninjas {
+            evil_ninja.think(self.frame, &mut self.latest_evil_ninja_activation_frame, past_ninjas);
+        }
         // call move_entities right after think for deathballs to get them in the correct grid cell since they get moved in the think function.
         move_entities(&mut self.entities.deathballs, &mut self.entity_grid, segments, &self.entities.doors);
+        // call move_entities right after think for evil ninjas to get them in the correct grid cell since they get moved in the think function.
+        move_entities(&mut self.entities.evil_ninjas, &mut self.entity_grid, segments, &self.entities.doors);
 
         if self.ninja.state != NinjaState::Disabled {
             self.ninja.integrate();
@@ -145,6 +156,7 @@ impl KeyFrame {
             frame: sim.frame,
             ninja: sim.ninja.clone(),
             score: sim.score,
+            latest_evil_ninja_activation_frame: sim.latest_evil_ninja_activation_frame,
             mine_state_diffs: mine_diffs(initial_mines, &sim.entities.mines),
             collected_golds: collected_golds(&sim.entities.golds),
             boost_pads: sim.entities.boost_pads.clone(),
@@ -157,7 +169,9 @@ impl KeyFrame {
             regular_doors: sim.entities.doors.regular.clone(),
             shove_thwumps: sim.entities.shove_thwumps.clone(),
             zap_drones: sim.entities.zap_drones.clone(),
+            chase_drones: sim.entities.chase_drones.clone(),
             deathballs: sim.entities.deathballs.clone(),
+            evil_ninjas: sim.entities.evil_ninjas.clone(),
         }
     }
 
@@ -167,6 +181,7 @@ impl KeyFrame {
         sim.frame = self.frame;
         sim.ninja = self.ninja.clone();
         sim.score = self.score;
+        sim.latest_evil_ninja_activation_frame = self.latest_evil_ninja_activation_frame;
 
         sim.entities.mines = mines_from_diff(initial_mines, &self.mine_state_diffs);
 
@@ -203,7 +218,11 @@ impl KeyFrame {
 
         self.zap_drones.clone_into(&mut sim.entities.zap_drones);
 
+        self.chase_drones.clone_into(&mut sim.entities.chase_drones);
+
         self.deathballs.clone_into(&mut sim.entities.deathballs);
+
+        self.evil_ninjas.clone_into(&mut sim.entities.evil_ninjas);
 
         sim.entity_grid.drain_mobs();
         // add all mobs back into entity_grid
@@ -221,6 +240,15 @@ impl KeyFrame {
         }
         for (i, zap_drone) in sim.entities.zap_drones.iter().enumerate() {
             sim.entity_grid[zap_drone.pos].push((GridEntityType::ZapDrone, i));
+        }
+        for (i, chase_drone) in sim.entities.chase_drones.iter().enumerate() {
+            sim.entity_grid[chase_drone.pos].push((GridEntityType::ChaseDrone, i));
+        }
+        for (i, deathball) in sim.entities.deathballs.iter().enumerate() {
+            sim.entity_grid[deathball.pos].push((GridEntityType::Deathball, i));
+        }
+        for (i, evil_ninja) in sim.entities.evil_ninjas.iter().enumerate() {
+            sim.entity_grid[evil_ninja.pos].push((GridEntityType::EvilNinja, i));
         }
     }
 }

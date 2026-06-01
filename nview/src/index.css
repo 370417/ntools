@@ -87,6 +87,8 @@
     --deathball-middle: #5F0D6B;
     --deathball-inner: #3F1CB2;
 
+    --evil-ninja: #000000;
+
     --time-remaining: #FECC04;
     --hardcore-time: #DF9B43;
     --empty-timebar: #707A6B;
@@ -202,5 +204,10 @@ svg {
 
 .door-switch-line {
     stroke: var(--door-switch-line);
+}
+
+svg text {
+    pointer-events: none;
+    user-select: none;
 }
 

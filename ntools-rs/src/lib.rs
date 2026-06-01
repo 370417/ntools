@@ -9,6 +9,7 @@ mod mode;
 mod ninja;
 mod orientation;
 mod replay;
+mod replay_file;
 mod segment;
 mod simulation;
 mod tile;

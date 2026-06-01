@@ -63,6 +63,9 @@ impl Deathball {
             if depen_len < 0.0000001 {
                 break;
             }
+            if dist == 0.0 {
+                return;
+            }
             let norm = (self.pos - closest_point.point).normalize_or_zero();
             self.pos += norm * depen_len;
             normal += norm;
@@ -75,7 +78,7 @@ impl Deathball {
             if dot_product < 0.0 {
                 // Project velocity onto surface only if moving towards surface
                 let bounce_strength = if self.speed.length() <= 1.35 {
-                    1.35
+                    1.0
                 } else {
                     2.0
                 };

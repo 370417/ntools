@@ -199,24 +199,16 @@ impl PlaceEntity {
             self.stage = Some(Stage::PlaceSwitch);
             return None;
         }
-        let command = match self.entity {
-            entity @ EditorEntity::BounceBlock { .. } => {
-                // stackable entities
-                let old_count = *entities.get(&entity).unwrap_or(&0);
-                Some(Command::SetEntityCount(SetEntityCount {
-                    entity,
-                    old_count,
-                    new_count: old_count.saturating_add(1),
-                }))
-            }
-            entity => {
-                Some(Command::SetEntityCount(SetEntityCount {
-                    entity,
-                    old_count: *entities.get(&entity).unwrap_or(&0),
-                    new_count: 1,
-                }))
-            }
-        };
+        let old_count = *entities.get(&self.entity).unwrap_or(&0);
+        let command = Some(Command::SetEntityCount(SetEntityCount {
+            entity: self.entity,
+            old_count,
+            new_count: if self.entity.is_stackable() {
+                old_count.saturating_add(1)
+            } else {
+                1
+            },
+        }));
         if let Some(Stage::PlaceSwitch) = self.stage {
             // place the door where the switch used to be in preparation for
             // placing the next instance of the entity.

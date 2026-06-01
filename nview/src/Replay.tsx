@@ -26,6 +26,7 @@ import { LaserDroneDefs, LaserDrones, updateLaserDrones, type LaserDroneData } f
 import { GoldDefs, Golds, updateGolds, type GoldData } from './entities/Gold';
 import { InputDisplay } from './InputDisplay';
 import { DeathballDefs, Deathballs, updateDeathballs, type DeathballData } from './entities/Deathball';
+import { EvilNinjaDefs, EvilNinjas, updateEvilNinjas, type EvilNinjaData } from './entities/EvilNinja';
 
 export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventState: GlobalEventState }) {
     const replay = props.replay;
@@ -52,9 +53,11 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                 setRecording(false);
                 setPreviewProgress(undefined);
                 updatePausedInfo();
+                props.editor.set_start_replay_paused(true);
             } else {
                 setIsPlaying(true);
                 setRecording(true);
+                props.editor.set_start_replay_paused(false);
             }
         } else if (event.code === 'Comma') {
             if (!isPlaying() && progress() > 0) {
@@ -141,6 +144,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
     const chaingunDrones = createSignal<ChaingunDroneData[]>([]);
     const laserDrones = createSignal<LaserDroneData[]>([]);
     const deathballs = createSignal<DeathballData[]>([]);
+    const evilNinjas = createSignal<EvilNinjaData[]>([]);
 
     const [pastNinjas, setPastNinjas] = createSignal<{ x: number, y: number }[]>([]);
     function updatePastNinjas() {
@@ -272,9 +276,12 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
         updateChaingunDrones(chaingunDrones, replay, partialFrame);
         updateLaserDrones(laserDrones, replay, partialFrame);
         updateDeathballs(deathballs, replay, partialFrame);
+        updateEvilNinjas(evilNinjas, replay, partialFrame);
 
         setReplayLength(replay.replay_length());
     }
+
+    renderFrame(1);
 
     return (
         <>
@@ -306,6 +313,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                     <ChaseDroneDefs />
                     <DeathballDefs />
                     <ExitDoorGradient />
+                    <EvilNinjaDefs />
                 </defs>
                 <TrapDoors trapDoors={trapDoors[0]} />
                 <LockedDoors lockedDoors={lockedDoors[0]} />
@@ -325,6 +333,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                 <FloorGuards floorGuards={floorGuards[0]} />
                 <Deathballs deathballs={deathballs[0]} />
                 <Thwumps thwumps={thwumps[0]} />
+                <EvilNinjas evilNinjas={evilNinjas[0]} />
                 <Ninja class="ninja preview" ninja={ninjaPreview} bones={ninjaPreviewBones} />
                 <Ninja class="ninja" ninja={ninja} bones={ninjaBones} />
                 <BounceBlocks bounceBlocks={bounceBlocks[0]} />

@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{entity::{boost_pad::BoostPad, bounce_block::BounceBlock, chaingun_drone::ChaingunDrone, chase_drone::ChaseDrone, deathball::Deathball, door::Doors, exit::Exit, floor_guard::FloorGuard, gold::Gold, laser_drone::LaserDrone, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::{Grid, GridPos}, segment::Segment};
+use crate::{entity::{boost_pad::BoostPad, bounce_block::BounceBlock, chaingun_drone::ChaingunDrone, chase_drone::ChaseDrone, deathball::Deathball, door::Doors, evil_ninja::EvilNinja, exit::Exit, floor_guard::FloorGuard, gold::Gold, laser_drone::LaserDrone, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::{Grid, GridPos}, segment::Segment};
 
 pub mod boost_pad;
 pub mod bounce_block;
@@ -8,6 +8,7 @@ pub mod chaingun_drone;
 pub mod chase_drone;
 pub mod deathball;
 pub mod door;
+pub mod evil_ninja;
 pub mod exit;
 pub mod floor_guard;
 pub mod gold;
@@ -38,6 +39,7 @@ pub struct Entities {
     pub chase_drones: Vec<ChaseDrone>,
     pub chaingun_drones: Vec<ChaingunDrone>,
     pub laser_drones: Vec<LaserDrone>,
+    pub evil_ninjas: Vec<EvilNinja>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -56,7 +58,9 @@ pub enum GridEntityType {
     RegularDoor,
     ShoveThwump,
     ZapDrone,
+    ChaseDrone,
     Deathball,
+    EvilNinja,
 }
 
 pub trait Entity {
@@ -85,6 +89,7 @@ impl Entities {
             chase_drones: Vec::new(),
             chaingun_drones: Vec::new(),
             laser_drones: Vec::new(),
+            evil_ninjas: Vec::new(),
         }
     }
 
@@ -139,6 +144,12 @@ impl Entities {
         for (i, zap_drone) in self.zap_drones.iter().enumerate() {
             grid[zap_drone.pos].push((GridEntityType::ZapDrone, i));
         }
+        for (i, chase_drone) in self.chase_drones.iter().enumerate() {
+            grid[chase_drone.pos].push((GridEntityType::ChaseDrone, i));
+        }
+        for (i, evil_ninja) in self.evil_ninjas.iter().enumerate() {
+            grid[evil_ninja.pos].push((GridEntityType::EvilNinja, i));
+        }
         grid
     }
 }
@@ -150,7 +161,9 @@ impl GridEntityType {
             GridEntityType::Thwump |
             GridEntityType::FloorGuard |
             GridEntityType::ZapDrone |
+            GridEntityType::ChaseDrone |
             GridEntityType::Deathball |
+            GridEntityType::EvilNinja |
             GridEntityType::ShoveThwump => true,
             GridEntityType::Mine |
             GridEntityType::Gold |

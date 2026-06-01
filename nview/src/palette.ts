@@ -241,6 +241,7 @@ const colorVarNames = [
     '--deathball-outer',
     '--deathball-middle',
     '--deathball-inner',
+    '--evil-ninja',
     '--time-remaining',
     '--hardcore-time',
     '--empty-timebar',
@@ -520,6 +521,10 @@ const colorVarPaletteLocations: Record<ColorVarName, { file: PaletteFileName, in
     },
     '--deathball-inner': {
         file: 'entityBat',
+        index: 0,
+    },
+    '--evil-ninja': {
+        file: 'entityEvilNinja',
         index: 0,
     },
     '--time-remaining': {

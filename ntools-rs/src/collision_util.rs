@@ -124,8 +124,16 @@ pub fn overlap_circle_vs_circle(center1: DVec2, radius1: f64, center2: DVec2, ra
     (center1 - center2).length() < radius1 + radius2
 }
 
-pub fn overlap_circle_vs_segment() {
-    todo!()
+/// Given two cirles definied by their center and radius, return true if they overlap.
+pub fn overlap_circle_vs_segment(center: DVec2, radius: f64, point1: DVec2, point2: DVec2) -> bool {
+    let segment = point2 - point1;
+    let to_center = center - point1;
+
+    // Project center onto segment, clamped to [0, 1]
+    let t = (to_center.dot(segment) / segment.length_squared()).clamp(0.0, 1.0);
+    let closest = point1 + segment * t;
+
+    center.distance_squared(closest) < radius * radius
 }
 
 pub struct Depenetration {

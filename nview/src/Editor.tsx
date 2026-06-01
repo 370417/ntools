@@ -27,6 +27,7 @@ import { LaserDroneDefs, LaserDrones, type LaserDroneData } from "./entities/Las
 import { ChaseDroneDefs, ChaseDrones, type ChaseDroneData } from "./entities/ChaseDrone";
 import { GoldDefs, Golds, type GoldData } from "./entities/Gold";
 import { DeathballDefs, Deathballs, type DeathballData } from "./entities/Deathball";
+import { EVIL_NINJA_UNTOUCHED, EvilNinjaDefs, EvilNinjas, type EvilNinjaData } from "./entities/EvilNinja";
 
 const COLS = 42;
 const ROWS = 23;
@@ -67,6 +68,7 @@ const ENTITY_CHASE_DRONE = 15;
 const ENTITY_FLOOR_GUARD = 16;
 const ENTITY_BOUNCE_BLOCK = 17;
 const ENTITY_THWUMP = 20;
+const ENTITY_EVIL_NINJA = 22;
 const ENTITY_TOGGLE_MINE = 21;
 const ENTITY_BOOST_PAD = 24;
 const ENTITY_DEATHBALL = 25;
@@ -87,6 +89,21 @@ type Line = {
     x2: number;
     y2: number;
 };
+
+type StackCounts = Array<{
+    x: number;
+    y: number;
+    count: number;
+}>;
+
+function updateStackCounts(setStackCounts: Setter<StackCounts>, entities: ExportedEntity[]) {
+    const stackCounts = entities.map(entity => ({
+        x: entity.x,
+        y: entity.y,
+        count: entity.stack_count,
+    })).filter(({ count }) => count > 1);
+    setStackCounts(stackCounts);
+}
 
 export type EntitiesProps = {
     ninjas: Accessor<NinjaData[]>,
@@ -127,6 +144,8 @@ export type EntitiesProps = {
     setBounceBlocks: Setter<BounceBlockData[]>,
     thwumps: Accessor<ThwumpData[]>,
     setThwumps: Setter<ThwumpData[]>,
+    evilNinjas: Accessor<EvilNinjaData[]>,
+    setEvilNinjas: Setter<EvilNinjaData[]>,
     boostPads: Accessor<BoostPadData[]>,
     setBoostPads: Setter<BoostPadData[]>,
     deathballs: Accessor<DeathballData[]>,
@@ -157,6 +176,7 @@ function createEntities(): EntitiesProps {
     const [floorGuards, setFloorGuards] = createSignal<FloorGuardData[]>([]);
     const [bounceBlocks, setBounceBlocks] = createSignal<BounceBlockData[]>([]);
     const [thwumps, setThwumps] = createSignal<ThwumpData[]>([]);
+    const [evilNinjas, setEvilNinjas] = createSignal<EvilNinjaData[]>([]);
     const [boostPads, setBoostPads] = createSignal<BoostPadData[]>([]);
     const [deathballs, setDeathballs] = createSignal<DeathballData[]>([]);
     const [bats, setBats] = createSignal<BatData[]>([]);
@@ -181,6 +201,7 @@ function createEntities(): EntitiesProps {
         floorGuards, setFloorGuards,
         bounceBlocks, setBounceBlocks,
         thwumps, setThwumps,
+        evilNinjas, setEvilNinjas,
         boostPads, setBoostPads,
         deathballs, setDeathballs,
         bats, setBats,
@@ -208,6 +229,7 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
     const floorGuards: FloorGuardData[] = [];
     const bounceBlocks: BounceBlockData[] = [];
     const thwumps: ThwumpData[] = [];
+    const evilNinjas: EvilNinjaData[] = [];
     const boostPads: BoostPadData[] = [];
     const deathballs: DeathballData[] = [];
     const bats: BatData[] = [];
@@ -293,6 +315,12 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
             bounceBlocks.push(entityCopy);
         } else if (entity.type_int === ENTITY_THWUMP) {
             thwumps.push(entityCopy);
+        } else if (entity.type_int === ENTITY_EVIL_NINJA) {
+            evilNinjas.push({
+                ...entityCopy,
+                type: EVIL_NINJA_UNTOUCHED,
+                scale: 1,
+            });
         } else if (entity.type_int === ENTITY_BOOST_PAD) {
             boostPads.push({
                 ...entityCopy,
@@ -308,7 +336,6 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
                 touch: 16,
             });
         }
-        // Do I need this?
         entity.free();
     }
 
@@ -331,6 +358,7 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
     entities.setFloorGuards(floorGuards);
     entities.setBounceBlocks(bounceBlocks);
     entities.setThwumps(thwumps);
+    entities.setEvilNinjas(evilNinjas);
     entities.setBoostPads(boostPads);
     entities.setDeathballs(deathballs);
     entities.setBats(bats);
@@ -362,7 +390,7 @@ function Entities({ entities }: { entities: EntitiesProps }) {
         {/* rocket */}
         {/* laser turret */}
         <Thwumps thwumps={entities.thwumps} />
-        {/* evil ninja */}
+        <EvilNinjas evilNinjas={entities.evilNinjas} />
         <For each={entities.ninjas()}>
             {ninja => <Ninja class="ninja" ninja={() => ninja} bones={() => BONES_STANDING} />}
         </For>
@@ -406,6 +434,8 @@ export function EditorApp(props: {
     const [doorSwitchLines, setDoorSwitchLines] = createSignal<Line[]>([]);
     const [showTrail, setShowTrail] = createSignal(editor.get_show_trail());
     const [ninjaPreviewBones, setNinjaPreviewBones] = createSignal<Float64Array<ArrayBufferLike>>();
+
+    const [stackCounts, setStackCounts] = createSignal<StackCounts>([]);
 
     const keydownListener = (event: KeyboardEvent) => {
         let change = false;
@@ -486,6 +516,8 @@ export function EditorApp(props: {
 
         else if (event.code === 'Slash') change = true, editor.press_slash();
 
+        // else if (event.code === 'KeyG') change = true, editor.fill_with_mines();
+
         if (change) {
             render(true);
             event.preventDefault();
@@ -546,6 +578,7 @@ export function EditorApp(props: {
 
         updateEntities(entities, lines, editor.entities(), false);
         updateEntities(previewEntities, lines, editor.preview_entities(), true);
+        updateStackCounts(setStackCounts, editor.entities());
 
         setDoorSwitchLines(lines);
 
@@ -640,6 +673,7 @@ export function EditorApp(props: {
                 <TrapSwitchDefs />
                 <BoostPadDefs />
                 <ThwumpDefs />
+                <EvilNinjaDefs />
                 <ChaingunDroneDefs />
                 <LaserDroneDefs />
                 <ZapDroneDefs />
@@ -674,6 +708,9 @@ export function EditorApp(props: {
             {regularGridYs.map(y => <line class="regular-grid" x1="24" x2={24 * 43} y1={y} y2={y} />)}
             <Entities entities={entities} />
             <path id="tiles" stroke-width="2" clip-path="url(#tiles-clip)" clip-rule="evenodd" d={tilePath()} fill-rule="evenodd" />
+            <For each={stackCounts()}>
+                {(stackCount) => <text x={stackCount.x + 4} y={stackCount.y + 12}>{stackCount.count}</text>}
+            </For>
             <Show when={mode() === MODE_ENTITY_PALETTE}>
                 {/* palette background color from https://coloration-cimn.onrender.com/ */}
                 <rect fill="color-mix(in srgb,var(--background) 18%,white 15%)"

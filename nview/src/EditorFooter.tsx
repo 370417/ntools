@@ -68,6 +68,29 @@ export function EditorFooter(props: {
             }}
             />
         </label>
+        /
+        <label style={{
+            color: 'var(--main-menu-selected)',
+            cursor: 'pointer',
+            'text-decoration': 'underline',
+        }}>
+            replay
+            <input type="file" style={{ display: 'none' }} onchange={function(this: HTMLInputElement) {
+                const files = this.files;
+                if (files && files.length > 0) {
+                    const fileReader = new FileReader();
+                    fileReader.onloadend = () => {
+                        if (fileReader.result instanceof ArrayBuffer) {
+                            const replay = props.editor.load_outte_replay(new Uint8Array(fileReader.result), props.roundCorners(), props.dynamicFriction());
+                            props.render(true);
+                            props.setReplay(replay);
+                        }
+                    };
+                    fileReader.readAsArrayBuffer(files[0]);
+                }
+            }}
+            />
+        </label>
         {" | "}
         <a href="#" download="Untitled" style={{
             color: 'var(--main-menu-selected)',

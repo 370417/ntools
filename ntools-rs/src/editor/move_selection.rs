@@ -89,10 +89,10 @@ impl MoveSelection {
         })
     }
 
-    pub fn preview_entities(&self, cursor_pos: DVec2) -> impl Iterator<Item = EditorEntity> {
+    pub fn preview_entities(&self, cursor_pos: DVec2) -> impl Iterator<Item = (EditorEntity, u16)> {
         match self.mode {
             SelectionMode::All | SelectionMode::EntitiesOnly => {
-                Some(self.selected_entities(cursor_pos).map(|(entity, _count)| entity))
+                Some(self.selected_entities(cursor_pos))
             }
             SelectionMode::TilesOnly => None,
         }.into_iter().flatten()

@@ -6,7 +6,7 @@ use futures_channel::oneshot::{self, Receiver};
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{anim_data::flatten_bones, attract::from_attract_bytes, editor::{editor_entity::{EditorEntity, EntityId, ExportedEntity}, editor_state::{Command, EditorState}, entity_palette::EntityPalette, modify_entity::ModifyEntity, move_selection::MoveSelection, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::PlaceEntity, select_entity::SelectEntity, select_tiles::SelectTiles, spawn_ninja::closest_past_ninja, tile_palette::TilePalette}, entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, chaingun_drone::ChaingunDrone, chase_drone::ChaseDrone, deathball::Deathball, door::{LockedDoor, RegularDoor, TrapDoor}, exit::Exit, floor_guard::FloorGuard, gold::Gold, laser_drone::LaserDrone, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::{COLS, GridPos, ROWS}, map_file::MapFile, mode::{DroneMode, Modes}, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationBinary, OrientationCardinal, Orientations}, replay::Replay, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_HALF_SIZE, TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
+use crate::{anim_data::flatten_bones, attract::from_attract_bytes, editor::{editor_entity::{EditorEntity, EntityId, EntityPos, ExportedEntity}, editor_state::{Command, EditorState, SetEntityCount}, entity_palette::EntityPalette, modify_entity::ModifyEntity, move_selection::MoveSelection, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::PlaceEntity, select_entity::SelectEntity, select_tiles::SelectTiles, spawn_ninja::closest_past_ninja, tile_palette::TilePalette}, entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, chaingun_drone::ChaingunDrone, chase_drone::ChaseDrone, deathball::Deathball, door::{LockedDoor, RegularDoor, TrapDoor}, evil_ninja::EvilNinja, exit::Exit, floor_guard::FloorGuard, gold::Gold, laser_drone::LaserDrone, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::{COLS, GridPos, ROWS}, map_file::MapFile, mode::{DroneMode, Modes}, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationBinary, OrientationCardinal, Orientations}, replay::Replay, replay_file::from_outte_replay_bytes, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_HALF_SIZE, TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
 
 pub mod editor_entity;
 pub mod editor_state;
@@ -50,6 +50,10 @@ pub struct Editor {
     show_past_ninjas_trail: bool,
     receiver: Option<Receiver<Vec<PastNinja>>>,
     anim_data: Box<[u8]>,
+    // Normally, pressing tab to start playing starts playing the game in real time,
+    // but if the game was paused before switching to the editor, we want to keep
+    // the game paused when switching out of the editor.
+    start_replay_paused: bool,
 }
 
 pub enum EditorMode {
@@ -94,6 +98,7 @@ impl Editor {
             show_past_ninjas_trail: false,
             receiver: None,
             anim_data: Box::new([]),
+            start_replay_paused: false,
         }
     }
 
@@ -109,15 +114,29 @@ impl Editor {
         }
     }
 
+    pub fn set_start_replay_paused(&mut self, start_replay_paused: bool) {
+        self.start_replay_paused = start_replay_paused;
+    }
+
     pub fn load_attract(&mut self, attract_bytes: &[u8], round_corners: bool, dynamic_friction: bool) -> Result<Replay, String> {
         let (map, inputs) = from_attract_bytes(attract_bytes)?;
         self.set_level_name(&map.level_name);
         self.state = EditorState::from_map(map);
+        self.start_replay_paused = true;
 
         let mut replay = self.to_replay(round_corners, dynamic_friction)?;
         replay.is_from_attract = true;
         replay.inputs = inputs;
 
+        Ok(replay)
+    }
+
+    pub fn load_outte_replay(&mut self, replay_bytes: &[u8], round_corners: bool, dynamic_friction: bool) -> Result<Replay, String> {
+        let inputs = from_outte_replay_bytes(replay_bytes)?;
+        self.start_replay_paused = true;
+        let mut replay = self.to_replay(round_corners, dynamic_friction)?;
+        replay.is_from_attract = true;
+        replay.inputs = inputs;
         Ok(replay)
     }
 
@@ -198,8 +217,8 @@ impl Editor {
                     EditorEntity::ZapDrone { pos, orientation, mode } => {
                         entities.zap_drones.push(ZapDrone::new(pos.to_world_pos(), *orientation, *mode));
                     }
-                    EditorEntity::ChaseDrone { pos, orientation, .. } => {
-                        entities.chase_drones.push(ChaseDrone::new(pos.to_world_pos(), *orientation));
+                    EditorEntity::ChaseDrone { pos, orientation, mode } => {
+                        entities.chase_drones.push(ChaseDrone::new(pos.to_world_pos(), *orientation, *mode));
                     }
                     EditorEntity::FloorGuard { pos, orientation } => {
                         entities.floor_guards.push(FloorGuard::new(pos.to_world_pos(), *orientation));
@@ -217,7 +236,7 @@ impl Editor {
                         entities.thwumps.push(Thwump::new(pos.to_world_pos(), *orientation, round_corners));
                     }
                     EditorEntity::EvilNinja { pos } => {
-                        // not supported in replays
+                        entities.evil_ninjas.push(EvilNinja::new(pos.to_world_pos()));
                     }
                     EditorEntity::LaserTurret { pos, orientation } => {
                         // not supported in replays
@@ -252,19 +271,25 @@ impl Editor {
         let (sender, receiver) = oneshot::channel();
         self.receiver = Some(receiver);
 
+        let inputs = if self.start_replay_paused {
+            self.past_ninjas.iter().skip(1).map(|past_ninja| past_ninja.prev_input).collect()
+        } else {
+            Vec::new()
+        };
+
         Ok(Replay {
             _level_name: String::new(),
             _author_name: None,
             segments,
-            inputs: Vec::new(),
-            past_ninjas: vec![current_sim.ninja.to_past_ninja()],
+            inputs,
+            past_ninjas: vec![current_sim.ninja.to_past_ninja(0)],
             initial_mines: current_sim.entities.mines.clone(),
             preview_sim: current_sim.clone(),
             current_sim,
             keyframes,
             sender: Some(sender),
             anim_data: self.anim_data.clone(),
-            is_from_attract: false,
+            is_from_attract: self.start_replay_paused,
         })
     }
 
@@ -522,17 +547,17 @@ impl Editor {
     pub fn entities(&self) -> Box<[ExportedEntity]> {
         match &self.mode {
             EditorMode::ModifyEntity(modify_entity) => modify_entity.export_entities(self.state.entities()),
-            _ => self.state.entities().keys().map(|entity| entity.export()).collect(),
+            _ => self.state.entities().iter().map(|(&entity, &count)| entity.export(count)).collect(),
         }
     }
 
     pub fn preview_entities(&self) -> Box<[ExportedEntity]> {
         match &self.mode {
-            EditorMode::PlaceEntity(place_entity) => Box::new([place_entity.entity.export().with_stage(place_entity.stage)]),
-            EditorMode::ModifyEntity(modify_entity) => Box::new([modify_entity.modified_entity.export()]),
-            EditorMode::MoveSelection(move_selection) => move_selection.preview_entities(self.cursor_pos).map(|entity| entity.export()).collect(),
+            EditorMode::PlaceEntity(place_entity) => Box::new([place_entity.entity.export(1).with_stage(place_entity.stage)]),
+            EditorMode::ModifyEntity(modify_entity) => Box::new([modify_entity.modified_entity.export(1)]),
+            EditorMode::MoveSelection(move_selection) => move_selection.preview_entities(self.cursor_pos).map(|(entity, count)| entity.export(count)).collect(),
             EditorMode::SelectEntity(select_entity) => select_entity.get_selection_exported().into_iter().collect(),
-            EditorMode::EntityPalette(entity_palette) => entity_palette.preview_entities(self.entity_orientations, self.entity_modes, self.selected_entity_id).map(|entity| entity.export().without_switch()).collect(),
+            EditorMode::EntityPalette(entity_palette) => entity_palette.preview_entities(self.entity_orientations, self.entity_modes, self.selected_entity_id).map(|entity| entity.export(1).without_switch()).collect(),
             _ => Box::new([]),
         }
     }
@@ -1045,6 +1070,12 @@ impl Editor {
                     select_entity.set_selection(crosshair_pos, self.state.entities());
                 }
             }
+            EditorMode::ModifyEntity(modify_entity) => {
+                if let Some(command) = modify_entity.command_delete(self.state.entities()) {
+                    self.state.apply(command);
+                    self.mode = EditorMode::SelectEntity(SelectEntity::new(self.cursor_pos, self.state.entities(), self.entity_fine_grid));
+                }
+            }
             EditorMode::MoveSelection(move_selection) => {
                 move_selection.toggle_tile_visibility();
             }
@@ -1393,6 +1424,26 @@ impl Editor {
             flatten_bones(&closest_past_ninja(self.cursor_pos, &self.past_ninjas, self.entity_orientations.orientation, self.show_past_ninjas_trail).calc_ninja_position(&self.anim_data))
         } else {
             Box::new([])
+        }
+    }
+
+    pub fn fill_with_mines(&mut self) {
+        for x in 0..=(COLS * 4) {
+            'row: for y in 0..=(ROWS * 4) {
+                let pos = DVec2::new(24.0 + x as f64 * 6.0, 24.0 + y as f64 * 6.0);
+
+                for past_ninja in &self.past_ninjas {
+                    if past_ninja.pos.distance(pos) <= 14.0 {
+                        continue 'row;
+                    }
+                }
+
+                self.state.apply(Command::SetEntityCount(SetEntityCount {
+                    entity: EditorEntity::Mine { pos: EntityPos::from_world_pos(pos) },
+                    old_count: 0,
+                    new_count: 1,
+                }));
+            }
         }
     }
 }

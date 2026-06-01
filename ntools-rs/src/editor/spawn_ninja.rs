@@ -13,6 +13,7 @@ pub fn closest_past_ninja(cursor_pos: DVec2, past_ninjas: &[PastNinja], orientat
         anim_state: AnimState::Airborne,
         run_cycle: 0,
         tilt: orientation.vec2().perp(),
+        prev_input: 0,
     };
     if !show_trail {
         return default;

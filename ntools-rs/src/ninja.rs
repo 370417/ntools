@@ -63,6 +63,7 @@ pub struct PastNinja {
     pub anim_frame: usize,
     pub run_cycle: usize,
     pub tilt: DVec2,
+    pub prev_input: u8,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -456,8 +457,14 @@ impl Ninja {
                 GridEntityType::ZapDrone => {
                     entities.zap_drones[i].logical_collision(self);
                 }
+                GridEntityType::ChaseDrone => {
+                    entities.chase_drones[i].logical_collision(self);
+                }
                 GridEntityType::Deathball => {
                     entities.deathballs[i].logical_collision(self);
+                }
+                GridEntityType::EvilNinja => {
+                    entities.evil_ninjas[i].logical_collision(self);
                 }
             }
         }
@@ -952,6 +959,10 @@ impl Ninja {
         bones
     }
 
+    pub fn calc_past_ninja_bones(past_ninja: &PastNinja, anim_data: &[u8]) -> Bones {
+        Ninja::calc_ninja_position_inner(past_ninja.anim_frame, past_ninja.anim_state, past_ninja.run_cycle, past_ninja.facing, past_ninja.tilt, anim_data)
+    }
+
     fn calc_ninja_position_inner(anim_frame: usize, anim_state: AnimState, run_cycle: usize, facing: f64, tilt: DVec2, anim_data: &[u8]) -> Bones {
         let mut bones = get_anim_frame(anim_frame, anim_data);
         if anim_state == AnimState::Running {
@@ -1095,7 +1106,7 @@ impl Ninja {
         }
     }
 
-    pub fn to_past_ninja(&self) -> PastNinja {
+    pub fn to_past_ninja(&self, prev_input: u8) -> PastNinja {
         PastNinja {
             pos: self.pos,
             orientation: self.orientation,
@@ -1105,6 +1116,7 @@ impl Ninja {
             anim_frame: self.anim_frame,
             run_cycle: self.run_cycle,
             tilt: self.tilt,
+            prev_input,
         }
     }
 }
