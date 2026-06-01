@@ -90,6 +90,21 @@ type Line = {
     y2: number;
 };
 
+type StackCounts = Array<{
+    x: number;
+    y: number;
+    count: number;
+}>;
+
+function updateStackCounts(setStackCounts: Setter<StackCounts>, entities: ExportedEntity[]) {
+    const stackCounts = entities.map(entity => ({
+        x: entity.x,
+        y: entity.y,
+        count: entity.stack_count,
+    })).filter(({ count }) => count > 1);
+    setStackCounts(stackCounts);
+}
+
 export type EntitiesProps = {
     ninjas: Accessor<NinjaData[]>,
     setNinjas: Setter<NinjaData[]>,
@@ -420,6 +435,8 @@ export function EditorApp(props: {
     const [showTrail, setShowTrail] = createSignal(editor.get_show_trail());
     const [ninjaPreviewBones, setNinjaPreviewBones] = createSignal<Float64Array<ArrayBufferLike>>();
 
+    const [stackCounts, setStackCounts] = createSignal<StackCounts>([]);
+
     const keydownListener = (event: KeyboardEvent) => {
         let change = false;
 
@@ -561,6 +578,7 @@ export function EditorApp(props: {
 
         updateEntities(entities, lines, editor.entities(), false);
         updateEntities(previewEntities, lines, editor.preview_entities(), true);
+        updateStackCounts(setStackCounts, editor.entities());
 
         setDoorSwitchLines(lines);
 
@@ -690,6 +708,9 @@ export function EditorApp(props: {
             {regularGridYs.map(y => <line class="regular-grid" x1="24" x2={24 * 43} y1={y} y2={y} />)}
             <Entities entities={entities} />
             <path id="tiles" stroke-width="2" clip-path="url(#tiles-clip)" clip-rule="evenodd" d={tilePath()} fill-rule="evenodd" />
+            <For each={stackCounts()}>
+                {(stackCount) => <text x={stackCount.x + 4} y={stackCount.y + 12}>{stackCount.count}</text>}
+            </For>
             <Show when={mode() === MODE_ENTITY_PALETTE}>
                 {/* palette background color from https://coloration-cimn.onrender.com/ */}
                 <rect fill="color-mix(in srgb,var(--background) 18%,white 15%)"

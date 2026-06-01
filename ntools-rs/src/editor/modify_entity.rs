@@ -127,39 +127,27 @@ impl ModifyEntity {
         let remove_original_entity = SetEntityCount {
             entity: self.original_entity,
             old_count: original_count,
-            new_count: 0,
+            new_count: original_count.saturating_sub(1),
         };
 
-        match self.modified_entity {
-            entity @ EditorEntity::BounceBlock { .. } => {
-                // stackable entities
-                let old_count = *entities.get(&entity).unwrap_or(&0);
-                Some(Command::SetTilesAndEntities(
-                    Vec::new(),
-                    vec![
-                        remove_original_entity,
-                        SetEntityCount {
-                            entity,
-                            old_count,
-                            new_count: old_count.saturating_add(original_count),
-                        },
-                    ],
-                ))
-            }
-            entity => {
-                Some(Command::SetTilesAndEntities(
-                    Vec::new(),
-                    vec![
-                        remove_original_entity,
-                        SetEntityCount {
-                            entity,
-                            old_count: *entities.get(&entity).unwrap_or(&0),
-                            new_count: 1,
-                        },
-                    ],
-                ))
-            }
-        }
+        let old_modified_count = *entities.get(&self.modified_entity).unwrap_or(&0);
+        let add_modified_entity = SetEntityCount {
+            entity: self.modified_entity,
+            old_count: old_modified_count,
+            new_count: if self.modified_entity.is_stackable() {
+                old_modified_count.saturating_add(1)
+            } else {
+                1
+            },
+        };
+
+        Some(Command::SetTilesAndEntities(
+            Vec::new(),
+            vec![
+                remove_original_entity,
+                add_modified_entity,
+            ],
+        ))
     }
 
     pub fn press_x(&mut self) {
@@ -197,7 +185,15 @@ impl ModifyEntity {
     /// Exported entites with the currently selected entity filtered out
     /// because we want to show it as a preview entity instead.
     pub fn export_entities(&self, entities: &EditorEntities) -> Box<[ExportedEntity]> {
-        entities.keys().filter(|&&entity| entity != self.original_entity).map(|entity| entity.export()).collect()
+        entities.iter().map(|(&entity, &count)| {
+            if entity == self.original_entity {
+                entity.export(count.saturating_sub(1))
+            } else {
+                entity.export(count)
+            }
+        }).filter(|exported| {
+            exported.stack_count > 0
+        }).collect()
     }
 
     pub fn command_delete(&self, entities: &EditorEntities) -> Option<Command> {

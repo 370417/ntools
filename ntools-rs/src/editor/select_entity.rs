@@ -118,7 +118,7 @@ impl SelectEntity {
 
     pub fn get_selection_exported(&self) -> Option<ExportedEntity> {
         self.get_selection().map(|(entity, selection_type)| {
-            entity.export().with_selection_type(selection_type)
+            entity.export(1).with_selection_type(selection_type)
         })
     }
 

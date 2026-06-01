@@ -547,17 +547,17 @@ impl Editor {
     pub fn entities(&self) -> Box<[ExportedEntity]> {
         match &self.mode {
             EditorMode::ModifyEntity(modify_entity) => modify_entity.export_entities(self.state.entities()),
-            _ => self.state.entities().keys().map(|entity| entity.export()).collect(),
+            _ => self.state.entities().iter().map(|(&entity, &count)| entity.export(count)).collect(),
         }
     }
 
     pub fn preview_entities(&self) -> Box<[ExportedEntity]> {
         match &self.mode {
-            EditorMode::PlaceEntity(place_entity) => Box::new([place_entity.entity.export().with_stage(place_entity.stage)]),
-            EditorMode::ModifyEntity(modify_entity) => Box::new([modify_entity.modified_entity.export()]),
-            EditorMode::MoveSelection(move_selection) => move_selection.preview_entities(self.cursor_pos).map(|entity| entity.export()).collect(),
+            EditorMode::PlaceEntity(place_entity) => Box::new([place_entity.entity.export(1).with_stage(place_entity.stage)]),
+            EditorMode::ModifyEntity(modify_entity) => Box::new([modify_entity.modified_entity.export(1)]),
+            EditorMode::MoveSelection(move_selection) => move_selection.preview_entities(self.cursor_pos).map(|(entity, count)| entity.export(count)).collect(),
             EditorMode::SelectEntity(select_entity) => select_entity.get_selection_exported().into_iter().collect(),
-            EditorMode::EntityPalette(entity_palette) => entity_palette.preview_entities(self.entity_orientations, self.entity_modes, self.selected_entity_id).map(|entity| entity.export().without_switch()).collect(),
+            EditorMode::EntityPalette(entity_palette) => entity_palette.preview_entities(self.entity_orientations, self.entity_modes, self.selected_entity_id).map(|entity| entity.export(1).without_switch()).collect(),
             _ => Box::new([]),
         }
     }

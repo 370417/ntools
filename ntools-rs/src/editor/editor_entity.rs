@@ -206,6 +206,7 @@ pub struct ExportedEntity {
     pub switch_x: f64,
     pub switch_y: f64,
     pub mode: u8,
+    pub stack_count: u16,
 }
 
 impl EditorEntity {
@@ -240,7 +241,7 @@ impl EditorEntity {
         }
     }
 
-    pub fn export(&self) -> ExportedEntity {
+    pub fn export(&self, count: u16) -> ExportedEntity {
         let pos = self.pos().to_world_pos();
         let switch_pos = self.switch_pos().map(EntityPos::to_world_pos).unwrap_or(DVec2::splat(f64::NAN));
         ExportedEntity {
@@ -251,6 +252,7 @@ impl EditorEntity {
             switch_x: switch_pos.x,
             switch_y: switch_pos.y,
             mode: self.mode(),
+            stack_count: count,
         }
     }
 
@@ -497,6 +499,37 @@ impl EditorEntity {
             EditorEntity::Mine { pos } => Some(EditorEntity::ToggleMine { pos }),
             EditorEntity::ToggleMine { pos } => Some(EditorEntity::Mine { pos }),
             _ => None,
+        }
+    }
+
+    pub fn is_stackable(self) -> bool {
+        match self {
+            EditorEntity::Gold { .. } |
+            EditorEntity::BounceBlock { .. } |
+            EditorEntity::EvilNinja { .. } |
+            EditorEntity::BoostPad { .. } => true,
+            EditorEntity::Ninja { .. } |
+            EditorEntity::Mine { .. } |
+            EditorEntity::Exit { .. } |
+            EditorEntity::RegularDoor { .. } |
+            EditorEntity::LockedDoor { .. } |
+            EditorEntity::TrapDoor { .. } |
+            EditorEntity::LaunchPad { .. } |
+            EditorEntity::OneWay { .. } |
+            EditorEntity::ChaingunDrone { .. } |
+            EditorEntity::LaserDrone { .. } |
+            EditorEntity::ZapDrone { .. } |
+            EditorEntity::ChaseDrone { .. } |
+            EditorEntity::FloorGuard { .. } |
+            EditorEntity::RocketTurret { .. } |
+            EditorEntity::GaussTurret { .. } |
+            EditorEntity::Thwump { .. } |
+            EditorEntity::ToggleMine { .. } |
+            EditorEntity::LaserTurret { .. } |
+            EditorEntity::Deathball { .. } |
+            EditorEntity::MiniDrone { .. } |
+            EditorEntity::Bat { .. } |
+            EditorEntity::ShoveThwump { .. } => false,
         }
     }
 }
