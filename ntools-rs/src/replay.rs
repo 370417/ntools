@@ -180,6 +180,10 @@ impl Replay {
         flatten_bones(&self.preview_sim.ninja.calc_ninja_position(prev, partial_frame, &self.anim_data))
     }
 
+    pub fn ninja_info(&self) -> String {
+        self.current_sim.ninja.info()
+    }
+
     pub fn past_ninjas_len(&self) -> usize {
         self.past_ninjas.len()
     }

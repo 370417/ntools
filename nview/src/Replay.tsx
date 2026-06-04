@@ -28,6 +28,9 @@ import { InputDisplay } from './InputDisplay';
 import { DeathballDefs, Deathballs, updateDeathballs, type DeathballData } from './entities/Deathball';
 import { EvilNinjaDefs, EvilNinjas, updateEvilNinjas, type EvilNinjaData } from './entities/EvilNinja';
 
+const xhairHalfSize = 4;
+const crosshairPath = `M ${-xhairHalfSize} 0 H ${xhairHalfSize} M 0 ${-xhairHalfSize} V ${xhairHalfSize}`;
+
 export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventState: GlobalEventState }) {
     const replay = props.replay;
 
@@ -35,10 +38,10 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
     const [isPlaying, setIsPlaying] = createSignal(!replay.is_from_attract());
     // If dragging dragStart is the progress value (frame) that the drag started at.
     // If not dragging, dragStart is undefined.
-    const [dragStart, setDragStart] = createSignal<number | undefined>(undefined);
+    const [dragStart, setDragStart] = createSignal<number>();
     const [replayLength, setReplayLength] = createSignal(0);
     const [progress, setProgress] = createSignal(0);
-    const [previewProgress, setPreviewProgress] = createSignal<number | undefined>(undefined);
+    const [previewProgress, setPreviewProgress] = createSignal<number>();
     const [score, setScore] = createSignal(90 * 60);
 
     const keydownListener = (event: KeyboardEvent) => {
@@ -102,6 +105,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
         updateInputs();
         updatePastNinjaBones();
         updatePastNinjas();
+        setNinjaInfo(replay.ninja_info());
     }
 
     document.addEventListener('keydown', keydownListener);
@@ -145,6 +149,9 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
     const laserDrones = createSignal<LaserDroneData[]>([]);
     const deathballs = createSignal<DeathballData[]>([]);
     const evilNinjas = createSignal<EvilNinjaData[]>([]);
+
+    const [ninjaInfo, setNinjaInfo] = createSignal('');
+    const [distanceMeasurePoint, setDistanceMeasurePoint] = createSignal<{ x: number, y: number }>();
 
     const [pastNinjas, setPastNinjas] = createSignal<{ x: number, y: number }[]>([]);
     function updatePastNinjas() {
@@ -288,12 +295,33 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
             <span style={{
                 position: 'absolute',
             }} >{(score() / 60).toFixed(3)}</span>
+            <Show when={!isPlaying()}>
+                <span style={{
+                    position: 'absolute',
+                    top: '1.5em',
+                    'white-space': 'pre',
+                    'font-family': 'monospace',
+                }}>
+                    {ninjaInfo()}
+                </span>
+            </Show>
             <svg viewBox="0 0 1056 600" onmousemove={function(this: SVGElement, event) {
                 const { left, top, width, height } = this.getBoundingClientRect();
                 props.globalEventState.setMouseGamePos({
                     x: (event.clientX - left) / width * 1056,
                     y: (event.clientY - top) / height * 600,
                 });
+            }}
+            onmousedown={function() {
+                const { x, y } = props.globalEventState.mouseGamePos();
+                const roundedX = Math.round(x / 6) * 6;
+                const roundedY = Math.round(y / 6) * 6;
+                const point = distanceMeasurePoint();
+                if (roundedX === point?.x && roundedY === point?.y) {
+                    setDistanceMeasurePoint(undefined);
+                } else {
+                    setDistanceMeasurePoint({ x: roundedX, y: roundedY });
+                }
             }}>
                 <defs>
                     <clipPath id="tiles-clip">
@@ -314,6 +342,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                     <DeathballDefs />
                     <ExitDoorGradient />
                     <EvilNinjaDefs />
+                    <path id="crosshair" stroke-width="1.5" fill="none" d={crosshairPath} />
                 </defs>
                 <TrapDoors trapDoors={trapDoors[0]} />
                 <LockedDoors lockedDoors={lockedDoors[0]} />
@@ -343,6 +372,16 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                 <Show when={!isPlaying()}>
                     <polyline stroke="var(--ninja)" fill="none" points={pastNinjas().slice(progress(), previewProgress() || 0).map(({ x, y }) => `${x},${y}`).join(' ')} />
                     <InputDisplay inputs={inputs} pastNinjas={pastNinjaBones} />
+                    <Show when={distanceMeasurePoint()}>
+                        <use href="#crosshair" x={distanceMeasurePoint()!.x} y={distanceMeasurePoint()!.y} />
+                        <text x={distanceMeasurePoint()!.x} y={distanceMeasurePoint()!.y}>x {distanceMeasurePoint()!.x - ninja().x}</text>
+                        <text x={distanceMeasurePoint()!.x} y={distanceMeasurePoint()!.y + 20}>y {distanceMeasurePoint()!.y - ninja().y}</text>
+                        <text x={distanceMeasurePoint()!.x} y={distanceMeasurePoint()!.y + 40}>{(() => {
+                            let x = distanceMeasurePoint()!.x - ninja().x;
+                            let y = distanceMeasurePoint()!.y - ninja().y;
+                            return Math.sqrt(x * x + y * y);
+                        })()}</text>
+                    </Show>
                 </Show>
             </svg>
             <div>

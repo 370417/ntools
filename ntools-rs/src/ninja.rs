@@ -71,13 +71,19 @@ pub enum NinjaState {
     Standing,
     Running,
     Skidding,
-    Jumping,
+    Jumping(JumpType),
     Falling,
     WallSliding,
     Dead,
     AwaitingDeath,
     Celebrating,
     Disabled,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum JumpType {
+    Floor,
+    Wall,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -151,6 +157,26 @@ impl NinjaState {
     fn is_grounded(&self) -> bool {
         matches!(self, Self::Standing | Self::Running | Self::Skidding)
     }
+
+    fn is_jumping(&self) -> bool {
+        matches!(self, Self::Jumping(_))
+    }
+
+    fn to_string(&self) -> String {
+        match self {
+            NinjaState::Standing => "Standing",
+            NinjaState::Running => "Running",
+            NinjaState::Skidding => "Skidding",
+            NinjaState::Jumping(JumpType::Floor) => "Jumping (floor jump)",
+            NinjaState::Jumping(JumpType::Wall) => "Jumping (wall jump)",
+            NinjaState::Falling => "Falling",
+            NinjaState::WallSliding => "WallSliding",
+            NinjaState::Dead => "Dead",
+            NinjaState::AwaitingDeath => "AwaitingDeath",
+            NinjaState::Celebrating => "Celebrating",
+            NinjaState::Disabled => "Disabled",
+        }.to_owned()
+    }
 }
 
 impl Ninja {
@@ -223,6 +249,34 @@ impl Ninja {
             dance_end: 0,
             run_cycle: past_ninja.run_cycle,
         }
+    }
+
+    pub fn info(&self) -> String {
+        format!(
+            "\
+pos {:>7.2} {:>7.2}
+vel {:>7.2} {:>7.2}
+speed {:>7.2}
+{}
+airborne     {}
+walled       {}
+jump_buffer  {:?}
+floor_buffer {:?}
+wall_buffer  {:?}
+lp_buffer    {:?}",
+            self.pos.x,
+            self.pos.y,
+            self.speed.x,
+            self.speed.y,
+            self.speed.length(),
+            self.state.to_string(),
+            self.airborne,
+            self.walled,
+            self.jump_buffer,
+            self.floor_buffer,
+            self.wall_buffer,
+            self.launch_pad_buffer,
+        )
     }
 
     /// Update position and speed by applying drag and gravity before collision phase.
@@ -424,7 +478,7 @@ impl Ninja {
                         self.floor_buffer = None;
                         self.launch_pad_boost_normal = boost.normalize();
                         self.launch_pad_buffer = Some(0);
-                        if self.state == NinjaState::Jumping {
+                        if self.state.is_jumping() {
                             self.applied_gravity = GRAVITY_FALL;
                         }
                         self.state = NinjaState::Falling;
@@ -568,7 +622,7 @@ impl Ninja {
         self.jump_buffer = None;
         self.floor_buffer = None;
         self.launch_pad_buffer = None;
-        self.state = NinjaState::Jumping;
+        self.state = NinjaState::Jumping(JumpType::Floor);
         self.applied_gravity = GRAVITY_JUMP;
         let jump = if self.grav_get_horiz(self.floor_unit_normal) == 0.0 {
             // Jump from flat ground
@@ -612,7 +666,7 @@ impl Ninja {
         } else {
             self.grav_vec(DVec2::new(1.0, -1.4))
         };
-        self.state = NinjaState::Jumping;
+        self.state = NinjaState::Jumping(JumpType::Wall);
         self.applied_gravity = GRAVITY_JUMP;
         if self.grav_get_horiz(self.speed) * self.wall_normal < 0.0 {
             self.speed = self.grav_set_horiz(self.speed, 0.0);
@@ -709,7 +763,7 @@ impl Ninja {
                 self.speed = self.grav_set_horiz(self.speed, speed_horiz_new);
             }
             if !self.state.is_grounded() {
-                if self.state == NinjaState::Jumping {
+                if self.state.is_jumping() {
                     self.applied_gravity = GRAVITY_FALL;
                 }
                 self.state = if self.grav_get_horiz(self.speed - surface_speed) * hor_input <= 0.0 {
@@ -796,7 +850,7 @@ impl Ninja {
                 self.state = NinjaState::Falling;
                 return;
             }
-            if self.state == NinjaState::Jumping {
+            if self.state.is_jumping() {
                 self.jump_duration += 1;
                 if !jump_input || self.jump_duration > MAX_JUMP_DURATION {
                     self.applied_gravity = GRAVITY_FALL;
@@ -833,7 +887,7 @@ impl Ninja {
                     self.state = NinjaState::Falling;
                 }
             } else if self.grav_get_vert(self.speed) > self.avg_wall_slide && hor_input * self.wall_normal < 0.0 {
-                if self.state == NinjaState::Jumping {
+                if self.state.is_jumping() {
                     self.applied_gravity = GRAVITY_FALL;
                 }
                 self.state = NinjaState::WallSliding;
@@ -849,7 +903,7 @@ impl Ninja {
             self.tilt = self.orientation.vec2().perp();
             self.facing = -self.wall_normal.signum();
             self.anim_rate = self.grav_get_vert(self.speed);
-        } else if !self.airborne && self.state != NinjaState::Jumping {
+        } else if !self.airborne && !self.state.is_jumping() {
             self.tilt = self.floor_unit_normal.perp();
             match self.state {
                 NinjaState::Standing => self.anim_state = AnimState::Standing,
@@ -870,7 +924,7 @@ impl Ninja {
         } else {
             self.anim_state = AnimState::Airborne;
             self.anim_rate = self.grav_get_vert(self.speed);
-            if self.state == NinjaState::Jumping {
+            if self.state.is_jumping() {
                 self.tilt = self.orientation.vec2().perp();
             } else {
                 let tilt_angle = self.tilt.to_angle();
@@ -986,7 +1040,7 @@ impl Ninja {
         match self.state {
             NinjaState::Dead | NinjaState::AwaitingDeath | NinjaState::Celebrating | NinjaState::Disabled => {}
             _ => {
-                if self.state == NinjaState::Jumping {
+                if self.state.is_jumping() {
                     self.applied_gravity = GRAVITY_FALL;
                 }
                 self.state = NinjaState::Celebrating;
