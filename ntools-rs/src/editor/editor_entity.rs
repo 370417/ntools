@@ -188,7 +188,7 @@ impl TryFrom<u8> for EntityId {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(debug_assertions, derive(Debug))]
 pub struct EntityPos {
     // list y before x so that the generated Ord implementation compares y before comparing x

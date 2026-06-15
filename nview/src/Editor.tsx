@@ -437,6 +437,8 @@ export function EditorApp(props: {
 
     const [stackCounts, setStackCounts] = createSignal<StackCounts>([]);
 
+    const [loopPath, setLoopPath] = createSignal('');
+
     const keydownListener = (event: KeyboardEvent) => {
         let change = false;
 
@@ -597,6 +599,7 @@ export function EditorApp(props: {
 
         if (save) {
             debouncedSaveMap(editor);
+            // setLoopPath(editor.loop_locations_path());
         }
     }
 
@@ -751,6 +754,7 @@ export function EditorApp(props: {
             <Show when={showTrail()}>
                 <polyline stroke="var(--ninja)" fill="none" points={pastNinjas().map(({ x, y }) => `${x},${y}`).join(' ')} />
             </Show>
+            <path stroke="red" fill="none" d={loopPath()} />
         </svg>
         <EditorFooter
             editor={editor}
