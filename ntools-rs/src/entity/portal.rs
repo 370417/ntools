@@ -1,8 +1,8 @@
 use std::collections::BTreeMap;
 
-use glam::DVec2;
+use glam::{DMat2, DVec2};
 
-use crate::{grid::{Grid, GridPos}, mode::PortalMode, orientation::OrientationCardinal, segment::Segment};
+use crate::{grid::{Grid, GridPos}, mode::PortalMode, ninja::Ninja, orientation::OrientationCardinal, segment::Segment};
 
 #[derive(Clone)]
 pub struct Portal {
@@ -28,6 +28,7 @@ struct Side {
     mode: PortalMode,
 }
 
+#[derive(Clone, Copy)]
 pub enum SideType {
     Side1,
     Side2,
@@ -165,11 +166,55 @@ impl Portal {
 
         spatial_map
     }
+
+    fn transform(&self, ninja: &Ninja, from_side_type: SideType) -> Ninja {
+        let (from_side, to_side) = match from_side_type {
+            SideType::Side1 => (self.side1.clone(), self.side2.clone()),
+            SideType::Side2 => (self.side2.clone(), self.side1.clone()),
+        };
+
+        let from_matrix = from_side.basis_matrix().inverse();
+        let to_matrix = to_side.basis_matrix();
+
+        let mut pos_rel_from = from_matrix * (ninja.pos - from_side.pos);
+        pos_rel_from.x *= -1.0; // reflect because if you are in front of one portal, you are behind the other
+        let transformed_pos = to_matrix * pos_rel_from + to_side.pos;
+
+        let mut ninja = ninja.clone();
+
+        ninja.tilt = to_matrix * from_matrix * ninja.tilt;
+
+        ninja.pos = transformed_pos;
+        ninja.pos_old = transformed_pos;
+        ninja
+    }
+}
+
+impl Side {
+    fn basis_matrix(&self) -> DMat2 {
+        let vec2 = self.orientation.vec2();
+        match self.mode {
+            PortalMode::CW => DMat2::from_cols(vec2, vec2.perp()),
+            PortalMode::CCW => DMat2::from_cols(vec2, -vec2.perp()),
+        }
+    }
+}
+
+pub fn get_portal_ninja(ninja: &Ninja, portals: &[Portal], spatial_map: &PortalSpatialMap) -> Option<Ninja> {
+    // round ninja position to nearest quarter tile center
+    let rounded_ninja_pos = 12.0 * ((ninja.pos + DVec2::splat(6.0)) / 12.0).round() - DVec2::splat(6.0);
+    let rounded_ninja_pos2 = (rounded_ninja_pos.x as i32, rounded_ninja_pos.y as i32);
+
+    spatial_map.get(&rounded_ninja_pos2).map(|&(i, side_type)| {
+        let portal = &portals[i];
+
+        portal.transform(ninja, side_type)
+    })
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{editor::Editor, map_file::MapFile};
+    use crate::editor::Editor;
 
     use super::*;
 
@@ -182,7 +227,7 @@ mod tests {
 
         let portal_segments: Vec<_> = replay.segments.flat_iter().filter(|segment| {
             match segment {
-                Segment::Linear { start, end, is_portal } => *is_portal,
+                Segment::Linear { is_portal, .. } => *is_portal,
                 _ => false,
             }
         }).collect();

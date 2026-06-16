@@ -1,9 +1,10 @@
-use crate::{entity::{Entities, EntityIndex, GridEntityType, boost_pad::BoostPad, bounce_block::BounceBlock, chase_drone::ChaseDrone, deathball::Deathball, door::RegularDoor, evil_ninja::EvilNinja, floor_guard::FloorGuard, gold::collected_golds, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, on_door_state_change, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::Grid, ninja::{AnimState, Ninja, NinjaState, PastNinja}, segment::Segment};
+use crate::{entity::{Entities, EntityIndex, GridEntityType, boost_pad::BoostPad, bounce_block::BounceBlock, chase_drone::ChaseDrone, deathball::Deathball, door::RegularDoor, evil_ninja::EvilNinja, floor_guard::FloorGuard, gold::collected_golds, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, on_door_state_change, portal::{PortalSpatialMap, get_portal_ninja}, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::Grid, ninja::{AnimState, Ninja, NinjaState, PastNinja}, segment::Segment};
 
 #[derive(Clone)]
 pub struct Simulation {
     pub frame: u32,
     pub ninja: Ninja,
+    pub portal_ninja: Option<Ninja>,
     pub score: u32,
     pub entities: Entities,
     pub entity_grid: Grid<EntityIndex>,
@@ -73,6 +74,7 @@ impl Simulation {
         Ok(Simulation {
             frame: 0,
             ninja: ninjas.into_iter().next().ok_or("Map has no ninja")?,
+            portal_ninja: None,
             score: 90 * 60,
             latest_evil_ninja_activation_frame: None,
             entity_grid: entities.grid(),
@@ -81,7 +83,7 @@ impl Simulation {
         })
     }
 
-    pub fn tick(&mut self, input: Input, segments: &Grid<Segment>, past_ninjas: &[PastNinja]) {
+    pub fn tick(&mut self, input: Input, segments: &Grid<Segment>, past_ninjas: &[PastNinja], portal_spatial_map: &PortalSpatialMap) {
         self.frame += 1;
 
         // set ninja input
@@ -131,6 +133,7 @@ impl Simulation {
 
         if self.ninja.state != NinjaState::Disabled {
             self.ninja.integrate();
+            self.portal_ninja = get_portal_ninja(&self.ninja, &self.entities.portals, portal_spatial_map);
             let mut collision_state = self.ninja.pre_collision();
             for _ in 0..4 {
                 self.ninja.collide_vs_objects(&mut collision_state, &mut self.entities, &self.entity_grid, self.dynamic_friction);

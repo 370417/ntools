@@ -43,8 +43,8 @@ pub struct Ninja {
     ceiling_unit_normal: DVec2,
     avg_wall_slide: f64,
     pub anim_state: AnimState,
-    facing: f64,
-    tilt: DVec2,
+    pub facing: f64,
+    pub tilt: DVec2,
     anim_rate: f64,
     pub anim_frame: usize,
     frame_residual: f64,
@@ -391,7 +391,7 @@ lp_buffer    {:?}",
                 // while inside them (because of portals).
                 // Besides, this bit was behaving differently than the official game anyways.
                 // RADIUS + dist
-                0.0
+                RADIUS - dist
             } else {
                 RADIUS - dist
             };
@@ -1019,6 +1019,10 @@ lp_buffer    {:?}",
             bones[i] = prev_bones[i].lerp(bones[i], partial_frame)
         }
         bones
+    }
+
+    pub fn calc_ninja_position_without_interpolation(&self, anim_data: &[u8]) -> Bones {
+        Ninja::calc_ninja_position_inner(self.anim_frame, self.anim_state, self.run_cycle, self.facing, self.tilt, anim_data)
     }
 
     pub fn calc_past_ninja_bones(past_ninja: &PastNinja, anim_data: &[u8]) -> Bones {

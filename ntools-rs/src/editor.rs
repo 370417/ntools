@@ -270,7 +270,7 @@ impl Editor {
 
         let mut segments = self.state.tiles().segments().clone();
         entities.doors.populate_grid(&mut segments);
-        Portal::init_portals(&mut entities.portals, &mut segments);
+        let portal_spatial_map = Portal::init_portals(&mut entities.portals, &mut segments);
 
         let current_sim = Simulation::new(ninjas, entities, dynamic_friction)?;
 
@@ -299,6 +299,7 @@ impl Editor {
             sender: Some(sender),
             anim_data: self.anim_data.clone(),
             is_from_attract: self.start_replay_paused,
+            portal_spatial_map,
         })
     }
 

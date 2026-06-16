@@ -123,9 +123,11 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
 
     const [ninja, setNinja] = createSignal({ x: -50, y: -50, deg: 0 });
     const [ninjaPreview, setNinjaPreview] = createSignal({ x: -50, y: -50, deg: 0 });
+    const [portalNinja, setPortalNinja] = createSignal({ x: -50, y: -50, deg: 0 });
 
     const [ninjaBones, setNinjaBones] = createSignal<Float64Array<ArrayBufferLike>>();
     const [ninjaPreviewBones, setNinjaPreviewBones] = createSignal<Float64Array<ArrayBufferLike>>();
+    const [portalNinjaBones, setPortalNinjaBones] = createSignal<Float64Array<ArrayBufferLike>>();
 
     const mines = createSignal<MineData[]>([]);
     const golds = createSignal<GoldData[]>([]);
@@ -255,12 +257,18 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
             y: replay.ninja_preview_y(partialFrame),
             deg: 0,
         });
+        setPortalNinja({
+            x: replay.portal_ninja_x(partialFrame),
+            y: replay.portal_ninja_y(partialFrame),
+            deg: 0,
+        });
         setNinjaBones(replay.ninja_bones(partialFrame));
         if (previewProgress() === undefined) {
             setNinjaPreviewBones(undefined);
         } else {
             setNinjaPreviewBones(replay.ninja_preview_bones(partialFrame));
         }
+        setPortalNinjaBones(replay.portal_ninja_bones());
 
         updateMines(mines, replay);
         updateGolds(golds, replay);
@@ -381,6 +389,9 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                             return Math.sqrt(x * x + y * y);
                         })()}</text>
                     </Show>
+                </Show>
+                <Show when={Number.isFinite(portalNinja().x)}>
+                    <Ninja class="ninja" ninja={portalNinja} bones={portalNinjaBones} />
                 </Show>
                 <Ninja class="ninja" ninja={ninja} bones={ninjaBones} />
             </svg>
