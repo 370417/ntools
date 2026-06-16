@@ -71,13 +71,10 @@ impl Portal {
         }
 
         fn congruent(start: DVec2, end: DVec2, side: &Side) -> bool {
-            println!("congruent start {:?} end {:?} pos {:?} orientation {:?}", start, end, side.pos, side.orientation.vec2());
             // position is the same
-            let resulta = 0.5 * (start + end) == side.pos;
+            0.5 * (start + end) == side.pos &&
             // orientation is the same
-            let resultb = (start - end).dot(side.orientation.vec2()) == 0.0;
-            println!("{} {}", resulta, resultb);
-            resulta && resultb
+            (start - end).dot(side.orientation.vec2()) == 0.0
         }
 
         let mut spatial_map = BTreeMap::new();
