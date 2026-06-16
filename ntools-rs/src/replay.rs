@@ -598,6 +598,38 @@ impl Replay {
         self.current_sim.entities.evil_ninjas[i].bones(self.current_sim.frame, &self.past_ninjas, &self.anim_data)
     }
 
+    pub fn portals_len(&self) -> usize {
+        self.current_sim.entities.portals.len()
+    }
+
+    pub fn portal_active(&self, i: usize) -> bool {
+        self.current_sim.entities.portals[i].active
+    }
+
+    pub fn portal_side1_x(&self, i: usize) -> f64 {
+        self.current_sim.entities.portals[i].side1.pos.x
+    }
+
+    pub fn portal_side1_y(&self, i: usize) -> f64 {
+        self.current_sim.entities.portals[i].side1.pos.y
+    }
+
+    pub fn portal_side1_deg(&self, i: usize) -> f64 {
+        self.current_sim.entities.portals[i].side1.orientation.rotation_deg()
+    }
+
+    pub fn portal_side2_x(&self, i: usize) -> f64 {
+        self.current_sim.entities.portals[i].side2.pos.x
+    }
+
+    pub fn portal_side2_y(&self, i: usize) -> f64 {
+        self.current_sim.entities.portals[i].side2.pos.y
+    }
+
+    pub fn portal_side2_deg(&self, i: usize) -> f64 {
+        self.current_sim.entities.portals[i].side2.orientation.rotation_deg()
+    }
+
     pub fn export_attract(&self, editor: &Editor) -> Box<[u8]> {
         to_attract_bytes(&editor.export_map(), &self.inputs).into()
     }

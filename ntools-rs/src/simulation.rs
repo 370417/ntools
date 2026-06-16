@@ -1,4 +1,4 @@
-use crate::{entity::{Entities, EntityIndex, GridEntityType, boost_pad::BoostPad, bounce_block::BounceBlock, chase_drone::ChaseDrone, deathball::Deathball, door::RegularDoor, evil_ninja::EvilNinja, floor_guard::FloorGuard, gold::collected_golds, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, on_door_state_change, portal::{PortalSpatialMap, get_portal_ninja}, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::Grid, ninja::{AnimState, Ninja, NinjaState, PastNinja}, segment::Segment};
+use crate::{entity::{Entities, EntityIndex, GridEntityType, boost_pad::BoostPad, bounce_block::BounceBlock, chase_drone::ChaseDrone, deathball::Deathball, door::RegularDoor, evil_ninja::EvilNinja, floor_guard::FloorGuard, gold::collected_golds, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, on_door_state_change, portal::{PortalSpatialMap, get_portal_ninja, teleport_ninja}, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::Grid, ninja::{AnimState, Ninja, NinjaState, PastNinja}, segment::Segment};
 
 #[derive(Clone)]
 pub struct Simulation {
@@ -143,6 +143,8 @@ impl Simulation {
             self.ninja.think(input.jump, hor_input);
             self.ninja.update_graphics(hor_input);
         }
+
+        teleport_ninja(&mut self.ninja, &mut self.portal_ninja, &self.entities.portals);
 
         self.score = self.score.saturating_sub(1);
 

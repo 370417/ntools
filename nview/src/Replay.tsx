@@ -27,6 +27,7 @@ import { GoldDefs, Golds, updateGolds, type GoldData } from './entities/Gold';
 import { InputDisplay } from './InputDisplay';
 import { DeathballDefs, Deathballs, updateDeathballs, type DeathballData } from './entities/Deathball';
 import { EvilNinjaDefs, EvilNinjas, updateEvilNinjas, type EvilNinjaData } from './entities/EvilNinja';
+import { getPortals, PortalDefs, Portals, type PortalData } from './entities/Portal';
 
 const xhairHalfSize = 4;
 const crosshairPath = `M ${-xhairHalfSize} 0 H ${xhairHalfSize} M 0 ${-xhairHalfSize} V ${xhairHalfSize}`;
@@ -151,6 +152,8 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
     const laserDrones = createSignal<LaserDroneData[]>([]);
     const deathballs = createSignal<DeathballData[]>([]);
     const evilNinjas = createSignal<EvilNinjaData[]>([]);
+    const portals = createSignal<PortalData[]>([]);
+    getPortals(portals, replay);
 
     const [ninjaInfo, setNinjaInfo] = createSignal('');
     const [distanceMeasurePoint, setDistanceMeasurePoint] = createSignal<{ x: number, y: number }>();
@@ -350,8 +353,10 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                     <DeathballDefs />
                     <ExitDoorGradient />
                     <EvilNinjaDefs />
+                    <PortalDefs />
                     <path id="crosshair" stroke-width="1.5" fill="none" d={crosshairPath} />
                 </defs>
+                <Portals portals={portals[0]} showMode={false} />
                 <TrapDoors trapDoors={trapDoors[0]} />
                 <LockedDoors lockedDoors={lockedDoors[0]} />
                 <LockedSwitches lockedSwitches={lockedSwitches[0]} />
@@ -375,6 +380,10 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                 <BounceBlocks bounceBlocks={bounceBlocks[0]} />
                 <ShoveThwumps shoveThwumps={shoveThwumps[0]} />
                 <BoostPads boostPads={boostPads[0]} />
+                <Show when={Number.isFinite(portalNinja().x)}>
+                    <Ninja class="ninja" ninja={portalNinja} bones={portalNinjaBones} />
+                </Show>
+                <Ninja class="ninja" ninja={ninja} bones={ninjaBones} />
                 <path id="tiles" stroke-width="2" clip-path="url(#tiles-clip)" clip-rule="evenodd" d={tilePath()} fill-rule="evenodd" />
                 <Show when={!isPlaying()}>
                     <polyline stroke="var(--ninja)" fill="none" points={pastNinjas().slice(progress(), previewProgress() || 0).map(({ x, y }) => `${x},${y}`).join(' ')} />
@@ -390,10 +399,6 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                         })()}</text>
                     </Show>
                 </Show>
-                <Show when={Number.isFinite(portalNinja().x)}>
-                    <Ninja class="ninja" ninja={portalNinja} bones={portalNinjaBones} />
-                </Show>
-                <Ninja class="ninja" ninja={ninja} bones={ninjaBones} />
             </svg>
             <div>
                 <Show when={!recording() || !isPlaying()}>

@@ -8,35 +8,33 @@ export type PortalData = {
     mode: number;
 };
 
-function equals(a: PortalData, b: PortalData): boolean {
-    return a.x == b.x && a.y == b.y && a.deg == b.deg && a.mode === b.mode;
-}
-
 function transform(floorguard: Accessor<PortalData>): string {
     const { x, y, deg } = floorguard();
     return `translate(${x},${y}) rotate(${deg},0,0)`;
 }
 
-// export function updatePortals([portals, setPortals]: Signal<PortalData[]>, replay: Replay, partialFrame: number) {
-//     const oldPortals = portals();
-//     const newPortalsLen = replay.portals_len();
-//     const newPortals: PortalData[] = [];
-//     for (let i = 0; i < newPortalsLen; i++) {
-//         const oldPortal = oldPortals.at(i);
-//         const newPortal = {
-//             x: replay.portal_x(i),
-//             y: replay.portal_y(i),
-//             deg: replay.portal_deg(i),
-//             animProgress: replay.portal_anim_progress(i, partialFrame),
-//         };
-//         if (oldPortal && equals(oldPortal, newPortal)) {
-//             newPortals.push(oldPortal);
-//         } else {
-//             newPortals.push(newPortal);
-//         }
-//     }
-//     setPortals(newPortals);
-// }
+export function getPortals([_portals, setPortals]: Signal<PortalData[]>, replay: Replay) {
+    const newPortalsLen = replay.portals_len();
+    const newPortals: PortalData[] = [];
+    for (let i = 0; i < newPortalsLen; i++) {
+        if (replay.portal_active(i)) {
+            const newPortal1 = {
+                x: replay.portal_side1_x(i),
+                y: replay.portal_side1_y(i),
+                deg: replay.portal_side1_deg(i),
+                mode: 0,
+            };
+            const newPortal2 = {
+                x: replay.portal_side2_x(i),
+                y: replay.portal_side2_y(i),
+                deg: replay.portal_side2_deg(i),
+                mode: 0,
+            };
+            newPortals.push(newPortal1, newPortal2);
+        }
+    }
+    setPortals(newPortals);
+}
 
 export function Portals(props: { portals: Accessor<PortalData[]>, showMode: boolean }) {
     return <Index each={props.portals()}>

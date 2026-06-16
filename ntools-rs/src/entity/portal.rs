@@ -6,9 +6,9 @@ use crate::{grid::{Grid, GridPos}, mode::PortalMode, ninja::Ninja, orientation::
 
 #[derive(Clone)]
 pub struct Portal {
-    side1: Side,
-    side2: Side,
-    active: bool,
+    pub side1: Side,
+    pub side2: Side,
+    pub active: bool,
 }
 
 /// Each portal has two quarter tiles in front of it.
@@ -22,9 +22,9 @@ pub struct Portal {
 pub type PortalSpatialMap = BTreeMap<(i32, i32), (usize, SideType)>;
 
 #[derive(Clone)]
-struct Side {
-    pos: DVec2,
-    orientation: OrientationCardinal,
+pub struct Side {
+    pub pos: DVec2,
+    pub orientation: OrientationCardinal,
     mode: PortalMode,
 }
 
@@ -92,6 +92,7 @@ impl Portal {
 
             // First case
             if a != c && a != d && b != c && b != d {
+                // TODO: check if portal facing direction is same as segment facing direction
                 let side1_matches_segment = segments.iter_neighborhood(portal.side1.pos).any(|segment| match segment {
                     &Segment::Linear { start, end, .. } if congruent(start, end, &portal.side1) => true,
                     _ => false,
@@ -194,6 +195,8 @@ impl Portal {
         ninja.pos = transformed_pos;
         ninja.pos_old = transformed_pos;
 
+        ninja.speed = to_matrix * from_matrix * ninja.speed;
+
         ninja
     }
 }
@@ -219,6 +222,35 @@ pub fn get_portal_ninja(ninja: &Ninja, portals: &[Portal], spatial_map: &PortalS
 
         portal.transform(ninja, side_type)
     })
+}
+
+/// If the ninja has crossed an active portal, send it to the portal's other side.
+pub fn teleport_ninja(ninja: &mut Ninja, portal_ninja: &mut Option<Ninja>, portals: &[Portal]) {
+    'outer: for portal in portals {
+        if portal.active {
+            for (side, side_type) in [(&portal.side1, SideType::Side1), (&portal.side2, SideType::Side2)] {
+                // check if ninja crossed from front to back of portal
+                if side.orientation.vec2().dot(ninja.pos_old - side.pos) >= 0.0 &&
+                   side.orientation.vec2().dot(ninja.pos - side.pos) <= 0.0 {
+                    // check if the intersection of the crossing is inside the portal segment
+                    if intersects_within(side.pos, side.orientation.vec2().perp(), ninja.pos_old, ninja.pos - ninja.pos_old, 12.0) {
+                        *portal_ninja = Some(ninja.clone());
+                        *ninja = portal.transform(ninja, side_type);
+                        break 'outer;
+                    }
+                }
+            }
+        }
+    }
+}
+
+pub fn intersects_within(intersection_target: DVec2, target_segment_direction: DVec2, ninja_pos: DVec2, ninja_direction: DVec2, max_dist_along_target_segment: f64) -> bool {
+    let denom = target_segment_direction.perp_dot(ninja_direction);
+    if denom <= 1e-6 {
+        return false;
+    }
+    let t = (ninja_pos - intersection_target).perp_dot(ninja_direction) / denom;
+    t.abs() < max_dist_along_target_segment
 }
 
 #[cfg(test)]
