@@ -173,29 +173,38 @@ impl Portal {
             SideType::Side2 => (self.side2.clone(), self.side1.clone()),
         };
 
-        let from_matrix = from_side.basis_matrix().inverse();
-        let to_matrix = to_side.basis_matrix();
+        let from_matrix = from_side.basis_matrix(true).inverse();
+        let to_matrix = to_side.basis_matrix(false);
 
-        let mut pos_rel_from = from_matrix * (ninja.pos - from_side.pos);
-        pos_rel_from.x *= -1.0; // reflect because if you are in front of one portal, you are behind the other
+        let pos_rel_from = from_matrix * (ninja.pos - from_side.pos);
         let transformed_pos = to_matrix * pos_rel_from + to_side.pos;
+
+        let tilt_normal = ninja.tilt.perp();
+        let transformed_tilt_normal = to_matrix * from_matrix * tilt_normal;
+        let transformed_tilt = -transformed_tilt_normal.perp();
 
         let mut ninja = ninja.clone();
 
-        ninja.tilt = to_matrix * from_matrix * ninja.tilt;
+        ninja.tilt = transformed_tilt;
+
+        if from_side.mode == to_side.mode {
+            ninja.facing *= -1.0;
+        }
 
         ninja.pos = transformed_pos;
         ninja.pos_old = transformed_pos;
+
         ninja
     }
 }
 
 impl Side {
-    fn basis_matrix(&self) -> DMat2 {
+    fn basis_matrix(&self, is_front_side: bool) -> DMat2 {
+        let scale = if is_front_side { 1.0 } else { -1.0 };
         let vec2 = self.orientation.vec2();
         match self.mode {
-            PortalMode::CW => DMat2::from_cols(vec2, vec2.perp()),
-            PortalMode::CCW => DMat2::from_cols(vec2, -vec2.perp()),
+            PortalMode::CW => DMat2::from_cols(scale * vec2, vec2.perp()),
+            PortalMode::CCW => DMat2::from_cols(scale * vec2, -vec2.perp()),
         }
     }
 }
