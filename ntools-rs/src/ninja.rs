@@ -387,7 +387,11 @@ lp_buffer    {:?}",
             // https://github.com/SimonV42/nclone/blob/842190b2a216579b5b5c551e0a0b4505fc3381cc/nsim.py#L180
             let dist = delta.length();
             let depen_len = if closest_point.is_back_facing {
-                RADIUS + dist
+                // Commented out because we don't want to interact with walls
+                // while inside them (because of portals).
+                // Besides, this bit was behaving differently than the official game anyways.
+                // RADIUS + dist
+                0.0
             } else {
                 RADIUS - dist
             };
@@ -536,7 +540,11 @@ lp_buffer    {:?}",
         // Check if the ninja can interact with walls from nearby tile segments.
         let rad = RADIUS + 0.1;
         let segments = segments.iter_rect_region(self.pos, self.pos, rad)
-            .filter(|segment| segment.is_active(&entities.doors));
+            .filter(|segment| segment.is_active(&entities.doors))
+            .filter(|segment| match segment {
+                Segment::Linear { is_portal, .. } => !*is_portal,
+                _ => true,
+            });
 
         for segment in segments {
             let closest = segment.get_closest_point(self.pos).point;

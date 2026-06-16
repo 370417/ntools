@@ -6,7 +6,7 @@ use futures_channel::oneshot::{self, Receiver};
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{anim_data::flatten_bones, attract::from_attract_bytes, editor::{drone_path::{calc_loop_locations, loop_locations_path}, editor_entity::{EditorEntity, EntityId, EntityPos, ExportedEntity}, editor_state::{Command, EditorState, SetEntityCount}, entity_palette::EntityPalette, modify_entity::ModifyEntity, move_selection::MoveSelection, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::PlaceEntity, select_entity::SelectEntity, select_tiles::SelectTiles, spawn_ninja::closest_past_ninja, tile_palette::TilePalette}, entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, chaingun_drone::ChaingunDrone, chase_drone::ChaseDrone, deathball::Deathball, door::{LockedDoor, RegularDoor, TrapDoor}, evil_ninja::EvilNinja, exit::Exit, floor_guard::FloorGuard, gold::Gold, laser_drone::LaserDrone, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::{COLS, GridPos, ROWS}, map_file::MapFile, mode::{DroneMode, Modes, PortalMode}, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationBinary, OrientationCardinal, Orientations}, replay::Replay, replay_file::from_outte_replay_bytes, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_HALF_SIZE, TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
+use crate::{anim_data::flatten_bones, attract::from_attract_bytes, editor::{drone_path::{calc_loop_locations, loop_locations_path}, editor_entity::{EditorEntity, EntityId, EntityPos, ExportedEntity}, editor_state::{Command, EditorState, SetEntityCount}, entity_palette::EntityPalette, modify_entity::ModifyEntity, move_selection::MoveSelection, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::PlaceEntity, select_entity::SelectEntity, select_tiles::SelectTiles, spawn_ninja::closest_past_ninja, tile_palette::TilePalette}, entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, chaingun_drone::ChaingunDrone, chase_drone::ChaseDrone, deathball::Deathball, door::{LockedDoor, RegularDoor, TrapDoor}, evil_ninja::EvilNinja, exit::Exit, floor_guard::FloorGuard, gold::Gold, laser_drone::LaserDrone, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, portal::Portal, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::{COLS, GridPos, ROWS}, map_file::MapFile, mode::{DroneMode, Modes, PortalMode}, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationBinary, OrientationCardinal, Orientations}, replay::Replay, replay_file::from_outte_replay_bytes, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_HALF_SIZE, TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
 
 pub mod drone_path;
 pub mod editor_entity;
@@ -259,7 +259,10 @@ impl Editor {
                         entities.shove_thwumps.push(ShoveThwump::new(pos.to_world_pos(), *orientation, round_corners));
                     }
                     EditorEntity::Portal { pos1, orientation1, mode1, pos2, orientation2, mode2 } => {
-                        // TODO
+                        entities.portals.push(Portal::new(
+                            pos1.to_world_pos(), *orientation1, *mode1,
+                            pos2.to_world_pos(), *orientation2, *mode2,
+                        ));
                     }
                 }
             }
@@ -267,6 +270,7 @@ impl Editor {
 
         let mut segments = self.state.tiles().segments().clone();
         entities.doors.populate_grid(&mut segments);
+        Portal::init_portals(&mut entities.portals, &mut segments);
 
         let current_sim = Simulation::new(ninjas, entities, dynamic_friction)?;
 

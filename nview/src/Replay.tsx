@@ -364,7 +364,6 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                 <Thwumps thwumps={thwumps[0]} />
                 <EvilNinjas evilNinjas={evilNinjas[0]} />
                 <Ninja class="ninja preview" ninja={ninjaPreview} bones={ninjaPreviewBones} />
-                <Ninja class="ninja" ninja={ninja} bones={ninjaBones} />
                 <BounceBlocks bounceBlocks={bounceBlocks[0]} />
                 <ShoveThwumps shoveThwumps={shoveThwumps[0]} />
                 <BoostPads boostPads={boostPads[0]} />
@@ -383,6 +382,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                         })()}</text>
                     </Show>
                 </Show>
+                <Ninja class="ninja" ninja={ninja} bones={ninjaBones} />
             </svg>
             <div>
                 <Show when={!recording() || !isPlaying()}>

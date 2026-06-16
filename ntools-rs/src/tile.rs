@@ -612,16 +612,19 @@ impl Tile {
                 Tile8S | Tile8A => Some(Segment::Linear {
                     start: upper_left,
                     end: upper_right,
+                    is_portal: false,
                 }),
                 // left half segment
                 Tile2S | Tile5Q | Tile6W => Some(Segment::Linear {
                     start: upper_left,
                     end: (upper_left + upper_right) / 2.0,
+                    is_portal: false,
                 }),
                 // right half segment
                 Tile2A | Tile5S | Tile6Q => Some(Segment::Linear {
                     start: (upper_left + upper_right) / 2.0,
                     end: upper_right,
+                    is_portal: false,
                 }),
                 // no segment
                 _ => None,
@@ -639,16 +642,19 @@ impl Tile {
                 Tile8A | Tile8Q => Some(Segment::Linear {
                     start: upper_right,
                     end: lower_right,
+                    is_portal: false,
                 }),
                 // upper half segment
                 Tile3A | Tile5W | Tile7S => Some(Segment::Linear {
                     start: upper_right,
                     end: (upper_right + lower_right) / 2.0,
+                    is_portal: false,
                 }),
                 // lower half segment
                 Tile3Q | Tile5A | Tile7W => Some(Segment::Linear {
                     start: (upper_right + lower_right) / 2.0,
                     end: lower_right,
+                    is_portal: false,
                 }),
                 // no segment
                 _ => None,
@@ -666,16 +672,19 @@ impl Tile {
                 Tile8Q | Tile8W => Some(Segment::Linear {
                     start: lower_right,
                     end: lower_left,
+                    is_portal: false,
                 }),
                 // right half segment
                 Tile2Q | Tile5S | Tile6A => Some(Segment::Linear {
                     start: lower_right,
                     end: (lower_right + lower_left) / 2.0,
+                    is_portal: false,
                 }),
                 // left half segment
                 Tile2W | Tile5Q | Tile6S => Some(Segment::Linear {
                     start: (lower_right + lower_left) / 2.0,
                     end: lower_left,
+                    is_portal: false,
                 }),
                 // no segment
                 _ => None,
@@ -693,16 +702,19 @@ impl Tile {
                 Tile8S | Tile8W => Some(Segment::Linear {
                     start: lower_left,
                     end: upper_left,
+                    is_portal: false,
                 }),
                 // lower half segment
                 Tile3W | Tile5A | Tile7Q => Some(Segment::Linear {
                     start: lower_left,
                     end: (lower_left + upper_left) / 2.0,
+                    is_portal: false,
                 }),
                 // upper half segment
                 Tile3S | Tile5W | Tile7A => Some(Segment::Linear {
                     start: (lower_left + upper_left) / 2.0,
                     end: upper_left,
+                    is_portal: false,
                 }),
                 // no segment
                 _ => None,
@@ -726,50 +738,62 @@ impl Tile {
             Tile1Q => Some(Segment::Linear {
                 start: lower_left,
                 end: upper_right,
+                is_portal: false,
             }),
             Tile1W => Some(Segment::Linear {
                 start: upper_left,
                 end: lower_right,
+                is_portal: false,
             }),
             Tile1S => Some(Segment::Linear {
                 start: upper_right,
                 end: lower_left,
+                is_portal: false,
             }),
             Tile1A => Some(Segment::Linear {
                 start: lower_right,
                 end: upper_left,
+                is_portal: false,
             }),
             Tile2Q => Some(Segment::Linear {
                 start: (lower_right + lower_left) / 2.0,
                 end: upper_right,
+                is_portal: false,
             }),
             Tile2W => Some(Segment::Linear {
                 start: upper_left,
                 end: (lower_left + lower_right) / 2.0,
+                is_portal: false,
             }),
             Tile2S => Some(Segment::Linear {
                 start: (upper_left + upper_right) / 2.0,
                 end: lower_left,
+                is_portal: false,
             }),
             Tile2A => Some(Segment::Linear {
                 start: lower_right,
                 end: (upper_left + upper_right) / 2.0,
+                is_portal: false,
             }),
             Tile3Q => Some(Segment::Linear {
                 start: lower_left,
                 end: (upper_right + lower_right) / 2.0,
+                is_portal: false,
             }),
             Tile3W => Some(Segment::Linear {
                 start: (upper_left + lower_left) / 2.0,
                 end: lower_right,
+                is_portal: false,
             }),
             Tile3S => Some(Segment::Linear {
                 start: upper_right,
                 end: (upper_left + lower_left) / 2.0,
+                is_portal: false,
             }),
             Tile3A => Some(Segment::Linear {
                 start: (upper_right + lower_right) / 2.0,
                 end: upper_left,
+                is_portal: false,
             }),
             Tile4Q => Some(Segment::Circular {
                 start: lower_left,
@@ -798,50 +822,62 @@ impl Tile {
             Tile5Q => Some(Segment::Linear {
                 start: (upper_left + upper_right) / 2.0,
                 end: (lower_left + lower_right) / 2.0,
+                is_portal: false,
             }),
             Tile5W => Some(Segment::Linear {
                 start: (upper_right + lower_right) / 2.0,
                 end: (upper_left + lower_left) / 2.0,
+                is_portal: false,
             }),
             Tile5S => Some(Segment::Linear {
                 start: (lower_left + lower_right) / 2.0,
                 end: (upper_left + upper_right) / 2.0,
+                is_portal: false,
             }),
             Tile5A => Some(Segment::Linear {
                 start: (upper_left + lower_left) / 2.0,
                 end: (upper_right + lower_right) / 2.0,
+                is_portal: false,
             }),
             Tile6Q => Some(Segment::Linear {
                 start: lower_left,
                 end: (upper_left + upper_right) / 2.0,
+                is_portal: false,
             }),
             Tile6W => Some(Segment::Linear {
                 start: (upper_left + upper_right) / 2.0,
                 end: lower_right,
+                is_portal: false,
             }),
             Tile6S => Some(Segment::Linear {
                 start: upper_right,
                 end: (lower_left + lower_right) / 2.0,
+                is_portal: false,
             }),
             Tile6A => Some(Segment::Linear {
                 start: (lower_left + lower_right) / 2.0,
                 end: upper_left,
+                is_portal: false,
             }),
             Tile7Q => Some(Segment::Linear {
                 start: (upper_left + lower_left) / 2.0,
                 end: upper_right,
+                is_portal: false,
             }),
             Tile7W => Some(Segment::Linear {
                 start: upper_left,
                 end: (upper_right + lower_right) / 2.0,
+                is_portal: false,
             }),
             Tile7S => Some(Segment::Linear {
                 start: (upper_right + lower_right) / 2.0,
                 end: lower_left,
+                is_portal: false,
             }),
             Tile7A => Some(Segment::Linear {
                 start: lower_right,
                 end: (upper_left + lower_left) / 2.0,
+                is_portal: false,
             }),
             Tile8Q => Some(Segment::Circular {
                 start: lower_left,
