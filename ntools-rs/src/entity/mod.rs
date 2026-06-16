@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{entity::{boost_pad::BoostPad, bounce_block::BounceBlock, chaingun_drone::ChaingunDrone, chase_drone::ChaseDrone, deathball::Deathball, door::Doors, evil_ninja::EvilNinja, exit::Exit, floor_guard::FloorGuard, gold::Gold, laser_drone::LaserDrone, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::{Grid, GridPos}, segment::Segment};
+use crate::{entity::{boost_pad::BoostPad, bounce_block::BounceBlock, chaingun_drone::ChaingunDrone, chase_drone::ChaseDrone, deathball::Deathball, door::Doors, evil_ninja::EvilNinja, exit::Exit, floor_guard::FloorGuard, gold::Gold, laser_drone::LaserDrone, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, portal::Portal, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::{Grid, GridPos}, segment::Segment};
 
 pub mod boost_pad;
 pub mod bounce_block;
@@ -17,6 +17,7 @@ pub mod launch_pad;
 pub mod mine;
 pub mod one_way;
 pub mod polymorphism;
+pub mod portal;
 pub mod shove_thwump;
 pub mod thwump;
 pub mod zap_drone_;
@@ -40,6 +41,7 @@ pub struct Entities {
     pub chaingun_drones: Vec<ChaingunDrone>,
     pub laser_drones: Vec<LaserDrone>,
     pub evil_ninjas: Vec<EvilNinja>,
+    pub portals: Vec<Portal>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -90,6 +92,7 @@ impl Entities {
             chaingun_drones: Vec::new(),
             laser_drones: Vec::new(),
             evil_ninjas: Vec::new(),
+            portals: Vec::new(),
         }
     }
 
@@ -150,6 +153,7 @@ impl Entities {
         for (i, evil_ninja) in self.evil_ninjas.iter().enumerate() {
             grid[evil_ninja.pos].push((GridEntityType::EvilNinja, i));
         }
+        // portals are not in the grid
         grid
     }
 }

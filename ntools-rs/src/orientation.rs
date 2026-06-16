@@ -459,6 +459,15 @@ impl OrientationBinary {
     }
 }
 
+impl From<OrientationCardinal> for OrientationBinary {
+    fn from(orientation: OrientationCardinal) -> Self {
+        match orientation {
+            OrientationCardinal::N | OrientationCardinal::S => Self::V,
+            OrientationCardinal::E | OrientationCardinal::W => Self::H,
+        }
+    }
+}
+
 impl TryFrom<u8> for Orientation {
     type Error = String;
 

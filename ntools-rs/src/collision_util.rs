@@ -8,6 +8,10 @@ pub fn sweep_circle_vs_tiles(pos_old: DVec2, delta: DVec2, radius: f64, segments
     let width = radius + 1.0;
     segments.iter_rect_region(pos_old, pos_new, width)
         .filter(|segment| segment.is_active(doors))
+        .filter(|segment| match segment {
+            Segment::Linear { start, end, is_portal } => !*is_portal,
+            _ => true,
+        })
         .map(|segment| segment.intersect_with_ray(pos_old, delta, radius))
         .reduce(f64::min)
         .unwrap_or(1.0)
@@ -90,6 +94,10 @@ pub fn get_time_of_intersection_circle_vs_arc(center_circle: DVec2, vel: DVec2, 
 pub fn get_single_closest_point(pos: DVec2, radius: f64, segments: &Grid<Segment>, doors: &Doors) -> Option<ClosestPoint> {
     segments.iter_rect_region(pos, pos, radius)
         .filter(|segment| segment.is_active(doors))
+        .filter(|segment| match segment {
+            Segment::Linear { start, end, is_portal } => !*is_portal,
+            _ => true,
+        })
         .map(|segment| {
             let closest = segment.get_closest_point(pos);
             let mut distance_sq = (pos - closest.point).length_squared();

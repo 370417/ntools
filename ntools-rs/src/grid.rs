@@ -50,10 +50,7 @@ impl <T> Grid<T> {
 
     /// Iterator over the items in a 3x3 neighborhood centered around a point.
     pub fn iter_neighborhood(&self, pos: DVec2) -> impl Iterator<Item = &T> {
-        let grid_pos_center = GridPos::from_world_pos(pos).clamp();
-        let grid_pos1 = grid_pos_center.plus((-1, -1)).clamp();
-        let grid_pos2 = grid_pos_center.plus((1, 1)).clamp();
-        GridPos::iter_range_inclusive(grid_pos1, grid_pos2).flat_map(|pos| self[pos].iter())
+        GridPos::iter_neighborhood(pos).flat_map(|pos| self[pos].iter())
     }
 }
 
@@ -145,6 +142,13 @@ impl GridPos {
         (min.y..=max.y).flat_map(move |y| {
             (min.x..=max.x).map(move |x| GridPos { x, y })
         })
+    }
+
+    pub fn iter_neighborhood(pos: DVec2) -> impl Iterator<Item = GridPos> {
+        let grid_pos_center = GridPos::from_world_pos(pos).clamp();
+        let grid_pos1 = grid_pos_center.plus((-1, -1)).clamp();
+        let grid_pos2 = grid_pos_center.plus((1, 1)).clamp();
+        GridPos::iter_range_inclusive(grid_pos1, grid_pos2)
     }
 
     pub fn rotate_cw(self, center: DVec2) -> GridPos {

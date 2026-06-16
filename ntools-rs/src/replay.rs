@@ -4,7 +4,7 @@ use futures_channel::oneshot::Sender;
 use glam::{DVec2, FloatExt};
 use wasm_bindgen::prelude::*;
 
-use crate::{anim_data::flatten_bones, attract::to_attract_bytes, editor::Editor, entity::mine::Mine, grid::{COLS, Grid, ROWS}, ninja::{Ninja, NinjaState, PastNinja}, orientation::OrientationExt, segment::{Segment, extract_path}, simulation::{Input, KeyFrame, Simulation}, tile::TILE_SIZE};
+use crate::{anim_data::flatten_bones, attract::to_attract_bytes, editor::Editor, entity::{mine::Mine, portal::PortalSpatialMap}, grid::{COLS, Grid, ROWS}, ninja::{Ninja, NinjaState, PastNinja}, orientation::OrientationExt, segment::{Segment, extract_path}, simulation::{Input, KeyFrame, Simulation}, tile::TILE_SIZE};
 
 #[wasm_bindgen]
 pub struct Replay {
@@ -20,6 +20,7 @@ pub struct Replay {
     pub(crate) sender: Option<Sender<Vec<PastNinja>>>,
     pub(crate) anim_data: Box<[u8]>,
     pub(crate) is_from_attract: bool,
+    pub(crate) portal_spatial_map: PortalSpatialMap,
 }
 
 #[wasm_bindgen]
@@ -68,7 +69,7 @@ impl Replay {
             let input_byte = self.inputs[self.current_sim.frame as usize];
             let input = Input::from_byte(input_byte);
 
-            self.current_sim.tick(input, &self.segments, &self.past_ninjas);
+            self.current_sim.tick(input, &self.segments, &self.past_ninjas, &self.portal_spatial_map);
 
             if let Some(past_ninja) = self.past_ninjas.get_mut(self.current_sim.frame as usize) {
                 *past_ninja = self.current_sim.ninja.to_past_ninja(input_byte);
@@ -170,6 +171,18 @@ impl Replay {
         self.preview_sim.ninja.pos_old.y.lerp(self.preview_sim.ninja.pos.y, partial_frame)
     }
 
+    pub fn portal_ninja_x(&self, partial_frame: f64) -> f64 {
+        self.current_sim.portal_ninja.as_ref().map(|ninja| {
+            ninja.pos_old.x.lerp(ninja.pos.x, partial_frame)
+        }).unwrap_or(f64::NAN)
+    }
+
+    pub fn portal_ninja_y(&self, partial_frame: f64) -> f64 {
+        self.current_sim.portal_ninja.as_ref().map(|ninja| {
+            ninja.pos_old.y.lerp(ninja.pos.y, partial_frame)
+        }).unwrap_or(f64::NAN)
+    }
+
     pub fn ninja_bones(&self, partial_frame: f64) -> Box<[f64]> {
         let prev = &self.past_ninjas[self.current_sim.frame.saturating_sub(1) as usize];
         flatten_bones(&self.current_sim.ninja.calc_ninja_position(prev, partial_frame, &self.anim_data))
@@ -178,6 +191,16 @@ impl Replay {
     pub fn ninja_preview_bones(&self, partial_frame: f64) -> Box<[f64]> {
         let prev = &self.past_ninjas[self.current_sim.frame.saturating_sub(1) as usize];
         flatten_bones(&self.preview_sim.ninja.calc_ninja_position(prev, partial_frame, &self.anim_data))
+    }
+
+    pub fn portal_ninja_bones(&self) -> Box<[f64]> {
+        self.current_sim.portal_ninja.as_ref().map(|ninja| {
+            flatten_bones(&ninja.calc_ninja_position_without_interpolation(&self.anim_data))
+        }).unwrap_or(Box::new([]))
+    }
+
+    pub fn ninja_info(&self) -> String {
+        self.current_sim.ninja.info()
     }
 
     pub fn past_ninjas_len(&self) -> usize {
@@ -575,6 +598,38 @@ impl Replay {
         self.current_sim.entities.evil_ninjas[i].bones(self.current_sim.frame, &self.past_ninjas, &self.anim_data)
     }
 
+    pub fn portals_len(&self) -> usize {
+        self.current_sim.entities.portals.len()
+    }
+
+    pub fn portal_active(&self, i: usize) -> bool {
+        self.current_sim.entities.portals[i].active
+    }
+
+    pub fn portal_side1_x(&self, i: usize) -> f64 {
+        self.current_sim.entities.portals[i].side1.pos.x
+    }
+
+    pub fn portal_side1_y(&self, i: usize) -> f64 {
+        self.current_sim.entities.portals[i].side1.pos.y
+    }
+
+    pub fn portal_side1_deg(&self, i: usize) -> f64 {
+        self.current_sim.entities.portals[i].side1.orientation.rotation_deg()
+    }
+
+    pub fn portal_side2_x(&self, i: usize) -> f64 {
+        self.current_sim.entities.portals[i].side2.pos.x
+    }
+
+    pub fn portal_side2_y(&self, i: usize) -> f64 {
+        self.current_sim.entities.portals[i].side2.pos.y
+    }
+
+    pub fn portal_side2_deg(&self, i: usize) -> f64 {
+        self.current_sim.entities.portals[i].side2.orientation.rotation_deg()
+    }
+
     pub fn export_attract(&self, editor: &Editor) -> Box<[u8]> {
         to_attract_bytes(&editor.export_map(), &self.inputs).into()
     }
@@ -593,7 +648,7 @@ impl Replay {
         let input_bytes = self.inputs.get(self.preview_sim.frame as usize).or(self.inputs.last()).cloned().unwrap_or_default();
         let input = Input::from_byte(input_bytes);
 
-        self.preview_sim.tick(input, &self.segments, &self.past_ninjas);
+        self.preview_sim.tick(input, &self.segments, &self.past_ninjas, &self.portal_spatial_map);
 
         if let Some(past_ninja) = self.past_ninjas.get_mut(self.preview_sim.frame as usize) {
             *past_ninja = self.preview_sim.ninja.to_past_ninja(input_bytes);

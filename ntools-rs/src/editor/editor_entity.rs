@@ -1,7 +1,7 @@
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{editor::{place_entity::Stage, select_entity::SelectionType}, grid::GridPos, mode::{DroneMode, Modes}, orientation::{Orientation, OrientationBinary, OrientationCardinal, OrientationExt, Orientations}};
+use crate::{editor::{place_entity::Stage, select_entity::SelectionType}, grid::GridPos, mode::{DroneMode, Modes, PortalMode}, orientation::{Orientation, OrientationBinary, OrientationCardinal, OrientationExt, Orientations}};
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(debug_assertions, derive(Debug))]
@@ -108,6 +108,14 @@ pub enum EditorEntity {
         pos: EntityPos,
         orientation: Orientation,
     },
+    Portal {
+        pos1: EntityPos,
+        orientation1: OrientationCardinal,
+        mode1: PortalMode,
+        pos2: EntityPos,
+        orientation2: OrientationCardinal,
+        mode2: PortalMode,
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -141,6 +149,8 @@ pub enum EntityId {
     MiniDrone = 26,
     Bat = 27,
     ShoveThwump = 28,
+    Portal1 = 29,
+    Portal2 = 30,
 }
 
 impl EntityId {
@@ -183,12 +193,14 @@ impl TryFrom<u8> for EntityId {
             26 => Ok(Self::MiniDrone),
             27 => Ok(Self::Bat),
             28 => Ok(Self::ShoveThwump),
+            29 => Ok(Self::Portal1),
+            30 => Ok(Self::Portal2),
             _ => Err(()),
         }
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(debug_assertions, derive(Debug))]
 pub struct EntityPos {
     // list y before x so that the generated Ord implementation compares y before comparing x
@@ -203,9 +215,13 @@ pub struct ExportedEntity {
     pub x: f64,
     pub y: f64,
     pub deg: f64,
+    /// only for portals because the second portal can rotate
+    pub deg2: f64,
     pub switch_x: f64,
     pub switch_y: f64,
     pub mode: u8,
+    /// only for portals because the second portal has its own independent mode
+    pub mode2: u8,
     pub stack_count: u16,
 }
 
@@ -238,6 +254,10 @@ impl EditorEntity {
             EntityId::MiniDrone => EditorEntity::MiniDrone { pos, orientation: orientations.orientation_cardinal, mode: modes.drone_mode },
             EntityId::Bat => EditorEntity::Bat { pos },
             EntityId::ShoveThwump => EditorEntity::ShoveThwump { pos, orientation: orientations.orientation },
+            EntityId::Portal1 | EntityId::Portal2 => EditorEntity::Portal {
+                pos1: pos, orientation1: orientations.orientation_cardinal, mode1: modes.portal_mode,
+                pos2: pos, orientation2: orientations.orientation_cardinal, mode2: modes.portal_mode,
+            }
         }
     }
 
@@ -249,9 +269,11 @@ impl EditorEntity {
             x: pos.x,
             y: pos.y,
             deg: self.rotation_deg(),
+            deg2: self.deg2(),
             switch_x: switch_pos.x,
             switch_y: switch_pos.y,
             mode: self.mode(),
+            mode2: self.mode2(),
             stack_count: count,
         }
     }
@@ -262,7 +284,22 @@ impl EditorEntity {
             EditorEntity::ChaseDrone { mode, .. } |
             EditorEntity::LaserDrone { mode, .. } |
             EditorEntity::ChaingunDrone { mode, .. } => mode as u8,
+            EditorEntity::Portal { mode1, .. } => mode1 as u8,
             _ => 0,
+        }
+    }
+
+    fn mode2(self) -> u8 {
+        match self {
+            EditorEntity::Portal { mode2, .. } => mode2 as u8,
+            _ => 0,
+        }
+    }
+
+    fn deg2(self) -> f64 {
+        match self {
+            EditorEntity::Portal { orientation2, .. } => orientation2.rotation_deg(),
+            _ => 0.0,
         }
     }
 
@@ -294,6 +331,7 @@ impl EditorEntity {
             EditorEntity::Exit { exit_pos, .. } => exit_pos,
             EditorEntity::LockedDoor { door_pos, .. } |
             EditorEntity::TrapDoor { door_pos, .. } => door_pos,
+            EditorEntity::Portal { pos1, .. } => pos1,
         }
     }
 
@@ -325,6 +363,7 @@ impl EditorEntity {
             EditorEntity::Exit { exit_pos, .. } => exit_pos,
             EditorEntity::LockedDoor { door_pos, .. } |
             EditorEntity::TrapDoor { door_pos, .. } => door_pos,
+            EditorEntity::Portal { pos1, .. } => pos1,
         }
     }
 
@@ -333,6 +372,7 @@ impl EditorEntity {
             EditorEntity::Exit { switch_pos, .. } => Some(switch_pos),
             EditorEntity::LockedDoor { switch_pos, .. } |
             EditorEntity::TrapDoor { switch_pos, .. } => Some(switch_pos),
+            EditorEntity::Portal { pos2, .. } => Some(pos2),
             _ => None,
         }
     }
@@ -342,6 +382,7 @@ impl EditorEntity {
             EditorEntity::Exit { switch_pos, .. } => Some(switch_pos),
             EditorEntity::LockedDoor { switch_pos, .. } |
             EditorEntity::TrapDoor { switch_pos, .. } => Some(switch_pos),
+            EditorEntity::Portal { pos2, .. } => Some(pos2),
             _ => None,
         }
     }
@@ -364,6 +405,10 @@ impl EditorEntity {
             EditorEntity::LaserDrone { orientation, .. } |
             EditorEntity::MiniDrone { orientation, .. } |
             EditorEntity::ChaingunDrone { orientation, .. } => orientation.rotate_cw_mut(),
+            EditorEntity::Portal { orientation1, orientation2, .. } => {
+                orientation1.rotate_cw_mut();
+                orientation2.rotate_cw_mut();
+            }
             _ => {}
         }
     }
@@ -386,6 +431,10 @@ impl EditorEntity {
             EditorEntity::LaserDrone { orientation, .. } |
             EditorEntity::MiniDrone { orientation, .. } |
             EditorEntity::ChaingunDrone { orientation, .. } => orientation.rotate_ccw_mut(),
+            EditorEntity::Portal { orientation1, orientation2, .. } => {
+                orientation1.rotate_ccw_mut();
+                orientation2.rotate_ccw_mut();
+            }
             _ => {}
         }
     }
@@ -410,6 +459,20 @@ impl EditorEntity {
             EditorEntity::ChaingunDrone { orientation, mode, .. } => {
                 orientation.flip_across_x_axis_mut();
                 mode.flip_mut();
+            }
+            EditorEntity::Portal { orientation1, mode1, .. } => {
+                orientation1.flip_across_x_axis_mut();
+                mode1.flip_mut();
+            }
+            _ => {}
+        }
+    }
+
+    pub fn flip_switch_across_x_axis(&mut self) {
+        match self {
+            EditorEntity::Portal { orientation2, mode2, .. } => {
+                orientation2.flip_across_x_axis_mut();
+                mode2.flip_mut();
             }
             _ => {}
         }
@@ -436,6 +499,20 @@ impl EditorEntity {
                 orientation.flip_across_y_axis_mut();
                 mode.flip_mut();
             }
+            EditorEntity::Portal { orientation1, mode1, .. } => {
+                orientation1.flip_across_y_axis_mut();
+                mode1.flip_mut();
+            }
+            _ => {}
+        }
+    }
+
+    pub fn flip_switch_across_y_axis(&mut self) {
+        match self {
+            EditorEntity::Portal { orientation2, mode2, .. } => {
+                orientation2.flip_across_y_axis_mut();
+                mode2.flip_mut();
+            }
             _ => {}
         }
     }
@@ -458,6 +535,7 @@ impl EditorEntity {
             EditorEntity::LaserDrone { orientation, .. } |
             EditorEntity::MiniDrone { orientation, .. } |
             EditorEntity::ChaingunDrone { orientation, .. } => orientation.rotation_deg(),
+            EditorEntity::Portal { orientation1, .. } => orientation1.rotation_deg(),
             _ => 0.0,
         }
     }
@@ -490,6 +568,7 @@ impl EditorEntity {
             EditorEntity::MiniDrone { .. } => EntityId::MiniDrone,
             EditorEntity::Bat { .. } => EntityId::Bat,
             EditorEntity::ShoveThwump { .. } => EntityId::ShoveThwump,
+            EditorEntity::Portal { .. } => EntityId::Portal1,
         }
     }
 
@@ -529,6 +608,7 @@ impl EditorEntity {
             EditorEntity::Deathball { .. } |
             EditorEntity::MiniDrone { .. } |
             EditorEntity::Bat { .. } |
+            EditorEntity::Portal { .. } |
             EditorEntity::ShoveThwump { .. } => false,
         }
     }

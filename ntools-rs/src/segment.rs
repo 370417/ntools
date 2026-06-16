@@ -4,10 +4,12 @@ use crate::{collision_util::{get_time_of_intersection_circle_vs_arc, get_time_of
 
 /// Represents a solid edge of a tile or door.
 #[derive(Clone)]
+#[cfg_attr(debug_assertions, derive(Debug))]
 pub enum Segment {
     Linear {
         start: DVec2,
         end: DVec2,
+        is_portal: bool,
     },
     Circular {
         start: DVec2,
@@ -24,6 +26,7 @@ pub enum Segment {
 }
 
 #[derive(Clone)]
+#[cfg_attr(debug_assertions, derive(Debug))]
 pub enum Curvature {
     Concave,
     Convex,
@@ -176,9 +179,11 @@ impl Segment {
         let (Segment::Linear {
             start: self_start,
             end: self_end,
+            ..
         }, Segment::Linear {
             start: other_start,
             end: other_end,
+            ..
         }) = (self, other) else {
             panic!("Invalid input - without_overlap is only valid for linear segments");
         };
@@ -193,21 +198,25 @@ impl Segment {
             Segment::Linear {
                 start: *shorter_end,
                 end: *longer_end,
+                is_portal: false,
             }
         } else if longer_start == shorter_end {
             Segment::Linear {
                 start: *shorter_start,
                 end: *longer_end,
+                is_portal: false,
             }
         } else if longer_end == shorter_start {
             Segment::Linear {
                 start: *longer_start,
                 end: *shorter_end,
+                is_portal: false,
             }
         } else if longer_end == shorter_end {
             Segment::Linear {
                 start: *longer_start,
                 end: *shorter_start,
+                is_portal: false,
             }
         } else {
             panic!("Invalid state - cannot find overlap");

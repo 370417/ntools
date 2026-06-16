@@ -22,6 +22,7 @@ pub struct Doors {
 }
 
 #[derive(Clone, Copy)]
+#[cfg_attr(debug_assertions, derive(Debug))]
 pub enum DoorType {
     Locked,
     Trap,

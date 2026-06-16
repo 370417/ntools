@@ -2,7 +2,7 @@ use std::{collections::{BTreeMap, VecDeque}, io::{Cursor, Read}};
 
 use byte_slice_cast::{AsByteSlice, AsSliceOf};
 
-use crate::{editor::{editor_entity::{EditorEntity, EntityId, EntityPos}, editor_state::EditorEntities}, mode::DroneMode, orientation::{Orientation, OrientationBinary, OrientationCardinal, OrientationExt}, tile::Tiles};
+use crate::{editor::{editor_entity::{EditorEntity, EntityId, EntityPos}, editor_state::EditorEntities}, mode::{DroneMode, PortalMode}, orientation::{Orientation, OrientationBinary, OrientationCardinal, OrientationExt}, tile::Tiles};
 
 pub struct MapFile {
     pub game_mode: u32,
@@ -19,6 +19,7 @@ struct EntityDataParser<'a> {
     exit_doors: VecDeque<EntityPos>,
     locked_doors: VecDeque<(EntityPos, OrientationBinary)>,
     trap_doors: VecDeque<(EntityPos, OrientationBinary)>,
+    portals: VecDeque<(EntityPos, OrientationCardinal, PortalMode)>,
 }
 
 impl MapFile {
@@ -114,6 +115,7 @@ impl <'a> EntityDataParser<'a> {
             exit_doors: VecDeque::new(),
             locked_doors: VecDeque::new(),
             trap_doors: VecDeque::new(),
+            portals: VecDeque::new(),
         }
     }
 }
@@ -134,7 +136,7 @@ impl <'a> Iterator for EntityDataParser<'a> {
             if let Some(entity_count_so_far) = self.entity_counts_so_far.get_mut(entity_id as usize) {
                 // It seems like entity_counts is 0 for door switches, so we skip this check if
                 // entity is an exit switch, locked door switch, or trap door switch.
-                if entity_id != 4 && entity_id != 7 && entity_id != 9 && *entity_count_so_far >= self.entity_counts[entity_id as usize] {
+                if entity_id != 4 && entity_id != 7 && entity_id != 9 && entity_id != 30 && *entity_count_so_far >= self.entity_counts[entity_id as usize] {
                     // skip extra entities
                     return None;
                 }
@@ -150,6 +152,7 @@ impl <'a> Iterator for EntityDataParser<'a> {
             let orientation_cardinal = OrientationCardinal::try_from(orientation_data).unwrap_or(OrientationCardinal::N);
             let orientation_binary = OrientationBinary::from(orientation_data);
             let drone_mode = DroneMode::from(mode);
+            let portal_mode = PortalMode::from(mode);
 
             match EntityId::try_from(entity_id).ok()? {
                 EntityId::Ninja => return Some(EditorEntity::Ninja { pos, orientation: orientation_ext }),
@@ -181,6 +184,8 @@ impl <'a> Iterator for EntityDataParser<'a> {
                 EntityId::MiniDrone => return Some(EditorEntity::MiniDrone { pos, orientation: orientation_cardinal, mode: drone_mode }),
                 EntityId::Bat => return Some(EditorEntity::Bat { pos }),
                 EntityId::ShoveThwump => return Some(EditorEntity::ShoveThwump { pos, orientation }),
+                EntityId::Portal1 => self.portals.push_back((pos, orientation_cardinal, portal_mode)),
+                EntityId::Portal2 => return self.portals.pop_front().map(|(pos1, orientation1, mode1)| EditorEntity::Portal { pos1, orientation1, mode1, pos2: pos, orientation2: orientation_cardinal, mode2: portal_mode }),
             }
         }
         None
@@ -241,17 +246,17 @@ fn editor_entities_to_bytes(entities: &EditorEntities) -> Vec<u8> {
                 EditorEntity::Mine { pos } => bytes.extend([id, pos.x as u8, pos.y as u8, 0, 0]),
                 EditorEntity::Gold { pos } => bytes.extend([id, pos.x as u8, pos.y as u8, 0, 0]),
                 EditorEntity::Exit { exit_pos, switch_pos } => {
-                    bytes.extend([3, exit_pos.x as u8, exit_pos.y as u8, 0, 0]);
-                    bytes.extend([4, switch_pos.x as u8, switch_pos.y as u8, 0, 0]);
+                    bytes.extend([EntityId::ExitDoor as u8, exit_pos.x as u8, exit_pos.y as u8, 0, 0]);
+                    bytes.extend([EntityId::ExitSwitch as u8, switch_pos.x as u8, switch_pos.y as u8, 0, 0]);
                 }
                 EditorEntity::RegularDoor { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
                 EditorEntity::LockedDoor { door_pos, orientation, switch_pos } => {
-                    bytes.extend([6, door_pos.x as u8, door_pos.y as u8, orientation as u8, 0]);
-                    bytes.extend([7, switch_pos.x as u8, switch_pos.y as u8, 0, 0]);
+                    bytes.extend([EntityId::LockedDoor as u8, door_pos.x as u8, door_pos.y as u8, orientation as u8, 0]);
+                    bytes.extend([EntityId::LockedSwitch as u8, switch_pos.x as u8, switch_pos.y as u8, 0, 0]);
                 }
                 EditorEntity::TrapDoor { door_pos, orientation, switch_pos } => {
-                    bytes.extend([8, door_pos.x as u8, door_pos.y as u8, orientation as u8, 0]);
-                    bytes.extend([9, switch_pos.x as u8, switch_pos.y as u8, 0, 0]);
+                    bytes.extend([EntityId::TrapDoor as u8, door_pos.x as u8, door_pos.y as u8, orientation as u8, 0]);
+                    bytes.extend([EntityId::TrapSwitch as u8, switch_pos.x as u8, switch_pos.y as u8, 0, 0]);
                 }
                 EditorEntity::LaunchPad { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
                 EditorEntity::OneWay { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
@@ -272,6 +277,10 @@ fn editor_entities_to_bytes(entities: &EditorEntities) -> Vec<u8> {
                 EditorEntity::MiniDrone { pos, orientation, mode } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, mode as u8]),
                 EditorEntity::Bat { pos } => bytes.extend([id, pos.x as u8, pos.y as u8, 0, 0]),
                 EditorEntity::ShoveThwump { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
+                EditorEntity::Portal { pos1, orientation1, mode1, pos2, orientation2, mode2 } => {
+                    bytes.extend([EntityId::Portal1 as u8, pos1.x as u8, pos1.y as u8, orientation1 as u8, mode1 as u8]);
+                    bytes.extend([EntityId::Portal2 as u8, pos2.x as u8, pos2.y as u8, orientation2 as u8, mode2 as u8]);
+                }
             }
         }
     }

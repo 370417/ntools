@@ -149,7 +149,7 @@ impl Thwump {
             // kill ninja if touching spicy part
             let point1 = self.pos + (SEMI_SIDE + 2.0) * self.orientation.vec2() + (SEMI_SIDE + 2.0) * self.orientation.rotate_cw().vec2();
             let point2 = self.pos + (SEMI_SIDE + 2.0) * self.orientation.vec2() - (SEMI_SIDE + 2.0) * self.orientation.rotate_cw().vec2();
-            if overlap_circle_vs_segment(self.pos, ninja::RADIUS + 2.0, point1, point2) {
+            if overlap_circle_vs_segment(ninja.pos, ninja::RADIUS + 2.0, point1, point2) {
                 ninja.kill(0, DVec2::ZERO, DVec2::ZERO);
             }
 

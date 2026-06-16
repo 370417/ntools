@@ -27,7 +27,7 @@ impl ModifyEntity {
         } else {
             match self.modified_entity {
                 EditorEntity::FloorGuard { .. } => PlaceEntity::round_to_grid_floorguard(cursor_pos, fine_grid),
-                EditorEntity::RegularDoor { .. } => PlaceEntity::round_to_grid_door(cursor_pos, fine_grid),
+                EditorEntity::RegularDoor { .. } | EditorEntity::Portal { .. } => PlaceEntity::round_to_grid_door(cursor_pos, fine_grid),
                 EditorEntity::LockedDoor { .. } |
                 EditorEntity::TrapDoor { .. } => if let SelectionType::NotSwitch = self.selection_type {
                     PlaceEntity::round_to_grid_door(cursor_pos, fine_grid)
@@ -86,6 +86,10 @@ impl ModifyEntity {
                 SelectionType::NotSwitch => *door_pos = new_pos,
                 SelectionType::Switch => *switch_pos = new_pos,
             },
+            EditorEntity::Portal { pos1, pos2, .. } => match self.selection_type {
+                SelectionType::NotSwitch => *pos1 = new_pos,
+                SelectionType::Switch => *pos2 = new_pos,
+            },
         }
     }
 
@@ -104,6 +108,10 @@ impl ModifyEntity {
             EditorEntity::ChaseDrone { orientation, .. } |
             EditorEntity::MiniDrone { orientation, .. } |
             EditorEntity::ChaingunDrone { orientation, .. } => *orientation = orientations.orientation_cardinal,
+            EditorEntity::Portal { orientation1, orientation2, .. } => match self.selection_type {
+                SelectionType::NotSwitch => *orientation1 = orientations.orientation_cardinal,
+                SelectionType::Switch => *orientation2 = orientations.orientation_cardinal,
+            },
             _ => {}
         }
     }
@@ -115,6 +123,10 @@ impl ModifyEntity {
             EditorEntity::LaserDrone { mode, .. } |
             EditorEntity::MiniDrone { mode, .. } |
             EditorEntity::ChaingunDrone { mode, .. } => *mode = modes.drone_mode,
+            EditorEntity::Portal { mode1, mode2, .. } => match self.selection_type {
+                SelectionType::NotSwitch => *mode1 = modes.portal_mode,
+                SelectionType::Switch => *mode2 = modes.portal_mode,
+            },
             _ => {}
         }
     }
@@ -150,10 +162,21 @@ impl ModifyEntity {
         ))
     }
 
-    pub fn press_x(&mut self) {
-        match self.modified_entity {
-            EditorEntity::Mine { pos } => self.modified_entity = EditorEntity::ToggleMine { pos },
-            EditorEntity::ToggleMine { pos } => self.modified_entity = EditorEntity::Mine { pos },
+    pub fn press_x(&mut self, modes: &mut Modes) {
+        match &mut self.modified_entity {
+            &mut EditorEntity::Mine { pos } => self.modified_entity = EditorEntity::ToggleMine { pos },
+            &mut EditorEntity::ToggleMine { pos } => self.modified_entity = EditorEntity::Mine { pos },
+            &mut EditorEntity::ZapDrone { pos, orientation, mode } => self.modified_entity = EditorEntity::ChaseDrone { pos, orientation, mode },
+            &mut EditorEntity::ChaseDrone { pos, orientation, mode } => self.modified_entity = EditorEntity::ZapDrone { pos, orientation, mode },
+            &mut EditorEntity::Deathball { pos } => self.modified_entity = EditorEntity::Bat { pos },
+            &mut EditorEntity::Bat { pos } => self.modified_entity = EditorEntity::Deathball { pos },
+            EditorEntity::Portal { mode1, mode2, .. } => {
+                modes.portal_mode.flip_mut();
+                match self.selection_type {
+                    SelectionType::NotSwitch => *mode1 = modes.portal_mode,
+                    SelectionType::Switch => *mode2 = modes.portal_mode,
+                }
+            },
             _ => {}
         }
     }

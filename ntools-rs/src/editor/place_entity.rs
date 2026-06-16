@@ -25,7 +25,8 @@ impl PlaceEntity {
             stage: match id {
                 EntityId::ExitDoor |
                 EntityId::LockedDoor |
-                EntityId::TrapDoor => Some(Stage::PlaceDoor),
+                EntityId::TrapDoor |
+                EntityId::Portal1 => Some(Stage::PlaceDoor),
                 _ => None,
             },
         }
@@ -37,7 +38,7 @@ impl PlaceEntity {
         } else {
             match self.entity {
                 EditorEntity::FloorGuard { .. } => Self::round_to_grid_floorguard(cursor_pos, fine_grid),
-                EditorEntity::RegularDoor { .. } => Self::round_to_grid_door(cursor_pos, fine_grid),
+                EditorEntity::RegularDoor { .. } | EditorEntity::Portal { .. } => Self::round_to_grid_door(cursor_pos, fine_grid),
                 EditorEntity::LockedDoor { .. } |
                 EditorEntity::TrapDoor { .. } => if let Some(Stage::PlaceDoor) = self.stage {
                     Self::round_to_grid_door(cursor_pos, fine_grid)
@@ -161,6 +162,13 @@ impl PlaceEntity {
                 }
                 Some(Stage::PlaceSwitch) | None => *switch_pos = new_pos,
             },
+            EditorEntity::Portal { pos1, pos2, .. } => match self.stage {
+                Some(Stage::PlaceDoor) => {
+                    *pos1 = new_pos;
+                    *pos2 = new_pos;
+                }
+                Some(Stage::PlaceSwitch) | None => *pos2 = new_pos,
+            },
         }
     }
 
@@ -179,6 +187,13 @@ impl PlaceEntity {
             EditorEntity::LaserDrone { orientation, .. } |
             EditorEntity::MiniDrone { orientation, .. } |
             EditorEntity::ChaingunDrone { orientation, .. } => *orientation = orientations.orientation_cardinal,
+            EditorEntity::Portal { orientation1, orientation2, .. } => match self.stage {
+                Some(Stage::PlaceDoor) => {
+                    *orientation1 = orientations.orientation_cardinal;
+                    *orientation2 = orientations.orientation_cardinal;
+                }
+                Some(Stage::PlaceSwitch) | None => *orientation2 = orientations.orientation_cardinal,
+            },
             _ => {}
         }
     }
@@ -190,6 +205,13 @@ impl PlaceEntity {
             EditorEntity::LaserDrone { mode, .. } |
             EditorEntity::MiniDrone { mode, .. } |
             EditorEntity::ChaingunDrone { mode, .. } => *mode = modes.drone_mode,
+            EditorEntity::Portal { mode1, mode2, .. } => match self.stage {
+                Some(Stage::PlaceDoor) => {
+                    *mode1 = modes.portal_mode;
+                    *mode2 = modes.portal_mode;
+                }
+                Some(Stage::PlaceSwitch) | None => *mode2 = modes.portal_mode,
+            }
             _ => {}
         }
     }
@@ -220,14 +242,24 @@ impl PlaceEntity {
         command
     }
 
-    pub fn press_x(&mut self) {
-        match self.entity {
-            EditorEntity::Mine { pos } => self.entity = EditorEntity::ToggleMine { pos },
-            EditorEntity::ToggleMine { pos } => self.entity = EditorEntity::Mine { pos },
-            EditorEntity::ZapDrone { pos, orientation, mode } => self.entity = EditorEntity::ChaseDrone { pos, orientation, mode },
-            EditorEntity::ChaseDrone { pos, orientation, mode } => self.entity = EditorEntity::ZapDrone { pos, orientation, mode },
-            EditorEntity::Deathball { pos } => self.entity = EditorEntity::Bat { pos },
-            EditorEntity::Bat { pos } => self.entity = EditorEntity::Deathball { pos },
+    pub fn press_x(&mut self, modes: &mut Modes) {
+        match &mut self.entity {
+            &mut EditorEntity::Mine { pos } => self.entity = EditorEntity::ToggleMine { pos },
+            &mut EditorEntity::ToggleMine { pos } => self.entity = EditorEntity::Mine { pos },
+            &mut EditorEntity::ZapDrone { pos, orientation, mode } => self.entity = EditorEntity::ChaseDrone { pos, orientation, mode },
+            &mut EditorEntity::ChaseDrone { pos, orientation, mode } => self.entity = EditorEntity::ZapDrone { pos, orientation, mode },
+            &mut EditorEntity::Deathball { pos } => self.entity = EditorEntity::Bat { pos },
+            &mut EditorEntity::Bat { pos } => self.entity = EditorEntity::Deathball { pos },
+            EditorEntity::Portal { mode1, mode2, .. } => {
+                modes.portal_mode.flip_mut();
+                match self.stage {
+                    Some(Stage::PlaceDoor) => {
+                        *mode1 = modes.portal_mode;
+                        *mode2 = modes.portal_mode;
+                    }
+                    Some(Stage::PlaceSwitch) | None => *mode2 = modes.portal_mode,
+                }
+            }
             _ => {}
         }
     }
