@@ -252,6 +252,7 @@ impl MoveSelection {
             }
             if *selection_type != SelectionType::Pos && let Some(switch_pos) = entity.switch_pos_mut() {
                 switch_pos.flip_across_x_axis_mut(center);
+                entity.flip_switch_across_x_axis();
             }
         }
     }
@@ -269,6 +270,7 @@ impl MoveSelection {
             }
             if *selection_type != SelectionType::Pos && let Some(switch_pos) = entity.switch_pos_mut() {
                 switch_pos.flip_across_y_axis_mut(center);
+                entity.flip_switch_across_y_axis();
             }
         }
     }
