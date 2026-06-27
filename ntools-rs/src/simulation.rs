@@ -1,4 +1,4 @@
-use crate::{entity::{Entities, EntityIndex, GridEntityType, boost_pad::BoostPad, bounce_block::BounceBlock, chase_drone::ChaseDrone, deathball::Deathball, door::RegularDoor, evil_ninja::EvilNinja, floor_guard::FloorGuard, gold::collected_golds, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, on_door_state_change, portal::{PortalSpatialMap, get_portal_ninja, teleport_ninja}, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::Grid, ninja::{AnimState, Ninja, NinjaState, PastNinja}, segment::Segment};
+use crate::{entity::{Entities, EntityIndex, GridEntityType, boost_pad::BoostPad, bounce_block::BounceBlock, chase_drone::ChaseDrone, deathball::Deathball, door::RegularDoor, evil_ninja::EvilNinja, floor_guard::FloorGuard, gold::collected_golds, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, on_door_state_change, portal::{PortalSpatialMap, get_portal_ninja, teleport_ninja}, rocket::{Rocket, RocketState}, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::Grid, ninja::{AnimState, Ninja, NinjaState, PastNinja}, segment::Segment};
 
 #[derive(Clone)]
 pub struct Simulation {
@@ -42,6 +42,7 @@ pub struct KeyFrame {
     chase_drones: Vec<ChaseDrone>,
     deathballs: Vec<Deathball>,
     evil_ninjas: Vec<EvilNinja>,
+    rockets: Vec<Rocket>,
 }
 
 impl Input {
@@ -118,6 +119,7 @@ impl Simulation {
         for mine in &mut self.entities.mines { mine.think(&self.ninja) }
         for thwump in &mut self.entities.thwumps { thwump.think(&self.ninja, segments, &self.entities.doors) }
         for floor_guard in &mut self.entities.floor_guards { floor_guard.think(&self.ninja, segments, &self.entities.doors) }
+        for rocket in &mut self.entities.rockets { rocket.think(&self.ninja, &mut self.entity_grid, segments, &self.entities.doors); }
         for (i, shove_thwump) in self.entities.shove_thwumps.iter_mut().enumerate() { shove_thwump.think(i, &mut self.entity_grid, segments, &self.entities.doors) }
         for i in 0..self.entities.deathballs.len() {
             let (deathball, other_deathballs) = self.entities.deathballs[i..].split_at_mut(1);
@@ -139,7 +141,7 @@ impl Simulation {
                 self.ninja.collide_vs_objects(&mut collision_state, &mut self.entities, &self.entity_grid, self.dynamic_friction);
                 self.ninja.collide_vs_tiles(&mut collision_state, segments, &self.entities.doors);
             }
-            self.ninja.post_collision(&mut collision_state, &mut self.entities, &self.entity_grid, segments, self.dynamic_friction, &mut self.score);
+            self.ninja.post_collision(&mut collision_state, &mut self.entities, &mut self.entity_grid, segments, self.dynamic_friction, &mut self.score);
             self.ninja.think(input.jump, hor_input);
             self.ninja.update_graphics(hor_input);
         }
@@ -177,6 +179,7 @@ impl KeyFrame {
             chase_drones: sim.entities.chase_drones.clone(),
             deathballs: sim.entities.deathballs.clone(),
             evil_ninjas: sim.entities.evil_ninjas.clone(),
+            rockets: sim.entities.rockets.clone(),
         }
     }
 
@@ -229,6 +232,8 @@ impl KeyFrame {
 
         self.evil_ninjas.clone_into(&mut sim.entities.evil_ninjas);
 
+        self.rockets.clone_into(&mut sim.entities.rockets);
+
         sim.entity_grid.drain_mobs();
         // add all mobs back into entity_grid
         for (i, bounce_block) in sim.entities.bounce_blocks.iter().enumerate() {
@@ -254,6 +259,11 @@ impl KeyFrame {
         }
         for (i, evil_ninja) in sim.entities.evil_ninjas.iter().enumerate() {
             sim.entity_grid[evil_ninja.pos].push((GridEntityType::EvilNinja, i));
+        }
+        for (i, rocket) in sim.entities.rockets.iter().enumerate() {
+            if matches!(rocket.state, RocketState::Homing) {
+                sim.entity_grid[rocket.grid_pos].push((GridEntityType::Rocket, i));
+            }
         }
     }
 }

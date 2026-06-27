@@ -241,6 +241,9 @@ const colorVarNames = [
     '--deathball-outer',
     '--deathball-middle',
     '--deathball-inner',
+    '--rocket-turret-outer',
+    '--rocket-turret-inner',
+    '--rocket',
     '--evil-ninja',
     '--time-remaining',
     '--hardcore-time',
@@ -504,11 +507,11 @@ const colorVarPaletteLocations: Record<ColorVarName, { file: PaletteFileName, in
         index: 3,
     },
     '--bat-body': {
-        file: 'entityBat',
+        file: 'entityEyeBat',
         index: 0,
     },
     '--bat-eye': {
-        file: 'entityBat',
+        file: 'entityEyeBat',
         index: 1,
     },
     '--deathball-outer': {
@@ -522,6 +525,18 @@ const colorVarPaletteLocations: Record<ColorVarName, { file: PaletteFileName, in
     '--deathball-inner': {
         file: 'entityBat',
         index: 0,
+    },
+    '--rocket-turret-outer': {
+        file: 'entityRocket',
+        index: 1,
+    },
+    '--rocket-turret-inner': {
+        file: 'entityRocket',
+        index: 0,
+    },
+    '--rocket': {
+        file: 'entityRocket',
+        index: 2,
     },
     '--evil-ninja': {
         file: 'entityEvilNinja',

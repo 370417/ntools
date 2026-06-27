@@ -29,6 +29,7 @@ import { GoldDefs, Golds, type GoldData } from "./entities/Gold";
 import { DeathballDefs, Deathballs, type DeathballData } from "./entities/Deathball";
 import { EVIL_NINJA_UNTOUCHED, EvilNinjaDefs, EvilNinjas, type EvilNinjaData } from "./entities/EvilNinja";
 import { PortalDefs, Portals, type PortalData } from "./entities/Portal";
+import { ROCKET_IDLE, RocketTurretDefs, RocketTurrets, type RocketTurretData } from "./entities/RocketTurret";
 
 const COLS = 42;
 const ROWS = 23;
@@ -68,6 +69,7 @@ const ENTITY_ZAP_DRONE = 14;
 const ENTITY_CHASE_DRONE = 15;
 const ENTITY_FLOOR_GUARD = 16;
 const ENTITY_BOUNCE_BLOCK = 17;
+const ENTITY_ROCKET = 18;
 const ENTITY_THWUMP = 20;
 const ENTITY_EVIL_NINJA = 22;
 const ENTITY_TOGGLE_MINE = 21;
@@ -144,6 +146,8 @@ export type EntitiesProps = {
     setFloorGuards: Setter<FloorGuardData[]>,
     bounceBlocks: Accessor<BounceBlockData[]>,
     setBounceBlocks: Setter<BounceBlockData[]>,
+    rocketTurrets: Accessor<RocketTurretData[]>,
+    setRocketTurrets: Setter<RocketTurretData[]>,
     thwumps: Accessor<ThwumpData[]>,
     setThwumps: Setter<ThwumpData[]>,
     evilNinjas: Accessor<EvilNinjaData[]>,
@@ -179,6 +183,7 @@ function createEntities(): EntitiesProps {
     const [chaseDrones, setChaseDrones] = createSignal<ChaseDroneData[]>([]);
     const [floorGuards, setFloorGuards] = createSignal<FloorGuardData[]>([]);
     const [bounceBlocks, setBounceBlocks] = createSignal<BounceBlockData[]>([]);
+    const [rocketTurrets, setRocketTurrets] = createSignal<RocketTurretData[]>([]);
     const [thwumps, setThwumps] = createSignal<ThwumpData[]>([]);
     const [evilNinjas, setEvilNinjas] = createSignal<EvilNinjaData[]>([]);
     const [boostPads, setBoostPads] = createSignal<BoostPadData[]>([]);
@@ -205,6 +210,7 @@ function createEntities(): EntitiesProps {
         chaseDrones, setChaseDrones,
         floorGuards, setFloorGuards,
         bounceBlocks, setBounceBlocks,
+        rocketTurrets, setRocketTurrets,
         thwumps, setThwumps,
         evilNinjas, setEvilNinjas,
         boostPads, setBoostPads,
@@ -234,6 +240,7 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
     const chaseDrones: ChaseDroneData[] = [];
     const floorGuards: FloorGuardData[] = [];
     const bounceBlocks: BounceBlockData[] = [];
+    const rocketTurrets: RocketTurretData[] = [];
     const thwumps: ThwumpData[] = [];
     const evilNinjas: EvilNinjaData[] = [];
     const boostPads: BoostPadData[] = [];
@@ -320,6 +327,11 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
             floorGuards.push(entityCopy);
         } else if (entity.type_int === ENTITY_BOUNCE_BLOCK) {
             bounceBlocks.push(entityCopy);
+        } else if (entity.type_int === ENTITY_ROCKET) {
+            rocketTurrets.push({
+                ...entityCopy,
+                state: ROCKET_IDLE,
+            });
         } else if (entity.type_int === ENTITY_THWUMP) {
             thwumps.push(entityCopy);
         } else if (entity.type_int === ENTITY_EVIL_NINJA) {
@@ -375,6 +387,7 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
     entities.setChaseDrones(chaseDrones);
     entities.setFloorGuards(floorGuards);
     entities.setBounceBlocks(bounceBlocks);
+    entities.setRocketTurrets(rocketTurrets);
     entities.setThwumps(thwumps);
     entities.setEvilNinjas(evilNinjas);
     entities.setBoostPads(boostPads);
@@ -407,7 +420,7 @@ function Entities({ entities }: { entities: EntitiesProps }) {
         <Bats bats={entities.bats} />
         <Deathballs deathballs={entities.deathballs} />
         {/* gauss */}
-        {/* rocket */}
+        <RocketTurrets rocketTurrets={entities.rocketTurrets} />
         {/* laser turret */}
         <Thwumps thwumps={entities.thwumps} />
         <EvilNinjas evilNinjas={entities.evilNinjas} />
@@ -705,6 +718,7 @@ export function EditorApp(props: {
                 <BatDefs />
                 <DeathballDefs />
                 <PortalDefs />
+                <RocketTurretDefs />
                 <path id="tilemode-crosshair" stroke-width="1.5" fill="none" d={tilemodeCrosshairPath} />
                 <path id="crosshair" stroke-width="1.5" fill="none" d={crosshairPath} />
                 <filter id="outline" filterUnits="userSpaceOnUse" x="0" y="0" width="1056" height="600">

@@ -28,6 +28,8 @@ import { InputDisplay } from './InputDisplay';
 import { DeathballDefs, Deathballs, updateDeathballs, type DeathballData } from './entities/Deathball';
 import { EvilNinjaDefs, EvilNinjas, updateEvilNinjas, type EvilNinjaData } from './entities/EvilNinja';
 import { getPortals, PortalDefs, Portals, type PortalData } from './entities/Portal';
+import { type RocketTurretData, RocketTurretDefs, RocketTurrets, updateRocketTurrets } from './entities/RocketTurret';
+import { type RocketData, RocketDefs, Rockets, updateRockets } from './entities/Rocket';
 
 const xhairHalfSize = 4;
 const crosshairPath = `M ${-xhairHalfSize} 0 H ${xhairHalfSize} M 0 ${-xhairHalfSize} V ${xhairHalfSize}`;
@@ -152,6 +154,8 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
     const laserDrones = createSignal<LaserDroneData[]>([]);
     const deathballs = createSignal<DeathballData[]>([]);
     const evilNinjas = createSignal<EvilNinjaData[]>([]);
+    const rocketTurrets = createSignal<RocketTurretData[]>([]);
+    const rockets = createSignal<RocketData[]>([]);
     const portals = createSignal<PortalData[]>([]);
     getPortals(portals, replay);
 
@@ -294,6 +298,8 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
         updateChaingunDrones(chaingunDrones, replay, partialFrame);
         updateLaserDrones(laserDrones, replay, partialFrame);
         updateDeathballs(deathballs, replay, partialFrame);
+        updateRocketTurrets(rocketTurrets, replay);
+        updateRockets(rockets, replay, partialFrame);
         updateEvilNinjas(evilNinjas, replay, partialFrame);
 
         setReplayLength(replay.replay_length());
@@ -353,6 +359,8 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                     <DeathballDefs />
                     <ExitDoorGradient />
                     <EvilNinjaDefs />
+                    <RocketTurretDefs />
+                    <RocketDefs />
                     <PortalDefs />
                     <path id="crosshair" stroke-width="1.5" fill="none" d={crosshairPath} />
                 </defs>
@@ -374,6 +382,8 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                 <ChaseDrones chaseDrones={chaseDrones[0]} />
                 <FloorGuards floorGuards={floorGuards[0]} />
                 <Deathballs deathballs={deathballs[0]} />
+                <RocketTurrets rocketTurrets={rocketTurrets[0]} />
+                <Rockets rockets={rockets[0]} />
                 <Thwumps thwumps={thwumps[0]} />
                 <EvilNinjas evilNinjas={evilNinjas[0]} />
                 <Ninja class="ninja preview" ninja={ninjaPreview} bones={ninjaPreviewBones} />

@@ -9,7 +9,7 @@ pub fn sweep_circle_vs_tiles(pos_old: DVec2, delta: DVec2, radius: f64, segments
     segments.iter_rect_region(pos_old, pos_new, width)
         .filter(|segment| segment.is_active(doors))
         .filter(|segment| match segment {
-            Segment::Linear { start, end, is_portal } => !*is_portal,
+            Segment::Linear { is_portal, .. } => !*is_portal,
             _ => true,
         })
         .map(|segment| segment.intersect_with_ray(pos_old, delta, radius))

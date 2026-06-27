@@ -2,7 +2,7 @@ use glam::{DMat2, DVec2};
 use rand::{seq::IndexedRandom, RngCore, SeedableRng};
 use rand_xoshiro::{SplitMix64, Xoroshiro64StarStar};
 
-use crate::{anim_data::{Bones, DANCES, get_anim_frame}, collision_util::{get_single_closest_point, sweep_circle_vs_tiles}, entity::{Entities, EntityIndex, GridEntityType, bounce_block, door::Doors, on_door_state_change, polymorphism::physical_collisions}, grid::Grid, orientation::OrientationExt, segment::Segment};
+use crate::{anim_data::{Bones, DANCES, get_anim_frame}, collision_util::{get_single_closest_point, sweep_circle_vs_tiles}, entity::{Entities, EntityIndex, GridEntityType, bounce_block, door::Doors, on_door_state_change, polymorphism::physical_collisions, rocket::Rocket}, grid::Grid, orientation::OrientationExt, segment::Segment};
 
 const GRAVITY_FALL: f64 = 0.06666666666666665;
 const GRAVITY_JUMP: f64 = 0.01111111111111111;
@@ -427,11 +427,12 @@ lp_buffer    {:?}",
 
     /// Perform logical collisions with entities, check for airborne state,
     /// check for walled state, calculate floor normals, check for impact or crush death.
-    pub fn post_collision(&mut self, collision_state: &mut CollisionState, entities: &mut Entities, entity_grid: &Grid<EntityIndex>, segments: &Grid<Segment>, dynamic_friction: bool, score: &mut u32) {
+    pub fn post_collision(&mut self, collision_state: &mut CollisionState, entities: &mut Entities, entity_grid: &mut Grid<EntityIndex>, segments: &Grid<Segment>, dynamic_friction: bool, score: &mut u32) {
         // Perform LOGICAL collisions between the ninja and nearby entities.
         // Also check if the ninja can interact with the walls of entities when applicable.
         let mut wall_normal = None;
-        for &(entity_type, i) in entity_grid.iter_neighborhood(self.pos) {
+        let mut rocket_explode_results = Vec::new();
+        for (entity_type, i) in entity_grid.iter_neighborhood(self.pos).cloned() {
             match entity_type {
                 GridEntityType::Mine => {
                     entities.mines[i].logical_collision(self);
@@ -524,7 +525,16 @@ lp_buffer    {:?}",
                 GridEntityType::EvilNinja => {
                     entities.evil_ninjas[i].logical_collision(self);
                 }
+                GridEntityType::Rocket => {
+                    if let Some(explode_results) = entities.rockets[i].logical_collision(self) {
+                        rocket_explode_results.push(explode_results);
+                    }
+                }
             }
+        }
+
+        for explode_results in rocket_explode_results {
+            Rocket::post_explode(explode_results, entity_grid);
         }
 
         // Store wall slide (vertical velocity of moving walls that the ninja is touching).

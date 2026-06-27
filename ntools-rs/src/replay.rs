@@ -4,7 +4,7 @@ use futures_channel::oneshot::Sender;
 use glam::{DVec2, FloatExt};
 use wasm_bindgen::prelude::*;
 
-use crate::{anim_data::flatten_bones, attract::to_attract_bytes, editor::Editor, entity::{mine::Mine, portal::PortalSpatialMap}, grid::{COLS, Grid, ROWS}, ninja::{Ninja, NinjaState, PastNinja}, orientation::OrientationExt, segment::{Segment, extract_path}, simulation::{Input, KeyFrame, Simulation}, tile::TILE_SIZE};
+use crate::{anim_data::flatten_bones, attract::to_attract_bytes, editor::Editor, entity::{mine::Mine, portal::PortalSpatialMap, rocket::RocketState}, grid::{COLS, Grid, ROWS}, ninja::{Ninja, NinjaState, PastNinja}, orientation::OrientationExt, segment::{Segment, extract_path}, simulation::{Input, KeyFrame, Simulation}, tile::TILE_SIZE};
 
 #[wasm_bindgen]
 pub struct Replay {
@@ -596,6 +596,42 @@ impl Replay {
 
     pub fn evil_ninja_bones(&self, i: usize) -> Option<Box<[f64]>> {
         self.current_sim.entities.evil_ninjas[i].bones(self.current_sim.frame, &self.past_ninjas, &self.anim_data)
+    }
+
+    pub fn rockets_len(&self) -> usize {
+        self.current_sim.entities.rockets.len()
+    }
+
+    pub fn rocket_turret_x(&self, i: usize) -> f64 {
+        self.current_sim.entities.rockets[i].turret_pos.x
+    }
+
+    pub fn rocket_turret_y(&self, i: usize) -> f64 {
+        self.current_sim.entities.rockets[i].turret_pos.y
+    }
+
+    pub fn rocket_x(&self, i: usize, partial_frame: f64) -> f64 {
+        let rocket = &self.current_sim.entities.rockets[i];
+        match rocket.state {
+            RocketState::Homing => rocket.old_rocket_pos.x.lerp(rocket.rocket_pos.x, partial_frame),
+            _ => f64::NAN,
+        }
+    }
+
+    pub fn rocket_y(&self, i: usize, partial_frame: f64) -> f64 {
+        let rocket = &self.current_sim.entities.rockets[i];
+        match rocket.state {
+            RocketState::Homing => rocket.old_rocket_pos.y.lerp(rocket.rocket_pos.y, partial_frame),
+            _ => f64::NAN,
+        }
+    }
+
+    pub fn rocket_deg(&self, i: usize) -> f64 {
+        self.current_sim.entities.rockets[i].rocket_dir.to_angle().to_degrees()
+    }
+
+    pub fn rocket_state(&self, i: usize) -> u32 {
+        self.current_sim.entities.rockets[i].state as u32
     }
 
     pub fn portals_len(&self) -> usize {
