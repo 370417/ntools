@@ -1,3 +1,13 @@
+//! Gauss behavior ported from Nv2.
+//! Numbers have been adjusted for the transition from 40fps to 60fps (that's why some are multiplied by 3/2 or 2/3).
+//!
+//! Gauss turret targeting has four different modes depending on the distance between
+//! the ninja and the targeting reticle.
+//! The cutoffs between these modes are given in THRESHOLD2 as squared distances (hence the 2).
+//!
+//! Each mode has a different aim speed (how fast the reticle moves towards the ninja)
+//! and a different timerstep (how fast the shot_timer ticks up until it hits the TIMER_FIRETIME threshold to fire).
+
 use glam::DVec2;
 
 use crate::{collision_util::get_raycast_distance, entity::door::Doors, grid::Grid, ninja::Ninja, segment::Segment};
