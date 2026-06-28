@@ -1,4 +1,4 @@
-use crate::{entity::{Entities, EntityIndex, GridEntityType, boost_pad::BoostPad, bounce_block::BounceBlock, chase_drone::ChaseDrone, deathball::Deathball, door::RegularDoor, evil_ninja::EvilNinja, floor_guard::FloorGuard, gold::collected_golds, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, on_door_state_change, portal::{PortalSpatialMap, get_portal_ninja, teleport_ninja}, rocket::{Rocket, RocketState}, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::Grid, ninja::{AnimState, Ninja, NinjaState, PastNinja}, segment::Segment};
+use crate::{entity::{Entities, EntityIndex, GridEntityType, boost_pad::BoostPad, bounce_block::BounceBlock, chase_drone::ChaseDrone, deathball::Deathball, door::RegularDoor, evil_ninja::EvilNinja, floor_guard::FloorGuard, gauss::Gauss, gold::collected_golds, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, on_door_state_change, portal::{PortalSpatialMap, get_portal_ninja, teleport_ninja}, rocket::{Rocket, RocketState}, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::Grid, ninja::{AnimState, Ninja, NinjaState, PastNinja}, segment::Segment};
 
 #[derive(Clone)]
 pub struct Simulation {
@@ -43,6 +43,7 @@ pub struct KeyFrame {
     deathballs: Vec<Deathball>,
     evil_ninjas: Vec<EvilNinja>,
     rockets: Vec<Rocket>,
+    gauss: Vec<Gauss>,
 }
 
 impl Input {
@@ -120,6 +121,7 @@ impl Simulation {
         for thwump in &mut self.entities.thwumps { thwump.think(&self.ninja, segments, &self.entities.doors) }
         for floor_guard in &mut self.entities.floor_guards { floor_guard.think(&self.ninja, segments, &self.entities.doors) }
         for rocket in &mut self.entities.rockets { rocket.think(&self.ninja, &mut self.entity_grid, segments, &self.entities.doors); }
+        for gauss in &mut self.entities.gauss { gauss.think(&mut self.ninja, segments, &self.entities.doors); }
         for (i, shove_thwump) in self.entities.shove_thwumps.iter_mut().enumerate() { shove_thwump.think(i, &mut self.entity_grid, segments, &self.entities.doors) }
         for i in 0..self.entities.deathballs.len() {
             let (deathball, other_deathballs) = self.entities.deathballs[i..].split_at_mut(1);
@@ -180,6 +182,7 @@ impl KeyFrame {
             deathballs: sim.entities.deathballs.clone(),
             evil_ninjas: sim.entities.evil_ninjas.clone(),
             rockets: sim.entities.rockets.clone(),
+            gauss: sim.entities.gauss.clone(),
         }
     }
 
@@ -233,6 +236,8 @@ impl KeyFrame {
         self.evil_ninjas.clone_into(&mut sim.entities.evil_ninjas);
 
         self.rockets.clone_into(&mut sim.entities.rockets);
+
+        self.gauss.clone_into(&mut sim.entities.gauss);
 
         sim.entity_grid.drain_mobs();
         // add all mobs back into entity_grid

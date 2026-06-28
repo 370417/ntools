@@ -1,6 +1,7 @@
+use float_ord::FloatOrd;
 use glam::{DMat2, DVec2};
 
-use crate::{entity::door::Doors, grid::Grid, orientation::Orientation, segment::{ClosestPoint, Segment}};
+use crate::{entity::door::Doors, grid::{Grid, GridPos}, orientation::Orientation, segment::{ClosestPoint, Segment}};
 
 /// Fetch all segments from neighbourhood. Return shortest intersection time from interpolation.
 pub fn sweep_circle_vs_tiles(pos_old: DVec2, delta: DVec2, radius: f64, segments: &Grid<Segment>, doors: &Doors) -> f64 {
@@ -111,12 +112,55 @@ pub fn get_single_closest_point(pos: DVec2, radius: f64, segments: &Grid<Segment
         }).map(|(_, closest)| closest)
 }
 
-pub fn get_raycast_distance() {
-    todo!()
+/// Return the length of a ray given its start point and direction. The ray stops when it hits a
+/// tile. Return None if the ray hits nothing after travelling for 2000 units. The algorithm works by
+/// finding the cells the ray traverses and testing it against the tile segments for each cell.
+pub fn get_raycast_distance(pos: DVec2, delta: DVec2, segments: &Grid<Segment>, doors: &Doors) -> Option<f64> {
+    let mut cell = (pos / 24.0).floor();
+    let (step_x, delta_x, mut tmax_x) = if delta.x > 0.0 {
+        (1.0, 24.0 / delta.x, ((cell.x + 1.0) * 24.0 - pos.x) / delta.x)
+    } else if delta.x < 0.0 {
+        (-1.0, -24.0 / delta.x, (cell.x * 24.0 - pos.x) / delta.x)
+    } else {
+        (0.0, 0.0, 999999.0)
+    };
+    let (step_y, delta_y, mut tmax_y) = if delta.y > 0.0 {
+        (1.0, 24.0 / delta.y, ((cell.y + 1.0) * 24.0 - pos.y) / delta.y)
+    } else if delta.y < 0.0 {
+        (-1.0, -24.0 / delta.y, (cell.y * 24.0 - pos.y) / delta.y)
+    } else {
+        (0.0, 0.0, 999999.0)
+    };
+    loop {
+        let grid_pos = GridPos::new(cell.x as i8, cell.y as i8);
+        let result = intersect_ray_vs_cell_contents(grid_pos, pos, 2000.0 * delta, segments, doors);
+        if result < 1.0 {
+            return Some(2000.0 * result);
+        }
+        if tmax_x < tmax_y {
+            cell.x += step_x;
+            if cell.x < 0.0 || cell.x >= 44.0 {
+                return None;
+            }
+            tmax_x += delta_x;
+        } else {
+            cell.x += step_y;
+            if cell.y < 0.0 || cell.y >= 25.0 {
+                return None;
+            }
+            tmax_y += delta_y;
+        }
+    }
 }
 
-pub fn intersect_ray_vs_cell_contents() {
-    todo!()
+/// Given a cell and a ray, return the shortest time of intersection between the ray and one of
+/// the cell's tile segments. Return 1 if the ray hits nothing.
+pub fn intersect_ray_vs_cell_contents(grid_pos: GridPos, pos: DVec2, delta: DVec2, segments: &Grid<Segment>, doors: &Doors) -> f64 {
+    segments[grid_pos.clamp()].iter()
+        .map(|segment| FloatOrd(segment.intersect_with_ray(pos, delta, 0.0)))
+        .min()
+        .unwrap_or(FloatOrd(1.0))
+        .0
 }
 
 pub fn raycast_vs_player() {
@@ -132,7 +176,8 @@ pub fn overlap_circle_vs_circle(center1: DVec2, radius1: f64, center2: DVec2, ra
     (center1 - center2).length() < radius1 + radius2
 }
 
-/// Given two cirles definied by their center and radius, return true if they overlap.
+/// Given a circle defined by its center and radius, and a segment defined by two points,
+/// return true if they overlap.
 pub fn overlap_circle_vs_segment(center: DVec2, radius: f64, point1: DVec2, point2: DVec2) -> bool {
     let segment = point2 - point1;
     let to_center = center - point1;

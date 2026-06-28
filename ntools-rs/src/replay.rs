@@ -634,6 +634,34 @@ impl Replay {
         self.current_sim.entities.rockets[i].state as u32
     }
 
+    pub fn gauss_len(&self) -> usize {
+        self.current_sim.entities.gauss.len()
+    }
+
+    pub fn gauss_turret_x(&self, i: usize) -> f64 {
+        self.current_sim.entities.gauss[i].turret_pos.x
+    }
+
+    pub fn gauss_turret_y(&self, i: usize) -> f64 {
+        self.current_sim.entities.gauss[i].turret_pos.y
+    }
+
+    pub fn gauss_aim_x(&self, i: usize) -> f64 {
+        self.current_sim.entities.gauss[i].aim_pos.x
+    }
+
+    pub fn gauss_aim_y(&self, i: usize) -> f64 {
+        self.current_sim.entities.gauss[i].aim_pos.y
+    }
+
+    pub fn gauss_state(&self, i: usize) -> u32 {
+        self.current_sim.entities.gauss[i].state as u32
+    }
+
+    pub fn gauss_aim_region(&self, i: usize) -> u32 {
+        self.current_sim.entities.gauss[i].aim_region as u32
+    }
+
     pub fn portals_len(&self) -> usize {
         self.current_sim.entities.portals.len()
     }
