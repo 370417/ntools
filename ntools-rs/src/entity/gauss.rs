@@ -10,7 +10,7 @@
 
 use glam::DVec2;
 
-use crate::{collision_util::get_raycast_distance, entity::door::Doors, grid::Grid, ninja::Ninja, segment::Segment};
+use crate::{collision_util::{get_raycast_distance, overlap_circle_vs_segment, raycast_vs_player}, entity::door::Doors, grid::Grid, ninja::{self, Ninja}, segment::Segment};
 
 const TIMER_FIRETIME: f64 = 60.0 * 3.0 / 2.0;
 const PREFIRE_DELAY: f64 = 10.0 * 3.0 / 2.0;
@@ -44,7 +44,9 @@ pub enum GaussState {
     Idle,
     Targetting,
     Prefire,
-    Postfire,
+    Postfire {
+        shot_endpoint: DVec2,
+    },
 }
 
 impl Gauss {
@@ -61,35 +63,45 @@ impl Gauss {
     pub fn think(&mut self, ninja: &mut Ninja, segments: &Grid<Segment>, doors: &Doors) {
         match self.state {
             GaussState::Idle => {
-                // TODO: try to aquire target
-                self.start_targetting();
+                if raycast_vs_player(self.turret_pos, ninja.pos, segments, doors) {
+                    self.start_targetting();
+                }
             }
             GaussState::Targetting => {
-                // TODO: if !current target is visible
-                // self.start_idling();
-                // else
-                self.update_aim(ninja.pos, ninja.speed);
-                if self.shot_timer > TIMER_FIRETIME {
-                    self.start_firing();
+                if !raycast_vs_player(self.turret_pos, ninja.pos, segments, doors) {
+                    self.start_idling();
+                } else {
+                    self.update_aim(ninja.pos, ninja.speed);
+                    if self.shot_timer > TIMER_FIRETIME {
+                        self.start_firing();
+                    }
                 }
             }
             GaussState::Prefire => {
                 self.shot_timer += 1.0;
                 if self.shot_timer >= PREFIRE_DELAY {
+                    let mut shot_endpoint = self.turret_pos;
                     if ninja.is_valid_target() {
                         let aim_dir = (self.aim_pos - self.turret_pos).normalize();
                         let ray_distance = get_raycast_distance(self.turret_pos, aim_dir, segments, doors);
+                        // if ray_distance was None, it traveled for 2000 units
+                        let ray_distance = ray_distance.unwrap_or(2000.0);
+                        shot_endpoint = self.turret_pos + ray_distance * (self.aim_pos - self.turret_pos).normalize();
+                        if overlap_circle_vs_segment(ninja.pos, ninja::RADIUS, self.turret_pos, shot_endpoint) {
+                            ninja.kill(0, DVec2::ZERO, DVec2::ZERO);
+                        }
                     }
-                    self.stop_firing();
+                    self.stop_firing(shot_endpoint);
                 }
             }
-            GaussState::Postfire => {
+            GaussState::Postfire { .. } => {
                 self.shot_timer += 1.0;
                 if self.shot_timer >= POSTFIRE_DELAY {
-                    // if ninja is visible
-                    self.resume_targetting();
-                    // else
-                    // self.start_idling();
+                    if raycast_vs_player(self.turret_pos, ninja.pos, segments, doors) {
+                        self.resume_targetting();
+                    } else {
+                        self.start_idling();
+                    }
                 }
             }
         }
@@ -115,9 +127,9 @@ impl Gauss {
         self.state = GaussState::Prefire;
     }
 
-    fn stop_firing(&mut self) {
+    fn stop_firing(&mut self, shot_endpoint: DVec2) {
         self.shot_timer = 0.0;
-        self.state = GaussState::Postfire;
+        self.state = GaussState::Postfire { shot_endpoint };
     }
 
     fn update_aim(&mut self, ninja_pos: DVec2, ninja_vel: DVec2) {
@@ -135,5 +147,23 @@ impl Gauss {
         };
         self.shot_timer += TIMERSTEP[self.aim_region];
         self.aim_pos += AIMSPEED[self.aim_region] * aim_to_ninja;
+    }
+}
+
+impl GaussState {
+    pub fn to_u32(&self) -> u32 {
+        match self {
+            GaussState::Idle => 0,
+            GaussState::Targetting => 1,
+            GaussState::Prefire => 2,
+            GaussState::Postfire { .. } => 3,
+        }
+    }
+
+    pub fn shot_endpoint(&self) -> Option<DVec2> {
+        match self {
+            GaussState::Postfire { shot_endpoint } => Some(*shot_endpoint),
+            _ => None,
+        }
     }
 }

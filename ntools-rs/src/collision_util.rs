@@ -1,7 +1,7 @@
 use float_ord::FloatOrd;
 use glam::{DMat2, DVec2};
 
-use crate::{entity::door::Doors, grid::{Grid, GridPos}, orientation::Orientation, segment::{ClosestPoint, Segment}};
+use crate::{entity::door::Doors, grid::{Grid, GridPos}, ninja, orientation::Orientation, segment::{ClosestPoint, Segment}};
 
 /// Fetch all segments from neighbourhood. Return shortest intersection time from interpolation.
 pub fn sweep_circle_vs_tiles(pos_old: DVec2, delta: DVec2, radius: f64, segments: &Grid<Segment>, doors: &Doors) -> f64 {
@@ -144,7 +144,7 @@ pub fn get_raycast_distance(pos: DVec2, delta: DVec2, segments: &Grid<Segment>, 
             }
             tmax_x += delta_x;
         } else {
-            cell.x += step_y;
+            cell.y += step_y;
             if cell.y < 0.0 || cell.y >= 25.0 {
                 return None;
             }
@@ -157,14 +157,24 @@ pub fn get_raycast_distance(pos: DVec2, delta: DVec2, segments: &Grid<Segment>, 
 /// the cell's tile segments. Return 1 if the ray hits nothing.
 pub fn intersect_ray_vs_cell_contents(grid_pos: GridPos, pos: DVec2, delta: DVec2, segments: &Grid<Segment>, doors: &Doors) -> f64 {
     segments[grid_pos.clamp()].iter()
+        .filter(|segment| segment.is_active(doors))
         .map(|segment| FloatOrd(segment.intersect_with_ray(pos, delta, 0.0)))
         .min()
         .unwrap_or(FloatOrd(1.0))
         .0
 }
 
-pub fn raycast_vs_player() {
-    todo!()
+/// Draw a segment that starts at a given position and goes towards the center of the ninja.
+/// Return true if the segment touches the ninja, meaning there were no tile segments in its path.
+pub fn raycast_vs_player(start_pos: DVec2, ninja_pos: DVec2, segments: &Grid<Segment>, doors: &Doors) -> bool {
+    let delta = ninja_pos - start_pos;
+    let dist = delta.length();
+    if dist >= ninja::RADIUS {
+        let length = get_raycast_distance(start_pos, delta / dist, segments, doors);
+        length.unwrap_or(0.0) > dist - ninja::RADIUS
+    } else {
+        true
+    }
 }
 
 pub fn check_lineseg_vs_ninja() {

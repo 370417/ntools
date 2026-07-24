@@ -655,11 +655,19 @@ impl Replay {
     }
 
     pub fn gauss_state(&self, i: usize) -> u32 {
-        self.current_sim.entities.gauss[i].state as u32
+        self.current_sim.entities.gauss[i].state.to_u32()
     }
 
     pub fn gauss_aim_region(&self, i: usize) -> u32 {
         self.current_sim.entities.gauss[i].aim_region as u32
+    }
+
+    pub fn gauss_shot_endpoint_x(&self, i: usize) -> Option<f64> {
+        self.current_sim.entities.gauss[i].state.shot_endpoint().map(|point| point.x)
+    }
+
+    pub fn gauss_shot_endpoint_y(&self, i: usize) -> Option<f64> {
+        self.current_sim.entities.gauss[i].state.shot_endpoint().map(|point| point.y)
     }
 
     pub fn portals_len(&self) -> usize {

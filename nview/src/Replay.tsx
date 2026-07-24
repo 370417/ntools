@@ -1,4 +1,4 @@
-import { createSignal, onCleanup, Show } from 'solid-js';
+import { createSignal, For, onCleanup, Show } from 'solid-js';
 import { Editor, Replay } from './assets/ntools_rs';
 import { Scrubber } from './Scrubber';
 // import Stats from 'stats-js';
@@ -7,7 +7,7 @@ import { MineDefs, Mines, updateMines, type MineData } from './entities/Mine';
 import { OneWayDefs, OneWays, updateOneWays, type OneWayData } from './entities/OneWay';
 import { BounceBlockDefs, BounceBlocks, updateBounceBlocks, type BounceBlockData } from './entities/BounceBlock';
 import { FloorGuards, updateFloorGuards, type FloorGuardData } from './entities/FloorGuard';
-import { Ninja } from './entities/Ninja';
+import { Ninja, type NinjaData } from './entities/Ninja';
 import { LockedDoors, updateLockedDoors, type LockedDoorData } from './entities/LockedDoor';
 import { LockedSwitchDefs, LockedSwitches, updateLockedSwitches, type LockedSwitchData } from './entities/LockedSwitch';
 import { TrapSwitchDefs, TrapSwitches, updateTrapSwitches, type TrapSwitchData } from './entities/TrapSwitch';
@@ -38,6 +38,8 @@ const crosshairPath = `M ${-xhairHalfSize} 0 H ${xhairHalfSize} M 0 ${-xhairHalf
 
 export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventState: GlobalEventState }) {
     const replay = props.replay;
+    const offset = 0;
+    const otherReplays: Replay[] = [];
 
     const [recording, setRecording] = createSignal(true);
     const [isPlaying, setIsPlaying] = createSignal(!replay.is_from_attract());
@@ -70,7 +72,10 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
         } else if (event.code === 'Comma') {
             if (!isPlaying() && progress() > 0) {
                 setProgress(progress() - 1);
-                replay.seek(progress());
+                replay.seek(Math.max(0, progress() - offset));
+                for (const otherReplay of otherReplays) {
+                    otherReplay.seek(progress());
+                }
 
                 let { isJump1Pressed, isJump2Pressed, isRightPressed, isLeftPressed, isDownPressed, isSuicidePressed } = props.globalEventState;
                 if (isJump1Pressed() || isJump2Pressed() || isRightPressed() || isLeftPressed() || isSuicidePressed()) {
@@ -96,8 +101,13 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                 } else {
                     // don't change existing input if nothing is pressed
                 }
-                replay.tick();
-                setProgress(replay.progress());
+                if (progress() >= offset) {
+                    replay.tick();
+                }
+                for (const otherReplay of otherReplays) {
+                    otherReplay.tick();
+                }
+                setProgress(progress() + 1);
                 updatePausedInfo();
                 renderFrame(1);
             }
@@ -133,6 +143,9 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
     const [ninjaBones, setNinjaBones] = createSignal<Float64Array<ArrayBufferLike>>();
     const [ninjaPreviewBones, setNinjaPreviewBones] = createSignal<Float64Array<ArrayBufferLike>>();
     const [portalNinjaBones, setPortalNinjaBones] = createSignal<Float64Array<ArrayBufferLike>>();
+    const [otherNinjas, setOtherNinjas] = createSignal<{
+        ninja: NinjaData, bones: Float64Array<ArrayBufferLike>,
+    }[]>();
 
     const mines = createSignal<MineData[]>([]);
     const golds = createSignal<GoldData[]>([]);
@@ -233,16 +246,26 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                         let { isJump1Pressed, isJump2Pressed, isRightPressed, isLeftPressed, isSuicidePressed } = props.globalEventState;
                         $replay.set_input(isJump1Pressed() || isJump2Pressed(), isRightPressed(), isLeftPressed(), isSuicidePressed());
                     }
-                    $replay.tick();
+                    if (progress() >= offset) {
+                        $replay.tick();
+                    }
+                    for (const otherReplay of otherReplays) {
+                        otherReplay.tick();
+                    }
                     updateInputs();
                     accumulator -= msPerTick;
                 }
                 partialFrame = accumulator / msPerTick;
 
-                setProgress($replay.progress());
+                setProgress(progress() + 1);
             } else if (progress() < replayLength()) {
-                $replay.tick();
-                setProgress($replay.progress());
+                if (progress() >= offset) {
+                    $replay.tick();
+                }
+                for (const otherReplay of otherReplays) {
+                    otherReplay.tick();
+                }
+                setProgress(progress() + 1);
             } else {
                 setIsPlaying(false);
             }
@@ -274,6 +297,14 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
             deg: 0,
         });
         setNinjaBones(replay.ninja_bones(partialFrame));
+        setOtherNinjas(otherReplays.map(r => ({
+            ninja: {
+                x: r.ninja_x(partialFrame),
+                y: r.ninja_y(partialFrame),
+                deg: 0,
+            },
+            bones: r.ninja_bones(partialFrame),
+        })));
         if (previewProgress() === undefined) {
             setNinjaPreviewBones(undefined);
         } else {
@@ -308,7 +339,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
         updateGaussReticles(gaussReticles, replay);
         updateEvilNinjas(evilNinjas, replay, partialFrame);
 
-        setReplayLength(replay.replay_length());
+        setReplayLength(replay.replay_length() + offset);
     }
 
     renderFrame(1);
@@ -403,6 +434,9 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                 <Show when={Number.isFinite(portalNinja().x)}>
                     <Ninja class="ninja" ninja={portalNinja} bones={portalNinjaBones} />
                 </Show>
+                <For each={otherNinjas()}>
+                    {({ ninja, bones }) => <Ninja class="ninja" ninja={() => ninja} bones={() => bones} />}
+                </For>
                 <Ninja class="ninja" ninja={ninja} bones={ninjaBones} />
                 <path id="tiles" stroke-width="2" clip-path="url(#tiles-clip)" clip-rule="evenodd" d={tilePath()} fill-rule="evenodd" />
                 <Show when={!isPlaying()}>
@@ -432,7 +466,10 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                         previewProgress={previewProgress}
                         seek={frame => {
                             setProgress(frame);
-                            replay.seek(frame);
+                            replay.seek(Math.max(0, frame - offset));
+                            for (const otherReplay of otherReplays) {
+                                otherReplay.seek(frame);
+                            }
                             updateInputs();
                             updatePastNinjaBones();
                             updatePastNinjas();
@@ -449,6 +486,8 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                             }
                         }}
                         attract={() => replay.export_attract(props.editor)}
+                        editor={props.editor}
+                        addReplay={(newReplay) => { otherReplays.push(newReplay) }}
                     />
                 </Show>
             </div>

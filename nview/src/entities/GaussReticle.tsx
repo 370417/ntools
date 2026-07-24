@@ -10,7 +10,7 @@ export type GaussReticleData = {
 };
 
 function equals(a: GaussReticleData, b: GaussReticleData): boolean {
-    return a.x === b.x && a.y === b.y && a.aim_region === b.aim_region;
+    return a.x === b.x && a.y === b.y && a.state === b.state && a.aim_region === b.aim_region;
 }
 
 function transform(mine: Accessor<GaussReticleData>): string {

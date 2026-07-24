@@ -1,9 +1,11 @@
-import { Index, type Accessor, type Signal } from "solid-js";
+import { Index, Show, type Accessor, type Signal } from "solid-js";
 import type { Replay } from "../assets/ntools_rs";
 
 export type GaussData = {
     x: number;
     y: number;
+    shot_x?: number;
+    shot_y?: number;
     state: typeof GAUSS_IDLE | typeof GAUSS_TARGETTING | typeof GAUSS_PREFIRE | typeof GAUSS_POSTFIRE;
 };
 
@@ -13,7 +15,7 @@ export const GAUSS_PREFIRE = 2;
 export const GAUSS_POSTFIRE = 3;
 
 function equals(a: GaussData, b: GaussData): boolean {
-    return a.x === b.x && a.y === b.y && a.state == b.state;
+    return a.x === b.x && a.y === b.y && a.shot_x === b.shot_x && a.shot_y === b.shot_y && a.state == b.state;
 }
 
 function transform(rocketTurret: Accessor<GaussData>): string {
@@ -30,6 +32,8 @@ export function updateGauss([gaussTurrets, setGauss]: Signal<GaussData[]>, repla
         const newGauss = {
             x: replay.gauss_turret_x(i),
             y: replay.gauss_turret_y(i),
+            shot_x: replay.gauss_shot_endpoint_x(i),
+            shot_y: replay.gauss_shot_endpoint_y(i),
             state: replay.gauss_state(i) as 0 | 1 | 2 | 3,
         };
         if (oldGauss && equals(oldGauss, newGauss)) {
@@ -43,7 +47,12 @@ export function updateGauss([gaussTurrets, setGauss]: Signal<GaussData[]>, repla
 
 export function Gauss(props: { gaussTurrets: Accessor<GaussData[]> }) {
     return <Index each={props.gaussTurrets()}>
-        {gauss => <use href={gauss().state > 0 ? '#gauss-active' : '#gauss-idle'} transform={transform(gauss)} />}
+        {gauss => <>
+            <use href={gauss().state > 0 ? '#gauss-active' : '#gauss-idle'} transform={transform(gauss)} />
+            <Show when={typeof gauss().shot_x === 'number'}>
+                <line x1={gauss().x} x2={gauss().shot_x} y1={gauss().y} y2={gauss().shot_y} stroke="black" />
+            </Show>
+        </>}
     </Index>
 }
 

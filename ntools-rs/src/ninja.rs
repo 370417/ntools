@@ -81,7 +81,7 @@ pub enum NinjaState {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
-enum JumpType {
+pub enum JumpType {
     Floor,
     Wall,
 }
@@ -263,11 +263,10 @@ walled       {}
 jump_buffer  {:?}
 floor_buffer {:?}
 wall_buffer  {:?}
-lp_buffer    {:?}",
-            self.pos.x,
-            self.pos.y,
-            self.speed.x,
-            self.speed.y,
+lp_buffer    {:?}
+floor_normal {:>7.2} {:>7.2}",
+            self.pos.x, self.pos.y,
+            self.speed.x, self.speed.y,
             self.speed.length(),
             self.state.to_string(),
             self.airborne,
@@ -276,6 +275,8 @@ lp_buffer    {:?}",
             self.floor_buffer,
             self.wall_buffer,
             self.launch_pad_buffer,
+            self.floor_unit_normal.x,
+            self.floor_unit_normal.y,
         )
     }
 
@@ -1200,5 +1201,26 @@ lp_buffer    {:?}",
 impl PastNinja {
     pub fn calc_ninja_position(&self, anim_data: &[u8]) -> [DVec2; 13] {
         Ninja::calc_ninja_position_inner(self.anim_frame, self.anim_state, self.run_cycle, self.facing, self.tilt, anim_data)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::editor::Editor;
+
+    /// Interaction where perp off slope connected to floor gives higher jump
+    #[test]
+    fn test_bread_jump() {
+        let map_bytes = include_bytes!("testfiles/85406");
+        let replay_bytes = include_bytes!("testfiles/85406_0");
+
+        let mut editor = Editor::new();
+        editor.load_map(map_bytes).unwrap();
+        let mut replay = editor.load_outte_replay(replay_bytes, false, false).unwrap();
+
+        replay.seek(164);
+        assert!(replay.current_sim.ninja.speed.y > 2.0, "before seed.y = {}", replay.current_sim.ninja.speed.y);
+        replay.tick();
+        assert!(replay.current_sim.ninja.speed.y < -3.0, "after seed.y = {}", replay.current_sim.ninja.speed.y);
     }
 }

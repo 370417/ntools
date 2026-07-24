@@ -3,7 +3,7 @@
 
 use glam::DVec2;
 
-use crate::{entity::{Entity, EntityIndex, GridEntityType, Mob, door::Doors, move_entity}, grid::{Grid, GridPos}, ninja::{self, Ninja}, segment::Segment};
+use crate::{collision_util::raycast_vs_player, entity::{Entity, EntityIndex, GridEntityType, Mob, door::Doors, move_entity}, grid::{Grid, GridPos}, ninja::{self, Ninja}, segment::Segment};
 
 const ACCEL_START: f64 = 0.1 * (2.0 / 3.0) * (2.0 / 3.0);
 const MAX_SPEED: f64 = 12.0 * (2.0 / 7.0) * (2.0 / 3.0);
@@ -61,9 +61,10 @@ impl Rocket {
     pub fn think(&mut self, ninja: &Ninja, entity_grid: &mut Grid<EntityIndex>, segments: &Grid<Segment>, doors: &Doors) {
         match self.state {
             RocketState::Idle => {
-                // if try to aquire target
-                self.shot_timer = 0;
-                self.state = RocketState::Prefire;
+                if raycast_vs_player(self.turret_pos, ninja.pos, segments, doors) {
+                    self.shot_timer = 0;
+                    self.state = RocketState::Prefire;
+                }
             }
             RocketState::Prefire => {
                 if !ninja.is_valid_target() {
@@ -117,11 +118,6 @@ impl Rocket {
                     }
                     let rocket_to_ninja = rocket_to_ninja.normalize();
                     let dot = self.rocket_dir.perp().dot(rocket_to_ninja);
-                    // let dot = if self.rocket_dir.dot(rocket_to_ninja) > 0.0 {
-                    //     self.rocket_dir.perp().dot(rocket_to_ninja)
-                    // } else {
-                    //     1.0
-                    // };
                     self.rocket_dir += TURN_RATE * dot * self.rocket_dir.perp();
                     self.rocket_dir = self.rocket_dir.normalize_or_zero();
                 }
