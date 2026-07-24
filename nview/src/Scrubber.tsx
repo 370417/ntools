@@ -15,6 +15,7 @@ type ScrubberProps = {
     attract(): Uint8Array,
     editor: Editor,
     addReplay(replay: Replay): void,
+    toReplay(): Uint8Array<ArrayBufferLike>,
 };
 
 export function Scrubber(props: ScrubberProps) {
@@ -169,6 +170,19 @@ export function Scrubber(props: ScrubberProps) {
                 setTimeout(() => URL.revokeObjectURL(downloadUrl), 100);
             }}>
                 Export attract
+            </a>
+            {" | "}
+            <a href="#" download="replay" style={{
+                color: 'var(--main-menu-selected)',
+                "margin-left": '1em'
+            }} onclick={function (this: HTMLAnchorElement) {
+                const replay = props.toReplay();
+                const blob = new Blob([replay.buffer as ArrayBuffer], { type: 'application/octet-stream' });
+                const downloadUrl = URL.createObjectURL(blob);
+                this.href = downloadUrl;
+                setTimeout(() => URL.revokeObjectURL(downloadUrl), 100);
+            }}>
+                Export replay
             </a>
         </div>
     </div>;

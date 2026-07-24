@@ -4,7 +4,7 @@ use futures_channel::oneshot::Sender;
 use glam::{DVec2, FloatExt};
 use wasm_bindgen::prelude::*;
 
-use crate::{anim_data::flatten_bones, attract::to_attract_bytes, editor::Editor, entity::{mine::Mine, portal::PortalSpatialMap, rocket::RocketState}, grid::{COLS, Grid, ROWS}, ninja::{Ninja, NinjaState, PastNinja}, orientation::OrientationExt, segment::{Segment, extract_path}, simulation::{Input, KeyFrame, Simulation}, tile::TILE_SIZE};
+use crate::{anim_data::flatten_bones, attract::to_attract_bytes, editor::Editor, entity::{mine::Mine, portal::PortalSpatialMap, rocket::RocketState}, grid::{COLS, Grid, ROWS}, ninja::{Ninja, NinjaState, PastNinja}, orientation::OrientationExt, replay_file::to_outte_replay_bytes, segment::{Segment, extract_path}, simulation::{Input, KeyFrame, Simulation}, tile::TILE_SIZE};
 
 #[wasm_bindgen]
 pub struct Replay {
@@ -704,6 +704,10 @@ impl Replay {
 
     pub fn export_attract(&self, editor: &Editor) -> Box<[u8]> {
         to_attract_bytes(&editor.export_map(), &self.inputs).into()
+    }
+
+    pub fn export_replay(&self) -> Result<Box<[u8]>, String> {
+        to_outte_replay_bytes(&self.inputs).map(|vec| vec.into())
     }
 }
 

@@ -458,7 +458,15 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                 <Show when={!recording() || !isPlaying()}>
                     <Scrubber
                         isPlaying={isPlaying}
-                        setIsPlaying={setIsPlaying}
+                        setIsPlaying={(playing) => {
+                            if (playing) {
+                                setIsPlaying(true);
+                                setRecording(false);
+                            } else {
+                                setIsPlaying(false);
+                                setRecording(true);
+                            }
+                        }}
                         dragStart={dragStart}
                         setDragStart={setDragStart}
                         length={replayLength}
@@ -488,6 +496,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                         attract={() => replay.export_attract(props.editor)}
                         editor={props.editor}
                         addReplay={(newReplay) => { otherReplays.push(newReplay) }}
+                        toReplay={() => replay.export_replay()}
                     />
                 </Show>
             </div>
