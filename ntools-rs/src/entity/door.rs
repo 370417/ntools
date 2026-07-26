@@ -1,6 +1,6 @@
 use glam::{DVec2, FloatExt};
 
-use crate::{collision_util::overlap_circle_vs_circle, entity::boost_pad::ease_out_quad, grid::Grid, ninja::{self, Ninja}, orientation::OrientationBinary, segment::Segment, tile::{TILE_HALF_SIZE, TILE_SIZE}};
+use crate::{collision_util::overlap_circle_vs_circle, entity::boost_pad::ease_out_quad, grid::Grid, ninja::{self, HumanNinja}, orientation::OrientationBinary, segment::Segment, tile::{TILE_HALF_SIZE, TILE_SIZE}};
 
 // nclone (and presumably n++ itself?) has a cool semaphore-like system where
 // they keep track of the number of closed doors to tell if a segment has a closed door or not.
@@ -133,7 +133,7 @@ impl LockedDoor {
 
     /// Check for collision with the door switch.
     /// Return true if door state changed.
-    pub fn switch_logical_collision(&mut self, ninja: &Ninja) -> bool {
+    pub fn switch_logical_collision(&mut self, ninja: &HumanNinja) -> bool {
         if self.frames_since_open.is_none() && overlap_circle_vs_circle(self.switch_pos, SWITCH_RADIUS, ninja.pos, ninja::RADIUS) {
             self.frames_since_open = Some(0);
             true
@@ -176,7 +176,7 @@ impl TrapDoor {
 
     /// Check for collision with the door switch.
     /// Return true if door state changed.
-    pub fn switch_logical_collision(&mut self, ninja: &Ninja) -> bool {
+    pub fn switch_logical_collision(&mut self, ninja: &HumanNinja) -> bool {
         if self.frames_since_close.is_none() && overlap_circle_vs_circle(self.switch_pos, SWITCH_RADIUS, ninja.pos, ninja::RADIUS) {
             self.frames_since_close = Some(0);
             true
@@ -235,7 +235,7 @@ impl RegularDoor {
     /// If the ninja touches the activation region of the door (circle with a radius of 10 at the
     /// door's center), open it.
     /// Return true if door state changed.
-    pub fn logical_collision(&mut self, ninja: &Ninja) -> bool {
+    pub fn logical_collision(&mut self, ninja: &HumanNinja) -> bool {
         if overlap_circle_vs_circle(self.pos, REGULAR_DOOR_RADIUS, ninja.pos, ninja::RADIUS) {
             let was_closed = self.frames_since_empty.is_none();
             self.frames_since_empty = Some(0);

@@ -2,7 +2,7 @@ use glam::{DMat2, DVec2};
 use rand::{seq::IndexedRandom, RngCore, SeedableRng};
 use rand_xoshiro::{SplitMix64, Xoroshiro64StarStar};
 
-use crate::{anim_data::{Bones, DANCES, get_anim_frame}, collision_util::{get_single_closest_point, sweep_circle_vs_tiles}, entity::{Entities, EntityIndex, GridEntityType, bounce_block, door::Doors, on_door_state_change, polymorphism::physical_collisions}, grid::Grid, orientation::OrientationExt, segment::Segment};
+use crate::{anim_data::{Bones, DANCES, get_anim_frame}, collision_util::{get_single_closest_point, sweep_circle_vs_tiles}, entity::{Entities, EntityIndex, GridEntityType, bounce_block, door::Doors, on_door_state_change, polymorphism::physical_collisions, rocket::Rocket}, grid::Grid, orientation::OrientationExt, rocket_ninja::RocketNinja, segment::Segment};
 
 const GRAVITY_FALL: f64 = 0.06666666666666665;
 const GRAVITY_JUMP: f64 = 0.01111111111111111;
@@ -20,7 +20,13 @@ const MIN_SURVIVABLE_CRUSHING: f64 = 0.05;
 pub const RADIUS: f64 = 10.0;
 
 #[derive(Clone)]
-pub struct Ninja {
+pub enum Ninja {
+    Human(HumanNinja),
+    Rocket(RocketNinja),
+}
+
+#[derive(Clone)]
+pub struct HumanNinja {
     pub pos: DVec2,
     pub pos_old: DVec2,
     pub speed: DVec2,
@@ -28,9 +34,9 @@ pub struct Ninja {
     applied_gravity: f64,
     applied_drag: f64,
     pub state: NinjaState,
-    airborne: bool,
-    walled: bool,
-    wall_normal: f64,
+    pub airborne: bool,
+    pub walled: bool,
+    pub wall_normal: f64,
     jump_input_old: bool,
     jump_duration: u32,
     jump_buffer: Option<u8>,
@@ -52,9 +58,15 @@ pub struct Ninja {
     run_cycle: usize,
 }
 
+#[derive(Clone)]
+pub enum PastNinja {
+    Human(PastHumanNinja),
+    Rocket(RocketNinja),
+}
+
 /// Position and animation state for evil ninjas
 #[derive(Clone)]
-pub struct PastNinja {
+pub struct PastHumanNinja {
     pub pos: DVec2,
     pub orientation: OrientationExt,
     pub speed: DVec2,
@@ -81,7 +93,7 @@ pub enum NinjaState {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
-enum JumpType {
+pub enum JumpType {
     Floor,
     Wall,
 }
@@ -180,8 +192,71 @@ impl NinjaState {
 }
 
 impl Ninja {
-    pub fn new(pos: DVec2, orientation: OrientationExt) -> Ninja {
-        let mut ninja = Ninja {
+    pub fn new(pos: DVec2, orientation: OrientationExt) -> Self {
+        Self::Human(HumanNinja::new(pos, orientation))
+    }
+
+    pub fn pos(&self) -> DVec2 {
+        match self {
+            Ninja::Human(ninja) => ninja.pos,
+            Ninja::Rocket(ninja) => ninja.rocket_pos,
+        }
+    }
+
+    pub fn pos_old(&self) -> DVec2 {
+        match self {
+            Ninja::Human(ninja) => ninja.pos_old,
+            Ninja::Rocket(ninja) => ninja.old_rocket_pos,
+        }
+    }
+
+    pub fn speed(&self) -> DVec2 {
+        match self {
+            Ninja::Human(ninja) => ninja.speed,
+            Ninja::Rocket(ninja) => ninja.rocket_vel,
+        }
+    }
+
+    // TODO: dead code?
+    pub fn is_valid_target(&self) -> bool {
+        match self {
+            Ninja::Human(ninja) => ninja.is_valid_target(),
+            Ninja::Rocket(_) => false,
+        }
+    }
+
+    pub fn is_dead(&self) -> bool {
+        match self {
+            Ninja::Human(ninja) => ninja.state == NinjaState::Dead,
+            Ninja::Rocket(_) => false,
+        }
+    }
+
+    pub fn from_past_ninja(past_ninja: &PastNinja) -> Self {
+        match past_ninja {
+            PastNinja::Human(past_ninja) => Self::Human(HumanNinja::from_past_ninja(past_ninja)),
+            PastNinja::Rocket(rocket_ninja) => Self::Rocket(rocket_ninja.clone()),
+        }
+    }
+
+    pub fn to_past_ninja(&self, prev_input: u8) -> PastNinja {
+        match self {
+            Ninja::Human(ninja) => PastNinja::Human(ninja.to_past_ninja(prev_input)),
+            Ninja::Rocket(ninja) => PastNinja::Rocket(ninja.clone()),
+        }
+    }
+
+    pub fn calc_ninja_position(&self, prev: &PastNinja, partial_frame: f64, anim_data: &[u8]) -> Option<Bones> {
+        match self {
+            Ninja::Human(ninja) => Some(ninja.calc_ninja_position(prev, partial_frame, anim_data)),
+            Ninja::Rocket(_) => None,
+        }
+    }
+}
+
+impl HumanNinja {
+    pub fn new(pos: DVec2, orientation: OrientationExt) -> Self {
+        let mut ninja = Self {
             pos,
             pos_old: pos,
             speed: DVec2::ZERO,
@@ -216,9 +291,9 @@ impl Ninja {
         ninja
     }
 
-    pub fn from_past_ninja(past_ninja: &PastNinja) -> Ninja {
+    pub fn from_past_ninja(past_ninja: &PastHumanNinja) -> Self {
         let orientation = past_ninja.orientation;
-        Ninja {
+        Self {
             pos: past_ninja.pos,
             pos_old: past_ninja.pos,
             speed: past_ninja.speed,
@@ -263,11 +338,10 @@ walled       {}
 jump_buffer  {:?}
 floor_buffer {:?}
 wall_buffer  {:?}
-lp_buffer    {:?}",
-            self.pos.x,
-            self.pos.y,
-            self.speed.x,
-            self.speed.y,
+lp_buffer    {:?}
+floor_normal {:>7.2} {:>7.2}",
+            self.pos.x, self.pos.y,
+            self.speed.x, self.speed.y,
             self.speed.length(),
             self.state.to_string(),
             self.airborne,
@@ -276,6 +350,8 @@ lp_buffer    {:?}",
             self.floor_buffer,
             self.wall_buffer,
             self.launch_pad_buffer,
+            self.floor_unit_normal.x,
+            self.floor_unit_normal.y,
         )
     }
 
@@ -427,11 +503,13 @@ lp_buffer    {:?}",
 
     /// Perform logical collisions with entities, check for airborne state,
     /// check for walled state, calculate floor normals, check for impact or crush death.
-    pub fn post_collision(&mut self, collision_state: &mut CollisionState, entities: &mut Entities, entity_grid: &Grid<EntityIndex>, segments: &Grid<Segment>, dynamic_friction: bool, score: &mut u32) {
+    /// Returns new ninja if it has transformed into a rocket
+    pub fn post_collision(&mut self, collision_state: &mut CollisionState, entities: &mut Entities, entity_grid: &mut Grid<EntityIndex>, segments: &Grid<Segment>, dynamic_friction: bool, score: &mut u32) -> Option<RocketNinja> {
         // Perform LOGICAL collisions between the ninja and nearby entities.
         // Also check if the ninja can interact with the walls of entities when applicable.
         let mut wall_normal = None;
-        for &(entity_type, i) in entity_grid.iter_neighborhood(self.pos) {
+        let mut rocket_explode_results = Vec::new();
+        for (entity_type, i) in entity_grid.iter_neighborhood(self.pos).cloned() {
             match entity_type {
                 GridEntityType::Mine => {
                     entities.mines[i].logical_collision(self);
@@ -524,7 +602,21 @@ lp_buffer    {:?}",
                 GridEntityType::EvilNinja => {
                     entities.evil_ninjas[i].logical_collision(self);
                 }
+                GridEntityType::Rocket => {
+                    if let Some(explode_results) = entities.rockets[i].logical_collision(self) {
+                        rocket_explode_results.push(explode_results);
+                    }
+                }
+                GridEntityType::RocketMorph => {
+                    if let Some(ninja) = entities.rocket_morphs[i].logical_collision(self) {
+                        return Some(ninja);
+                    }
+                }
             }
+        }
+
+        for explode_results in rocket_explode_results {
+            Rocket::post_explode(explode_results, entity_grid);
         }
 
         // Store wall slide (vertical velocity of moving walls that the ninja is touching).
@@ -612,6 +704,9 @@ lp_buffer    {:?}",
                 self.kill(2, self.pos, DVec2::ZERO);
             }
         }
+
+        // ninja has not transformed
+        None
     }
 
     pub fn kill(&mut self, _death_type: u32, _pos: DVec2, _speed: DVec2) {
@@ -1008,13 +1103,15 @@ lp_buffer    {:?}",
     /// Calculate the positions of ninja's joints. The positions are fetched from the animation data,
     /// after applying mirroring, rotation or interpolation if necessary.
     pub fn calc_ninja_position(&self, prev: &PastNinja, partial_frame: f64, anim_data: &[u8]) -> Bones {
-        let mut bones = Ninja::calc_ninja_position_inner(self.anim_frame, self.anim_state, self.run_cycle, self.facing, self.tilt, anim_data);
+        let mut bones = Self::calc_ninja_position_inner(self.anim_frame, self.anim_state, self.run_cycle, self.facing, self.tilt, anim_data);
+
+        let PastNinja::Human(prev) = prev else { return bones };
 
         if self.facing != prev.facing || self.anim_state != prev.anim_state {
             return bones;
         }
 
-        let prev_bones = Ninja::calc_ninja_position_inner(prev.anim_frame, prev.anim_state, prev.run_cycle, prev.facing, prev.tilt, anim_data);
+        let prev_bones = Self::calc_ninja_position_inner(prev.anim_frame, prev.anim_state, prev.run_cycle, prev.facing, prev.tilt, anim_data);
         for i in 0..bones.len() {
             bones[i] = prev_bones[i].lerp(bones[i], partial_frame)
         }
@@ -1022,11 +1119,11 @@ lp_buffer    {:?}",
     }
 
     pub fn calc_ninja_position_without_interpolation(&self, anim_data: &[u8]) -> Bones {
-        Ninja::calc_ninja_position_inner(self.anim_frame, self.anim_state, self.run_cycle, self.facing, self.tilt, anim_data)
+        Self::calc_ninja_position_inner(self.anim_frame, self.anim_state, self.run_cycle, self.facing, self.tilt, anim_data)
     }
 
-    pub fn calc_past_ninja_bones(past_ninja: &PastNinja, anim_data: &[u8]) -> Bones {
-        Ninja::calc_ninja_position_inner(past_ninja.anim_frame, past_ninja.anim_state, past_ninja.run_cycle, past_ninja.facing, past_ninja.tilt, anim_data)
+    pub fn calc_past_ninja_bones(past_ninja: &PastHumanNinja, anim_data: &[u8]) -> Bones {
+        Self::calc_ninja_position_inner(past_ninja.anim_frame, past_ninja.anim_state, past_ninja.run_cycle, past_ninja.facing, past_ninja.tilt, anim_data)
     }
 
     fn calc_ninja_position_inner(anim_frame: usize, anim_state: AnimState, run_cycle: usize, facing: f64, tilt: DVec2, anim_data: &[u8]) -> Bones {
@@ -1172,8 +1269,8 @@ lp_buffer    {:?}",
         }
     }
 
-    pub fn to_past_ninja(&self, prev_input: u8) -> PastNinja {
-        PastNinja {
+    pub fn to_past_ninja(&self, prev_input: u8) -> PastHumanNinja {
+        PastHumanNinja {
             pos: self.pos,
             orientation: self.orientation,
             speed: self.speed,
@@ -1188,7 +1285,44 @@ lp_buffer    {:?}",
 }
 
 impl PastNinja {
+    pub fn pos(&self) -> DVec2 {
+        match self {
+            PastNinja::Human(past_human_ninja) => past_human_ninja.pos,
+            PastNinja::Rocket(rocket_ninja) => rocket_ninja.rocket_pos,
+        }
+    }
+
+    pub fn calc_ninja_position(&self, anim_data: &[u8]) -> Option<Bones> {
+        match self {
+            PastNinja::Human(past_human_ninja) => Some(past_human_ninja.calc_ninja_position(anim_data)),
+            PastNinja::Rocket(_) => None,
+        }
+    }
+}
+
+impl PastHumanNinja {
     pub fn calc_ninja_position(&self, anim_data: &[u8]) -> [DVec2; 13] {
-        Ninja::calc_ninja_position_inner(self.anim_frame, self.anim_state, self.run_cycle, self.facing, self.tilt, anim_data)
+        HumanNinja::calc_ninja_position_inner(self.anim_frame, self.anim_state, self.run_cycle, self.facing, self.tilt, anim_data)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::editor::Editor;
+
+    /// Interaction where perp off slope connected to floor gives higher jump
+    #[test]
+    fn test_bread_jump() {
+        let map_bytes = include_bytes!("testfiles/85406");
+        let replay_bytes = include_bytes!("testfiles/85406_0");
+
+        let mut editor = Editor::new();
+        editor.load_map(map_bytes).unwrap();
+        let mut replay = editor.load_outte_replay(replay_bytes, false, false).unwrap();
+
+        replay.seek(164);
+        assert!(replay.current_sim.ninja.speed().y > 2.0, "before seed.y = {}", replay.current_sim.ninja.speed().y);
+        replay.tick();
+        assert!(replay.current_sim.ninja.speed().y < -3.0, "after seed.y = {}", replay.current_sim.ninja.speed().y);
     }
 }

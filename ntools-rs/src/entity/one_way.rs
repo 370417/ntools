@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{collision_util::Depenetration, orientation::Orientation, ninja::{self, Ninja}};
+use crate::{collision_util::Depenetration, orientation::Orientation, ninja::{self, HumanNinja}};
 
 const SEMI_SIDE: f64 = 12.0;
 
@@ -16,7 +16,7 @@ impl OneWay {
     }
 
     /// Return the depenetration vector between the ninja and the one way.
-    pub fn physical_collision(&self, ninja: &Ninja) -> Option<Depenetration> {
+    pub fn physical_collision(&self, ninja: &HumanNinja) -> Option<Depenetration> {
         let delta = ninja.pos - self.pos;
         let normal = self.orientation.vec2();
         let lateral_dist = normal.perp_dot(delta);
@@ -45,7 +45,7 @@ impl OneWay {
     }
 
     /// Return wall normal if the ninja enters walled state from entity
-    pub fn logical_collision(&self, ninja: &Ninja) -> Option<f64> {
+    pub fn logical_collision(&self, ninja: &HumanNinja) -> Option<f64> {
         if self.physical_collision(ninja).is_some() && ninja.grav_eq_abs_horiz(self.orientation.vec2(), 1.0) {
             Some(ninja.grav_get_horiz(self.orientation.vec2()))
         } else {

@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{collision_util::overlap_circle_vs_circle, ninja::{self, Ninja, NinjaState}};
+use crate::{collision_util::overlap_circle_vs_circle, ninja::{self, HumanNinja, Ninja, NinjaState}};
 
 #[derive(Clone)]
 pub struct Mine {
@@ -24,29 +24,31 @@ impl Mine {
     }
 
     pub fn think(&mut self, ninja: &Ninja) {
-        match self.state {
-            MineState::Toggled => {
-                // do nothing
-            }
-            MineState::Untoggled => {
-                let is_colliding = ninja.is_valid_target() && overlap_circle_vs_circle(self.pos, self.radius(), ninja.pos, ninja::RADIUS);
-                if is_colliding {
-                    self.state = MineState::Toggling;
+        if let Ninja::Human(ninja) = ninja {
+            match self.state {
+                MineState::Toggled => {
+                    // do nothing
                 }
-            }
-            MineState::Toggling => {
-                let is_colliding = ninja.is_valid_target() && overlap_circle_vs_circle(self.pos, self.radius(), ninja.pos, ninja::RADIUS);
-                if !is_colliding {
-                    self.state = match ninja.state {
-                        NinjaState::Dead | NinjaState::Disabled => MineState::Untoggled,
-                        _ => MineState::Toggled
-                    };
+                MineState::Untoggled => {
+                    let is_colliding = ninja.is_valid_target() && overlap_circle_vs_circle(self.pos, self.radius(), ninja.pos, ninja::RADIUS);
+                    if is_colliding {
+                        self.state = MineState::Toggling;
+                    }
+                }
+                MineState::Toggling => {
+                    let is_colliding = ninja.is_valid_target() && overlap_circle_vs_circle(self.pos, self.radius(), ninja.pos, ninja::RADIUS);
+                    if !is_colliding {
+                        self.state = match ninja.state {
+                            NinjaState::Dead | NinjaState::Disabled => MineState::Untoggled,
+                            _ => MineState::Toggled
+                        };
+                    }
                 }
             }
         }
     }
 
-    pub fn logical_collision(&mut self, ninja: &mut Ninja) {
+    pub fn logical_collision(&mut self, ninja: &mut HumanNinja) {
         #[allow(clippy::collapsible_if)]
         if ninja.is_valid_target() && self.state == MineState::Toggled {
             if overlap_circle_vs_circle(self.pos, self.radius(), ninja.pos, ninja::RADIUS) {

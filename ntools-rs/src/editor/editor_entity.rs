@@ -115,7 +115,10 @@ pub enum EditorEntity {
         pos2: EntityPos,
         orientation2: OrientationCardinal,
         mode2: PortalMode,
-    }
+    },
+    RocketMorph {
+        pos: EntityPos,
+    },
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -151,6 +154,7 @@ pub enum EntityId {
     ShoveThwump = 28,
     Portal1 = 29,
     Portal2 = 30,
+    RocketMorph = 31,
 }
 
 impl EntityId {
@@ -195,6 +199,7 @@ impl TryFrom<u8> for EntityId {
             28 => Ok(Self::ShoveThwump),
             29 => Ok(Self::Portal1),
             30 => Ok(Self::Portal2),
+            31 => Ok(Self::RocketMorph),
             _ => Err(()),
         }
     }
@@ -257,7 +262,8 @@ impl EditorEntity {
             EntityId::Portal1 | EntityId::Portal2 => EditorEntity::Portal {
                 pos1: pos, orientation1: orientations.orientation_cardinal, mode1: modes.portal_mode,
                 pos2: pos, orientation2: orientations.orientation_cardinal, mode2: modes.portal_mode,
-            }
+            },
+            EntityId::RocketMorph => EditorEntity::RocketMorph { pos },
         }
     }
 
@@ -327,6 +333,7 @@ impl EditorEntity {
             EditorEntity::Deathball { pos } |
             EditorEntity::LaserTurret { pos, .. } |
             EditorEntity::MiniDrone { pos, .. } |
+            EditorEntity::RocketMorph { pos } |
             EditorEntity::OneWay { pos, .. } => pos,
             EditorEntity::Exit { exit_pos, .. } => exit_pos,
             EditorEntity::LockedDoor { door_pos, .. } |
@@ -359,6 +366,7 @@ impl EditorEntity {
             EditorEntity::Deathball { pos } |
             EditorEntity::LaserTurret { pos, .. } |
             EditorEntity::MiniDrone { pos, .. } |
+            EditorEntity::RocketMorph { pos } |
             EditorEntity::OneWay { pos, .. } => pos,
             EditorEntity::Exit { exit_pos, .. } => exit_pos,
             EditorEntity::LockedDoor { door_pos, .. } |
@@ -569,6 +577,7 @@ impl EditorEntity {
             EditorEntity::Bat { .. } => EntityId::Bat,
             EditorEntity::ShoveThwump { .. } => EntityId::ShoveThwump,
             EditorEntity::Portal { .. } => EntityId::Portal1,
+            EditorEntity::RocketMorph { .. } => EntityId::RocketMorph,
         }
     }
 
@@ -609,6 +618,7 @@ impl EditorEntity {
             EditorEntity::MiniDrone { .. } |
             EditorEntity::Bat { .. } |
             EditorEntity::Portal { .. } |
+            EditorEntity::RocketMorph { .. } |
             EditorEntity::ShoveThwump { .. } => false,
         }
     }

@@ -1,10 +1,12 @@
-use crate::{entity::{Entities, EntityIndex, GridEntityType, boost_pad::BoostPad, bounce_block::BounceBlock, chase_drone::ChaseDrone, deathball::Deathball, door::RegularDoor, evil_ninja::EvilNinja, floor_guard::FloorGuard, gold::collected_golds, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, on_door_state_change, portal::{PortalSpatialMap, get_portal_ninja, teleport_ninja}, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::Grid, ninja::{AnimState, Ninja, NinjaState, PastNinja}, segment::Segment};
+use glam::DVec2;
+
+use crate::{entity::{Entities, EntityIndex, GridEntityType, boost_pad::BoostPad, bounce_block::BounceBlock, chase_drone::ChaseDrone, deathball::Deathball, door::RegularDoor, evil_ninja::EvilNinja, floor_guard::FloorGuard, gauss::Gauss, gold::collected_golds, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, on_door_state_change, portal::{PortalSpatialMap, get_portal_ninja, teleport_ninja}, rocket::{Rocket, RocketState}, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::Grid, ninja::{AnimState, HumanNinja, Ninja, NinjaState, PastHumanNinja, PastNinja}, rocket_ninja::RocketNinja, segment::Segment};
 
 #[derive(Clone)]
 pub struct Simulation {
     pub frame: u32,
     pub ninja: Ninja,
-    pub portal_ninja: Option<Ninja>,
+    pub portal_ninja: Option<HumanNinja>,
     pub score: u32,
     pub entities: Entities,
     pub entity_grid: Grid<EntityIndex>,
@@ -42,6 +44,8 @@ pub struct KeyFrame {
     chase_drones: Vec<ChaseDrone>,
     deathballs: Vec<Deathball>,
     evil_ninjas: Vec<EvilNinja>,
+    rockets: Vec<Rocket>,
+    gauss: Vec<Gauss>,
 }
 
 impl Input {
@@ -118,6 +122,8 @@ impl Simulation {
         for mine in &mut self.entities.mines { mine.think(&self.ninja) }
         for thwump in &mut self.entities.thwumps { thwump.think(&self.ninja, segments, &self.entities.doors) }
         for floor_guard in &mut self.entities.floor_guards { floor_guard.think(&self.ninja, segments, &self.entities.doors) }
+        for rocket in &mut self.entities.rockets { rocket.think(&self.ninja, &mut self.entity_grid, segments, &self.entities.doors); }
+        for gauss in &mut self.entities.gauss { gauss.think(&mut self.ninja, segments, &self.entities.doors); }
         for (i, shove_thwump) in self.entities.shove_thwumps.iter_mut().enumerate() { shove_thwump.think(i, &mut self.entity_grid, segments, &self.entities.doors) }
         for i in 0..self.entities.deathballs.len() {
             let (deathball, other_deathballs) = self.entities.deathballs[i..].split_at_mut(1);
@@ -131,27 +137,56 @@ impl Simulation {
         // call move_entities right after think for evil ninjas to get them in the correct grid cell since they get moved in the think function.
         move_entities(&mut self.entities.evil_ninjas, &mut self.entity_grid, segments, &self.entities.doors);
 
-        if self.ninja.state != NinjaState::Disabled {
-            self.ninja.integrate();
-            self.portal_ninja = get_portal_ninja(&self.ninja, &self.entities.portals, portal_spatial_map);
-            let mut collision_state = self.ninja.pre_collision();
-            for _ in 0..4 {
-                self.ninja.collide_vs_objects(&mut collision_state, &mut self.entities, &self.entity_grid, self.dynamic_friction);
-                self.ninja.collide_vs_tiles(&mut collision_state, segments, &self.entities.doors);
+        // if the ninja transforms between human and rocket forms, store the new form in transformed_ninja
+        let transformed_ninja = match &mut self.ninja {
+            Ninja::Human(ninja) if input.suicide => {
+                // press suicide key to turn into rocket
+                match ninja.state {
+                    NinjaState::Dead |
+                    NinjaState::AwaitingDeath |
+                    NinjaState::Disabled => None,
+                    _ => Some(Ninja::Rocket(RocketNinja::new(ninja.pos, ninja.speed.normalize_or(DVec2::new(0.0, -1.0)), ninja.speed, ninja.orientation))),
+                }
             }
-            self.ninja.post_collision(&mut collision_state, &mut self.entities, &self.entity_grid, segments, self.dynamic_friction, &mut self.score);
-            self.ninja.think(input.jump, hor_input);
-            self.ninja.update_graphics(hor_input);
+            Ninja::Human(ninja) => {
+                let mut transformed_ninja = None;
+                if ninja.state != NinjaState::Disabled {
+                    ninja.integrate();
+                    self.portal_ninja = get_portal_ninja(ninja, &self.entities.portals, portal_spatial_map);
+                    let mut collision_state = ninja.pre_collision();
+                    for _ in 0..4 {
+                        ninja.collide_vs_objects(&mut collision_state, &mut self.entities, &self.entity_grid, self.dynamic_friction);
+                        ninja.collide_vs_tiles(&mut collision_state, segments, &self.entities.doors);
+                    }
+                    transformed_ninja = ninja.post_collision(&mut collision_state, &mut self.entities, &mut self.entity_grid, segments, self.dynamic_friction, &mut self.score);
+                    if transformed_ninja.is_none() {
+                        // only continue with human ninja logic if ninja has not transformed into rocket
+                        ninja.think(input.jump, hor_input);
+                        ninja.update_graphics(hor_input);
+                    }
+                }
+
+                if transformed_ninja.is_none() {
+                    teleport_ninja(ninja, &mut self.portal_ninja, &self.entities.portals);
+
+                    self.score = self.score.saturating_sub(1);
+
+                    if ninja.state == NinjaState::Dead {
+                        ninja.anim_frame = 105;
+                        ninja.anim_state = AnimState::Dead;
+                    }
+                }
+                transformed_ninja.map(|ninja| Ninja::Rocket(ninja))
+            }
+            Ninja::Rocket(ninja) => {
+                ninja.think(input.jump, hor_input, segments, &self.entities.doors).map(|ninja| Ninja::Human(ninja))
+            }
+        };
+
+        if let Some(transformed_ninja) = transformed_ninja {
+            self.ninja = transformed_ninja;
         }
-
-        teleport_ninja(&mut self.ninja, &mut self.portal_ninja, &self.entities.portals);
-
-        self.score = self.score.saturating_sub(1);
-
-        if self.ninja.state == NinjaState::Dead {
-            self.ninja.anim_frame = 105;
-            self.ninja.anim_state = AnimState::Dead;
-        }
+        
     }
 }
 
@@ -177,6 +212,8 @@ impl KeyFrame {
             chase_drones: sim.entities.chase_drones.clone(),
             deathballs: sim.entities.deathballs.clone(),
             evil_ninjas: sim.entities.evil_ninjas.clone(),
+            rockets: sim.entities.rockets.clone(),
+            gauss: sim.entities.gauss.clone(),
         }
     }
 
@@ -229,6 +266,10 @@ impl KeyFrame {
 
         self.evil_ninjas.clone_into(&mut sim.entities.evil_ninjas);
 
+        self.rockets.clone_into(&mut sim.entities.rockets);
+
+        self.gauss.clone_into(&mut sim.entities.gauss);
+
         sim.entity_grid.drain_mobs();
         // add all mobs back into entity_grid
         for (i, bounce_block) in sim.entities.bounce_blocks.iter().enumerate() {
@@ -254,6 +295,11 @@ impl KeyFrame {
         }
         for (i, evil_ninja) in sim.entities.evil_ninjas.iter().enumerate() {
             sim.entity_grid[evil_ninja.pos].push((GridEntityType::EvilNinja, i));
+        }
+        for (i, rocket) in sim.entities.rockets.iter().enumerate() {
+            if matches!(rocket.state, RocketState::Homing) {
+                sim.entity_grid[rocket.grid_pos].push((GridEntityType::Rocket, i));
+            }
         }
     }
 }

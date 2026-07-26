@@ -1,5 +1,6 @@
 import { Match, onCleanup, Switch, type Accessor, type Setter } from "solid-js";
 import "./Scrubber.css";
+import type { Editor, Replay } from "./assets/ntools_rs";
 
 type ScrubberProps = {
     isPlaying: Accessor<boolean>,
@@ -12,6 +13,9 @@ type ScrubberProps = {
     previewProgress: Accessor<number | undefined>,
     previewSeek(frame: number | undefined): void,
     attract(): Uint8Array,
+    editor: Editor,
+    addReplay(replay: Replay): void,
+    toReplay(): Uint8Array<ArrayBufferLike>,
 };
 
 export function Scrubber(props: ScrubberProps) {
@@ -133,6 +137,28 @@ export function Scrubber(props: ScrubberProps) {
             <div class="thumb" style={{ left: progressWidth() }}></div>
         </div>
         <div>
+            <label style={{
+                color: 'var(--main-menu-selected)',
+                cursor: 'pointer',
+                'text-decoration': 'underline',
+            }}>
+                Import replay
+                <input type="file" style={{ display: 'none' }} onchange={function(this: HTMLInputElement) {
+                    const files = this.files;
+                    if (files && files.length > 0) {
+                        const fileReader = new FileReader();
+                        fileReader.onloadend = () => {
+                            if (fileReader.result instanceof ArrayBuffer) {
+                                const replay = props.editor.load_outte_replay(new Uint8Array(fileReader.result), false, false);
+                                props.addReplay(replay);
+                            }
+                        };
+                        fileReader.readAsArrayBuffer(files[0]);
+                    }
+                }}
+                />
+            </label>
+            {" | "}
             <a href="#" download="1234" style={{
                 color: 'var(--main-menu-selected)',
                 "margin-left": '1em'
@@ -144,6 +170,19 @@ export function Scrubber(props: ScrubberProps) {
                 setTimeout(() => URL.revokeObjectURL(downloadUrl), 100);
             }}>
                 Export attract
+            </a>
+            {" | "}
+            <a href="#" download="replay" style={{
+                color: 'var(--main-menu-selected)',
+                "margin-left": '1em'
+            }} onclick={function (this: HTMLAnchorElement) {
+                const replay = props.toReplay();
+                const blob = new Blob([replay.buffer as ArrayBuffer], { type: 'application/octet-stream' });
+                const downloadUrl = URL.createObjectURL(blob);
+                this.href = downloadUrl;
+                setTimeout(() => URL.revokeObjectURL(downloadUrl), 100);
+            }}>
+                Export replay
             </a>
         </div>
     </div>;

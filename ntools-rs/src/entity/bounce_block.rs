@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{collision_util::{Depenetration, penetration_square_vs_circle_with_orientation}, entity::{Entity, Mob, door::Doors}, grid::{Grid, GridPos}, ninja::{self, Ninja}, orientation::Orientation, segment::Segment};
+use crate::{collision_util::{Depenetration, penetration_square_vs_circle_with_orientation}, entity::{Entity, Mob, door::Doors}, grid::{Grid, GridPos}, ninja::{self, HumanNinja}, orientation::Orientation, segment::Segment};
 
 pub const SEMI_SIDE: f64 = 9.0;
 const STIFFNESS: f64 = 0.02222222222222222; // 1/45
@@ -61,7 +61,7 @@ impl BounceBlock {
         })
     }
 
-    pub fn logical_collision(&self, ninja: &Ninja) -> Option<f64> {
+    pub fn logical_collision(&self, ninja: &HumanNinja) -> Option<f64> {
         let depen = match self.corners {
             Corners::Round => penetration_square_vs_circle_with_orientation(self.pos, SEMI_SIDE, ninja.pos, ninja::RADIUS + 0.1, self.orientation),
             Corners::Square => penetration_square_vs_circle_with_orientation(self.pos, SEMI_SIDE + ninja::RADIUS + 0.1, ninja.pos, 0.0, self.orientation),

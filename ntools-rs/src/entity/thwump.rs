@@ -1,6 +1,6 @@
 use glam::{DMat2, DVec2};
 
-use crate::{collision_util::{Depenetration, overlap_circle_vs_segment, penetration_square_vs_circle_with_orientation}, entity::{Entity, GridEntityType, Mob, door::Doors}, grid::{Grid, GridPos}, ninja::{self, Ninja}, orientation::Orientation, segment::{Curvature, Segment}, tile::{TILE_HALF_SIZE, TILE_SIZE}};
+use crate::{collision_util::{Depenetration, overlap_circle_vs_segment, penetration_square_vs_circle_with_orientation}, entity::{Entity, GridEntityType, Mob, door::Doors}, grid::{Grid, GridPos}, ninja::{self, HumanNinja, Ninja}, orientation::Orientation, segment::{Curvature, Segment}, tile::{TILE_HALF_SIZE, TILE_SIZE}};
 
 const SEMI_SIDE: f64 = 9.0;
 const FORWARD_SPEED: f64 = 20.0 / 7.0;
@@ -87,11 +87,13 @@ impl Thwump {
                 .reduce(f64::min);
         }
 
-        if let (&ThwumpState::Waiting, Some(detection_range)) = (&self.state, self.detection_range) && ninja.is_valid_target() {
-            let activation_range = 2.0 * (SEMI_SIDE + ninja::RADIUS);
-            let ninja_pos_rel_thwump = basis_matrix_inverse * (ninja.pos - self.pos);
-            if ninja_pos_rel_thwump.x.abs() < activation_range && self.is_facing_ninja(ninja.pos, basis_matrix_inverse) && ninja_pos_rel_thwump.y < detection_range {
-                self.state = ThwumpState::Forward;
+        if let Ninja::Human(ninja) = ninja {
+            if let (&ThwumpState::Waiting, Some(detection_range)) = (&self.state, self.detection_range) && ninja.is_valid_target() {
+                let activation_range = 2.0 * (SEMI_SIDE + ninja::RADIUS);
+                let ninja_pos_rel_thwump = basis_matrix_inverse * (ninja.pos - self.pos);
+                if ninja_pos_rel_thwump.x.abs() < activation_range && self.is_facing_ninja(ninja.pos, basis_matrix_inverse) && ninja_pos_rel_thwump.y < detection_range {
+                    self.state = ThwumpState::Forward;
+                }
             }
         }
     }
@@ -112,7 +114,7 @@ impl Thwump {
     }
 
     /// Return the depenetration vector for the ninja if it collides with the thwump.
-    pub fn physical_collision(&self, ninja: &Ninja) -> Option<Depenetration> {
+    pub fn physical_collision(&self, ninja: &HumanNinja) -> Option<Depenetration> {
         match self.corners {
             Corners::Round => penetration_square_vs_circle_with_orientation(self.pos, SEMI_SIDE, ninja.pos, ninja::RADIUS, self.orientation),
             Corners::Square => penetration_square_vs_circle_with_orientation(self.pos, SEMI_SIDE + ninja::RADIUS, ninja.pos, 0.0, self.orientation),
@@ -140,7 +142,7 @@ impl Thwump {
         }
     }
 
-    pub fn logical_collision(&self, ninja: &mut Ninja) -> Option<f64> {
+    pub fn logical_collision(&self, ninja: &mut HumanNinja) -> Option<f64> {
         let depen = match self.corners {
             Corners::Round => penetration_square_vs_circle_with_orientation(self.pos, SEMI_SIDE, ninja.pos, ninja::RADIUS + 0.1, self.orientation),
             Corners::Square => penetration_square_vs_circle_with_orientation(self.pos, SEMI_SIDE + ninja::RADIUS + 0.1, ninja.pos, 0.0, self.orientation),

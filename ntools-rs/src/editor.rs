@@ -6,7 +6,7 @@ use futures_channel::oneshot::{self, Receiver};
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{anim_data::flatten_bones, attract::from_attract_bytes, editor::{drone_path::{calc_loop_locations, loop_locations_path}, editor_entity::{EditorEntity, EntityId, EntityPos, ExportedEntity}, editor_state::{Command, EditorState, SetEntityCount}, entity_palette::EntityPalette, modify_entity::ModifyEntity, move_selection::MoveSelection, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::PlaceEntity, select_entity::SelectEntity, select_tiles::SelectTiles, spawn_ninja::closest_past_ninja, tile_palette::TilePalette}, entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, chaingun_drone::ChaingunDrone, chase_drone::ChaseDrone, deathball::Deathball, door::{LockedDoor, RegularDoor, TrapDoor}, evil_ninja::EvilNinja, exit::Exit, floor_guard::FloorGuard, gold::Gold, laser_drone::LaserDrone, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, portal::Portal, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::{COLS, GridPos, ROWS}, map_file::MapFile, mode::{DroneMode, Modes, PortalMode}, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationBinary, OrientationCardinal, Orientations}, replay::Replay, replay_file::from_outte_replay_bytes, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_HALF_SIZE, TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
+use crate::{anim_data::flatten_bones, attract::from_attract_bytes, editor::{drone_path::loop_locations_path, editor_entity::{EditorEntity, EntityId, EntityPos, ExportedEntity}, editor_state::{Command, EditorState, SetEntityCount}, entity_palette::EntityPalette, modify_entity::ModifyEntity, move_selection::MoveSelection, pen_tool::{PenTool, PenToolStart, create_command}, place_entity::PlaceEntity, select_entity::SelectEntity, select_tiles::SelectTiles, spawn_ninja::ninja_from_cursor, tile_palette::TilePalette}, entity::{Entities, boost_pad::BoostPad, bounce_block::BounceBlock, chaingun_drone::ChaingunDrone, chase_drone::ChaseDrone, deathball::Deathball, door::{LockedDoor, RegularDoor, TrapDoor}, evil_ninja::EvilNinja, exit::Exit, floor_guard::FloorGuard, gauss::Gauss, gold::Gold, laser_drone::LaserDrone, launch_pad::LaunchPad, mine::Mine, one_way::OneWay, portal::Portal, rocket::Rocket, rocket_morph::RocketMorph, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::{COLS, GridPos, ROWS}, map_file::MapFile, mode::{DroneMode, Modes, PortalMode}, ninja::{Ninja, PastNinja}, orientation::{Orientation, OrientationBinary, OrientationCardinal, Orientations}, replay::Replay, replay_file::from_outte_replay_bytes, segment::extract_path, simulation::{KeyFrame, Simulation}, tile::{TILE_HALF_SIZE, TILE_SIZE, Tile, TileCategory, TileVariant, Tiles}};
 
 pub mod drone_path;
 pub mod editor_entity;
@@ -172,8 +172,8 @@ impl Editor {
         }).collect();
 
         if matches!(self.mode, EditorMode::SpawnNinja) || ninjas.is_empty() {
-            let past_ninja = closest_past_ninja(self.cursor_pos, &self.past_ninjas, self.entity_orientations.orientation, self.show_past_ninjas_trail);
-            ninjas = vec![Ninja::from_past_ninja(&past_ninja)];
+            let past_ninja = ninja_from_cursor(self.cursor_pos, self.entity_orientations.orientation);
+            ninjas = vec![Ninja::from_past_ninja(&PastNinja::Human(past_ninja))];
         }
 
         self.mode = EditorMode::PaintTiles;
@@ -229,10 +229,10 @@ impl Editor {
                         entities.bounce_blocks.push(BounceBlock::new(pos.to_world_pos(), *orientation, round_corners));
                     }
                     EditorEntity::RocketTurret { pos } => {
-                        // not supported in replays
+                        entities.rockets.push(Rocket::new(pos.to_world_pos(), entities.rockets.len()));
                     }
                     EditorEntity::GaussTurret { pos } => {
-                        // not supported in replays
+                        entities.gauss.push(Gauss::new(pos.to_world_pos()));
                     }
                     EditorEntity::Thwump { pos, orientation } => {
                         entities.thwumps.push(Thwump::new(pos.to_world_pos(), *orientation, round_corners));
@@ -240,7 +240,7 @@ impl Editor {
                     EditorEntity::EvilNinja { pos } => {
                         entities.evil_ninjas.push(EvilNinja::new(pos.to_world_pos()));
                     }
-                    EditorEntity::LaserTurret { pos, orientation } => {
+                    EditorEntity::LaserTurret { .. } => {
                         // not supported in replays
                     }
                     EditorEntity::BoostPad { pos } => {
@@ -249,10 +249,10 @@ impl Editor {
                     EditorEntity::Deathball { pos } => {
                         entities.deathballs.push(Deathball::new(pos.to_world_pos()));
                     }
-                    EditorEntity::MiniDrone { pos, orientation, mode } => {
+                    EditorEntity::MiniDrone { .. } => {
                         // not supported in replays
                     }
-                    EditorEntity::Bat { pos } => {
+                    EditorEntity::Bat { .. } => {
                         // TODO: add support for bats in replays
                     }
                     EditorEntity::ShoveThwump { pos, orientation } => {
@@ -263,6 +263,9 @@ impl Editor {
                             pos1.to_world_pos(), *orientation1, *mode1,
                             pos2.to_world_pos(), *orientation2, *mode2,
                         ));
+                    }
+                    EditorEntity::RocketMorph { pos } => {
+                        entities.rocket_morphs.push(RocketMorph::new(pos.to_world_pos()));
                     }
                 }
             }
@@ -280,11 +283,13 @@ impl Editor {
         let (sender, receiver) = oneshot::channel();
         self.receiver = Some(receiver);
 
-        let inputs = if self.start_replay_paused {
-            self.past_ninjas.iter().skip(1).map(|past_ninja| past_ninja.prev_input).collect()
-        } else {
-            Vec::new()
-        };
+        // TODO: refactor inputs to be stored separately from past ninjas
+        // let inputs = if self.start_replay_paused {
+        //     self.past_ninjas.iter().skip(1).map(|past_ninja| past_ninja.prev_input).collect()
+        // } else {
+        //     Vec::new()
+        // };
+        let inputs = Vec::new();
 
         Ok(Replay {
             _level_name: String::new(),
@@ -1099,13 +1104,15 @@ impl Editor {
                 move_selection.toggle_entity_visibility();
             }
             _ => {
-                // gauss turret
+                self.selected_entity_id = EntityId::GaussTurret;
+                self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations, self.entity_modes));
             }
         }
     }
 
     pub fn press_u(&mut self) {
-        // rocket turret
+        self.selected_entity_id = EntityId::RocketTurret;
+        self.mode = EditorMode::PlaceEntity(PlaceEntity::new(self.selected_entity_id, self.cursor_pos, self.entity_fine_grid, self.entity_orientations, self.entity_modes));
     }
 
     pub fn press_i(&mut self) {
@@ -1427,16 +1434,17 @@ impl Editor {
     }
 
     pub fn past_ninja_x(&self, i: usize) -> f64 {
-        self.past_ninjas[i].pos.x
+        self.past_ninjas[i].pos().x
     }
 
     pub fn past_ninja_y(&self, i: usize) -> f64 {
-        self.past_ninjas[i].pos.y
+        self.past_ninjas[i].pos().y
     }
 
+    // TODO: rename to preview ninja bones now that this no longer makes ninja snap to past ninjas path
     pub fn past_ninja_bones(&self) -> Box<[f64]> {
         if let EditorMode::SpawnNinja = self.mode {
-            flatten_bones(&closest_past_ninja(self.cursor_pos, &self.past_ninjas, self.entity_orientations.orientation, self.show_past_ninjas_trail).calc_ninja_position(&self.anim_data))
+            flatten_bones(&ninja_from_cursor(self.cursor_pos, self.entity_orientations.orientation).calc_ninja_position(&self.anim_data))
         } else {
             Box::new([])
         }
@@ -1448,7 +1456,7 @@ impl Editor {
                 let pos = DVec2::new(24.0 + x as f64 * 6.0, 24.0 + y as f64 * 6.0);
 
                 for past_ninja in &self.past_ninjas {
-                    if past_ninja.pos.distance(pos) <= 14.0 {
+                    if past_ninja.pos().distance(pos) <= 14.0 {
                         continue 'row;
                     }
                 }
@@ -1494,7 +1502,7 @@ impl Editor {
             EditorMode::PlaceEntity(place_entity) => place_entity.crosshair(self.cursor_pos, self.entity_fine_grid),
             EditorMode::ModifyEntity(modify_entity) => modify_entity.crosshair(self.cursor_pos, self.entity_fine_grid),
             EditorMode::SelectEntity(_) => PlaceEntity::round_to_grid(self.cursor_pos, self.entity_fine_grid),
-            EditorMode::SpawnNinja => closest_past_ninja(self.cursor_pos, &self.past_ninjas, self.entity_orientations.orientation, self.show_past_ninjas_trail).pos,
+            EditorMode::SpawnNinja => self.cursor_pos,
             _ => DVec2::new(TILE_SIZE, TILE_SIZE),
         }
     }

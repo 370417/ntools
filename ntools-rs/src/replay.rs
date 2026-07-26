@@ -4,7 +4,7 @@ use futures_channel::oneshot::Sender;
 use glam::{DVec2, FloatExt};
 use wasm_bindgen::prelude::*;
 
-use crate::{anim_data::flatten_bones, attract::to_attract_bytes, editor::Editor, entity::{mine::Mine, portal::PortalSpatialMap}, grid::{COLS, Grid, ROWS}, ninja::{Ninja, NinjaState, PastNinja}, orientation::OrientationExt, segment::{Segment, extract_path}, simulation::{Input, KeyFrame, Simulation}, tile::TILE_SIZE};
+use crate::{anim_data::flatten_bones, attract::to_attract_bytes, editor::Editor, entity::{mine::Mine, portal::PortalSpatialMap, rocket::RocketState}, grid::{COLS, Grid, ROWS}, ninja::{Ninja, PastNinja}, orientation::OrientationExt, replay_file::to_outte_replay_bytes, segment::{Segment, extract_path}, simulation::{Input, KeyFrame, Simulation}, tile::TILE_SIZE};
 
 #[wasm_bindgen]
 pub struct Replay {
@@ -113,7 +113,7 @@ impl Replay {
             let keyframe = self.keyframes.get(closest_keyframe).expect("failed to get closest keyframe");
             keyframe.hydrate_into(&mut self.preview_sim, &self.initial_mines);
         }
-        while self.preview_sim.frame < target_frame && self.preview_sim.ninja.state != NinjaState::Dead {
+        while self.preview_sim.frame < target_frame && !self.preview_sim.ninja.is_dead() {
             self.tick_preview();
         }
     }
@@ -156,19 +156,47 @@ impl Replay {
     }
 
     pub fn ninja_x(&self, partial_frame: f64) -> f64 {
-        self.current_sim.ninja.pos_old.x.lerp(self.current_sim.ninja.pos.x, partial_frame)
+        self.current_sim.ninja.pos_old().x.lerp(self.current_sim.ninja.pos().x, partial_frame)
     }
 
     pub fn ninja_y(&self, partial_frame: f64) -> f64 {
-        self.current_sim.ninja.pos_old.y.lerp(self.current_sim.ninja.pos.y, partial_frame)
+        self.current_sim.ninja.pos_old().y.lerp(self.current_sim.ninja.pos().y, partial_frame)
+    }
+
+    pub fn ninja_form(&self) -> u32 {
+        match &self.current_sim.ninja {
+            Ninja::Human(_) => 0,
+            Ninja::Rocket(_) => 1,
+        }
+    }
+
+    pub fn ninja_deg(&self) -> f64 {
+        match &self.current_sim.ninja {
+            Ninja::Human(_) => 0.0,
+            Ninja::Rocket(ninja) => ninja.rocket_dir.to_angle().to_degrees(),
+        }
     }
 
     pub fn ninja_preview_x(&self, partial_frame: f64) -> f64 {
-        self.preview_sim.ninja.pos_old.x.lerp(self.preview_sim.ninja.pos.x, partial_frame)
+        self.preview_sim.ninja.pos_old().x.lerp(self.preview_sim.ninja.pos().x, partial_frame)
     }
 
     pub fn ninja_preview_y(&self, partial_frame: f64) -> f64 {
-        self.preview_sim.ninja.pos_old.y.lerp(self.preview_sim.ninja.pos.y, partial_frame)
+        self.preview_sim.ninja.pos_old().y.lerp(self.preview_sim.ninja.pos().y, partial_frame)
+    }
+
+    pub fn preview_ninja_form(&self) -> u32 {
+        match &self.preview_sim.ninja {
+            Ninja::Human(_) => 0,
+            Ninja::Rocket(_) => 1,
+        }
+    }
+
+    pub fn ninja_preview_deg(&self) -> f64 {
+        match &self.preview_sim.ninja {
+            Ninja::Human(_) => 0.0,
+            Ninja::Rocket(ninja) => ninja.rocket_dir.to_angle().to_degrees(),
+        }
     }
 
     pub fn portal_ninja_x(&self, partial_frame: f64) -> f64 {
@@ -185,12 +213,18 @@ impl Replay {
 
     pub fn ninja_bones(&self, partial_frame: f64) -> Box<[f64]> {
         let prev = &self.past_ninjas[self.current_sim.frame.saturating_sub(1) as usize];
-        flatten_bones(&self.current_sim.ninja.calc_ninja_position(prev, partial_frame, &self.anim_data))
+        match self.current_sim.ninja.calc_ninja_position(prev, partial_frame, &self.anim_data) {
+            Some(bones) => flatten_bones(&bones),
+            None => Box::new([]),
+        }
     }
 
     pub fn ninja_preview_bones(&self, partial_frame: f64) -> Box<[f64]> {
         let prev = &self.past_ninjas[self.current_sim.frame.saturating_sub(1) as usize];
-        flatten_bones(&self.preview_sim.ninja.calc_ninja_position(prev, partial_frame, &self.anim_data))
+        match self.preview_sim.ninja.calc_ninja_position(prev, partial_frame, &self.anim_data) {
+            Some(bones) => flatten_bones(&bones),
+            None => Box::new([]),
+        }
     }
 
     pub fn portal_ninja_bones(&self) -> Box<[f64]> {
@@ -200,7 +234,10 @@ impl Replay {
     }
 
     pub fn ninja_info(&self) -> String {
-        self.current_sim.ninja.info()
+        match &self.current_sim.ninja {
+            Ninja::Human(ninja) => ninja.info(),
+            Ninja::Rocket(_) => String::new(),
+        }
     }
 
     pub fn past_ninjas_len(&self) -> usize {
@@ -208,18 +245,20 @@ impl Replay {
     }
 
     pub fn past_ninja_x(&self, i: usize) -> f64 {
-        self.past_ninjas[i].pos.x
+        self.past_ninjas[i].pos().x
     }
 
     pub fn past_ninja_y(&self, i: usize) -> f64 {
-        self.past_ninjas[i].pos.y
+        self.past_ninjas[i].pos().y
     }
 
     pub fn past_ninja_bones(&self, i: isize) -> Box<[f64]> {
         if i < 0 || i >= self.past_ninjas.len() as isize || i > self.inputs.len() as isize {
             Box::new([])
+        } else if let Some(bones) = self.past_ninjas[i as usize].calc_ninja_position(&self.anim_data) {
+            flatten_bones(&bones)
         } else {
-            flatten_bones(&self.past_ninjas[i as usize].calc_ninja_position(&self.anim_data))
+            Box::new([])
         }
     }
 
@@ -598,6 +637,78 @@ impl Replay {
         self.current_sim.entities.evil_ninjas[i].bones(self.current_sim.frame, &self.past_ninjas, &self.anim_data)
     }
 
+    pub fn rockets_len(&self) -> usize {
+        self.current_sim.entities.rockets.len()
+    }
+
+    pub fn rocket_turret_x(&self, i: usize) -> f64 {
+        self.current_sim.entities.rockets[i].turret_pos.x
+    }
+
+    pub fn rocket_turret_y(&self, i: usize) -> f64 {
+        self.current_sim.entities.rockets[i].turret_pos.y
+    }
+
+    pub fn rocket_x(&self, i: usize, partial_frame: f64) -> f64 {
+        let rocket = &self.current_sim.entities.rockets[i];
+        match rocket.state {
+            RocketState::Homing => rocket.old_rocket_pos.x.lerp(rocket.rocket_pos.x, partial_frame),
+            _ => f64::NAN,
+        }
+    }
+
+    pub fn rocket_y(&self, i: usize, partial_frame: f64) -> f64 {
+        let rocket = &self.current_sim.entities.rockets[i];
+        match rocket.state {
+            RocketState::Homing => rocket.old_rocket_pos.y.lerp(rocket.rocket_pos.y, partial_frame),
+            _ => f64::NAN,
+        }
+    }
+
+    pub fn rocket_deg(&self, i: usize) -> f64 {
+        self.current_sim.entities.rockets[i].rocket_dir.to_angle().to_degrees()
+    }
+
+    pub fn rocket_state(&self, i: usize) -> u32 {
+        self.current_sim.entities.rockets[i].state as u32
+    }
+
+    pub fn gauss_len(&self) -> usize {
+        self.current_sim.entities.gauss.len()
+    }
+
+    pub fn gauss_turret_x(&self, i: usize) -> f64 {
+        self.current_sim.entities.gauss[i].turret_pos.x
+    }
+
+    pub fn gauss_turret_y(&self, i: usize) -> f64 {
+        self.current_sim.entities.gauss[i].turret_pos.y
+    }
+
+    pub fn gauss_aim_x(&self, i: usize) -> f64 {
+        self.current_sim.entities.gauss[i].aim_pos.x
+    }
+
+    pub fn gauss_aim_y(&self, i: usize) -> f64 {
+        self.current_sim.entities.gauss[i].aim_pos.y
+    }
+
+    pub fn gauss_state(&self, i: usize) -> u32 {
+        self.current_sim.entities.gauss[i].state.to_u32()
+    }
+
+    pub fn gauss_aim_region(&self, i: usize) -> u32 {
+        self.current_sim.entities.gauss[i].aim_region as u32
+    }
+
+    pub fn gauss_shot_endpoint_x(&self, i: usize) -> Option<f64> {
+        self.current_sim.entities.gauss[i].state.shot_endpoint().map(|point| point.x)
+    }
+
+    pub fn gauss_shot_endpoint_y(&self, i: usize) -> Option<f64> {
+        self.current_sim.entities.gauss[i].state.shot_endpoint().map(|point| point.y)
+    }
+
     pub fn portals_len(&self) -> usize {
         self.current_sim.entities.portals.len()
     }
@@ -630,8 +741,24 @@ impl Replay {
         self.current_sim.entities.portals[i].side2.orientation.rotation_deg()
     }
 
+    pub fn rocket_morphs_len(&self) -> usize {
+        self.current_sim.entities.rocket_morphs.len()
+    }
+
+    pub fn rocket_morph_x(&self, i: usize) -> f64 {
+        self.current_sim.entities.rocket_morphs[i].pos.x
+    }
+
+    pub fn rocket_morph_y(&self, i: usize) -> f64 {
+        self.current_sim.entities.rocket_morphs[i].pos.y
+    }
+
     pub fn export_attract(&self, editor: &Editor) -> Box<[u8]> {
         to_attract_bytes(&editor.export_map(), &self.inputs).into()
+    }
+
+    pub fn export_replay(&self) -> Result<Box<[u8]>, String> {
+        to_outte_replay_bytes(&self.inputs).map(|vec| vec.into())
     }
 }
 
@@ -714,8 +841,8 @@ mod tests {
         for i in 0..replay.inputs.len() {
             replay.tick();
             if i < nsim_pos_log.len() {
-                let x = replay.current_sim.ninja.pos.x;
-                let y = replay.current_sim.ninja.pos.y;
+                let x = replay.current_sim.ninja.pos().x;
+                let y = replay.current_sim.ninja.pos().y;
                 let nsim_x = nsim_pos_log[i][0];
                 let nsim_y = nsim_pos_log[i][1];
                 let dx = x - nsim_x;
@@ -744,8 +871,8 @@ mod tests {
         for i in 0..replay.inputs.len() {
             replay.tick();
             if i < nsim_pos_log.len() {
-                let x = replay.current_sim.ninja.pos.x;
-                let y = replay.current_sim.ninja.pos.y;
+                let x = replay.current_sim.ninja.pos().x;
+                let y = replay.current_sim.ninja.pos().y;
                 let nsim_x = nsim_pos_log[i][0];
                 let nsim_y = nsim_pos_log[i][1];
                 let dx = x - nsim_x;

@@ -1,6 +1,6 @@
 use glam::{DMat2, DVec2};
 
-use crate::{collision_util::overlap_circle_vs_circle, entity::{Entity, GridEntityType, Mob, door::Doors, thwump::segments_in_fov}, grid::{Grid, GridPos}, ninja::{self, Ninja}, orientation::OrientationExt, segment::Segment, tile::TILE_SIZE};
+use crate::{collision_util::overlap_circle_vs_circle, entity::{Entity, GridEntityType, Mob, door::Doors, thwump::segments_in_fov}, grid::{Grid, GridPos}, ninja::{self, HumanNinja, Ninja}, orientation::OrientationExt, segment::Segment, tile::TILE_SIZE};
 
 const RADIUS: f64 = 6.0;
 const SPEED: f64 = 3.428571428571428; // 24 / 7
@@ -96,22 +96,24 @@ impl FloorGuard {
         let basis_matrix = DMat2::from_cols(self.orientation.vec2().perp(), self.orientation.vec2());
         let basis_matrix_inverse = basis_matrix.inverse();
 
-        if ninja.is_valid_target() {
-            let ninja_pos_rel_floorguard = basis_matrix_inverse * (ninja.pos - self.pos);
-            #[allow(clippy::collapsible_if)]
-            if ninja_pos_rel_floorguard.y >= RADIUS - TILE_SIZE && ninja_pos_rel_floorguard.y <= RADIUS {
-                if let (FloorGuardState::Waiting, Some(detection_range)) = (&self.state, self.detection_range) {
-                    if ninja_pos_rel_floorguard.x >= 0.0 && ninja_pos_rel_floorguard.x <= detection_range.positive_x {
-                        self.state = FloorGuardState::ChasingRight;
-                    } else if ninja_pos_rel_floorguard.x <= 0.0 && ninja_pos_rel_floorguard.x >= detection_range.negative_x {
-                        self.state = FloorGuardState::ChasingLeft;
+        if let Ninja::Human(ninja) = ninja {
+            if ninja.is_valid_target() {
+                let ninja_pos_rel_floorguard = basis_matrix_inverse * (ninja.pos - self.pos);
+                #[allow(clippy::collapsible_if)]
+                if ninja_pos_rel_floorguard.y >= RADIUS - TILE_SIZE && ninja_pos_rel_floorguard.y <= RADIUS {
+                    if let (FloorGuardState::Waiting, Some(detection_range)) = (&self.state, self.detection_range) {
+                        if ninja_pos_rel_floorguard.x >= 0.0 && ninja_pos_rel_floorguard.x <= detection_range.positive_x {
+                            self.state = FloorGuardState::ChasingRight;
+                        } else if ninja_pos_rel_floorguard.x <= 0.0 && ninja_pos_rel_floorguard.x >= detection_range.negative_x {
+                            self.state = FloorGuardState::ChasingLeft;
+                        }
                     }
                 }
             }
         }
     }
 
-    pub fn logical_collision(&mut self, ninja: &mut Ninja) {
+    pub fn logical_collision(&mut self, ninja: &mut HumanNinja) {
         if ninja.is_valid_target() && overlap_circle_vs_circle(self.pos, RADIUS, ninja.pos, ninja::RADIUS) {
             ninja.kill(0, DVec2::ZERO, DVec2::ZERO);
         }

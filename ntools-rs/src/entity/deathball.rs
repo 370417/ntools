@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{collision_util::{get_single_closest_point, overlap_circle_vs_circle, sweep_circle_vs_tiles}, entity::{Entity, Mob, door::Doors}, grid::{Grid, GridPos}, ninja::{self, Ninja}, segment::Segment};
+use crate::{collision_util::{get_single_closest_point, overlap_circle_vs_circle, sweep_circle_vs_tiles}, entity::{Entity, Mob, door::Doors}, grid::{Grid, GridPos}, ninja::{self, HumanNinja, Ninja}, segment::Segment};
 
 const COLLISION_RADIUS: f64 = 8.0;
 const HITBOX_RADIUS: f64 = 5.0;
@@ -26,20 +26,23 @@ impl Deathball {
     }
 
     pub fn think(&mut self, ninja: &Ninja, other_deathballs: &mut [Deathball], segments: &Grid<Segment>, doors: &Doors) {
-        if !ninja.is_valid_target() {
-            // If no valid targets, decelerate ball to a stop
-            self.speed *= DRAG_NO_TARGET;
-        } else {
-            // Otherwise, apply acceleration towards closest ninja. Apply drag if speed exceeds 0.85.
-            self.speed += (ninja.pos - self.pos).normalize_or_zero() * ACCELERATION;
-            let speed = self.speed.length();
-            if speed > MAX_SPEED {
-                let mut new_speed = (speed - MAX_SPEED) * DRAG_MAX_SPEED;
-                if new_speed <= 0.01 {
-                    new_speed = 0.0;
+        match ninja {
+            Ninja::Human(ninja) if ninja.is_valid_target() => {
+                // If ninja is valid target, apply acceleration towards closest ninja. Apply drag if speed exceeds 0.85.
+                self.speed += (ninja.pos - self.pos).normalize_or_zero() * ACCELERATION;
+                let speed = self.speed.length();
+                if speed > MAX_SPEED {
+                    let mut new_speed = (speed - MAX_SPEED) * DRAG_MAX_SPEED;
+                    if new_speed <= 0.01 {
+                        new_speed = 0.0;
+                    }
+                    new_speed += MAX_SPEED;
+                    self.speed = self.speed / speed * new_speed;
                 }
-                new_speed += MAX_SPEED;
-                self.speed = self.speed / speed * new_speed;
+            }
+            _ => {
+                // If no valid targets, decelerate ball to a stop
+                self.speed *= DRAG_NO_TARGET;
             }
         }
 
@@ -99,7 +102,7 @@ impl Deathball {
     }
 
     /// If the ninja touches the ball, kill it and make the ball bounce from it.
-    pub fn logical_collision(&mut self, ninja: &mut Ninja) {
+    pub fn logical_collision(&mut self, ninja: &mut HumanNinja) {
         if ninja.is_valid_target() && overlap_circle_vs_circle(self.pos, HITBOX_RADIUS, ninja.pos, ninja::RADIUS) {
             self.speed += (self.pos - ninja.pos).normalize_or_zero() * 10.0;
             ninja.kill(0, DVec2::ZERO, DVec2::ZERO);

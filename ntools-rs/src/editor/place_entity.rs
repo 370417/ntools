@@ -152,6 +152,7 @@ impl PlaceEntity {
             EditorEntity::Deathball { pos } |
             EditorEntity::LaserTurret { pos, .. } |
             EditorEntity::MiniDrone { pos, .. } |
+            EditorEntity::RocketMorph { pos } |
             EditorEntity::OneWay { pos, .. } => *pos = new_pos,
             EditorEntity::Exit { exit_pos: door_pos, switch_pos } |
             EditorEntity::LockedDoor { door_pos, switch_pos, .. } |
@@ -260,6 +261,8 @@ impl PlaceEntity {
                     Some(Stage::PlaceSwitch) | None => *mode2 = modes.portal_mode,
                 }
             }
+            &mut EditorEntity::RocketTurret { pos } => self.entity = EditorEntity::RocketMorph { pos },
+            &mut EditorEntity::RocketMorph { pos } => self.entity = EditorEntity::RocketTurret { pos },
             _ => {}
         }
     }

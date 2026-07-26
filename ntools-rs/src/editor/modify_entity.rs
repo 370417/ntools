@@ -79,6 +79,7 @@ impl ModifyEntity {
             EditorEntity::Deathball { pos } |
             EditorEntity::LaserTurret { pos, .. } |
             EditorEntity::MiniDrone { pos, .. } |
+            EditorEntity::RocketMorph { pos } |
             EditorEntity::OneWay { pos, .. } => *pos = new_pos,
             EditorEntity::Exit { exit_pos: door_pos, switch_pos } |
             EditorEntity::LockedDoor { door_pos, switch_pos, .. } |
@@ -177,6 +178,8 @@ impl ModifyEntity {
                     SelectionType::Switch => *mode2 = modes.portal_mode,
                 }
             },
+            &mut EditorEntity::RocketTurret { pos } => self.modified_entity = EditorEntity::RocketMorph { pos },
+            &mut EditorEntity::RocketMorph { pos } => self.modified_entity = EditorEntity::RocketTurret { pos },
             _ => {}
         }
     }

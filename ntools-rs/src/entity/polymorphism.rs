@@ -3,9 +3,9 @@
 //! The alternative would be dynamic dispatch via boxed trait objects
 //! and storing everything in one place.
 
-use crate::{collision_util::Depenetration, entity::{Entities, EntityIndex, GridEntityType}, ninja::Ninja};
+use crate::{collision_util::Depenetration, entity::{Entities, EntityIndex, GridEntityType}, ninja::HumanNinja};
 
-pub fn physical_collisions(entities: &mut Entities, (entity_type, i): EntityIndex, ninja: &Ninja) -> Option<Depenetration> {
+pub fn physical_collisions(entities: &mut Entities, (entity_type, i): EntityIndex, ninja: &HumanNinja) -> Option<Depenetration> {
     match entity_type {
         GridEntityType::BounceBlock => entities.bounce_blocks.get_mut(i)?.physical_collision(ninja.pos),
         GridEntityType::OneWay => entities.one_ways.get(i)?.physical_collision(ninja),
