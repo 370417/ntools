@@ -32,6 +32,7 @@ import { type RocketTurretData, RocketTurretDefs, RocketTurrets, updateRocketTur
 import { type RocketData, RocketDefs, Rockets, updateRockets } from './entities/Rocket';
 import { Gauss, GaussDefs, updateGauss, type GaussData } from './entities/GaussTurret';
 import { GaussReticleDefs, GaussReticles, updateGaussReticles, type GaussReticleData } from './entities/GaussReticle';
+import { RocketMorphDefs, RocketMorphs, updateRocketMorphs, type RocketMorphData } from './entities/RocketMorph';
 
 const xhairHalfSize = 4;
 const crosshairPath = `M ${-xhairHalfSize} 0 H ${xhairHalfSize} M 0 ${-xhairHalfSize} V ${xhairHalfSize}`;
@@ -175,6 +176,9 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
     const gaussReticles = createSignal<GaussReticleData[]>([]);
     const portals = createSignal<PortalData[]>([]);
     getPortals(portals, replay);
+    const rocketMorphs = createSignal<RocketMorphData[]>([]);
+
+    const rocketNinjas = createSignal<RocketData[]>([]);
 
     const [ninjaInfo, setNinjaInfo] = createSignal('');
     const [distanceMeasurePoint, setDistanceMeasurePoint] = createSignal<{ x: number, y: number }>();
@@ -338,6 +342,19 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
         updateGauss(gauss, replay);
         updateGaussReticles(gaussReticles, replay);
         updateEvilNinjas(evilNinjas, replay, partialFrame);
+        updateRocketMorphs(rocketMorphs, replay);
+
+        // update rocket ninjas
+        const setRocketNinjas = rocketNinjas[1];
+        if (replay.ninja_form() === 0) {
+            setRocketNinjas([]);
+        } else {
+            setRocketNinjas([{
+                x: replay.ninja_x(partialFrame),
+                y: replay.ninja_y(partialFrame),
+                deg: replay.ninja_deg(),
+            }]);
+        }
 
         setReplayLength(replay.replay_length() + offset);
     }
@@ -401,6 +418,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                     <GaussDefs />
                     <GaussReticleDefs />
                     <PortalDefs />
+                    <RocketMorphDefs />
                     <path id="crosshair" stroke-width="1.5" fill="none" d={crosshairPath} />
                 </defs>
                 <Portals portals={portals[0]} showMode={false} />
@@ -422,6 +440,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                 <FloorGuards floorGuards={floorGuards[0]} />
                 <Deathballs deathballs={deathballs[0]} />
                 <RocketTurrets rocketTurrets={rocketTurrets[0]} />
+                <RocketMorphs rocketMorphs={rocketMorphs[0]} />
                 <Gauss gaussTurrets={gauss[0]} />
                 <GaussReticles gauss={gaussReticles[0]} />
                 <Rockets rockets={rockets[0]} />
@@ -438,6 +457,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                     {({ ninja, bones }) => <Ninja class="ninja" ninja={() => ninja} bones={() => bones} />}
                 </For>
                 <Ninja class="ninja" ninja={ninja} bones={ninjaBones} />
+                <Rockets rockets={rocketNinjas[0]} />
                 <path id="tiles" stroke-width="2" clip-path="url(#tiles-clip)" clip-rule="evenodd" d={tilePath()} fill-rule="evenodd" />
                 <Show when={!isPlaying()}>
                     <polyline stroke="var(--ninja)" fill="none" points={pastNinjas().slice(progress(), previewProgress() || 0).map(({ x, y }) => `${x},${y}`).join(' ')} />

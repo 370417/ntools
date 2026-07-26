@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use glam::{DMat2, DVec2};
 
-use crate::{grid::{Grid, GridPos}, mode::PortalMode, ninja::Ninja, orientation::OrientationCardinal, segment::Segment};
+use crate::{grid::{Grid, GridPos}, mode::PortalMode, ninja::HumanNinja, orientation::OrientationCardinal, segment::Segment};
 
 #[derive(Clone)]
 pub struct Portal {
@@ -168,7 +168,7 @@ impl Portal {
         spatial_map
     }
 
-    fn transform(&self, ninja: &Ninja, from_side_type: SideType) -> Ninja {
+    fn transform(&self, ninja: &HumanNinja, from_side_type: SideType) -> HumanNinja {
         let (from_side, to_side) = match from_side_type {
             SideType::Side1 => (self.side1.clone(), self.side2.clone()),
             SideType::Side2 => (self.side2.clone(), self.side1.clone()),
@@ -212,7 +212,7 @@ impl Side {
     }
 }
 
-pub fn get_portal_ninja(ninja: &Ninja, portals: &[Portal], spatial_map: &PortalSpatialMap) -> Option<Ninja> {
+pub fn get_portal_ninja(ninja: &HumanNinja, portals: &[Portal], spatial_map: &PortalSpatialMap) -> Option<HumanNinja> {
     // round ninja position to nearest quarter tile center
     let rounded_ninja_pos = 12.0 * ((ninja.pos + DVec2::splat(6.0)) / 12.0).round() - DVec2::splat(6.0);
     let rounded_ninja_pos2 = (rounded_ninja_pos.x as i32, rounded_ninja_pos.y as i32);
@@ -225,7 +225,7 @@ pub fn get_portal_ninja(ninja: &Ninja, portals: &[Portal], spatial_map: &PortalS
 }
 
 /// If the ninja has crossed an active portal, send it to the portal's other side.
-pub fn teleport_ninja(ninja: &mut Ninja, portal_ninja: &mut Option<Ninja>, portals: &[Portal]) {
+pub fn teleport_ninja(ninja: &mut HumanNinja, portal_ninja: &mut Option<HumanNinja>, portals: &[Portal]) {
     'outer: for portal in portals {
         if portal.active {
             for (side, side_type) in [(&portal.side1, SideType::Side1), (&portal.side2, SideType::Side2)] {

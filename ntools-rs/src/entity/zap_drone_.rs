@@ -3,7 +3,7 @@
 
 use glam::{DMat2, DVec2};
 
-use crate::{collision_util::overlap_circle_vs_circle, entity::{Entity, GridEntityType, Mob, door::Doors, thwump::segments_in_fov}, grid::{Grid, GridPos}, mode::DroneMode, ninja::{self, Ninja}, orientation::OrientationCardinal, segment::Segment, tile::TILE_SIZE};
+use crate::{collision_util::overlap_circle_vs_circle, entity::{Entity, GridEntityType, Mob, door::Doors, thwump::segments_in_fov}, grid::{Grid, GridPos}, mode::DroneMode, ninja::{self, HumanNinja}, orientation::OrientationCardinal, segment::Segment, tile::TILE_SIZE};
 
 pub const RADIUS: f64 = 7.5;
 pub const SPEED: f64 = 8.0 / 7.0;
@@ -26,7 +26,7 @@ impl ZapDrone {
         }
     }
 
-    pub fn logical_collision(&self, ninja: &mut Ninja) {
+    pub fn logical_collision(&self, ninja: &mut HumanNinja) {
         if ninja.is_valid_target() && overlap_circle_vs_circle(self.pos, RADIUS, ninja.pos, ninja::RADIUS) {
             ninja.kill(0, DVec2::ZERO, DVec2::ZERO);
         }

@@ -96,7 +96,7 @@ pub fn get_single_closest_point(pos: DVec2, radius: f64, segments: &Grid<Segment
     segments.iter_rect_region(pos, pos, radius)
         .filter(|segment| segment.is_active(doors))
         .filter(|segment| match segment {
-            Segment::Linear { start, end, is_portal } => !*is_portal,
+            Segment::Linear { is_portal, .. } => !*is_portal,
             _ => true,
         })
         .map(|segment| {

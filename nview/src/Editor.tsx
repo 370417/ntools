@@ -31,6 +31,7 @@ import { EVIL_NINJA_UNTOUCHED, EvilNinjaDefs, EvilNinjas, type EvilNinjaData } f
 import { PortalDefs, Portals, type PortalData } from "./entities/Portal";
 import { ROCKET_IDLE, RocketTurretDefs, RocketTurrets, type RocketTurretData } from "./entities/RocketTurret";
 import { Gauss, GAUSS_IDLE, GaussDefs, type GaussData } from "./entities/GaussTurret";
+import { RocketMorphDefs, RocketMorphs, type RocketMorphData } from "./entities/RocketMorph";
 
 const COLS = 42;
 const ROWS = 23;
@@ -80,6 +81,7 @@ const ENTITY_DEATHBALL = 25;
 const ENTITY_BAT = 27;
 const ENTITY_SHOVE_THWUMP = 28;
 const ENTITY_PORTAL1 = 29;
+const ENTITY_ROCKET_MORPH = 31;
 
 const BONES_STANDING = new Float64Array([-0.039, -0.0249, 0.1127, -0.1738, 0.1115, -0.1512, -0.0846, 0.0749, 0.1072, -0.0423, 0.0263, -0.1452, -0.0358, -0.075, -0.377, 0.4686, 0.4643, -0.0225, -0.0453, -0.5054, -0.4724, 0.1962, 0.2293, -0.1812, -0.2266, -0.2224]);
 const BONES_FALLING = new Float64Array([0.018, 0.0, 0.4156, 0.0988, 0.3581, -0.3242, -0.0708, 0.0845, 0.2924, 0.3212, 0.1853, -0.1927, -0.0236, -0.06, -0.3602, 0.3086, 0.1278, -0.3238, -0.2018, -0.4976, -0.4488, 0.0656, -0.024, -0.2729, -0.3268, -0.2042]);
@@ -166,6 +168,8 @@ export type EntitiesProps = {
     setShoveThwumps: Setter<ShoveThwumpData[]>,
     portals: Accessor<PortalData[]>,
     setPortals: Setter<PortalData[]>,
+    rocketMorphs: Accessor<RocketMorphData[]>,
+    setRocketMorphs: Setter<RocketMorphData[]>,
 };
 
 function createEntities(): EntitiesProps {
@@ -196,6 +200,7 @@ function createEntities(): EntitiesProps {
     const [bats, setBats] = createSignal<BatData[]>([]);
     const [shoveThwumps, setShoveThwumps] = createSignal<ShoveThwumpData[]>([]);
     const [portals, setPortals] = createSignal<PortalData[]>([]);
+    const [rocketMorphs, setRocketMorphs] = createSignal<RocketMorphData[]>([]);
     return {
         ninjas, setNinjas,
         mines, setMines,
@@ -224,6 +229,7 @@ function createEntities(): EntitiesProps {
         bats, setBats,
         shoveThwumps, setShoveThwumps,
         portals, setPortals,
+        rocketMorphs, setRocketMorphs,
     };
 }
 
@@ -255,6 +261,7 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
     const bats: BatData[] = [];
     const shoveThwumps: ShoveThwumpData[] = [];
     const portals: PortalData[] = [];
+    const rocketMorphs: RocketMorphData[] = [];
 
     for (const entity of exportedEntities) {
         // Make sure to create new objects instead of reusing entity
@@ -377,6 +384,8 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
                 });
                 lines.push(line);
             }
+        } else if (entity.type_int === ENTITY_ROCKET_MORPH) {
+            rocketMorphs.push(entityCopy);
         }
         entity.free();
     }
@@ -408,6 +417,7 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
     entities.setBats(bats);
     entities.setShoveThwumps(shoveThwumps);
     entities.setPortals(portals);
+    entities.setRocketMorphs(rocketMorphs);
 }
 
 function Entities({ entities }: { entities: EntitiesProps }) {
@@ -434,6 +444,7 @@ function Entities({ entities }: { entities: EntitiesProps }) {
         <Deathballs deathballs={entities.deathballs} />
         <Gauss gaussTurrets={entities.gaussTurrets} />
         <RocketTurrets rocketTurrets={entities.rocketTurrets} />
+        <RocketMorphs rocketMorphs={entities.rocketMorphs} />
         {/* laser turret */}
         <Thwumps thwumps={entities.thwumps} />
         <EvilNinjas evilNinjas={entities.evilNinjas} />
@@ -732,6 +743,7 @@ export function EditorApp(props: {
                 <DeathballDefs />
                 <PortalDefs />
                 <RocketTurretDefs />
+                <RocketMorphDefs />
                 <GaussDefs />
                 <path id="tilemode-crosshair" stroke-width="1.5" fill="none" d={tilemodeCrosshairPath} />
                 <path id="crosshair" stroke-width="1.5" fill="none" d={crosshairPath} />

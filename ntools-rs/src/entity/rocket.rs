@@ -3,14 +3,14 @@
 
 use glam::DVec2;
 
-use crate::{collision_util::raycast_vs_player, entity::{Entity, EntityIndex, GridEntityType, Mob, door::Doors, move_entity}, grid::{Grid, GridPos}, ninja::{self, Ninja}, segment::Segment};
+use crate::{collision_util::raycast_vs_player, entity::{Entity, EntityIndex, GridEntityType, Mob, door::Doors, move_entity}, grid::{Grid, GridPos}, ninja::{self, HumanNinja, Ninja}, segment::Segment};
 
-const ACCEL_START: f64 = 0.1 * (2.0 / 3.0) * (2.0 / 3.0);
-const MAX_SPEED: f64 = 12.0 * (2.0 / 7.0) * (2.0 / 3.0);
-const ACCEL_RATE: f64 = 1.06560223677; // 1.1^(2/3)
-const TURN_RATE: f64 = 0.1 * (2.0 / 3.0);
-const PREFIRE_DELAY: u32 = 15; // 10 * 3 / 2
-const PREDICTION_SCALE: f64 = 3.0 / 2.0;
+pub const ACCEL_START: f64 = 0.1 * (2.0 / 3.0) * (2.0 / 3.0);
+pub const MAX_SPEED: f64 = 12.0 * (2.0 / 7.0) * (2.0 / 3.0);
+pub const ACCEL_RATE: f64 = 1.06560223677; // 1.1^(2/3)
+pub const TURN_RATE: f64 = 0.1 * (2.0 / 3.0);
+pub const PREFIRE_DELAY: u32 = 15; // 10 * 3 / 2
+pub const PREDICTION_SCALE: f64 = 3.0 / 2.0;
 
 #[derive(Clone)]
 pub struct Rocket {
@@ -48,7 +48,7 @@ impl Rocket {
             rocket_pos: pos,
             old_rocket_pos: pos,
             rocket_dir: DVec2::new(1.0, 0.0),
-            rocket_vel: DVec2::new(0.0, 0.0),
+            rocket_vel: DVec2::ZERO,
             rocket_speed: 0.0,
             rocket_accel: ACCEL_START,
             shot_timer: 0,
@@ -61,25 +61,30 @@ impl Rocket {
     pub fn think(&mut self, ninja: &Ninja, entity_grid: &mut Grid<EntityIndex>, segments: &Grid<Segment>, doors: &Doors) {
         match self.state {
             RocketState::Idle => {
-                if raycast_vs_player(self.turret_pos, ninja.pos, segments, doors) {
-                    self.shot_timer = 0;
-                    self.state = RocketState::Prefire;
+                if let Ninja::Human(ninja) = ninja {
+                    if raycast_vs_player(self.turret_pos, ninja.pos, segments, doors) {
+                        self.shot_timer = 0;
+                        self.state = RocketState::Prefire;
+                    }
                 }
             }
             RocketState::Prefire => {
-                if !ninja.is_valid_target() {
-                    self.state = RocketState::Idle;
-                } else {
-                    self.shot_timer += 1;
-                    if self.shot_timer >= PREFIRE_DELAY {
-                        self.rocket_pos = self.turret_pos;
-                        self.grid_pos = GridPos::from_world_pos(self.rocket_pos);
-                        self.rocket_accel = ACCEL_START;
-                        self.rocket_speed = 0.0;
-                        self.rocket_dir = (ninja.pos - self.rocket_pos).normalize_or(DVec2::new(1.0, 0.0));
-                        entity_grid[self.grid_pos].push((GridEntityType::Rocket, self.entity_index));
-                        self.state = RocketState::Homing;
+                match ninja {
+                    Ninja::Human(ninja) if ninja.is_valid_target() => {
+                        if ninja.is_valid_target() {
+                            self.shot_timer += 1;
+                            if self.shot_timer >= PREFIRE_DELAY {
+                                self.rocket_pos = self.turret_pos;
+                                self.grid_pos = GridPos::from_world_pos(self.rocket_pos);
+                                self.rocket_accel = ACCEL_START;
+                                self.rocket_speed = 0.0;
+                                self.rocket_dir = (ninja.pos - self.rocket_pos).normalize_or(DVec2::new(1.0, 0.0));
+                                entity_grid[self.grid_pos].push((GridEntityType::Rocket, self.entity_index));
+                                self.state = RocketState::Homing;
+                            }
+                        }
                     }
+                    _ => self.state = RocketState::Idle,
                 }
             }
             RocketState::Homing => {
@@ -109,23 +114,25 @@ impl Rocket {
                     }
                 }
 
-                if ninja.is_valid_target() {
-                    let predicted_rocket_pos = self.rocket_pos + self.rocket_vel * PREDICTION_SCALE;
-                    let predicted_ninja_pos = ninja.pos + ninja.speed * PREDICTION_SCALE;
-                    let rocket_to_ninja = predicted_ninja_pos - predicted_rocket_pos;
-                    if rocket_to_ninja.length_squared() == 0.0 {
-                        return;
+                if let Ninja::Human(ninja) = ninja {
+                    if ninja.is_valid_target() {
+                        let predicted_rocket_pos = self.rocket_pos + self.rocket_vel * PREDICTION_SCALE;
+                        let predicted_ninja_pos = ninja.pos + ninja.speed * PREDICTION_SCALE;
+                        let rocket_to_ninja = predicted_ninja_pos - predicted_rocket_pos;
+                        if rocket_to_ninja.length_squared() == 0.0 {
+                            return;
+                        }
+                        let rocket_to_ninja = rocket_to_ninja.normalize();
+                        let dot = self.rocket_dir.perp().dot(rocket_to_ninja);
+                        self.rocket_dir += TURN_RATE * dot * self.rocket_dir.perp();
+                        self.rocket_dir = self.rocket_dir.normalize_or_zero();
                     }
-                    let rocket_to_ninja = rocket_to_ninja.normalize();
-                    let dot = self.rocket_dir.perp().dot(rocket_to_ninja);
-                    self.rocket_dir += TURN_RATE * dot * self.rocket_dir.perp();
-                    self.rocket_dir = self.rocket_dir.normalize_or_zero();
                 }
             }
         }
     }
 
-    pub fn logical_collision(&mut self, ninja: &mut Ninja) -> Option<(GridPos, usize)> {
+    pub fn logical_collision(&mut self, ninja: &mut HumanNinja) -> Option<(GridPos, usize)> {
         if ninja.is_valid_target() {
             if (self.rocket_pos - ninja.pos).length() < ninja::RADIUS {
                 ninja.kill(0, DVec2::ZERO, DVec2::ZERO);

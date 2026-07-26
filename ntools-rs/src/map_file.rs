@@ -186,6 +186,7 @@ impl <'a> Iterator for EntityDataParser<'a> {
                 EntityId::ShoveThwump => return Some(EditorEntity::ShoveThwump { pos, orientation }),
                 EntityId::Portal1 => self.portals.push_back((pos, orientation_cardinal, portal_mode)),
                 EntityId::Portal2 => return self.portals.pop_front().map(|(pos1, orientation1, mode1)| EditorEntity::Portal { pos1, orientation1, mode1, pos2: pos, orientation2: orientation_cardinal, mode2: portal_mode }),
+                EntityId::RocketMorph => return Some(EditorEntity::RocketMorph { pos }),
             }
         }
         None
@@ -281,6 +282,7 @@ fn editor_entities_to_bytes(entities: &EditorEntities) -> Vec<u8> {
                     bytes.extend([EntityId::Portal1 as u8, pos1.x as u8, pos1.y as u8, orientation1 as u8, mode1 as u8]);
                     bytes.extend([EntityId::Portal2 as u8, pos2.x as u8, pos2.y as u8, orientation2 as u8, mode2 as u8]);
                 }
+                EditorEntity::RocketMorph { pos } => bytes.extend([id, pos.x as u8, pos.y as u8, 0, 0]),
             }
         }
     }

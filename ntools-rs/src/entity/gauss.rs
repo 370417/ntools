@@ -63,18 +63,24 @@ impl Gauss {
     pub fn think(&mut self, ninja: &mut Ninja, segments: &Grid<Segment>, doors: &Doors) {
         match self.state {
             GaussState::Idle => {
-                if raycast_vs_player(self.turret_pos, ninja.pos, segments, doors) {
-                    self.start_targetting();
+                if let Ninja::Human(ninja) = ninja {
+                    if raycast_vs_player(self.turret_pos, ninja.pos, segments, doors) {
+                        self.start_targetting();
+                    }
                 }
             }
             GaussState::Targetting => {
-                if !raycast_vs_player(self.turret_pos, ninja.pos, segments, doors) {
-                    self.start_idling();
-                } else {
-                    self.update_aim(ninja.pos, ninja.speed);
-                    if self.shot_timer > TIMER_FIRETIME {
-                        self.start_firing();
+                if let Ninja::Human(ninja) = ninja {
+                    if !raycast_vs_player(self.turret_pos, ninja.pos, segments, doors) {
+                        self.start_idling();
+                    } else {
+                        self.update_aim(ninja.pos, ninja.speed);
+                        if self.shot_timer > TIMER_FIRETIME {
+                            self.start_firing();
+                        }
                     }
+                } else {
+                    self.start_idling();
                 }
             }
             GaussState::Prefire => {
@@ -87,8 +93,10 @@ impl Gauss {
                         // if ray_distance was None, it traveled for 2000 units
                         let ray_distance = ray_distance.unwrap_or(2000.0);
                         shot_endpoint = self.turret_pos + ray_distance * (self.aim_pos - self.turret_pos).normalize();
-                        if overlap_circle_vs_segment(ninja.pos, ninja::RADIUS, self.turret_pos, shot_endpoint) {
-                            ninja.kill(0, DVec2::ZERO, DVec2::ZERO);
+                        if let Ninja::Human(ninja) = ninja {
+                            if overlap_circle_vs_segment(ninja.pos, ninja::RADIUS, self.turret_pos, shot_endpoint) {
+                                ninja.kill(0, DVec2::ZERO, DVec2::ZERO);
+                            }
                         }
                     }
                     self.stop_firing(shot_endpoint);
@@ -97,8 +105,12 @@ impl Gauss {
             GaussState::Postfire { .. } => {
                 self.shot_timer += 1.0;
                 if self.shot_timer >= POSTFIRE_DELAY {
-                    if raycast_vs_player(self.turret_pos, ninja.pos, segments, doors) {
-                        self.resume_targetting();
+                    if let Ninja::Human(ninja) = ninja {
+                        if raycast_vs_player(self.turret_pos, ninja.pos, segments, doors) {
+                            self.resume_targetting();
+                        } else {
+                            self.start_idling();
+                        }
                     } else {
                         self.start_idling();
                     }

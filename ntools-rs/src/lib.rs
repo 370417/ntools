@@ -10,6 +10,7 @@ mod ninja;
 mod orientation;
 mod replay;
 mod replay_file;
+mod rocket_ninja;
 mod segment;
 mod simulation;
 mod tile;

@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{collision_util::overlap_circle_vs_circle, entity::{Entity, GridEntityType, Mob, door::Doors, zap_drone_::{RADIUS, SPEED, drone_move}}, grid::{Grid, GridPos}, mode::DroneMode, ninja::{self, Ninja}, orientation::OrientationCardinal, segment::Segment};
+use crate::{collision_util::overlap_circle_vs_circle, entity::{Entity, GridEntityType, Mob, door::Doors, zap_drone_::{RADIUS, SPEED, drone_move}}, grid::{Grid, GridPos}, mode::DroneMode, ninja::{self, HumanNinja}, orientation::OrientationCardinal, segment::Segment};
 
 #[derive(Clone)]
 pub struct ChaseDrone {
@@ -22,7 +22,7 @@ impl ChaseDrone {
         }
     }
 
-    pub fn logical_collision(&self, ninja: &mut Ninja) {
+    pub fn logical_collision(&self, ninja: &mut HumanNinja) {
         if ninja.is_valid_target() && overlap_circle_vs_circle(self.pos, RADIUS, ninja.pos, ninja::RADIUS) {
             ninja.kill(0, DVec2::ZERO, DVec2::ZERO);
         }

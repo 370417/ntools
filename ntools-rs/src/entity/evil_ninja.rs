@@ -1,6 +1,6 @@
 use glam::{DVec2, FloatExt};
 
-use crate::{anim_data::flatten_bones, collision_util::overlap_circle_vs_circle, entity::{Entity, GridEntityType, Mob, door::Doors}, grid::{Grid, GridPos}, ninja::{self, Ninja, PastNinja}, segment::Segment};
+use crate::{anim_data::flatten_bones, collision_util::overlap_circle_vs_circle, entity::{Entity, GridEntityType, Mob, door::Doors}, grid::{Grid, GridPos}, ninja::{self, HumanNinja, PastNinja}, segment::Segment};
 
 const SPAWNER_RADIUS: f64 = 10.0;
 const EVIL_NINJA_RADIUS: f64 = 6.0;
@@ -26,7 +26,14 @@ enum EvilNinjaState {
     },
     Active {
         delay_frames: u32,
+        form: EvilNinjaForm,
     },
+}
+
+#[derive(Clone)]
+enum EvilNinjaForm {
+    Human,
+    Rocket,
 }
 
 impl EvilNinja {
@@ -43,6 +50,7 @@ impl EvilNinja {
         match self.state {
             EvilNinjaState::Untouched => {}
             EvilNinjaState::JustTouched => {
+                // TODO: evil ninja is one frame behind where it should be compared to in game
                 // if we are in JustTouched state, that state was set on the previous frame
                 let touched_frame = frame.saturating_sub(1);
 
@@ -58,27 +66,36 @@ impl EvilNinja {
             }
             EvilNinjaState::Activating { first_active_frame, delay_frames } => {
                 if frame == first_active_frame {
-                    self.state = EvilNinjaState::Active { delay_frames };
+                    let past_ninja = &past_ninjas[(frame - delay_frames) as usize];
+                    self.state = match past_ninja {
+                        PastNinja::Human(_) => EvilNinjaState::Active { delay_frames, form: EvilNinjaForm::Human },
+                        PastNinja::Rocket(_) => EvilNinjaState::Active { delay_frames, form: EvilNinjaForm::Rocket },
+                    };
                     self.old_pos = self.pos;
-                    self.pos = past_ninjas[(frame - delay_frames) as usize].pos;
+                    self.pos = past_ninja.pos();
                 } else if frame + 120 > first_active_frame {
                     // lerp pos from original pos to first active pos as the evil ninja is about to spawn
                     let t = (frame + 120 - first_active_frame) as f64 / 120.0;
                     let t = t.clamp(0.0, 1.0);
 
-                    let first_active_pos = past_ninjas[(first_active_frame - delay_frames) as usize].pos;
+                    let first_active_pos = past_ninjas[(first_active_frame - delay_frames) as usize].pos();
                     self.old_pos = self.pos;
                     self.pos = self.original_pos.lerp(first_active_pos, t);
                 }
             }
-            EvilNinjaState::Active { delay_frames } => {
+            EvilNinjaState::Active { delay_frames, .. } => {
+                let past_ninja = &past_ninjas[(frame - delay_frames) as usize];
                 self.old_pos = self.pos;
-                self.pos = past_ninjas[(frame - delay_frames) as usize].pos;
+                self.pos = past_ninja.pos();
+                self.state = match past_ninja {
+                    PastNinja::Human(_) => EvilNinjaState::Active { delay_frames, form: EvilNinjaForm::Human },
+                    PastNinja::Rocket(_) => EvilNinjaState::Active { delay_frames, form: EvilNinjaForm::Rocket },
+                };
             }
         }
     }
 
-    pub fn logical_collision(&mut self, ninja: &mut Ninja) {
+    pub fn logical_collision(&mut self, ninja: &mut HumanNinja) {
         if ninja.is_valid_target() {
             match self.state {
                 EvilNinjaState::Untouched => if overlap_circle_vs_circle(self.pos, SPAWNER_RADIUS, ninja.pos, ninja::RADIUS) {
@@ -108,7 +125,8 @@ impl EvilNinja {
             EvilNinjaState::Untouched => 0,
             EvilNinjaState::JustTouched |
             EvilNinjaState::Activating { .. } => 1,
-            EvilNinjaState::Active { .. } => 2,
+            EvilNinjaState::Active { form: EvilNinjaForm::Human, .. } => 2,
+            EvilNinjaState::Active { form: EvilNinjaForm::Rocket, .. } => 3,
         }
     }
 
@@ -126,9 +144,10 @@ impl EvilNinja {
 
     pub fn bones(&self, frame: u32, past_ninjas: &[PastNinja], anim_data: &[u8]) -> Option<Box<[f64]>> {
         match self.state {
-            EvilNinjaState::Active { delay_frames } => {
-                let past_ninja = &past_ninjas[(frame - delay_frames) as usize];
-                let bones = Ninja::calc_past_ninja_bones(past_ninja, anim_data);
+            EvilNinjaState::Active { delay_frames, form: EvilNinjaForm::Human } => {
+                let past_ninja = past_ninjas.get((frame - delay_frames) as usize);
+                let Some(PastNinja::Human(past_ninja)) = past_ninja else { return None };
+                let bones = HumanNinja::calc_past_ninja_bones(past_ninja, anim_data);
                 Some(flatten_bones(&bones))
             }
             _ => None,

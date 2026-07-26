@@ -2,7 +2,7 @@ use glam::{DVec2, FloatExt};
 
 // TODO: reading multiple exits from map is incorrect
 
-use crate::{collision_util::overlap_circle_vs_circle, entity::boost_pad::ease_out_quad, ninja::{self, Ninja}};
+use crate::{collision_util::overlap_circle_vs_circle, entity::boost_pad::ease_out_quad, ninja::{self, HumanNinja}};
 
 const DOOR_RADIUS: f64 = 12.0;
 const SWITCH_RADIUS: f64 = 6.0;
@@ -33,7 +33,7 @@ impl Exit {
         }
     }
 
-    pub fn door_logical_collision(&mut self, ninja: &mut Ninja) {
+    pub fn door_logical_collision(&mut self, ninja: &mut HumanNinja) {
         if self.frames_since_door_open.is_some() && overlap_circle_vs_circle(self.door_pos, DOOR_RADIUS, ninja.pos, ninja::RADIUS) {
             ninja.win();
         }

@@ -1,10 +1,10 @@
 use float_ord::FloatOrd;
 use glam::DVec2;
 
-use crate::{ninja::{AnimState, PastNinja}, orientation::Orientation, tile::TILE_HALF_SIZE};
+use crate::{ninja::{AnimState, PastHumanNinja, PastNinja}, orientation::Orientation, tile::TILE_HALF_SIZE};
 
-pub fn closest_past_ninja(cursor_pos: DVec2, past_ninjas: &[PastNinja], orientation: Orientation, show_trail: bool) -> PastNinja {
-    let default = PastNinja {
+pub fn ninja_from_cursor(cursor_pos: DVec2, orientation: Orientation) -> PastHumanNinja {
+    PastHumanNinja {
         pos: cursor_pos,
         orientation: orientation.into(),
         speed: DVec2::ZERO,
@@ -14,13 +14,5 @@ pub fn closest_past_ninja(cursor_pos: DVec2, past_ninjas: &[PastNinja], orientat
         run_cycle: 0,
         tilt: orientation.vec2().perp(),
         prev_input: 0,
-    };
-    if !show_trail {
-        return default;
     }
-    past_ninjas.iter().min_by_key(|ninja| {
-        FloatOrd((ninja.pos - cursor_pos).length_squared())
-    }).filter(|ninja| {
-        (ninja.pos - cursor_pos).length_squared() <= TILE_HALF_SIZE * TILE_HALF_SIZE
-    }).cloned().unwrap_or(default)
 }

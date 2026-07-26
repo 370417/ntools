@@ -27,38 +27,40 @@ impl BoostPad {
 
     /// If the ninja starts touching the booster, add 2 to its velocity norm.
     pub fn move_entity(&mut self, ninja: &mut Ninja) {
-        self.is_touching_ninja = if !ninja.is_valid_target() {
-            false
-        } else if overlap_circle_vs_circle(self.pos, RADIUS, ninja.pos, ninja::RADIUS) {
-            if !self.is_touching_ninja {
-                let vel_norm =  ninja.speed.length();
-                if vel_norm > 0.0 {
-                    ninja.speed += 2.0 * ninja.speed / vel_norm;
-                    // Set initial rotation angle based on ninja's velocity vector.
-                    // Adjusted by pi/4 because the boost pad sprite points diagonally
-                    // when it has 0 rotation.
-                    // If it pointed to the right, we wouldn't need to adjust.
-                    let pi = std::f64::consts::PI;
-                    let initial_rotation = ninja.speed.to_angle() - pi / 4.0;
-                    // Flip rotation if it results in a smaller absolute angle
-                    // since the boost pad is symmetric.
-                    self.initial_rotation = if (initial_rotation - pi).abs() < initial_rotation.abs() {
-                        initial_rotation - pi
-                    } else if (initial_rotation + pi).abs() < initial_rotation.abs() {
-                        initial_rotation + pi
-                    } else {
-                        initial_rotation
-                    };
+        if let Ninja::Human(ninja) = ninja {
+            self.is_touching_ninja = if !ninja.is_valid_target() {
+                false
+            } else if overlap_circle_vs_circle(self.pos, RADIUS, ninja.pos, ninja::RADIUS) {
+                if !self.is_touching_ninja {
+                    let vel_norm =  ninja.speed.length();
+                    if vel_norm > 0.0 {
+                        ninja.speed += 2.0 * ninja.speed / vel_norm;
+                        // Set initial rotation angle based on ninja's velocity vector.
+                        // Adjusted by pi/4 because the boost pad sprite points diagonally
+                        // when it has 0 rotation.
+                        // If it pointed to the right, we wouldn't need to adjust.
+                        let pi = std::f64::consts::PI;
+                        let initial_rotation = ninja.speed.to_angle() - pi / 4.0;
+                        // Flip rotation if it results in a smaller absolute angle
+                        // since the boost pad is symmetric.
+                        self.initial_rotation = if (initial_rotation - pi).abs() < initial_rotation.abs() {
+                            initial_rotation - pi
+                        } else if (initial_rotation + pi).abs() < initial_rotation.abs() {
+                            initial_rotation + pi
+                        } else {
+                            initial_rotation
+                        };
+                    }
                 }
+                true
+            } else {
+                false
+            };
+            if self.is_touching_ninja {
+                self.frames_since_last_touch = 0;
+            } else {
+                self.frames_since_last_touch = self.frames_since_last_touch.saturating_add(1);
             }
-            true
-        } else {
-            false
-        };
-        if self.is_touching_ninja {
-            self.frames_since_last_touch = 0;
-        } else {
-            self.frames_since_last_touch = self.frames_since_last_touch.saturating_add(1);
         }
     }
 

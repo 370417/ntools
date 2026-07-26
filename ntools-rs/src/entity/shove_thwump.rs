@@ -2,7 +2,7 @@ use core::panic;
 
 use glam::{DMat2, DVec2};
 
-use crate::{collision_util::{Depenetration, penetration_circle_vs_point, penetration_square_vs_circle_with_orientation}, entity::{Entity, EntityIndex, GridEntityType, Mob, door::Doors, move_entity, thwump::segments_in_fov}, grid::{Grid, GridPos}, ninja::{self, Ninja}, orientation::Orientation, segment::Segment};
+use crate::{collision_util::{Depenetration, penetration_circle_vs_point, penetration_square_vs_circle_with_orientation}, entity::{Entity, EntityIndex, GridEntityType, Mob, door::Doors, move_entity, thwump::segments_in_fov}, grid::{Grid, GridPos}, ninja::{self, HumanNinja}, orientation::Orientation, segment::Segment};
 
 const SEMI_SIDE: f64 = 12.0;
 const INNER_RADIUS: f64 = 8.0;
@@ -111,7 +111,7 @@ impl ShoveThwump {
         }
     }
 
-    pub fn physical_collision(&self, ninja: &Ninja) -> Option<Depenetration> {
+    pub fn physical_collision(&self, ninja: &HumanNinja) -> Option<Depenetration> {
         match self.state {
             ShoveThwumpState::Waiting => {
                 match self.corners {
@@ -127,7 +127,7 @@ impl ShoveThwump {
         }
     }
 
-    pub fn logical_collision(&mut self, ninja: &mut Ninja) -> Option<f64> {
+    pub fn logical_collision(&mut self, ninja: &mut HumanNinja) -> Option<f64> {
         match &mut self.state {
             ShoveThwumpState::Waiting => {
                 let depen = match self.corners {
