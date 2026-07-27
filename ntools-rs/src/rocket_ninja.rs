@@ -59,7 +59,7 @@ impl RocketNinja {
                     // TODO: do we want to set state to falling instead if ninja's
                     // momentum is upward instead of downward?
                     ninja.state = NinjaState::WallSliding;
-                }  else if ninja.grav_get_vert(normal) < 0.0 {
+                }  else if ninja.grav_get_vert(normal) > 0.0 {
                     // airborne
                     ninja.airborne = true;
                     ninja.state = NinjaState::Falling;

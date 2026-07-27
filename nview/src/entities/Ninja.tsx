@@ -17,7 +17,7 @@ export function Ninja(props: {
     function path() {
         const bones = props.bones();
         if (!bones) return '';
-        return LIMBS.map(([i, j]) => {
+        return LIMBS/*.filter((_, i) => i === 2 || i === 3 || i == 7 || i === 8)*/.map(([i, j]) => {
             return `M ${20 * bones[i]} ${20 * bones[i + 13]} ${20 * bones[j]} ${20 * bones[j + 13]}`;
         }).join(' ');
     }

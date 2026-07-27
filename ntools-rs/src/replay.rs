@@ -753,6 +753,10 @@ impl Replay {
         self.current_sim.entities.rocket_morphs[i].pos.y
     }
 
+    pub fn rocket_morph_is_active(&self, i: usize) -> bool {
+        self.current_sim.entities.rocket_morphs[i].is_active
+    }
+
     pub fn export_attract(&self, editor: &Editor) -> Box<[u8]> {
         to_attract_bytes(&editor.export_map(), &self.inputs).into()
     }

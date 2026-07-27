@@ -454,7 +454,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                     <Ninja class="ninja" ninja={portalNinja} bones={portalNinjaBones} />
                 </Show>
                 <For each={otherNinjas()}>
-                    {({ ninja, bones }) => <Ninja class="ninja" ninja={() => ninja} bones={() => bones} />}
+                    {({ ninja, bones }) => <Ninja class="other-ninja" ninja={() => ninja} bones={() => bones} />}
                 </For>
                 <Ninja class="ninja" ninja={ninja} bones={ninjaBones} />
                 <Rockets rockets={rocketNinjas[0]} />

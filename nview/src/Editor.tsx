@@ -385,7 +385,10 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
                 lines.push(line);
             }
         } else if (entity.type_int === ENTITY_ROCKET_MORPH) {
-            rocketMorphs.push(entityCopy);
+            rocketMorphs.push({
+                ...entityCopy,
+                is_active: false,
+            });
         }
         entity.free();
     }

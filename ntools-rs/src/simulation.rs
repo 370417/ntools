@@ -185,6 +185,12 @@ impl Simulation {
 
         if let Some(transformed_ninja) = transformed_ninja {
             self.ninja = transformed_ninja;
+            // reset is_active for rocket morphs
+            if let Ninja::Human(_) = &self.ninja {
+                for rocket_morph in &mut self.entities.rocket_morphs {
+                    rocket_morph.is_active = false;
+                }
+            }
         }
         
     }

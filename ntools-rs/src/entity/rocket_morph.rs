@@ -7,18 +7,21 @@ const RADIUS: f64 = 5.0;
 #[derive(Clone)]
 pub struct RocketMorph {
     pub pos: DVec2,
+    pub is_active: bool,
 }
 
 impl RocketMorph {
     pub fn new(pos: DVec2) -> Self {
         Self {
-            pos
+            pos,
+            is_active: false,
         }
     }
 
     /// Return transformed ninja if it has collided with the rocket morph trigger
-    pub fn logical_collision(&self, ninja: &mut HumanNinja) -> Option<RocketNinja> {
+    pub fn logical_collision(&mut self, ninja: &mut HumanNinja) -> Option<RocketNinja> {
         if ninja.is_valid_target() && overlap_circle_vs_circle(self.pos, RADIUS, ninja.pos, ninja::RADIUS) {
+            self.is_active = true;
             Some(RocketNinja::new(ninja.pos, ninja.speed.normalize_or(DVec2::new(0.0, -1.0)), ninja.speed, ninja.orientation))
         } else {
             None

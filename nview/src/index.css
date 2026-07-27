@@ -151,6 +151,12 @@ svg {
     stroke: var(--ninja);
 }
 
+.other-ninja {
+    /* for disambiguating the ninjas */
+    /* stroke: var(--mine-interior); */
+    stroke: var(--ninja);
+}
+
 .ninja.preview {
     opacity: 0.5;
 }
