@@ -46,22 +46,19 @@ impl EvilNinja {
         }
     }
 
-    pub fn think(&mut self, frame: u32, latest_evil_ninja_activation_frame: &mut Option<u32>, past_ninjas: &[PastNinja]) {
+    pub fn think(&mut self, frame: u32, active_evil_ninja_count: &mut u32, past_ninjas: &[PastNinja]) {
         match self.state {
             EvilNinjaState::Untouched => {}
             EvilNinjaState::JustTouched => {
-                // TODO: evil ninja is one frame behind where it should be compared to in game
                 // if we are in JustTouched state, that state was set on the previous frame
                 let touched_frame = frame.saturating_sub(1);
 
-                let first_active_frame = match latest_evil_ninja_activation_frame {
-                    &mut Some(latest) if latest > touched_frame => latest + 120,
-                    _ => touched_frame + 120,
-                };
-                *latest_evil_ninja_activation_frame = Some(first_active_frame);
+                *active_evil_ninja_count += 1;
+                let first_active_frame = touched_frame + 120 * *active_evil_ninja_count;
                 self.state = EvilNinjaState::Activating {
                     first_active_frame,
-                    delay_frames: first_active_frame - touched_frame,
+                    // subtract 1 to make behavior match game
+                    delay_frames: first_active_frame - touched_frame - 1,
                 };
             }
             EvilNinjaState::Activating { first_active_frame, delay_frames } => {

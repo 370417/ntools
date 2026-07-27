@@ -11,7 +11,7 @@ pub struct Simulation {
     pub entities: Entities,
     pub entity_grid: Grid<EntityIndex>,
     dynamic_friction: bool,
-    latest_evil_ninja_activation_frame: Option<u32>,
+    active_evil_ninja_count: u32,
 }
 
 #[derive(Clone, Copy)]
@@ -26,7 +26,7 @@ pub struct KeyFrame {
     frame: u32,
     ninja: Ninja,
     score: u32,
-    latest_evil_ninja_activation_frame: Option<u32>,
+    active_evil_ninja_count: u32,
     mine_state_diffs: Vec<(usize, MineState)>,
     collected_golds: Vec<usize>,
     boost_pads: Vec<BoostPad>,
@@ -80,7 +80,7 @@ impl Simulation {
             ninja: ninjas.into_iter().next().ok_or("Map has no ninja")?,
             portal_ninja: None,
             score: 90 * 60,
-            latest_evil_ninja_activation_frame: None,
+            active_evil_ninja_count: 0,
             entity_grid: entities.grid(),
             entities,
             dynamic_friction,
@@ -130,7 +130,7 @@ impl Simulation {
             deathball[0].think(&self.ninja, other_deathballs, segments, &self.entities.doors);
         }
         for evil_ninja in &mut self.entities.evil_ninjas {
-            evil_ninja.think(self.frame, &mut self.latest_evil_ninja_activation_frame, past_ninjas);
+            evil_ninja.think(self.frame, &mut self.active_evil_ninja_count, past_ninjas);
         }
         // call move_entities right after think for deathballs to get them in the correct grid cell since they get moved in the think function.
         move_entities(&mut self.entities.deathballs, &mut self.entity_grid, segments, &self.entities.doors);
@@ -202,7 +202,7 @@ impl KeyFrame {
             frame: sim.frame,
             ninja: sim.ninja.clone(),
             score: sim.score,
-            latest_evil_ninja_activation_frame: sim.latest_evil_ninja_activation_frame,
+            active_evil_ninja_count: sim.active_evil_ninja_count,
             mine_state_diffs: mine_diffs(initial_mines, &sim.entities.mines),
             collected_golds: collected_golds(&sim.entities.golds),
             boost_pads: sim.entities.boost_pads.clone(),
@@ -229,7 +229,7 @@ impl KeyFrame {
         sim.frame = self.frame;
         sim.ninja = self.ninja.clone();
         sim.score = self.score;
-        sim.latest_evil_ninja_activation_frame = self.latest_evil_ninja_activation_frame;
+        sim.active_evil_ninja_count = self.active_evil_ninja_count;
 
         sim.entities.mines = mines_from_diff(initial_mines, &self.mine_state_diffs);
 
