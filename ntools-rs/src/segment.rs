@@ -32,6 +32,8 @@ pub enum Curvature {
     Convex,
 }
 
+#[derive(Clone)]
+#[cfg_attr(debug_assertions, derive(Debug))]
 pub struct ClosestPoint {
     pub point: DVec2,
     pub is_back_facing: bool,

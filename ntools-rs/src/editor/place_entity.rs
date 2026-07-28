@@ -263,6 +263,10 @@ impl PlaceEntity {
             }
             &mut EditorEntity::RocketTurret { pos } => self.entity = EditorEntity::RocketMorph { pos },
             &mut EditorEntity::RocketMorph { pos } => self.entity = EditorEntity::RocketTurret { pos },
+            EditorEntity::LaserTurret { mode, .. } => {
+                modes.laser_turret_mode.flip_mut();
+                *mode = modes.laser_turret_mode;
+            }
             _ => {}
         }
     }

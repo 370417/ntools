@@ -1,7 +1,7 @@
 use glam::DVec2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{editor::{place_entity::Stage, select_entity::SelectionType}, grid::GridPos, mode::{DroneMode, Modes, PortalMode}, orientation::{Orientation, OrientationBinary, OrientationCardinal, OrientationExt, Orientations}};
+use crate::{editor::{place_entity::Stage, select_entity::SelectionType}, grid::GridPos, mode::{DroneMode, LaserTurretMode, Modes, PortalMode}, orientation::{Orientation, OrientationBinary, OrientationCardinal, OrientationExt, Orientations}};
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(debug_assertions, derive(Debug))]
@@ -89,6 +89,7 @@ pub enum EditorEntity {
     LaserTurret {
         pos: EntityPos,
         orientation: Orientation,
+        mode: LaserTurretMode,
     },
     BoostPad {
         pos: EntityPos,
@@ -253,7 +254,7 @@ impl EditorEntity {
             EntityId::Thwump => EditorEntity::Thwump { pos, orientation: orientations.orientation },
             EntityId::ToggleMine => EditorEntity::ToggleMine { pos },
             EntityId::EvilNinja => EditorEntity::EvilNinja { pos },
-            EntityId::LaserTurret => EditorEntity::LaserTurret { pos, orientation: orientations.orientation },
+            EntityId::LaserTurret => EditorEntity::LaserTurret { pos, orientation: orientations.orientation, mode: modes.laser_turret_mode },
             EntityId::BoostPad => EditorEntity::BoostPad { pos },
             EntityId::Deathball => EditorEntity::Deathball { pos },
             EntityId::MiniDrone => EditorEntity::MiniDrone { pos, orientation: orientations.orientation_cardinal, mode: modes.drone_mode },
@@ -291,6 +292,7 @@ impl EditorEntity {
             EditorEntity::LaserDrone { mode, .. } |
             EditorEntity::ChaingunDrone { mode, .. } => mode as u8,
             EditorEntity::Portal { mode1, .. } => mode1 as u8,
+            EditorEntity::LaserTurret { mode, .. } => mode as u8,
             _ => 0,
         }
     }

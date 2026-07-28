@@ -33,6 +33,7 @@ import { type RocketData, RocketDefs, Rockets, updateRockets } from './entities/
 import { Gauss, GaussDefs, updateGauss, type GaussData } from './entities/GaussTurret';
 import { GaussReticleDefs, GaussReticles, updateGaussReticles, type GaussReticleData } from './entities/GaussReticle';
 import { RocketMorphDefs, RocketMorphs, updateRocketMorphs, type RocketMorphData } from './entities/RocketMorph';
+import { LaserTurretDefs, LaserTurrets, updateLaserTurrets, type LaserData } from './entities/LaserTurret';
 
 const xhairHalfSize = 4;
 const crosshairPath = `M ${-xhairHalfSize} 0 H ${xhairHalfSize} M 0 ${-xhairHalfSize} V ${xhairHalfSize}`;
@@ -176,6 +177,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
     const gaussReticles = createSignal<GaussReticleData[]>([]);
     const portals = createSignal<PortalData[]>([]);
     getPortals(portals, replay);
+    const laserTurrets = createSignal<LaserData[]>([]);
     const rocketMorphs = createSignal<RocketMorphData[]>([]);
 
     const rocketNinjas = createSignal<RocketData[]>([]);
@@ -342,6 +344,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
         updateGauss(gauss, replay);
         updateGaussReticles(gaussReticles, replay);
         updateEvilNinjas(evilNinjas, replay, partialFrame);
+        updateLaserTurrets(laserTurrets, replay, partialFrame);
         updateRocketMorphs(rocketMorphs, replay);
 
         // update rocket ninjas
@@ -418,6 +421,7 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                     <GaussDefs />
                     <GaussReticleDefs />
                     <PortalDefs />
+                    <LaserTurretDefs />
                     <RocketMorphDefs />
                     <path id="crosshair" stroke-width="1.5" fill="none" d={crosshairPath} />
                 </defs>
@@ -439,11 +443,12 @@ export function ReplayApp(props: { replay: Replay, editor: Editor, globalEventSt
                 <ChaseDrones chaseDrones={chaseDrones[0]} />
                 <FloorGuards floorGuards={floorGuards[0]} />
                 <Deathballs deathballs={deathballs[0]} />
-                <RocketTurrets rocketTurrets={rocketTurrets[0]} />
-                <RocketMorphs rocketMorphs={rocketMorphs[0]} />
                 <Gauss gaussTurrets={gauss[0]} />
                 <GaussReticles gauss={gaussReticles[0]} />
+                <RocketTurrets rocketTurrets={rocketTurrets[0]} />
+                <RocketMorphs rocketMorphs={rocketMorphs[0]} />
                 <Rockets rockets={rockets[0]} />
+                <LaserTurrets laserTurrets={laserTurrets[0]} />
                 <Thwumps thwumps={thwumps[0]} />
                 <EvilNinjas evilNinjas={evilNinjas[0]} />
                 <Ninja class="ninja preview" ninja={ninjaPreview} bones={ninjaPreviewBones} />

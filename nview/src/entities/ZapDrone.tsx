@@ -1,6 +1,7 @@
 import { Index, Show, type Accessor, type Signal } from "solid-js";
 import type { Replay } from "../assets/ntools_rs";
 import type { EntitiesProps } from "../Editor";
+import type { LaserData } from "./LaserTurret";
 
 // Unimplemented drone animation:
 // - eye retracts and extends in the new direction
@@ -71,8 +72,8 @@ export function ZapDroneDefs() {
 }
 
 export function ModeIndicator({ entities }: { entities: EntitiesProps }) {
-    const entity = () => entities.zapDrones().at(0) ?? entities.chaseDrones().at(0) ?? entities.chaingunDrones().at(0) ?? entities.laserDrones().at(0);
-    const transform = (entity: Accessor<ZapDroneData | undefined>) => {
+    const entity = () => entities.zapDrones().at(0) ?? entities.chaseDrones().at(0) ?? entities.chaingunDrones().at(0) ?? entities.laserDrones().at(0) ?? entities.laserTurrets().at(0);
+    const transform = (entity: Accessor<ZapDroneData | LaserData | undefined>) => {
         const $entity = entity();
         if ($entity) {
             const { x, y, deg } = $entity;

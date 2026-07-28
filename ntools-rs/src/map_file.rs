@@ -2,7 +2,7 @@ use std::{collections::{BTreeMap, VecDeque}, io::{Cursor, Read}};
 
 use byte_slice_cast::{AsByteSlice, AsSliceOf};
 
-use crate::{editor::{editor_entity::{EditorEntity, EntityId, EntityPos}, editor_state::EditorEntities}, mode::{DroneMode, PortalMode}, orientation::{Orientation, OrientationBinary, OrientationCardinal, OrientationExt}, tile::Tiles};
+use crate::{editor::{editor_entity::{EditorEntity, EntityId, EntityPos}, editor_state::EditorEntities}, mode::{DroneMode, LaserTurretMode, PortalMode}, orientation::{Orientation, OrientationBinary, OrientationCardinal, OrientationExt}, tile::Tiles};
 
 pub struct MapFile {
     pub game_mode: u32,
@@ -153,6 +153,7 @@ impl <'a> Iterator for EntityDataParser<'a> {
             let orientation_binary = OrientationBinary::from(orientation_data);
             let drone_mode = DroneMode::from(mode);
             let portal_mode = PortalMode::from(mode);
+            let laser_turret_mode = LaserTurretMode::from(mode);
 
             match EntityId::try_from(entity_id).ok()? {
                 EntityId::Ninja => return Some(EditorEntity::Ninja { pos, orientation: orientation_ext }),
@@ -178,7 +179,7 @@ impl <'a> Iterator for EntityDataParser<'a> {
                 EntityId::Thwump => return Some(EditorEntity::Thwump { pos, orientation }),
                 EntityId::ToggleMine => return Some(EditorEntity::ToggleMine { pos }),
                 EntityId::EvilNinja => return Some(EditorEntity::EvilNinja { pos }),
-                EntityId::LaserTurret => return Some(EditorEntity::LaserTurret { pos, orientation }),
+                EntityId::LaserTurret => return Some(EditorEntity::LaserTurret { pos, orientation, mode: laser_turret_mode }),
                 EntityId::BoostPad => return Some(EditorEntity::BoostPad { pos }),
                 EntityId::Deathball => return Some(EditorEntity::Deathball { pos }),
                 EntityId::MiniDrone => return Some(EditorEntity::MiniDrone { pos, orientation: orientation_cardinal, mode: drone_mode }),
@@ -272,7 +273,7 @@ fn editor_entities_to_bytes(entities: &EditorEntities) -> Vec<u8> {
                 EditorEntity::Thwump { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
                 EditorEntity::ToggleMine { pos } => bytes.extend([id, pos.x as u8, pos.y as u8, 0, 0]),
                 EditorEntity::EvilNinja { pos } => bytes.extend([id, pos.x as u8, pos.y as u8, 0, 0]),
-                EditorEntity::LaserTurret { pos, orientation } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, 0]),
+                EditorEntity::LaserTurret { pos, orientation, mode } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, mode as u8]),
                 EditorEntity::BoostPad { pos } => bytes.extend([id, pos.x as u8, pos.y as u8, 0, 0]),
                 EditorEntity::Deathball { pos } => bytes.extend([id, pos.x as u8, pos.y as u8, 0, 0]),
                 EditorEntity::MiniDrone { pos, orientation, mode } => bytes.extend([id, pos.x as u8, pos.y as u8, orientation as u8, mode as u8]),

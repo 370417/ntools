@@ -18,8 +18,8 @@ function equals(a: GaussData, b: GaussData): boolean {
     return a.x === b.x && a.y === b.y && a.shot_x === b.shot_x && a.shot_y === b.shot_y && a.state == b.state;
 }
 
-function transform(rocketTurret: Accessor<GaussData>): string {
-    const { x, y } = rocketTurret();
+function transform(gaussTurret: Accessor<GaussData>): string {
+    const { x, y } = gaussTurret();
     return `translate(${x},${y})`;
 }
 

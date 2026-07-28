@@ -68,9 +68,38 @@ impl From<u8> for PortalMode {
     }
 }
 
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(debug_assertions, derive(Debug))]
+pub enum LaserTurretMode {
+    CW,
+    CCW,
+}
+
+impl LaserTurretMode {
+    pub fn flip_mut(&mut self) {
+        *self = self.flip();
+    }
+
+    fn flip(self) -> Self {
+        match self {
+            Self::CW => Self::CCW,
+            Self::CCW => Self::CW,
+        }
+    }
+}
+
+impl From<u8> for LaserTurretMode {
+    fn from(value: u8) -> Self {
+        match value % 2 {
+            0 => Self::CW,
+            _ => Self::CCW,
+        }
+    }
+}
+
 #[derive(Clone, Copy)]
 pub struct Modes {
     pub drone_mode: DroneMode,
     pub portal_mode: PortalMode,
-    // todo: add mode for laser turrets
+    pub laser_turret_mode: LaserTurretMode,
 }

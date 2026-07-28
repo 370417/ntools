@@ -32,6 +32,7 @@ import { PortalDefs, Portals, type PortalData } from "./entities/Portal";
 import { ROCKET_IDLE, RocketTurretDefs, RocketTurrets, type RocketTurretData } from "./entities/RocketTurret";
 import { Gauss, GAUSS_IDLE, GaussDefs, type GaussData } from "./entities/GaussTurret";
 import { RocketMorphDefs, RocketMorphs, type RocketMorphData } from "./entities/RocketMorph";
+import { LaserTurretDefs, LaserTurrets, type LaserData } from "./entities/LaserTurret";
 
 const COLS = 42;
 const ROWS = 23;
@@ -74,8 +75,9 @@ const ENTITY_BOUNCE_BLOCK = 17;
 const ENTITY_ROCKET = 18;
 const ENTITY_GAUSS = 19;
 const ENTITY_THWUMP = 20;
-const ENTITY_EVIL_NINJA = 22;
 const ENTITY_TOGGLE_MINE = 21;
+const ENTITY_EVIL_NINJA = 22;
+const ENTITY_LASER_TURRET = 23;
 const ENTITY_BOOST_PAD = 24;
 const ENTITY_DEATHBALL = 25;
 const ENTITY_BAT = 27;
@@ -158,6 +160,8 @@ export type EntitiesProps = {
     setThwumps: Setter<ThwumpData[]>,
     evilNinjas: Accessor<EvilNinjaData[]>,
     setEvilNinjas: Setter<EvilNinjaData[]>,
+    laserTurrets: Accessor<LaserData[]>,
+    setLaserTurrets: Setter<LaserData[]>,
     boostPads: Accessor<BoostPadData[]>,
     setBoostPads: Setter<BoostPadData[]>,
     deathballs: Accessor<DeathballData[]>,
@@ -195,6 +199,7 @@ function createEntities(): EntitiesProps {
     const [gaussTurrets, setGaussTurrets] = createSignal<GaussData[]>([]);
     const [thwumps, setThwumps] = createSignal<ThwumpData[]>([]);
     const [evilNinjas, setEvilNinjas] = createSignal<EvilNinjaData[]>([]);
+    const [laserTurrets, setLaserTurrets] = createSignal<LaserData[]>([]);
     const [boostPads, setBoostPads] = createSignal<BoostPadData[]>([]);
     const [deathballs, setDeathballs] = createSignal<DeathballData[]>([]);
     const [bats, setBats] = createSignal<BatData[]>([]);
@@ -224,6 +229,7 @@ function createEntities(): EntitiesProps {
         gaussTurrets, setGaussTurrets,
         thwumps, setThwumps,
         evilNinjas, setEvilNinjas,
+        laserTurrets, setLaserTurrets,
         boostPads, setBoostPads,
         deathballs, setDeathballs,
         bats, setBats,
@@ -256,6 +262,7 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
     const gausTurrets: GaussData[] = [];
     const thwumps: ThwumpData[] = [];
     const evilNinjas: EvilNinjaData[] = [];
+    const laserTurrets: LaserData[] = [];
     const boostPads: BoostPadData[] = [];
     const deathballs: DeathballData[] = [];
     const bats: BatData[] = [];
@@ -359,6 +366,8 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
                 type: EVIL_NINJA_UNTOUCHED,
                 scale: 1,
             });
+        } else if (entity.type_int === ENTITY_LASER_TURRET) {
+            laserTurrets.push(entityCopy);
         } else if (entity.type_int === ENTITY_BOOST_PAD) {
             boostPads.push({
                 ...entityCopy,
@@ -415,6 +424,7 @@ function updateEntities(entities: EntitiesProps, lines: Line[], exportedEntities
     entities.setGaussTurrets(gausTurrets);
     entities.setThwumps(thwumps);
     entities.setEvilNinjas(evilNinjas);
+    entities.setLaserTurrets(laserTurrets);
     entities.setBoostPads(boostPads);
     entities.setDeathballs(deathballs);
     entities.setBats(bats);
@@ -448,7 +458,7 @@ function Entities({ entities }: { entities: EntitiesProps }) {
         <Gauss gaussTurrets={entities.gaussTurrets} />
         <RocketTurrets rocketTurrets={entities.rocketTurrets} />
         <RocketMorphs rocketMorphs={entities.rocketMorphs} />
-        {/* laser turret */}
+        <LaserTurrets laserTurrets={entities.laserTurrets} />
         <Thwumps thwumps={entities.thwumps} />
         <EvilNinjas evilNinjas={entities.evilNinjas} />
         <For each={entities.ninjas()}>
@@ -737,6 +747,7 @@ export function EditorApp(props: {
                 <TrapSwitchDefs />
                 <BoostPadDefs />
                 <ThwumpDefs />
+                <LaserTurretDefs />
                 <EvilNinjaDefs />
                 <ChaingunDroneDefs />
                 <LaserDroneDefs />

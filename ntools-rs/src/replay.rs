@@ -757,6 +757,37 @@ impl Replay {
         self.current_sim.entities.rocket_morphs[i].is_active
     }
 
+    pub fn laser_turrets_len(&self) -> usize {
+        self.current_sim.entities.laser_turrets.len()
+    }
+
+    pub fn laser_turret_x(&self, i: usize, partial_frame: f64) -> f64 {
+        self.current_sim.entities.laser_turrets[i].pos_old.x.lerp(self.current_sim.entities.laser_turrets[i].pos.x, partial_frame)
+    }
+
+    pub fn laser_turret_y(&self, i: usize, partial_frame: f64) -> f64 {
+        self.current_sim.entities.laser_turrets[i].pos_old.y.lerp(self.current_sim.entities.laser_turrets[i].pos.y, partial_frame)
+    }
+
+    pub fn laser_turret_deg(&self, i: usize, partial_frame: f64) -> f64 {
+        let angle = self.current_sim.entities.laser_turrets[i].angle;
+        let angle_old = self.current_sim.entities.laser_turrets[i].angle_old;
+        // don't interpolate if angle and angle_old are separated by 2pi, e.g. angle has just wrapped around frmo 2pi to 0
+        if (angle - angle_old).abs() < 2.5 {
+            angle_old.lerp(angle, partial_frame).to_degrees()
+        } else {
+            angle.to_degrees()
+        }
+    }
+
+    pub fn laser_turret_end_x(&self, i: usize, partial_frame: f64) -> f64 {
+        self.current_sim.entities.laser_turrets[i].laser_endpoint_old.x.lerp(self.current_sim.entities.laser_turrets[i].laser_endpoint.x, partial_frame)
+    }
+
+    pub fn laser_turret_end_y(&self, i: usize, partial_frame: f64) -> f64 {
+        self.current_sim.entities.laser_turrets[i].laser_endpoint_old.y.lerp(self.current_sim.entities.laser_turrets[i].laser_endpoint.y, partial_frame)
+    }
+
     pub fn export_attract(&self, editor: &Editor) -> Box<[u8]> {
         to_attract_bytes(&editor.export_map(), &self.inputs).into()
     }

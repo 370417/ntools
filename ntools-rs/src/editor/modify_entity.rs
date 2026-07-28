@@ -180,6 +180,10 @@ impl ModifyEntity {
             },
             &mut EditorEntity::RocketTurret { pos } => self.modified_entity = EditorEntity::RocketMorph { pos },
             &mut EditorEntity::RocketMorph { pos } => self.modified_entity = EditorEntity::RocketTurret { pos },
+            EditorEntity::LaserTurret { mode, .. } => {
+                modes.laser_turret_mode.flip_mut();
+                *mode = modes.laser_turret_mode;
+            }
             _ => {}
         }
     }

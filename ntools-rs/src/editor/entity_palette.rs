@@ -118,7 +118,7 @@ fn entity_pos_in_palette(entity_id: EntityId) -> Option<EntityPos> {
         EntityId::Thwump => Some(EntityPos { x: -5, y: 10 }),
         EntityId::ToggleMine => Some(EntityPos { x: -5, y: 0 }),
         EntityId::EvilNinja => Some(EntityPos { x: 5, y: 10 }),
-        // EntityId::LaserTurret => Some(EntityPos { x: -10, y: 10 }),
+        EntityId::LaserTurret => Some(EntityPos { x: -10, y: 10 }),
         EntityId::BoostPad => Some(EntityPos { x: 5, y: -10 }),
         EntityId::Deathball => Some(EntityPos { x: -10, y: -10 }),
         // EntityId::MiniDrone => Some(EntityPos { x: 10, y: 10 }),

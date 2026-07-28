@@ -1,6 +1,6 @@
 use glam::DVec2;
 
-use crate::{entity::{Entities, EntityIndex, GridEntityType, boost_pad::BoostPad, bounce_block::BounceBlock, chase_drone::ChaseDrone, deathball::Deathball, door::RegularDoor, evil_ninja::EvilNinja, floor_guard::FloorGuard, gauss::Gauss, gold::collected_golds, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, on_door_state_change, portal::{PortalSpatialMap, get_portal_ninja, teleport_ninja}, rocket::{Rocket, RocketState}, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::Grid, ninja::{AnimState, HumanNinja, Ninja, NinjaState, PastHumanNinja, PastNinja}, rocket_ninja::RocketNinja, segment::Segment};
+use crate::{entity::{Entities, EntityIndex, GridEntityType, boost_pad::BoostPad, bounce_block::BounceBlock, chase_drone::ChaseDrone, deathball::Deathball, door::RegularDoor, evil_ninja::EvilNinja, floor_guard::FloorGuard, gauss::Gauss, gold::collected_golds, laser_turret::LaserTurret, mine::{Mine, MineState, mine_diffs, mines_from_diff}, move_entities, on_door_state_change, portal::{PortalSpatialMap, get_portal_ninja, teleport_ninja}, rocket::{Rocket, RocketState}, shove_thwump::ShoveThwump, thwump::Thwump, zap_drone_::ZapDrone}, grid::Grid, ninja::{AnimState, HumanNinja, Ninja, NinjaState, PastHumanNinja, PastNinja}, rocket_ninja::RocketNinja, segment::Segment};
 
 #[derive(Clone)]
 pub struct Simulation {
@@ -46,6 +46,7 @@ pub struct KeyFrame {
     evil_ninjas: Vec<EvilNinja>,
     rockets: Vec<Rocket>,
     gauss: Vec<Gauss>,
+    laser_turrets: Vec<LaserTurret>,
 }
 
 impl Input {
@@ -131,6 +132,9 @@ impl Simulation {
         }
         for evil_ninja in &mut self.entities.evil_ninjas {
             evil_ninja.think(self.frame, &mut self.active_evil_ninja_count, past_ninjas);
+        }
+        for laser_turret in &mut self.entities.laser_turrets {
+            laser_turret.think(&mut self.ninja, segments, &self.entities.doors);
         }
         // call move_entities right after think for deathballs to get them in the correct grid cell since they get moved in the think function.
         move_entities(&mut self.entities.deathballs, &mut self.entity_grid, segments, &self.entities.doors);
@@ -220,6 +224,7 @@ impl KeyFrame {
             evil_ninjas: sim.entities.evil_ninjas.clone(),
             rockets: sim.entities.rockets.clone(),
             gauss: sim.entities.gauss.clone(),
+            laser_turrets: sim.entities.laser_turrets.clone(),
         }
     }
 
@@ -275,6 +280,8 @@ impl KeyFrame {
         self.rockets.clone_into(&mut sim.entities.rockets);
 
         self.gauss.clone_into(&mut sim.entities.gauss);
+
+        self.laser_turrets.clone_into(&mut sim.entities.laser_turrets);
 
         sim.entity_grid.drain_mobs();
         // add all mobs back into entity_grid

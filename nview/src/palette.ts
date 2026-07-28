@@ -244,6 +244,8 @@ const colorVarNames = [
     '--rocket-turret-outer',
     '--rocket-turret-inner',
     '--rocket',
+    '--laser-turret-body',
+    '--laser-turret-beam',
     '--evil-ninja',
     '--time-remaining',
     '--hardcore-time',
@@ -537,6 +539,14 @@ const colorVarPaletteLocations: Record<ColorVarName, { file: PaletteFileName, in
     '--rocket': {
         file: 'entityRocket',
         index: 2,
+    },
+    '--laser-turret-body': {
+        file: 'entityDualLaser',
+        index: 0,
+    },
+    '--laser-turret-beam': {
+        file: 'entityDualLaser',
+        index: 1,
     },
     '--evil-ninja': {
         file: 'entityEvilNinja',
