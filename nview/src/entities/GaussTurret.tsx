@@ -50,7 +50,7 @@ export function Gauss(props: { gaussTurrets: Accessor<GaussData[]> }) {
         {gauss => <>
             <use href={gauss().state > 0 ? '#gauss-active' : '#gauss-idle'} transform={transform(gauss)} />
             <Show when={typeof gauss().shot_x === 'number'}>
-                <line x1={gauss().x} x2={gauss().shot_x} y1={gauss().y} y2={gauss().shot_y} stroke="black" />
+                <line x1={gauss().x} x2={gauss().shot_x} y1={gauss().y} y2={gauss().shot_y} stroke="var(--gauss-turret-laser)" />
             </Show>
         </>}
     </Index>
@@ -65,14 +65,14 @@ const activeY = outerRadius * Math.sin(activeAngle * Math.PI / 180);
 export function GaussDefs() {
     return <>
         <g id="gauss-idle">
-            <path d={`M ${0} ${outerRadius} A ${outerRadius} ${outerRadius} 0 1 1 ${0} ${-outerRadius}`} stroke="black" stroke-width="3.5" stroke-linecap="round" fill="none" />
-            <circle r={outerRadius} stroke="black" stroke-width="2" fill="none" />
-            <circle r="3" fill="maroon" />
+            <path d={`M ${0} ${outerRadius} A ${outerRadius} ${outerRadius} 0 1 1 ${0} ${-outerRadius}`} stroke="var(--gauss-turret-outer)" stroke-width="3.5" stroke-linecap="round" fill="none" />
+            <circle r={outerRadius} stroke="var(--gauss-turret-outer)" stroke-width="2" fill="none" />
+            <circle r="3" fill="var(--gauss-turret-inner)" />
         </g>
         <g id="gauss-active">
-            <path d={`M ${0} ${outerRadius} A ${outerRadius} ${outerRadius} 0 1 1 ${0} ${-outerRadius}`} stroke="black" stroke-width="3.5" stroke-linecap="round" fill="none" />
-            <path d={`M ${activeX} ${activeY} A ${outerRadius} ${outerRadius} 0 1 1 ${activeX} ${-activeY}`} stroke="black" stroke-width="2" stroke-linecap="round" fill="none" />
-            <circle r="3" fill="maroon" />
+            <path d={`M ${0} ${outerRadius} A ${outerRadius} ${outerRadius} 0 1 1 ${0} ${-outerRadius}`} stroke="var(--gauss-turret-outer)" stroke-width="3.5" stroke-linecap="round" fill="none" />
+            <path d={`M ${activeX} ${activeY} A ${outerRadius} ${outerRadius} 0 1 1 ${activeX} ${-activeY}`} stroke="var(--gauss-turret-outer)" stroke-width="2" stroke-linecap="round" fill="none" />
+            <circle r="3" fill="var(--gauss-turret-inner)" />
         </g>
     </>;
 }

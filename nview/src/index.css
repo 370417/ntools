@@ -91,6 +91,11 @@
     --rocket-turret-inner: #910A46;
     --rocket: #000000;
 
+    --gauss-turret-outer: #000000;
+    --gauss-turret-inner: #910A46;
+    --gauss-turret-crosshairs: #000000;
+    --gauss-turret-laser: #910A46;
+
     --laser-turret-body: #000000;
     --laser-turret-beam: #910A46;
 

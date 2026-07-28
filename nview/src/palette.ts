@@ -244,6 +244,10 @@ const colorVarNames = [
     '--rocket-turret-outer',
     '--rocket-turret-inner',
     '--rocket',
+    '--gauss-turret-outer',
+    '--gauss-turret-inner',
+    '--gauss-turret-crosshairs',
+    '--gauss-turret-laser',
     '--laser-turret-body',
     '--laser-turret-beam',
     '--evil-ninja',
@@ -539,6 +543,22 @@ const colorVarPaletteLocations: Record<ColorVarName, { file: PaletteFileName, in
     '--rocket': {
         file: 'entityRocket',
         index: 2,
+    },
+    '--gauss-turret-outer': {
+        file: 'entityTurret',
+        index: 1,
+    },
+    '--gauss-turret-inner': {
+        file: 'entityTurret',
+        index: 0,
+    },
+    '--gauss-turret-crosshairs': {
+        file: 'entityTurret',
+        index: 2,
+    },
+    '--gauss-turret-laser': {
+        file: 'entityTurret',
+        index: 3,
     },
     '--laser-turret-body': {
         file: 'entityDualLaser',

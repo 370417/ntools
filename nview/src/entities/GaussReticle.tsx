@@ -65,19 +65,19 @@ const aim3corner = 3;
 export function GaussReticleDefs() {
     return <>
         <g id="aim0">
-            <path d={`M ${-aim0size} ${-aim0size + aim0corner} V ${-aim0size} h ${aim0corner} M ${aim0size - aim0corner} ${-aim0size} H ${aim0size} v ${aim0corner} M ${aim0size} ${aim0size - aim0corner} V ${aim0size} h ${-aim0corner} M ${-aim0size + aim0corner} ${aim0size} H ${-aim0size} v ${-aim0corner}`} stroke="black" fill="none" />
+            <path d={`M ${-aim0size} ${-aim0size + aim0corner} V ${-aim0size} h ${aim0corner} M ${aim0size - aim0corner} ${-aim0size} H ${aim0size} v ${aim0corner} M ${aim0size} ${aim0size - aim0corner} V ${aim0size} h ${-aim0corner} M ${-aim0size + aim0corner} ${aim0size} H ${-aim0size} v ${-aim0corner}`} stroke="var(--gauss-turret-crosshairs)" fill="none" />
         </g>
         <g id="aim1">
-            <path d={`M ${-aim1size} ${-aim1size + aim1corner} V ${-aim1size} h ${aim1corner} M ${aim1size - aim1corner} ${-aim1size} H ${aim1size} v ${aim1corner} M ${aim1size} ${aim1size - aim1corner} V ${aim1size} h ${-aim1corner} M ${-aim1size + aim1corner} ${aim1size} H ${-aim1size} v ${-aim1corner}`} stroke="black" fill="none" />
+            <path d={`M ${-aim1size} ${-aim1size + aim1corner} V ${-aim1size} h ${aim1corner} M ${aim1size - aim1corner} ${-aim1size} H ${aim1size} v ${aim1corner} M ${aim1size} ${aim1size - aim1corner} V ${aim1size} h ${-aim1corner} M ${-aim1size + aim1corner} ${aim1size} H ${-aim1size} v ${-aim1corner}`} stroke="var(--gauss-turret-crosshairs)" fill="none" />
         </g>
         <g id="aim2">
-            <path d={`M ${-aim2size} ${-aim2size + aim2corner} V ${-aim2size} h ${aim2corner} M ${aim2size - aim2corner} ${-aim2size} H ${aim2size} v ${aim2corner} M ${aim2size} ${aim2size - aim2corner} V ${aim2size} h ${-aim2corner} M ${-aim2size + aim2corner} ${aim2size} H ${-aim2size} v ${-aim2corner}`} stroke="black" fill="none" />
+            <path d={`M ${-aim2size} ${-aim2size + aim2corner} V ${-aim2size} h ${aim2corner} M ${aim2size - aim2corner} ${-aim2size} H ${aim2size} v ${aim2corner} M ${aim2size} ${aim2size - aim2corner} V ${aim2size} h ${-aim2corner} M ${-aim2size + aim2corner} ${aim2size} H ${-aim2size} v ${-aim2corner}`} stroke="var(--gauss-turret-crosshairs)" fill="none" />
         </g>
         <g id="aim3">
-            <path d={`M ${-aim3size} ${-aim3size + aim3corner} V ${-aim3size} h ${aim3corner} M ${aim3size - aim3corner} ${-aim3size} H ${aim3size} v ${aim3corner} M ${aim3size} ${aim3size - aim3corner} V ${aim3size} h ${-aim3corner} M ${-aim3size + aim3corner} ${aim3size} H ${-aim3size} v ${-aim3corner}`} stroke="black" fill="none" />
+            <path d={`M ${-aim3size} ${-aim3size + aim3corner} V ${-aim3size} h ${aim3corner} M ${aim3size - aim3corner} ${-aim3size} H ${aim3size} v ${aim3corner} M ${aim3size} ${aim3size - aim3corner} V ${aim3size} h ${-aim3corner} M ${-aim3size + aim3corner} ${aim3size} H ${-aim3size} v ${-aim3corner}`} stroke="var(--gauss-turret-crosshairs)" fill="none" />
         </g>
         <g id="gauss-crosshair">
-            <path d="M 0 -4 V 4 M -4 0 H 4" stroke="black" fill="none" />
+            <path d="M 0 -4 V 4 M -4 0 H 4" stroke="var(--gauss-turret-crosshairs)" fill="none" />
         </g>
     </>;
 }
