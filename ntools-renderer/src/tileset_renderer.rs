@@ -20,7 +20,9 @@ impl TilesetRenderer {
             pixmap.fill(tile_color);
 
             let mut stroke = Stroke::default();
-            stroke.width = 2.0;
+            // stroke width scales with resolution, is always even so that half the stroke
+            // takes up an exact amount of pixels, and is at least 2
+            stroke.width = 2.0 * (dims.tile_size_px as f32 / 24.0).round().max(1.0);
             pixmap.stroke_path(&path, &tile_outline_color, &stroke, Transform::identity(), None);
 
             let mut mask = Mask::new(dims.frame_width_px(), dims.frame_height_px()).unwrap();

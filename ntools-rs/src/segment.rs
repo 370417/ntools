@@ -137,6 +137,18 @@ impl Segment {
         }
     }
 
+    /// Get the normal vector of the segment at a point along the segment
+    /// if there is an unambiguous normal. Doesn't account for pos being on
+    /// the start/endpoint of the segment
+    pub fn normal(&self, pos: DVec2) -> Option<DVec2> {
+        match self {
+            Segment::Linear { start, end, .. } => Some((start - end).perp().normalize()),
+            Segment::Circular { center, curvature: Curvature::Concave, .. } => (center - pos).try_normalize(),
+            Segment::Circular { center, curvature: Curvature::Convex, .. } => (pos - center).try_normalize(),
+            Segment::Door { .. } => None,
+        }
+    }
+
     /// Two outside segments are fully overlapping if they have the same start
     /// and end points (in either order).
     pub fn has_full_overlap(&self, other: &Segment) -> bool {

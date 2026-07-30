@@ -58,20 +58,32 @@ impl LaserTurret {
             .cloned()
             .collect();
 
-        if let Some((_segment, closest_point)) = get_closest_point(self.pos, &local_segments) {
+        if let Some((segment, closest_point)) = get_closest_point(self.pos, &local_segments) {
             let distance = (self.pos - closest_point.point).length();
+            // normal in case self.pos is touching the segment
+            let default_normal = segment.normal(self.pos).unwrap_or(DVec2::from_angle(self.angle));
             if closest_point.is_back_facing {
-                let normal = (closest_point.point - self.pos).normalize_or(DVec2::from_angle(self.angle));
+                let normal = (closest_point.point - self.pos).normalize_or(default_normal);
                 self.pos = closest_point.point + normal * RADIUS;
                 self.pos_old = self.pos;
                 self.movement_mode = MovementMode::Surface { surface_angle: normal.to_angle() };
+                self.angle = normal.to_angle();
+                self.angle_old = self.angle;
             } else if distance < 12.0 {
-                let normal = (self.pos - closest_point.point).normalize_or(DVec2::from_angle(self.angle));
+                let normal = (self.pos - closest_point.point).normalize_or(default_normal);
                 self.pos = closest_point.point + normal * RADIUS;
                 self.pos_old = self.pos;
                 self.movement_mode = MovementMode::Surface { surface_angle: normal.to_angle() };
+                self.angle = normal.to_angle();
+                self.angle_old = self.angle;
             }
         }
+
+        // init the laser beam visual
+        let dir = DVec2::from_angle(self.angle);
+        let raycast_distance = get_raycast_distance(self.pos, dir, segments, doors).unwrap_or(2000.0);
+        self.laser_endpoint = self.pos + dir * raycast_distance;
+        self.laser_endpoint_old = self.laser_endpoint;
     }
 
     pub fn think(&mut self, ninja: &mut Ninja, segments: &Grid<Segment>, doors: &Doors) {
@@ -110,7 +122,7 @@ impl LaserTurret {
             return;
         }
 
-        let (segment, mut closest_point) = get_closest_point(self.pos, &local_segments).unwrap();
+        let (_segment, mut closest_point) = get_closest_point(self.pos, &local_segments).unwrap();
 
         for _ in 0..10 {
             let dir = DVec2::from_angle(*surface_angle);
@@ -120,7 +132,7 @@ impl LaserTurret {
 
             let old_normal = DVec2::from_angle(*surface_angle);
             let new_normal = (self.pos - new_closest_point.point).normalize_or_zero();
-            if old_normal.dot(new_normal) < 0.0000001 {
+            if old_normal.dot(new_normal) < 0.0000001 || !segment.is_from_tile() {
                 // change directions when hitting a wall
                 self.rotation_mode.flip_mut();
                 // move away from the wall
