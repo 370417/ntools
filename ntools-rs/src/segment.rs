@@ -254,7 +254,7 @@ impl Segment {
             Self::Circular { end, curvature, .. } => {
                 format!("A {} {} 0 0 {} {} {}", TILE_SIZE, TILE_SIZE, curvature.sweep_flag(), end.x, end.y)
             }
-            _ => todo!(),
+            _ => String::new(),
         }
     }
 }

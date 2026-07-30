@@ -1,16 +1,20 @@
 mod anim_data;
 mod attract;
 mod collision_util;
-mod editor;
+pub mod editor;
 mod entity;
 mod grid;
 mod map_file;
 mod mode;
 mod ninja;
 mod orientation;
-mod replay;
+pub mod replay;
 mod replay_file;
 mod rocket_ninja;
-mod segment;
+pub mod segment;
 mod simulation;
 mod tile;
+
+pub use glam;
+pub use editor::editor_entity::EntityId;
+pub use entity::mine::MineState;

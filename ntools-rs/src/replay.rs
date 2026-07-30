@@ -4,7 +4,7 @@ use futures_channel::oneshot::Sender;
 use glam::{DVec2, FloatExt};
 use wasm_bindgen::prelude::*;
 
-use crate::{anim_data::flatten_bones, attract::to_attract_bytes, editor::Editor, entity::{mine::Mine, portal::PortalSpatialMap, rocket::RocketState}, grid::{COLS, Grid, ROWS}, ninja::{Ninja, PastNinja}, orientation::OrientationExt, replay_file::to_outte_replay_bytes, segment::{Segment, extract_path}, simulation::{Input, KeyFrame, Simulation}, tile::TILE_SIZE};
+use crate::{anim_data::flatten_bones, attract::to_attract_bytes, editor::Editor, entity::{Entities, mine::Mine, portal::PortalSpatialMap, rocket::RocketState}, grid::{COLS, Grid, ROWS}, ninja::{Ninja, PastNinja}, orientation::OrientationExt, replay_file::to_outte_replay_bytes, segment::{Segment, extract_path}, simulation::{Input, KeyFrame, Simulation}, tile::TILE_SIZE};
 
 #[wasm_bindgen]
 pub struct Replay {
@@ -817,6 +817,14 @@ impl Replay {
         } else if self.preview_sim.frame as usize == self.past_ninjas.len() {
             self.past_ninjas.push(self.preview_sim.ninja.to_past_ninja(input_bytes));
         }
+    }
+
+    pub fn segments(&self) -> Vec<Segment> {
+        self.segments.flat_iter().filter(|s| s.is_from_tile()).cloned().collect()
+    }
+
+    pub fn entities(&self) -> &Entities {
+        &self.current_sim.entities
     }
 }
 
