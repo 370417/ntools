@@ -23,10 +23,10 @@ fn main() -> ExitCode {
     let mut replay = editor.load_outte_replay(replay_bytes, false, false).unwrap();
 
     let palette = Palette::new();
-    let theme = ColorTheme::Dusk;
+    let theme = ColorTheme::Vasquez;
 
     let mut dims = Dimensions::new();
-    // dims.tile_size_px = 24;
+    // dims.tile_size_px = 8;
     dims.force_alias = true;
 
     // match screenshot::screenshot("image.png", replay, theme, &dims) {

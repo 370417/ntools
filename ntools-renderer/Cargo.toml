@@ -7,7 +7,6 @@ edition = "2024"
 anyhow = "1.0.104"
 # parsing command line arguments
 clap = { version = "4.6.4", features = ["derive"] }
-crossbeam-channel = "0.5.16"
 gif = "0.14.2"
 # game logic
 ntools-rs = { path = "../ntools-rs" }
