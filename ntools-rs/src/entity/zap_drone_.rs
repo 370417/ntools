@@ -1,7 +1,7 @@
 //! This module was called zap_drone, but rust-analyzer is stuck thinking it
 //! is called zap_Drone and refuses to work with it, hence the added underscore at the end.
 
-use glam::{DMat2, DVec2};
+use glam::{DMat2, DVec2, FloatExt};
 
 use crate::{collision_util::overlap_circle_vs_circle, entity::{Entity, GridEntityType, Mob, door::Doors, thwump::segments_in_fov}, grid::{Grid, GridPos}, mode::DroneMode, ninja::{self, HumanNinja}, orientation::OrientationCardinal, segment::Segment, tile::TILE_SIZE};
 
@@ -11,6 +11,7 @@ pub const SPEED: f64 = 8.0 / 7.0;
 #[derive(Clone)]
 pub struct ZapDrone {
     pub pos: DVec2,
+    pos_old: DVec2,
     pub orientation: OrientationCardinal,
     pub mode: DroneMode,
     target: DVec2,
@@ -20,6 +21,7 @@ impl ZapDrone {
     pub fn new(pos: DVec2, orientation: OrientationCardinal, mode: DroneMode) -> ZapDrone {
         ZapDrone {
             pos,
+            pos_old: pos,
             orientation,
             mode,
             target: pos,
@@ -32,12 +34,12 @@ impl ZapDrone {
         }
     }
 
-    pub fn x(&self, _partial_frame: f64) -> f64 {
-        self.pos.x
+    pub fn x(&self, partial_frame: f64) -> f64 {
+        self.pos_old.x.lerp(self.pos.x, partial_frame)
     }
 
-    pub fn y(&self, _partial_frame: f64) -> f64 {
-        self.pos.y
+    pub fn y(&self, partial_frame: f64) -> f64 {
+        self.pos_old.y.lerp(self.pos.y, partial_frame)
     }
 }
 
@@ -62,6 +64,7 @@ impl Mob for ZapDrone {
     }
 
     fn move_entity(&mut self, segments: &Grid<Segment>, doors: &Doors) {
+        self.pos_old = self.pos;
         drone_move(
             &mut self.pos,
             &mut self.orientation,

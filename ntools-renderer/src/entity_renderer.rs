@@ -1,5 +1,5 @@
 use ntools_rs::{EntityId, glam::DVec2, replay::Replay};
-use tiny_skia::{ColorU8, Mask, Paint, Path, PathBuilder, Pixmap, PixmapPaint, Rect, Stroke, Transform};
+use tiny_skia::{BlendMode, ColorU8, Mask, Paint, Path, PathBuilder, Pixmap, PixmapPaint, Rect, Stroke, Transform};
 
 use crate::{dimensions::Dimensions, palette::{ColorTheme, Palette, to_paint}};
 
@@ -501,11 +501,13 @@ fn draw_sprite(base_pixmap: &mut Pixmap, sprite: &Pixmap, pos: DVec2, rotation_d
         pos.0 - (sprite.width() as i32 / 2) as f32 * scale,
         pos.1 - (sprite.height() as i32 / 2) as f32 * scale,
     ));
+    let mut paint = PixmapPaint::default();
+    paint.blend_mode = BlendMode::SourceAtop;
     base_pixmap.draw_pixmap(
         0,
         0,
         sprite.as_ref(),
-        &PixmapPaint::default(),
+        &paint,
         transform,
         None,
     );

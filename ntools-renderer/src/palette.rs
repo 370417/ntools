@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 
 use ntools_rs::EntityId;
 use tiny_skia::{Color, Paint, Pixmap, PremultipliedColorU8};
@@ -13,8 +13,6 @@ pub struct ColorIndex {
     /// Stores all colors of a color scheme deduplicated.
     /// This is sorted to allow for binary search.
     pub unique_colors: Vec<(u8, u8, u8)>,
-    /// For getting the index of a color in the unique_colors vec
-    pub index_by_color: HashMap<(u8, u8, u8), u8>,
 }
 
 impl Palette {
@@ -55,29 +53,30 @@ impl Palette {
     }
 
     pub fn create_index(&self, theme: ColorTheme) -> ColorIndex {
-        let mut index = ColorIndex {
-            unique_colors: Vec::new(),
-            index_by_color: HashMap::new(),
-        };
+        let mut colors = BTreeSet::new();
 
         for x in 0..self.colors.width() {
             let color = self.colors.pixel(x, theme as u32).unwrap_or(PremultipliedColorU8::TRANSPARENT).demultiply();
             let color = (color.red(), color.green(), color.blue());
-            
-            if index.index_by_color.get(&color).is_none() {
-                index.unique_colors.push(color);
-                let i = index.unique_colors.len() - 1;
-                index.index_by_color.insert(color, i as u8);
-            }
+            colors.insert(color);
         }
 
-        index
+        ColorIndex {
+            unique_colors: colors.into_iter().collect(),
+        }
     }
 }
 
 impl ColorIndex {
     pub fn transparent_index(&self) -> u8 {
         self.unique_colors.len() as u8
+    }
+
+    pub fn get(&self, color: &(u8, u8, u8)) -> Option<u8> {
+        match self.unique_colors.binary_search(color) {
+            Ok(i) => Some(i as u8),
+            Err(_) => None,
+        }
     }
 
     pub fn to_flat_colors(&self) -> Vec<u8> {

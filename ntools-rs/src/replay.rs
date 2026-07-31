@@ -826,6 +826,10 @@ impl Replay {
     pub fn entities(&self) -> &Entities {
         &self.current_sim.entities
     }
+
+    pub fn ninja_displacement(&self) -> f64 {
+        (self.current_sim.ninja.pos() - self.current_sim.ninja.pos_old()).length()
+    }
 }
 
 #[cfg(test)]

@@ -4,8 +4,10 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+anyhow = "1.0.104"
 # parsing command line arguments
 clap = { version = "4.6.4", features = ["derive"] }
+gif = "0.14.2"
 # game logic
 ntools-rs = { path = "../ntools-rs" }
 # graphics library

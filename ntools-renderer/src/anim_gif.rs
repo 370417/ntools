@@ -57,8 +57,8 @@ pub fn anim_gif(output_filename: &str, replay: Replay, theme: ColorTheme, frame_
             continue;
         }
         
-        // prerpare the next frame to get rendered
-        let new_frame = frame_renderer.render(&replay, &palette, theme, Some(partial_frame), dims);
+        // prepare the next frame to get rendered
+        let new_frame = frame_renderer.render_anim_frame(&replay, &palette, theme, Some(partial_frame), dims);
         if let Some(dirty) = find_dirty_rectangle(&frame, &new_frame) {
             // render the previous frame now that we know its duration
             indexed.delay = frame_delay * (1 + skipped_frames);
@@ -208,11 +208,11 @@ fn to_indexed(frame: &Pixmap, prev_frame: Option<&Pixmap>, bounding_box: &Rect, 
         for x in bounding_box.left..bounding_box.right {
             let i = ((y * frame.width() + x) * 4) as usize;
             let color = (data[i], data[i + 1], data[i + 2]);
+            let is_transparent = data[i + 3] == 0;
             let prev_color = prev_frame.map(|frame| frame.data()).map(|data| (data[i], data[i + 1], data[i + 2]));
-            if Some(color) == prev_color {
+            if Some(color) == prev_color || is_transparent {
                 indexed.push(color_index.transparent_index());
-            } else
-            if let Some(&i) = color_index.index_by_color.get(&color) {
+            } else if let Some(i) = color_index.get(&color) {
                 indexed.push(i);
             } else {
                 return Err(anyhow!("color {:?} at pixel (x={},y={}) not found in index", color, x, y));

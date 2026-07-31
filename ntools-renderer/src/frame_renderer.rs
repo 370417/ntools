@@ -30,4 +30,14 @@ impl FrameRenderer {
         
         pixmap
     }
+
+    pub fn render_anim_frame(&mut self, replay: &Replay, palette: &Palette, theme: ColorTheme, partial_frame: Option<f32>, dims: &Dimensions) -> Pixmap {
+        let mut pixmap = self.tileset_renderer.anim_base();
+
+        let partial_frame = partial_frame.unwrap_or(1.0);
+
+        self.entity_renderer.render(&mut pixmap, replay, palette, theme, partial_frame as f64, dims);
+
+        pixmap
+    }
 }

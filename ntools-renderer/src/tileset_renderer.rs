@@ -6,15 +6,20 @@ use crate::{dimensions::Dimensions, palette::{ColorTheme, Palette, to_color, to_
 /// The tiles on a level are the same on every frame, so we generate the bitmap
 /// for the tileset once and store it in this struct.
 pub struct TilesetRenderer {
+    /// rendering of tiles and tile border, non-tile is transparent
     tileset_pixmap: Pixmap,
+    /// rendering of non-tile background, tiles are transparent
+    inverse_tileset_pixmap: Pixmap,
 }
 
 impl TilesetRenderer {
     pub fn new(replay: &Replay, palette: &Palette, theme: ColorTheme, dims: &Dimensions) -> Self {
         let mut pixmap = Pixmap::new(dims.frame_width_px(), dims.frame_height_px()).unwrap();
+        let mut inverse_pixmap = pixmap.clone();
 
         let tile_color = to_color(palette.tile(theme));
         let mut tile_outline_color = to_paint(palette.tile_outline(theme));
+        let bg_color = to_color(palette.bg(theme));
 
         if dims.force_alias {
             tile_outline_color.anti_alias = false;
@@ -33,15 +38,26 @@ impl TilesetRenderer {
             let anti_alias = !dims.force_alias;
             mask.fill_path(&path, FillRule::EvenOdd, anti_alias, Transform::identity());
             pixmap.apply_mask(&mask);
+
+            inverse_pixmap.fill(bg_color);
+            mask.invert();
+            inverse_pixmap.apply_mask(&mask);
         }
 
         TilesetRenderer {
             tileset_pixmap: pixmap,
+            inverse_tileset_pixmap: inverse_pixmap,
         }
     }
 
     pub fn render(&self, base_pixmap: &mut Pixmap) {
         base_pixmap.draw_pixmap(0, 0, self.tileset_pixmap.as_ref(), &PixmapPaint::default(), Transform::identity(), None);
+    }
+
+    /// Returns the inverse tileset pixmap as a base for any animation frames after the first one.
+    /// The goal is to avoid needing to blit the tileset every frame
+    pub fn anim_base(&self) -> Pixmap {
+        self.inverse_tileset_pixmap.clone()
     }
 }
 
