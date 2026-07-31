@@ -1,11 +1,15 @@
 use ntools_rs::glam::DVec2;
 
+/// Store dimensions and other options
 pub struct Dimensions {
     // height of a map in tiles. does not include outer border
     pub rows: u32,
     // width of a map in tiles. does not include outer border
     pub cols: u32,
     pub tile_size_px: u32,
+    // set to true to prevent antialiasing, useful when generating gifs
+    // with limited color palettes
+    pub force_alias: bool,
 }
 
 impl Dimensions {
@@ -14,6 +18,7 @@ impl Dimensions {
             rows: 23,
             cols: 42,
             tile_size_px: 44,
+            force_alias: false,
         }
     }
 

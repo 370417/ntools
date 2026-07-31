@@ -47,7 +47,7 @@ impl EntityRenderer {
         Self::default()
     }
 
-    pub fn render(&mut self, base_pixmap: &mut Pixmap, replay: &Replay, palette: &Palette, theme: ColorTheme, dims: &Dimensions) {
+    pub fn render(&mut self, base_pixmap: &mut Pixmap, replay: &Replay, palette: &Palette, theme: ColorTheme, partial_frame: f64, dims: &Dimensions) {
         let entities = replay.entities();
 
         // trap doors
@@ -80,7 +80,6 @@ impl EntityRenderer {
 
         // trap switches
         for door in &entities.doors.trap {
-            let pos = dims.to_pixel_int(door.switch_pos);
             let sprite = if door.frames_since_close.is_some() {
                 // touched
                 self.trap_switch_collected_sprite.get_or_insert_with(|| Self::create_entity_sprite(EntityId::TrapSwitch, 1, palette, theme))
@@ -175,8 +174,9 @@ impl EntityRenderer {
         
         // zap drones
         for zap_drone in &replay.entities().zap_drones {
+            let pos = DVec2::new(zap_drone.x(partial_frame), zap_drone.y(partial_frame));
             let sprite = self.zap_drone_sprite.get_or_insert_with(|| Self::create_entity_sprite(EntityId::ZapDrone, 0, palette, theme));
-            draw_sprite(base_pixmap, sprite, zap_drone.pos, zap_drone.orientation.rotation_deg(), dims);
+            draw_sprite(base_pixmap, sprite, pos, zap_drone.orientation.rotation_deg(), dims);
         }
         
         // chase drones
@@ -222,7 +222,10 @@ impl EntityRenderer {
             path.move_to(start_x, start_y);
             path.line_to(end_x, end_y);
             if let Some(path) = path.finish() {
-                let paint = to_paint(palette.entity_color(EntityId::LaserTurret, 1, theme));
+                let mut paint = to_paint(palette.entity_color(EntityId::LaserTurret, 1, theme));
+                if dims.force_alias {
+                    paint.anti_alias = false;
+                }
                 let mut stroke = Stroke::default();
                 stroke.width = dims.tile_size_px as f32 / 24.0;
                 base_pixmap.stroke_path(&path, &paint, &stroke, Transform::identity(), None);
@@ -272,8 +275,8 @@ impl EntityRenderer {
 
         // ninjas
         {
-            let bones = replay.ninja_bones(1.0);
-            let (x, y) = dims.to_pixel(DVec2::new(replay.ninja_x(1.0), replay.ninja_y(1.0)));
+            let bones = replay.ninja_bones(partial_frame);
+            let (x, y) = dims.to_pixel(DVec2::new(replay.ninja_x(partial_frame), replay.ninja_y(partial_frame)));
             if let Some(path) = ninja_path(bones, dims) {
                 let mut color = to_paint(palette.entity_color(EntityId::Ninja, 0, theme));
                 color.anti_alias = false;

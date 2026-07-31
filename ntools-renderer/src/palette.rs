@@ -1,8 +1,20 @@
+use std::collections::HashMap;
+
 use ntools_rs::EntityId;
 use tiny_skia::{Color, Paint, Pixmap, PremultipliedColorU8};
 
 pub struct Palette {
     colors: Pixmap,
+}
+
+/// Index to convert between rgb colors and byte indices.
+/// Meant for gif encoding.
+pub struct ColorIndex {
+    /// Stores all colors of a color scheme deduplicated.
+    /// This is sorted to allow for binary search.
+    pub unique_colors: Vec<(u8, u8, u8)>,
+    /// For getting the index of a color in the unique_colors vec
+    pub index_by_color: HashMap<(u8, u8, u8), u8>,
 }
 
 impl Palette {
@@ -40,6 +52,52 @@ impl Palette {
         let file = PaletteFile::from_entity(entity);
         let x = calc_palette_x(file, index);
         self.colors.pixel(x, theme as u32).unwrap_or(PremultipliedColorU8::TRANSPARENT)
+    }
+
+    pub fn create_index(&self, theme: ColorTheme) -> ColorIndex {
+        let mut index = ColorIndex {
+            unique_colors: Vec::new(),
+            index_by_color: HashMap::new(),
+        };
+
+        for x in 0..self.colors.width() {
+            let color = self.colors.pixel(x, theme as u32).unwrap_or(PremultipliedColorU8::TRANSPARENT).demultiply();
+            let color = (color.red(), color.green(), color.blue());
+            
+            if index.index_by_color.get(&color).is_none() {
+                index.unique_colors.push(color);
+                let i = index.unique_colors.len() - 1;
+                index.index_by_color.insert(color, i as u8);
+            }
+        }
+
+        index
+    }
+}
+
+impl ColorIndex {
+    pub fn transparent_index(&self) -> u8 {
+        self.unique_colors.len() as u8
+    }
+
+    pub fn to_flat_colors(&self) -> Vec<u8> {
+        // plus one to include transparent color at end
+        let color_count = self.unique_colors.len() + 1;
+
+        let mut flat_colors = Vec::with_capacity(color_count * 3);
+
+        for color in &self.unique_colors {
+            flat_colors.push(color.0);
+            flat_colors.push(color.1);
+            flat_colors.push(color.2);
+        }
+
+        // add transparent color
+        flat_colors.push(0);
+        flat_colors.push(0);
+        flat_colors.push(0);
+
+        flat_colors
     }
 }
 

@@ -14,7 +14,11 @@ impl TilesetRenderer {
         let mut pixmap = Pixmap::new(dims.frame_width_px(), dims.frame_height_px()).unwrap();
 
         let tile_color = to_color(palette.tile(theme));
-        let tile_outline_color = to_paint(palette.tile_outline(theme));
+        let mut tile_outline_color = to_paint(palette.tile_outline(theme));
+
+        if dims.force_alias {
+            tile_outline_color.anti_alias = false;
+        }
 
         if let Some(path) = extract_path_from_segments(replay.segments(), true, dims) {
             pixmap.fill(tile_color);
@@ -26,7 +30,8 @@ impl TilesetRenderer {
             pixmap.stroke_path(&path, &tile_outline_color, &stroke, Transform::identity(), None);
 
             let mut mask = Mask::new(dims.frame_width_px(), dims.frame_height_px()).unwrap();
-            mask.fill_path(&path, FillRule::EvenOdd, true, Transform::identity());
+            let anti_alias = !dims.force_alias;
+            mask.fill_path(&path, FillRule::EvenOdd, anti_alias, Transform::identity());
             pixmap.apply_mask(&mask);
         }
 
@@ -82,19 +87,23 @@ fn add_segment_path(path: &mut PathBuilder, segment: &Segment, dims: &Dimensions
             let (end_x, end_y) = dims.to_pixel(*end);
             path.line_to(end_x, end_y);
         }
-        Segment::Circular { start, end, center, curvature } => {
-            let (start_x, start_y) = dims.to_pixel(segment.start());
-            let (end_x, end_y) = dims.to_pixel(*end);
+        &Segment::Circular { start, end, center, .. } => {
+            let (end_x, end_y) = dims.to_pixel(end);
             // approximation of quarter circle using bezier
-            // 0.5522847498307936
+
+            // control points
+            let (cp1_x, cp1_y) = dims.to_pixel(start + (end - center) * 0.5522847498307936);
+            let (cp2_x, cp2_y) = dims.to_pixel(end + (start - center) * 0.5522847498307936);
+
             path.cubic_to(
-                start_x,
-                start_y,
-                start_x,
-                start_y,
+                cp1_x,
+                cp1_y,
+                cp2_x,
+                cp2_y,
                 end_x,
-                end_y);
+                end_y,
+            );
         },
-        Segment::Door { start, end, door_type, index } => {}
+        Segment::Door { .. } => {}
     }
 }

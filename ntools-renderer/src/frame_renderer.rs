@@ -16,13 +16,15 @@ impl FrameRenderer {
         }
     }
 
-    pub fn render(&mut self, replay: &Replay, palette: &Palette, theme: ColorTheme, dims: &Dimensions) -> Pixmap {
+    pub fn render(&mut self, replay: &Replay, palette: &Palette, theme: ColorTheme, partial_frame: Option<f32>, dims: &Dimensions) -> Pixmap {
         let mut pixmap = Pixmap::new(dims.frame_width_px(), dims.frame_height_px()).unwrap();
+
+        let partial_frame = partial_frame.unwrap_or(1.0);
 
         let bg_color = to_color(palette.bg(theme));
         pixmap.fill(bg_color);
 
-        self.entity_renderer.render(&mut pixmap, replay, palette, theme, dims);
+        self.entity_renderer.render(&mut pixmap, replay, palette, theme, partial_frame as f64, dims);
 
         self.tileset_renderer.render(&mut pixmap);
         
