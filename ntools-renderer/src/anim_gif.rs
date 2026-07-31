@@ -1,4 +1,4 @@
-use std::{assert_eq, borrow::Cow, fs::File, println};
+use std::{assert_eq, borrow::Cow, fs::File, println, thread};
 
 use anyhow::{Context, anyhow};
 use gif::{Encoder, Frame};
@@ -12,10 +12,24 @@ pub fn anim_gif(output_filename: &str, replay: Replay, theme: ColorTheme, frame_
     let palette = Palette::new();
     let color_index = palette.create_index(theme);
 
-    let mut image = File::create(output_filename)?;
-    let mut encoder = Encoder::new(&mut image, dims.frame_width_px() as u16, dims.frame_height_px() as u16, &color_index.to_flat_colors())?;
+    let (frame_send, frame_recv) = crossbeam_channel::bounded(100);
 
-    encoder.set_repeat(gif::Repeat::Infinite)?;
+    let output_filename = output_filename.to_owned();
+    let width = dims.frame_width_px();
+    let height = dims.frame_height_px();
+    let flat_colors = color_index.to_flat_colors();
+    
+    // Perform encoding and write final results in separate thread
+    let encoding_handle = thread::spawn(move || -> anyhow::Result<()> {
+        let mut image = File::create(output_filename)?;
+        let mut encoder = Encoder::new(&mut image, width as u16, height as u16, &flat_colors)?;
+        encoder.set_repeat(gif::Repeat::Infinite)?;
+
+        while let Ok(frame) = frame_recv.recv() {
+            encoder.write_frame(&frame)?;
+        }
+        Ok(())
+    });
 
     let mut frame_renderer = FrameRenderer::new(&replay, &palette, theme, dims);
 
@@ -64,7 +78,7 @@ pub fn anim_gif(output_filename: &str, replay: Replay, theme: ColorTheme, frame_
             indexed.delay = frame_delay * (1 + skipped_frames);
             skipped_frames = 0;
             net_ninja_displacement = 0.0;
-            encoder.write_frame(&indexed)?;
+            frame_send.send(indexed)?;
 
             // prepare the next frame
             indexed = to_indexed(&new_frame, Some(&frame), &dirty, &color_index)?;
@@ -76,9 +90,17 @@ pub fn anim_gif(output_filename: &str, replay: Replay, theme: ColorTheme, frame_
     }
 
     // render the last frame left over
-    encoder.write_frame(&indexed)?;
+    frame_send.send(indexed)?;
 
-    Ok(())
+    drop(frame_send);
+
+    match encoding_handle.join() {
+        Ok(result) => result,
+        Err(_) => Err(anyhow!("panic in encoding thread")),
+    }
+
+    // encoder.write_lzw_pre_encoded_frame(frame)
+    // Frame::make_lzw_pre_encoded(&mut self);
 }
 
 /// Minimum and maximum bounds forming a rectangle.
