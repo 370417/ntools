@@ -64,28 +64,13 @@ fn sprite_base(entity: EntityId, state: u32) -> Option<&'static [u8]> {
         (EntityId::GaussTurret, 3) => Some(include_bytes!("../small_objects/gauss_aim_1.png")),
         (EntityId::GaussTurret, 4) => Some(include_bytes!("../small_objects/gauss_aim_2.png")),
         (EntityId::GaussTurret, 5) => Some(include_bytes!("../small_objects/gauss_crosshairs_0.png")),
-        // (EntityId::Thwump, _) => vec![
-        //     (include_bytes!("../object_layers/14-0_0.png"), 0),
-        //     (include_bytes!("../object_layers/14-0_1.png"), 1),
-        //     (include_bytes!("../object_layers/14-0_2.png"), 2),
-        // ],
-        // (EntityId::EvilNinja, 0) => vec![
-        //     (include_bytes!("../object_layers/16-0_0.png"), 0),
-        // ],
-        // (EntityId::EvilNinja, 1) => vec![
-        //     (include_bytes!("../object_layers/16-0_0.png"), 1),
-        // ],
-        // (EntityId::LaserTurret, _) => vec![
-        //     (include_bytes!("../object_layers/17-0_0.png"), 0),
-        // ],
-        // (EntityId::BoostPad, _) => vec![
-        //     (include_bytes!("../object_layers/18-0_0.png"), 0),
-        // ],
-        // (EntityId::Deathball, _) => vec![
-        //     (include_bytes!("../object_layers/19-0_0.png"), 0),
-        //     (include_bytes!("../object_layers/19-0_1.png"), 1),
-        //     (include_bytes!("../object_layers/19-0_2.png"), 2),
-        // ],
+        (EntityId::Thwump, _) => Some(include_bytes!("../small_objects/thwump_0.png")),
+        (EntityId::EvilNinja, 0) => Some(include_bytes!("../small_objects/evil_ninja_0.png")),
+        (EntityId::EvilNinja, 1) => Some(include_bytes!("../small_objects/evil_ninja_1.png")),
+        (EntityId::LaserTurret, _) => Some(include_bytes!("../small_objects/laser_turret_0.png")),
+        (EntityId::BoostPad, _) => Some(include_bytes!("../small_objects/boost_pad_0.png")),
+        (EntityId::Deathball, _) => Some(include_bytes!("../small_objects/deathball_0.png")),
+
         // (EntityId::MiniDrone, _) => vec![
         //     (include_bytes!("../object_layers/1A-0_0.png"), 0),
         //     (include_bytes!("../object_layers/1A-0_1.png"), 1),
@@ -93,20 +78,9 @@ fn sprite_base(entity: EntityId, state: u32) -> Option<&'static [u8]> {
         // (EntityId::Bat, _) => vec![
         //     (include_bytes!("../object_layers/1B-0_0.png"), 0),
         // ],
-        // (EntityId::ShoveThwump, 0) => vec![
-        //     (include_bytes!("../object_layers/1C-0_0.png"), 0),
-        //     (include_bytes!("../object_layers/1C-0_1.png"), 1),
-        //     (include_bytes!("../object_layers/1C-0_2.png"), 2),
-        // ],
-        // (EntityId::ShoveThwump, 1) => vec![
-        //     (include_bytes!("../object_layers/1C-1_0.png"), 0),
-        //     (include_bytes!("../object_layers/1C-1_1.png"), 1),
-        //     (include_bytes!("../object_layers/1C-1_2.png"), 2),
-        // ],
-        // (EntityId::ShoveThwump, 2) => vec![
-        //     (include_bytes!("../object_layers/1C-2_0.png"), 0),
-        //     (include_bytes!("../object_layers/1C-2_1.png"), 1),
-        // ],
+        (EntityId::ShoveThwump, 0) => Some(include_bytes!("../small_objects/shove_thwump_0.png")),
+        (EntityId::ShoveThwump, 1) => Some(include_bytes!("../small_objects/shove_thwump_1.png")),
+        (EntityId::ShoveThwump, 2) => Some(include_bytes!("../small_objects/shove_thwump_2.png")),
         _ => None,
     }
 }

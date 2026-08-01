@@ -2,6 +2,7 @@
 name = "ntools-renderer"
 version = "0.1.0"
 edition = "2024"
+default-run = "ntools-renderer"
 
 [dependencies]
 anyhow = "1.0.104"

@@ -5,10 +5,10 @@ use gif::{Encoder, Frame};
 use ntools_rs::replay::Replay;
 use tiny_skia::Pixmap;
 
-use crate::{dimensions::Dimensions, entity_renderer::SpriteSize, frame_renderer::FrameRenderer, palette::{ColorIndex, ColorTheme, Palette}};
+use crate::{dimensions::Dimensions, entity_renderer::SpriteSize, frame_renderer::FrameRenderer, offset_replay::OffsetReplay, palette::{ColorIndex, ColorTheme, Palette}};
 
 /// frame_delay: deplay between frames in centiseconds, so fps = 100/frame_delay.
-pub fn anim_gif(output_filename: &str, replay: Replay, theme: ColorTheme, frame_delay: u16, dims: &Dimensions) -> anyhow::Result<()> {
+pub fn anim_gif(output_filename: &str, replays: Vec<Replay>, theme: ColorTheme, frame_delay: u16, dims: &Dimensions) -> anyhow::Result<()> {
     let palette = Palette::new();
     let color_index = palette.create_index(theme);
 
@@ -17,17 +17,17 @@ pub fn anim_gif(output_filename: &str, replay: Replay, theme: ColorTheme, frame_
 
     encoder.set_repeat(gif::Repeat::Infinite)?;
 
-    let mut frame_renderer = FrameRenderer::new(SpriteSize::Small, &replay, &palette, theme, dims);
+    let mut frame_renderer = FrameRenderer::new(SpriteSize::Small, &replays, &palette, theme, dims);
 
     // Render the initial frame that you see before any user input
-    let mut frame = frame_renderer.render(&replay, &palette, theme, None, dims);
+    let mut frame = frame_renderer.render(&replays, &palette, theme, None, dims);
 
     // We don't write the indexed frame right away because we need to know how long
     // the frame should be visible for, and for that we need to process future
     // frames to see if any will be skipped
     let mut indexed = to_indexed(&frame, None, &Rect::entire_frame(&frame), &color_index)?;
 
-    let mut replay = replay;
+    let mut replays = replays;
 
     let mut skipped_frames = 0;
 
@@ -39,31 +39,27 @@ pub fn anim_gif(output_filename: &str, replay: Replay, theme: ColorTheme, frame_
     let ms_per_game_tick = 1000.0 / 60.0;
     let mut accumulator = 0.0;
 
-    // Adaptive frame rate: lower fps when ninja is moving slower
-    let mut net_ninja_displacement = 0.0;
-
-    while replay.progress() < replay.inputs_len() as u32 {
+    while replays.iter().any(|replay| replay.progress() < replay.inputs_len() as u32) {
         // advance the simulation until it is time to render a frame
         accumulator += ms_per_gif_frame;
         while accumulator >= ms_per_game_tick {
-            replay.tick();
-            net_ninja_displacement += replay.ninja_displacement();
+            // tick all replays, adding empty input if there was none
+            for replay in &mut replays {
+                if replay.progress() >= replay.inputs_len() as u32 {
+                    replay.set_input(false, false, false, false);
+                }
+                replay.tick();
+            }
             accumulator -= ms_per_game_tick;
         }
         let partial_frame = accumulator / ms_per_game_tick;
-
-        if net_ninja_displacement < 3.0 && skipped_frames < 2 {
-            skipped_frames += 1;
-            continue;
-        }
         
         // prepare the next frame to get rendered
-        let new_frame = frame_renderer.render_anim_frame(&replay, &palette, theme, Some(partial_frame), dims);
+        let new_frame = frame_renderer.render_anim_frame(&replays, &palette, theme, Some(partial_frame), dims);
         if let Some(dirty) = find_dirty_rectangle(&frame, &new_frame) {
             // render the previous frame now that we know its duration
             indexed.delay = frame_delay * (1 + skipped_frames);
             skipped_frames = 0;
-            net_ninja_displacement = 0.0;
             encoder.write_frame(&indexed)?;
 
             // prepare the next frame

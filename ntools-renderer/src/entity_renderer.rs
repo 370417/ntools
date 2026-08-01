@@ -1,7 +1,7 @@
 use ntools_rs::{EntityId, GaussState, RocketState, glam::DVec2, replay::Replay};
 use tiny_skia::{BlendMode, ColorU8, Mask, Paint, Path, PathBuilder, Pixmap, PixmapPaint, Rect, Stroke, StrokeDash, Transform};
 
-use crate::{dimensions::Dimensions, palette::{ColorTheme, Palette, to_paint}, sprites_large, sprites_small};
+use crate::{dimensions::Dimensions, offset_replay::OffsetReplay, palette::{ColorTheme, Palette, to_paint}, sprites_large, sprites_small};
 
 /// Stores sprites for entities so that we don't need to recreate them over and over.
 pub struct EntityRenderer {
@@ -46,6 +46,9 @@ pub struct EntityRenderer {
     laser_turret_sprite: Pixmap,
     boost_pad_sprite: Pixmap,
     deathball_sprite: Pixmap,
+    shove_thwump_sprite: Pixmap,
+    shove_thwump_touched_sprite: Pixmap,
+    shove_thwump_core_sprite: Pixmap,
 }
 
 #[derive(Clone, Copy)]
@@ -106,11 +109,14 @@ impl EntityRenderer {
             laser_turret_sprite: create_entity_sprite(sprite_size, EntityId::LaserTurret, 0, palette, theme),
             boost_pad_sprite: create_entity_sprite(sprite_size, EntityId::BoostPad, 0, palette, theme),
             deathball_sprite: create_entity_sprite(sprite_size, EntityId::Deathball, 0, palette, theme),
+            shove_thwump_sprite: create_entity_sprite(sprite_size, EntityId::ShoveThwump, 0, palette, theme),
+            shove_thwump_touched_sprite: create_entity_sprite(sprite_size, EntityId::ShoveThwump, 1, palette, theme),
+            shove_thwump_core_sprite: create_entity_sprite(sprite_size, EntityId::ShoveThwump, 2, palette, theme),
         }
     }
 
-    pub fn render(&mut self, base_pixmap: &mut Pixmap, replay: &Replay, palette: &Palette, theme: ColorTheme, partial_frame: f64, dims: &Dimensions) {
-        let entities = replay.entities();
+    pub fn render(&mut self, base_pixmap: &mut Pixmap, replays: &[Replay], palette: &Palette, theme: ColorTheme, partial_frame: f64, dims: &Dimensions) {
+        let entities = replays[0].entities();
 
         // trap doors
         for door in &entities.doors.trap {
@@ -196,33 +202,33 @@ impl EntityRenderer {
         }
 
         // launch pads
-        for launch_pad in &replay.entities().launch_pads {
+        for launch_pad in &entities.launch_pads {
             self.draw_sprite(base_pixmap, &self.launch_pad_sprite, launch_pad.pos, launch_pad.orientation.rotation_deg(), dims);
         }
 
         // laser drones
-        for laser_drone in &replay.entities().laser_drones {
+        for laser_drone in &entities.laser_drones {
             self.draw_sprite(base_pixmap, &self.laser_drone_sprite, laser_drone.pos, laser_drone.orientation.rotation_deg(), dims);
         }
 
         // chaingun drones
-        for chaingun_drone in &replay.entities().chaingun_drones {
+        for chaingun_drone in &entities.chaingun_drones {
             self.draw_sprite(base_pixmap, &self.chaingun_drone_sprite, chaingun_drone.pos, chaingun_drone.orientation.rotation_deg(), dims);
         }
         
         // zap drones
-        for zap_drone in &replay.entities().zap_drones {
+        for zap_drone in &entities.zap_drones {
             let pos = DVec2::new(zap_drone.x(partial_frame), zap_drone.y(partial_frame));
             self.draw_sprite(base_pixmap, &self.zap_drone_sprite, pos, zap_drone.orientation.rotation_deg(), dims);
         }
         
         // chase drones
-        for chase_drone in &replay.entities().chase_drones {
+        for chase_drone in &entities.chase_drones {
             self.draw_sprite(base_pixmap, &self.chase_drone_sprite, chase_drone.pos, chase_drone.orientation.rotation_deg(), dims);
         }
 
         // floor guards
-        for floor_guard in &replay.entities().floor_guards {
+        for floor_guard in &entities.floor_guards {
             self.draw_sprite(base_pixmap, &self.floor_guard_sprite, floor_guard.pos, 0.0, dims);
         }
 
@@ -231,12 +237,12 @@ impl EntityRenderer {
         // bats
 
         // deathballs
-        for deathball in &replay.entities().deathballs {
+        for deathball in &entities.deathballs {
             self.draw_sprite(base_pixmap, &self.deathball_sprite, deathball.pos, 0.0, dims);
         }
 
         // gauss turrets
-        for gauss_turret in &replay.entities().gauss {
+        for gauss_turret in &entities.gauss {
             if let GaussState::Idle = gauss_turret.state {
                 self.draw_sprite(base_pixmap, &self.gauss_turret_sprite, gauss_turret.turret_pos, gauss_turret.angle.to_degrees(), dims);
             } else {
@@ -245,7 +251,7 @@ impl EntityRenderer {
         }
 
         // gauss turrets beam
-        for gauss_turret in &replay.entities().gauss {
+        for gauss_turret in &entities.gauss {
             if let GaussState::Postfire { shot_endpoint } = gauss_turret.state {
                 let (start_x, start_y) = dims.to_pixel(gauss_turret.turret_pos);
                 let (end_x, end_y) = dims.to_pixel(shot_endpoint);
@@ -265,7 +271,7 @@ impl EntityRenderer {
         }
 
         // gauss turrets crosshairs
-        for gauss_turret in &replay.entities().gauss {
+        for gauss_turret in &entities.gauss {
             if !matches!(gauss_turret.state, GaussState::Idle) {
                 let aim_sprite = match gauss_turret.aim_region {
                     0 => &self.gauss_turret_aim_0_sprite,
@@ -280,7 +286,7 @@ impl EntityRenderer {
         }
 
         // rocket turrets
-        for rocket_turret in &replay.entities().rockets {
+        for rocket_turret in &entities.rockets {
             let sprite = match rocket_turret.state {
                 RocketState::Idle => &self.rocket_turret_sprite,
                 RocketState::Homing => &self.rocket_turret_homing_sprite,
@@ -290,14 +296,14 @@ impl EntityRenderer {
         }
 
         // rocket turret rockets
-        for rocket_turret in &replay.entities().rockets {
+        for rocket_turret in &entities.rockets {
             if let RocketState::Homing = rocket_turret.state {
                 self.draw_sprite(base_pixmap, &self.rocket_sprite, rocket_turret.rocket_pos, rocket_turret.rocket_dir.to_angle().to_degrees(), dims);
             }
         }
 
         // laser turrets
-        for laser_turret in &replay.entities().laser_turrets {
+        for laser_turret in &entities.laser_turrets {
             // beam
             let (start_x, start_y) = dims.to_pixel(laser_turret.pos);
             let (end_x, end_y) = dims.to_pixel(laser_turret.laser_endpoint);
@@ -319,12 +325,12 @@ impl EntityRenderer {
         }
 
         // thwumps
-        for thwump in &replay.entities().thwumps {
+        for thwump in &entities.thwumps {
             self.draw_sprite(base_pixmap, &self.thwump_sprite, thwump.pos, thwump.orientation.rotation_deg(), dims);
         }
 
         // evil ninja spawners
-        for (i, evil_ninja) in replay.entities().evil_ninjas.iter().enumerate() {
+        for (i, evil_ninja) in entities.evil_ninjas.iter().enumerate() {
             match evil_ninja.type_u32() {
                 0 => {
                     // untouched
@@ -336,6 +342,7 @@ impl EntityRenderer {
                 }
                 _ => {
                     // active
+                    let replay = &replays[0];
                     if let Some(bones) = replay.evil_ninja_bones(i) {
                         let (x, y) = dims.to_pixel(DVec2::new(replay.evil_ninja_x(i, 1.0), replay.evil_ninja_y(i, 1.0)));
                         if let Some(path) = ninja_path(bones, dims) {
@@ -354,11 +361,11 @@ impl EntityRenderer {
         }
 
         // ninjas
-        {
+        for (i, replay) in replays.iter().enumerate().rev() {
             let bones = replay.ninja_bones(partial_frame);
             let (x, y) = dims.to_pixel(DVec2::new(replay.ninja_x(partial_frame), replay.ninja_y(partial_frame)));
             if let Some(path) = ninja_path(bones, dims) {
-                let mut color = to_paint(palette.entity_color(EntityId::Ninja, 0, theme));
+                let mut color = to_paint(palette.entity_color(EntityId::Ninja, i as u32, theme));
                 color.anti_alias = false;
                 let mut stroke = Stroke::default();
                 stroke.width = dims.tile_size_px as f32 / 24.0;
@@ -367,14 +374,27 @@ impl EntityRenderer {
         }
 
         // bounce blocks
-        for bounce_block in &replay.entities().bounce_blocks {
+        for bounce_block in &entities.bounce_blocks {
             self.draw_sprite(base_pixmap, &self.bounce_block_sprite, bounce_block.pos, 0.0, dims);
         }
 
-        // <ShoveThwumps shoveThwumps={entities.shoveThwumps} />
+        // shove thwumps
+        for shove_thwump in &entities.shove_thwumps {
+            let mut rotation = shove_thwump.orientation.rotation_deg();
+            let pos = DVec2::new(shove_thwump.x(partial_frame), shove_thwump.y(partial_frame));
+            let sprite = match shove_thwump.state {
+                ntools_rs::ShoveThwumpState::Waiting => &self.shove_thwump_sprite,
+                ntools_rs::ShoveThwumpState::Touched { touch, .. } => {
+                    rotation += touch.rotation_deg();
+                    &self.shove_thwump_touched_sprite
+                }
+                _ => &self.shove_thwump_core_sprite,
+            };
+            self.draw_sprite(base_pixmap, sprite, pos, rotation, dims);
+        }
         
         // boost pads
-        for boost_pad in &replay.entities().boost_pads {
+        for boost_pad in &entities.boost_pads {
             self.draw_sprite(base_pixmap, &self.boost_pad_sprite, boost_pad.pos, boost_pad.rotation(1.0).to_degrees(), dims);
         }
     }
