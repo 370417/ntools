@@ -13,6 +13,7 @@ mod palette;
 mod screenshot;
 mod sprites_large;
 mod sprites_small;
+mod text_renderer;
 mod tileset_renderer;
 
 fn main() -> ExitCode {

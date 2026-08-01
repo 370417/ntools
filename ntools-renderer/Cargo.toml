@@ -5,8 +5,10 @@ edition = "2024"
 
 [dependencies]
 anyhow = "1.0.104"
+bmfont_rs = "0.4.0"
 # parsing command line arguments
 clap = { version = "4.6.4", features = ["derive"] }
+fontdue = "0.9.4"
 gif = "0.14.2"
 # game logic
 ntools-rs = { path = "../ntools-rs" }
