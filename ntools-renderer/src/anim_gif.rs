@@ -5,7 +5,7 @@ use gif::{Encoder, Frame};
 use ntools_rs::replay::Replay;
 use tiny_skia::Pixmap;
 
-use crate::{dimensions::Dimensions, frame_renderer::FrameRenderer, palette::{ColorIndex, ColorTheme, Palette}};
+use crate::{dimensions::Dimensions, entity_renderer::SpriteSize, frame_renderer::FrameRenderer, palette::{ColorIndex, ColorTheme, Palette}};
 
 /// frame_delay: deplay between frames in centiseconds, so fps = 100/frame_delay.
 pub fn anim_gif(output_filename: &str, replay: Replay, theme: ColorTheme, frame_delay: u16, dims: &Dimensions) -> anyhow::Result<()> {
@@ -17,7 +17,7 @@ pub fn anim_gif(output_filename: &str, replay: Replay, theme: ColorTheme, frame_
 
     encoder.set_repeat(gif::Repeat::Infinite)?;
 
-    let mut frame_renderer = FrameRenderer::new(&replay, &palette, theme, dims);
+    let mut frame_renderer = FrameRenderer::new(SpriteSize::Small, &replay, &palette, theme, dims);
 
     // Render the initial frame that you see before any user input
     let mut frame = frame_renderer.render(&replay, &palette, theme, None, dims);
@@ -202,17 +202,15 @@ fn find_dirty_rectangle(old_frame: &Pixmap, new_frame: &Pixmap) -> Option<Rect> 
 }
 
 fn to_indexed(frame: &Pixmap, prev_frame: Option<&Pixmap>, bounding_box: &Rect, color_index: &ColorIndex) -> anyhow::Result<Frame<'static>> {
-    let data = frame.data();
+    let data = frame.pixels();
     let mut indexed = Vec::with_capacity(bounding_box.area() as usize);
     for y in bounding_box.top..bounding_box.bottom {
         for x in bounding_box.left..bounding_box.right {
-            let i = ((y * frame.width() + x) * 4) as usize;
-            let color = (data[i], data[i + 1], data[i + 2]);
-            let is_transparent = data[i + 3] == 0;
-            let prev_color = prev_frame.map(|frame| frame.data()).map(|data| (data[i], data[i + 1], data[i + 2]));
-            if Some(color) == prev_color || is_transparent {
+            let i = (y * frame.width() + x) as usize;
+            let color = data[i];
+            if !color.is_opaque() || prev_frame.is_some_and(|frame| frame.pixels()[i] == color) {
                 indexed.push(color_index.transparent_index());
-            } else if let Some(i) = color_index.get(&color) {
+            } else if let Some(i) = color_index.get(&(color.red(), color.green(), color.blue())) {
                 indexed.push(i);
             } else {
                 return Err(anyhow!("color {:?} at pixel (x={},y={}) not found in index", color, x, y));

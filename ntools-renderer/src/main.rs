@@ -11,11 +11,13 @@ mod entity_renderer;
 mod frame_renderer;
 mod palette;
 mod screenshot;
+mod sprites_large;
+mod sprites_small;
 mod tileset_renderer;
 
 fn main() -> ExitCode {
-    let map_bytes = include_bytes!("../maps/144908");
-    let replay_bytes = include_bytes!("../replays/144908_7");
+    let map_bytes = include_bytes!("../maps/86446");
+    let replay_bytes = include_bytes!("../replays/86446_0");
 
     let mut editor = Editor::new();
     editor.load_map(map_bytes).unwrap();
@@ -26,7 +28,7 @@ fn main() -> ExitCode {
     let theme = ColorTheme::Vasquez;
 
     let mut dims = Dimensions::new();
-    // dims.tile_size_px = 8;
+    dims.tile_size_px = 28;
     dims.force_alias = true;
 
     // match screenshot::screenshot("image.png", replay, theme, &dims) {
