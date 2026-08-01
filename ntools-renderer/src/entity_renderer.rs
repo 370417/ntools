@@ -1,4 +1,4 @@
-use ntools_rs::{EntityId, glam::DVec2, replay::Replay};
+use ntools_rs::{EntityId, GaussState, RocketState, glam::DVec2, replay::Replay};
 use tiny_skia::{BlendMode, ColorU8, Mask, Paint, Path, PathBuilder, Pixmap, PixmapPaint, Rect, Stroke, StrokeDash, Transform};
 
 use crate::{dimensions::Dimensions, palette::{ColorTheme, Palette, to_paint}, sprites_large, sprites_small};
@@ -31,7 +31,15 @@ pub struct EntityRenderer {
     floor_guard_sprite: Pixmap,
     bounce_block_sprite: Pixmap,
     rocket_turret_sprite: Pixmap,
+    rocket_turret_homing_sprite: Pixmap,
+    rocket_turret_prefire_sprite: Pixmap,
+    rocket_sprite: Pixmap,
     gauss_turret_sprite: Pixmap,
+    gauss_turret_firing_sprite: Pixmap,
+    gauss_turret_aim_0_sprite: Pixmap,
+    gauss_turret_aim_1_sprite: Pixmap,
+    gauss_turret_aim_2_sprite: Pixmap,
+    gauss_turret_crosshairs_sprite: Pixmap,
     thwump_sprite: Pixmap,
     evil_ninja_spawner_sprite: Pixmap,
     evil_ninja_active_spawner_sprite: Pixmap,
@@ -83,7 +91,15 @@ impl EntityRenderer {
             floor_guard_sprite: create_entity_sprite(sprite_size, EntityId::FloorGuard, 0, palette, theme),
             bounce_block_sprite: create_entity_sprite(sprite_size, EntityId::BounceBlock, 0, palette, theme),
             rocket_turret_sprite: create_entity_sprite(sprite_size, EntityId::RocketTurret, 0, palette, theme),
+            rocket_turret_homing_sprite: create_entity_sprite(sprite_size, EntityId::RocketTurret, 1, palette, theme),
+            rocket_turret_prefire_sprite: create_entity_sprite(sprite_size, EntityId::RocketTurret, 2, palette, theme),
+            rocket_sprite: create_entity_sprite(sprite_size, EntityId::RocketTurret, 3, palette, theme),
             gauss_turret_sprite: create_entity_sprite(sprite_size, EntityId::GaussTurret, 0, palette, theme),
+            gauss_turret_firing_sprite: create_entity_sprite(sprite_size, EntityId::GaussTurret, 1, palette, theme),
+            gauss_turret_aim_0_sprite: create_entity_sprite(sprite_size, EntityId::GaussTurret, 2, palette, theme),
+            gauss_turret_aim_1_sprite: create_entity_sprite(sprite_size, EntityId::GaussTurret, 3, palette, theme),
+            gauss_turret_aim_2_sprite: create_entity_sprite(sprite_size, EntityId::GaussTurret, 4, palette, theme),
+            gauss_turret_crosshairs_sprite: create_entity_sprite(sprite_size, EntityId::GaussTurret, 5, palette, theme),
             thwump_sprite: create_entity_sprite(sprite_size, EntityId::Thwump, 0, palette, theme),
             evil_ninja_spawner_sprite: create_entity_sprite(sprite_size, EntityId::EvilNinja, 0, palette, theme),
             evil_ninja_active_spawner_sprite: create_entity_sprite(sprite_size, EntityId::EvilNinja, 1, palette, theme),
@@ -221,12 +237,63 @@ impl EntityRenderer {
 
         // gauss turrets
         for gauss_turret in &replay.entities().gauss {
-            self.draw_sprite(base_pixmap, &self.gauss_turret_sprite, gauss_turret.turret_pos, 0.0, dims);
+            if let GaussState::Idle = gauss_turret.state {
+                self.draw_sprite(base_pixmap, &self.gauss_turret_sprite, gauss_turret.turret_pos, gauss_turret.angle.to_degrees(), dims);
+            } else {
+                self.draw_sprite(base_pixmap, &self.gauss_turret_firing_sprite, gauss_turret.turret_pos, gauss_turret.angle.to_degrees(), dims);
+            }
+        }
+
+        // gauss turrets beam
+        for gauss_turret in &replay.entities().gauss {
+            if let GaussState::Postfire { shot_endpoint } = gauss_turret.state {
+                let (start_x, start_y) = dims.to_pixel(gauss_turret.turret_pos);
+                let (end_x, end_y) = dims.to_pixel(shot_endpoint);
+                let mut path = PathBuilder::new();
+                path.move_to(start_x, start_y);
+                path.line_to(end_x, end_y);
+                if let Some(path) = path.finish() {
+                    let mut paint = to_paint(palette.entity_color(EntityId::GaussTurret, 3, theme));
+                    if dims.force_alias {
+                        paint.anti_alias = false;
+                    }
+                    let mut stroke = Stroke::default();
+                    stroke.width = dims.tile_size_px as f32 / 24.0;
+                    base_pixmap.stroke_path(&path, &paint, &stroke, Transform::identity(), None);
+                }
+            }
+        }
+
+        // gauss turrets crosshairs
+        for gauss_turret in &replay.entities().gauss {
+            if !matches!(gauss_turret.state, GaussState::Idle) {
+                let aim_sprite = match gauss_turret.aim_region {
+                    0 => &self.gauss_turret_aim_0_sprite,
+                    2 => &self.gauss_turret_aim_1_sprite,
+                    _ => &self.gauss_turret_aim_2_sprite,
+                };
+                self.draw_sprite(base_pixmap, aim_sprite, gauss_turret.aim_pos, 0.0, dims);
+            }
+            if let GaussState::Prefire = gauss_turret.state {
+                self.draw_sprite(base_pixmap, &self.gauss_turret_crosshairs_sprite, gauss_turret.aim_pos, 0.0, dims);
+            }
         }
 
         // rocket turrets
         for rocket_turret in &replay.entities().rockets {
-            self.draw_sprite(base_pixmap, &self.rocket_turret_sprite, rocket_turret.turret_pos, 0.0, dims);
+            let sprite = match rocket_turret.state {
+                RocketState::Idle => &self.rocket_turret_sprite,
+                RocketState::Homing => &self.rocket_turret_homing_sprite,
+                RocketState::Prefire => &self.rocket_turret_prefire_sprite,
+            };
+            self.draw_sprite(base_pixmap, sprite, rocket_turret.turret_pos, 0.0, dims);
+        }
+
+        // rocket turret rockets
+        for rocket_turret in &replay.entities().rockets {
+            if let RocketState::Homing = rocket_turret.state {
+                self.draw_sprite(base_pixmap, &self.rocket_sprite, rocket_turret.rocket_pos, rocket_turret.rocket_dir.to_angle().to_degrees(), dims);
+            }
         }
 
         // laser turrets
@@ -274,11 +341,7 @@ impl EntityRenderer {
                         if let Some(path) = ninja_path(bones, dims) {
                             let color = palette.entity_color(EntityId::Ninja, 0, theme).demultiply();
                             let mut paint = Paint::default();
-                            if dims.force_alias {
-                                paint.set_color_rgba8(color.red(), color.green(), color.blue(), 255);
-                            } else {
-                                paint.set_color_rgba8(color.red(), color.green(), color.blue(), 128);
-                            }
+                            paint.set_color_rgba8(color.red(), color.green(), color.blue(), 255);
                             paint.anti_alias = false;
                             let mut stroke = Stroke::default();
                             stroke.dash = Some(StrokeDash::new(vec![2.0, 2.0], 0.0).unwrap());

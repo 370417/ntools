@@ -37,6 +37,8 @@ pub struct Gauss {
     pub aim_region: usize,
     shot_timer: f64,
     pub state: GaussState,
+    /// in radians, points towards last seen player position
+    pub angle: f64,
 }
 
 #[derive(Clone, Copy)]
@@ -57,6 +59,8 @@ impl Gauss {
             aim_region: 0,
             shot_timer: 0.0,
             state: GaussState::Idle,
+            // start pointing down
+            angle: std::f64::consts::PI / 2.0,
         }
     }
 
@@ -74,6 +78,7 @@ impl Gauss {
                     if !raycast_vs_player(self.turret_pos, ninja.pos, segments, doors) {
                         self.start_idling();
                     } else {
+                        self.angle = (ninja.pos - self.turret_pos).to_angle();
                         self.update_aim(ninja.pos, ninja.speed);
                         if self.shot_timer > TIMER_FIRETIME {
                             self.start_firing();

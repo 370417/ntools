@@ -19,3 +19,5 @@ pub use glam;
 pub use editor::editor_entity::EntityId;
 pub use entity::mine::MineState;
 pub use orientation::{Orientation, OrientationBinary, OrientationCardinal, OrientationExt};
+pub use entity::gauss::GaussState;
+pub use entity::rocket::RocketState;
