@@ -11,4 +11,6 @@ pub struct AnimGifArgs {
     replays: Vec<String>,
     /// names of each player
     players: Vec<String>,
+    /// scores for each replay
+    scores: Vec<String>,
 }

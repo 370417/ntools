@@ -10,20 +10,18 @@ pub struct FrameRenderer {
     tileset_renderer: TilesetRenderer,
     entity_renderer: EntityRenderer,
     text_renderer: TextRenderer,
-    players: Vec<String>,
 }
 
 impl FrameRenderer {
-    pub fn new(sprite_size: SpriteSize, replays: &[Replay], players: Vec<String>, palette: &Palette, theme: ColorTheme, dims: &Dimensions) -> Self {
+    pub fn new(sprite_size: SpriteSize, replays: &[Replay], palette: &Palette, theme: ColorTheme, dims: &Dimensions) -> Self {
         Self {
             tileset_renderer: TilesetRenderer::new(&replays[0], palette, theme, &dims),
             entity_renderer: EntityRenderer::new(sprite_size, palette, theme),
             text_renderer: TextRenderer::new(),
-            players,
         }
     }
 
-    pub fn render(&mut self, replays: &[Replay], palette: &Palette, theme: ColorTheme, partial_frame: Option<f32>, dims: &Dimensions) -> Pixmap {
+    pub fn render(&mut self, replays: &[Replay], palette: &Palette, theme: ColorTheme, players: &[String], scores: &[String], partial_frame: Option<f32>, dims: &Dimensions) -> Pixmap {
         let mut pixmap = Pixmap::new(dims.frame_width_px(), dims.frame_height_px()).unwrap();
 
         let partial_frame = partial_frame.unwrap_or(1.0);
@@ -35,7 +33,7 @@ impl FrameRenderer {
 
         self.tileset_renderer.render(&mut pixmap);
 
-        self.text_renderer.render_super_text(&mut pixmap, replays, &self.players, palette, theme, dims);
+        self.text_renderer.render_super_text(&mut pixmap, replays, players, scores, palette, theme, dims);
 
         self.text_renderer.render_sub_text(&mut pixmap, "Mapper", "Level", palette, theme, dims);
 

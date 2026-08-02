@@ -18,7 +18,7 @@ impl TextRenderer {
 
         let color = to_color(palette.legend_color(theme));
 
-        self.draw_text(base_pixmap, mapper_name, color, bottom_left_rect, TextOptions::default());
+        self.draw_text(base_pixmap, mapper_name, color, bottom_left_rect, &TextOptions::default());
 
         let options_align_right = TextOptions {
             align: TextAlign::Right,
@@ -27,6 +27,6 @@ impl TextRenderer {
             background_color: None,
         };
 
-        self.draw_text(base_pixmap, level_name, color, bottom_right_rect, options_align_right);
+        self.draw_text(base_pixmap, level_name, color, bottom_right_rect, &options_align_right);
     }
 }

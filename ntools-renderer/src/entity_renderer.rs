@@ -346,7 +346,7 @@ impl EntityRenderer {
                     if let Some(bones) = replay.evil_ninja_bones(i) {
                         let (x, y) = dims.to_pixel(DVec2::new(replay.evil_ninja_x(i, 1.0), replay.evil_ninja_y(i, 1.0)));
                         if let Some(path) = ninja_path(bones, dims) {
-                            let color = palette.entity_color(EntityId::Ninja, 0, theme).demultiply();
+                            let color = palette.entity_color(EntityId::EvilNinja, 1, theme).demultiply();
                             let mut paint = Paint::default();
                             paint.set_color_rgba8(color.red(), color.green(), color.blue(), 255);
                             paint.anti_alias = false;

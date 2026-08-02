@@ -1,16 +1,20 @@
 //! Drawing text at the top of the screen: player names and scores.
 
 use ntools_rs::replay::Replay;
-use tiny_skia::{Pixmap, Rect, Transform};
+use tiny_skia::{FillRule, Paint, Path, PathBuilder, Pixmap, Rect, Transform};
 
 use crate::{dimensions::Dimensions, palette::{ColorTheme, Palette, to_color, to_paint}, text_renderer::{TextAlign, TextOptions, TextRenderer}};
 
 impl TextRenderer {
-    pub fn render_super_text(&mut self, base_pixmap: &mut Pixmap, replays: &[Replay], players: &[String], palette: &Palette, theme: ColorTheme, dims: &Dimensions) {
+    pub fn render_super_text(&mut self, base_pixmap: &mut Pixmap, replays: &[Replay], players: &[String], scores: &[String], palette: &Palette, theme: ColorTheme, dims: &Dimensions) {
         let names_and_scores: Vec<_> = replays.iter()
-            .map(|replay| score_str(replay.inputs_len()))
             .enumerate()
-            .map(|(i, score)| (i, players.get(i), score))
+            .filter_map(|(i, score)| {
+                match (players.get(i), scores.get(i)) {
+                    (Some(player), Some(score)) => Some((i, player, score)),
+                    _ => None,
+                }
+            })
             .take(4)
             .collect();
         
@@ -30,23 +34,32 @@ impl TextRenderer {
             ).unwrap();
 
             let text_color = to_color(palette.timebar_number_color(*i, theme));
-            let score_bg_paint = to_paint(palette.timebar_bonus_color(*i, theme));
-            let name_bg_paint = to_paint(palette.timebar_color(*i, theme));
+            let mut score_bg_paint = to_paint(palette.timebar_bonus_color(*i, theme));
+            let mut name_bg_paint = to_paint(palette.timebar_color(*i, theme));
+
+            if dims.force_alias {
+                score_bg_paint.anti_alias = false;
+                name_bg_paint.anti_alias = false;
+            }
 
             let score_text_options = TextOptions {
                 align: TextAlign::Right,
                 padding_start: dims.tile_size_px / 2,
                 padding_end: dims.tile_size_px / 2,
-                background_color: Some(score_bg_paint),
+                background_color: Some(score_bg_paint.clone()),
             };
 
-            let (x_start, _) = self.draw_text(base_pixmap, score, text_color, block_rect, score_text_options);
+            let measured_score = self.measure_text(score, block_rect, &score_text_options).unwrap(); 
+            let measured_score = Rect::from_xywh(measured_score.x(), measured_score.y(), measured_score.width(), (measured_score.height() * 0.8).round()).unwrap();
+            draw_bg(base_pixmap, measured_score, &score_bg_paint);
+
+            let (x_start, _) = self.draw_text(base_pixmap, score, text_color, block_rect, &score_text_options);
 
             let name_text_options = TextOptions {
                 align: TextAlign::Left,
                 padding_start: dims.tile_size_px / 2,
                 padding_end: 0,
-                background_color: Some(name_bg_paint),
+                background_color: Some(name_bg_paint.clone()),
             };
             let Some(name_rect) = Rect::from_ltrb(
                 block_rect.left(),
@@ -58,13 +71,35 @@ impl TextRenderer {
                 continue;
             };
 
-            self.draw_text(base_pixmap, name.unwrap_or(&String::new()), text_color, name_rect, name_text_options);
+            if let Some(name_rect) = Rect::from_ltrb(name_rect.left(), name_rect.top(), measured_score.left(), measured_score.bottom()) {
+                draw_bg(base_pixmap, name_rect, &name_bg_paint);
+            }
+
+            self.draw_text(base_pixmap, name, text_color, name_rect, &name_text_options);
 
             // base_pixmap.fill_rect(block_rect, &block_bg_paint, Transform::identity(), None);
         }
     }
 }
 
-fn score_str(frame_count: usize) -> String {
-    format!("{:.3}", frame_count as f32 / 60.0)
+fn draw_bg(pixmap: &mut Pixmap, rect: Rect, paint: &Paint) {
+    pixmap.fill_path(&npp_rect(rect), paint, FillRule::EvenOdd, Transform::identity(), None);
+    // pixmap.fill_rect(rect, paint, Transform::identity(), None);
+}
+
+/// An N++ rect is a rect with the bottom two corners beveled off
+fn npp_rect(rect: Rect) -> Path {
+    let max_bevel_size = rect.width() / 2.0;
+    let bevel_size = max_bevel_size.min(rect.height() * 0.33).floor();
+
+    let mut path = PathBuilder::new();
+    path.move_to(rect.left(), rect.top());
+    path.line_to(rect.right(), rect.top());
+    path.line_to(rect.right(), rect.bottom() - bevel_size);
+    path.line_to(rect.right() - bevel_size, rect.bottom());
+    path.line_to(rect.left() + bevel_size, rect.bottom());
+    path.line_to(rect.left(), rect.bottom() - bevel_size);
+    path.close();
+
+    path.finish().unwrap()
 }

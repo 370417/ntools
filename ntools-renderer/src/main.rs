@@ -2,7 +2,7 @@ use std::{eprintln, format, io::Write, println, process::{Command, ExitCode, Std
 
 use ntools_rs::editor::Editor;
 
-use crate::{dimensions::Dimensions, offset_replay::OffsetReplay, frame_renderer::FrameRenderer, palette::{ColorTheme, Palette}};
+use crate::{anim_gif::AnimGifArgs, dimensions::Dimensions, frame_renderer::FrameRenderer, offset_replay::OffsetReplay, palette::{ColorTheme, Palette}};
 
 mod anim_ffmpeg;
 mod anim_gif;
@@ -28,10 +28,17 @@ fn main() -> ExitCode {
     let replay_bytes_3 = include_bytes!("../replays/86446_3");
 
     let players = vec![
-        "EddyMataGallos".to_string(),
-        "DarkStuff".to_string(),
         "frankytrees".to_string(),
+        "DarkStuff".to_string(),
+        "EddyMataGallos".to_string(),
         "canadian esport".to_string(),
+    ];
+
+    let scores = vec![
+        "85.000".to_string(),
+        "88.383".to_string(),
+        "92.833".to_string(),
+        "82.733".to_string(),
     ];
 
     let mut editor = Editor::new();
@@ -50,6 +57,12 @@ fn main() -> ExitCode {
     dims.tile_size_px = 28;
     dims.force_alias = true;
 
+    let anim_gif_args = AnimGifArgs {
+        theme,
+        players,
+        scores,
+    };
+
     // match screenshot::screenshot("image.png", replays, theme, &dims) {
     //     Ok(_) => ExitCode::SUCCESS,
     //     Err(err) => {
@@ -58,7 +71,7 @@ fn main() -> ExitCode {
     //     }
     // }
 
-    match anim_gif::anim_gif("output.gif", replays, players, theme, 2, &dims) {
+    match anim_gif::anim_gif("output.gif", replays, &anim_gif_args, 2, &dims) {
         Ok(_) => ExitCode::SUCCESS,
         Err(err) => {
             eprintln!("{}", err);

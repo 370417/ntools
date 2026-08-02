@@ -1,4 +1,4 @@
-use std::collections::{BTreeSet, HashMap};
+use std::collections::BTreeSet;
 
 use ntools_rs::EntityId;
 use tiny_skia::{Color, Paint, Pixmap, PremultipliedColorU8};

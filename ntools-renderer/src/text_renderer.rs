@@ -49,7 +49,7 @@ impl TextRenderer {
     }
 
     /// Returns the start and end x-coordinates of the drawn text, including padding
-    pub fn draw_text(&mut self, target: &mut Pixmap, text: &str, color: Color, bounding_box: Rect, options: TextOptions) -> (f32, f32) {
+    pub fn draw_text(&mut self, target: &mut Pixmap, text: &str, color: Color, bounding_box: Rect, options: &TextOptions) -> (f32, f32) {
         // color texture with the text color
         let mut paint = Paint::default();
         paint.set_color(color);
@@ -72,8 +72,8 @@ impl TextRenderer {
         let mut x = x_start;
         let y = bounding_box.y() + vertical_padding as f32;
 
-        if let Some(bg_color) = options.background_color {
-            target.fill_rect(bounding_box, &bg_color, Transform::identity(), None);
+        if let Some(bg_color) = &options.background_color {
+            // target.fill_rect(bounding_box, bg_color, Transform::identity(), None);
         }
 
         for byte in text.bytes() {
@@ -110,5 +110,19 @@ impl TextRenderer {
         }
 
         (x_start - options.padding_start as f32, x + options.padding_end as f32)
+    }
+
+    /// Returns the minimal bounding rect around text, including padding.
+    pub fn measure_text(&mut self, text: &str, bounding_box: Rect, options: &TextOptions) -> Option<Rect> {
+        let text_width: i16 = text.bytes().filter_map(|byte| self.chars.get(&(byte as u32))).map(|char| char.xadvance).sum();
+
+        let x_start = match options.align {
+            TextAlign::Left => bounding_box.x() + options.padding_start as f32,
+            TextAlign::Right => (bounding_box.x() + options.padding_start as f32).max(bounding_box.right() - text_width as f32 - options.padding_end as f32),
+        };
+
+        let x_end = bounding_box.right().min(x_start + text_width as f32);
+
+        Rect::from_ltrb(x_start - options.padding_start as f32, bounding_box.top(), x_end + options.padding_end as f32, bounding_box.bottom())
     }
 }
