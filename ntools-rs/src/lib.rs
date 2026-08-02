@@ -21,3 +21,4 @@ pub use entity::mine::MineState;
 pub use orientation::{Orientation, OrientationBinary, OrientationCardinal, OrientationExt};
 pub use entity::gauss::GaussState;
 pub use entity::rocket::RocketState;
+pub use entity::shove_thwump::ShoveThwumpState;

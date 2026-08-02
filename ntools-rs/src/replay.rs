@@ -8,8 +8,8 @@ use crate::{anim_data::flatten_bones, attract::to_attract_bytes, editor::Editor,
 
 #[wasm_bindgen]
 pub struct Replay {
-    pub(crate) _level_name: String,
-    pub(crate) _author_name: Option<String>,
+    pub(crate) level_name: String,
+    pub(crate) author_name: Option<String>,
     pub(crate) segments: Grid<Segment>,
     pub(crate) inputs: Vec<u8>,
     pub(crate) past_ninjas: Vec<PastNinja>,
@@ -829,6 +829,14 @@ impl Replay {
 
     pub fn ninja_displacement(&self) -> f64 {
         (self.current_sim.ninja.pos() - self.current_sim.ninja.pos_old()).length()
+    }
+
+    pub fn level_name(&self) -> &str {
+        &self.level_name
+    }
+
+    pub fn author_name(&self) -> Option<&String> {
+        self.author_name.as_ref()
     }
 }
 

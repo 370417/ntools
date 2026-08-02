@@ -25,21 +25,21 @@ impl Palette {
         }
     }
 
-    pub fn bg(&self, theme: ColorTheme) -> PremultipliedColorU8 {
+    pub fn bg_color(&self, theme: ColorTheme) -> PremultipliedColorU8 {
         let file = PaletteFile::Background;
         let index = 2;
         let x = calc_palette_x(file, index);
         self.colors.pixel(x, theme as u32).unwrap_or(PremultipliedColorU8::TRANSPARENT)
     }
 
-    pub fn tile(&self, theme: ColorTheme) -> PremultipliedColorU8 {
+    pub fn tile_color(&self, theme: ColorTheme) -> PremultipliedColorU8 {
         let file = PaletteFile::Background;
         let index = 0;
         let x = calc_palette_x(file, index);
         self.colors.pixel(x, theme as u32).unwrap_or(PremultipliedColorU8::TRANSPARENT)
     }
 
-    pub fn tile_outline(&self, theme: ColorTheme) -> PremultipliedColorU8 {
+    pub fn tile_outline_color(&self, theme: ColorTheme) -> PremultipliedColorU8 {
         let file = PaletteFile::Background;
         let index = 1;
         let x = calc_palette_x(file, index);
@@ -48,6 +48,34 @@ impl Palette {
 
     pub fn entity_color(&self, entity: EntityId, index: u32, theme: ColorTheme) -> PremultipliedColorU8 {
         let file = PaletteFile::from_entity(entity);
+        let x = calc_palette_x(file, index);
+        self.colors.pixel(x, theme as u32).unwrap_or(PremultipliedColorU8::TRANSPARENT)
+    }
+
+    pub fn legend_color(&self, theme: ColorTheme) -> PremultipliedColorU8 {
+        let file = PaletteFile::Menu;
+        let index = 28;
+        let x = calc_palette_x(file, index);
+        self.colors.pixel(x, theme as u32).unwrap_or(PremultipliedColorU8::TRANSPARENT)
+    }
+
+    pub fn timebar_color(&self, ninja_index: usize, theme: ColorTheme) -> PremultipliedColorU8 {
+        let file = PaletteFile::TimeBarRace;
+        let index = 5 + 3 * ninja_index as u32;
+        let x = calc_palette_x(file, index);
+        self.colors.pixel(x, theme as u32).unwrap_or(PremultipliedColorU8::TRANSPARENT)
+    }
+
+    pub fn timebar_bonus_color(&self, ninja_index: usize, theme: ColorTheme) -> PremultipliedColorU8 {
+        let file = PaletteFile::TimeBarRace;
+        let index = 6 + 3 * ninja_index as u32;
+        let x = calc_palette_x(file, index);
+        self.colors.pixel(x, theme as u32).unwrap_or(PremultipliedColorU8::TRANSPARENT)
+    }
+
+    pub fn timebar_number_color(&self, ninja_index: usize, theme: ColorTheme) -> PremultipliedColorU8 {
+        let file = PaletteFile::TimeBarRace;
+        let index = 7 + 3 * ninja_index as u32;
         let x = calc_palette_x(file, index);
         self.colors.pixel(x, theme as u32).unwrap_or(PremultipliedColorU8::TRANSPARENT)
     }

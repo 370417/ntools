@@ -14,12 +14,12 @@ pub struct ShoveThwump {
     pub pos: DVec2,
     pub orientation: Orientation,
     origin: DVec2,
-    state: ShoveThwumpState,
+    pub state: ShoveThwumpState,
     corners: Corners,
 }
 
 #[derive(Clone)]
-enum ShoveThwumpState {
+pub enum ShoveThwumpState {
     Waiting,
     Touched {
         touch: Orientation,

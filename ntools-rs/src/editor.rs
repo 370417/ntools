@@ -297,8 +297,8 @@ impl Editor {
         let inputs = Vec::new();
 
         Ok(Replay {
-            _level_name: String::new(),
-            _author_name: None,
+            level_name: String::new(),
+            author_name: None,
             segments,
             inputs,
             past_ninjas: vec![current_sim.ninja.to_past_ninja(0)],

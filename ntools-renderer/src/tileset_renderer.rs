@@ -17,9 +17,9 @@ impl TilesetRenderer {
         let mut pixmap = Pixmap::new(dims.frame_width_px(), dims.frame_height_px()).unwrap();
         let mut inverse_pixmap = pixmap.clone();
 
-        let tile_color = to_color(palette.tile(theme));
-        let mut tile_outline_color = to_paint(palette.tile_outline(theme));
-        let bg_color = to_color(palette.bg(theme));
+        let tile_color = to_color(palette.tile_color(theme));
+        let mut tile_outline_color = to_paint(palette.tile_outline_color(theme));
+        let bg_color = to_color(palette.bg_color(theme));
 
         if dims.force_alias {
             tile_outline_color.anti_alias = false;

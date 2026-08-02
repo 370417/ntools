@@ -1,3 +1,5 @@
+//! Rendering replay animations to gifs.
+
 use std::{assert_eq, borrow::Cow, fs::File, println};
 
 use anyhow::{Context, anyhow};
@@ -8,7 +10,7 @@ use tiny_skia::Pixmap;
 use crate::{dimensions::Dimensions, entity_renderer::SpriteSize, frame_renderer::FrameRenderer, offset_replay::OffsetReplay, palette::{ColorIndex, ColorTheme, Palette}};
 
 /// frame_delay: deplay between frames in centiseconds, so fps = 100/frame_delay.
-pub fn anim_gif(output_filename: &str, replays: Vec<Replay>, theme: ColorTheme, frame_delay: u16, dims: &Dimensions) -> anyhow::Result<()> {
+pub fn anim_gif(output_filename: &str, replays: Vec<Replay>, players: Vec<String>, theme: ColorTheme, frame_delay: u16, dims: &Dimensions) -> anyhow::Result<()> {
     let palette = Palette::new();
     let color_index = palette.create_index(theme);
 
@@ -17,7 +19,7 @@ pub fn anim_gif(output_filename: &str, replays: Vec<Replay>, theme: ColorTheme, 
 
     encoder.set_repeat(gif::Repeat::Infinite)?;
 
-    let mut frame_renderer = FrameRenderer::new(SpriteSize::Small, &replays, &palette, theme, dims);
+    let mut frame_renderer = FrameRenderer::new(SpriteSize::Small, &replays, players, &palette, theme, dims);
 
     // Render the initial frame that you see before any user input
     let mut frame = frame_renderer.render(&replays, &palette, theme, None, dims);

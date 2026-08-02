@@ -1,3 +1,8 @@
+//! Rendering replay animations to video using ffmpeg.
+//!
+//! Gives good quality results, can do 60 fps unlike gif, and produces small file
+//! sizes, but encoding is vary slow.
+
 use std::{io::Write, process::{Child, Command, Stdio}};
 
 use anyhow::anyhow;
