@@ -9,7 +9,7 @@ impl TextRenderer {
     pub fn render_super_text(&mut self, base_pixmap: &mut Pixmap, replays: &[Replay], players: &[String], scores: &[String], palette: &Palette, theme: ColorTheme, dims: &Dimensions) {
         let names_and_scores: Vec<_> = replays.iter()
             .enumerate()
-            .filter_map(|(i, score)| {
+            .filter_map(|(i, _)| {
                 match (players.get(i), scores.get(i)) {
                     (Some(player), Some(score)) => Some((i, player, score)),
                     _ => None,
@@ -46,7 +46,6 @@ impl TextRenderer {
                 align: TextAlign::Right,
                 padding_start: dims.tile_size_px / 2,
                 padding_end: dims.tile_size_px / 2,
-                background_color: Some(score_bg_paint.clone()),
             };
 
             let measured_score = self.measure_text(score, block_rect, &score_text_options).unwrap(); 
@@ -59,7 +58,6 @@ impl TextRenderer {
                 align: TextAlign::Left,
                 padding_start: dims.tile_size_px / 2,
                 padding_end: 0,
-                background_color: Some(name_bg_paint.clone()),
             };
             let Some(name_rect) = Rect::from_ltrb(
                 block_rect.left(),
@@ -76,15 +74,12 @@ impl TextRenderer {
             }
 
             self.draw_text(base_pixmap, name, text_color, name_rect, &name_text_options);
-
-            // base_pixmap.fill_rect(block_rect, &block_bg_paint, Transform::identity(), None);
         }
     }
 }
 
 fn draw_bg(pixmap: &mut Pixmap, rect: Rect, paint: &Paint) {
     pixmap.fill_path(&npp_rect(rect), paint, FillRule::EvenOdd, Transform::identity(), None);
-    // pixmap.fill_rect(rect, paint, Transform::identity(), None);
 }
 
 /// An N++ rect is a rect with the bottom two corners beveled off

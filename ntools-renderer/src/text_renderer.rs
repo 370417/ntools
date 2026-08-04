@@ -1,7 +1,7 @@
-use std::{collections::HashMap, println};
+use std::collections::HashMap;
 
 use bmfont_rs::Char;
-use tiny_skia::{BlendMode, Color, Paint, Pattern, Pixmap, Rect, Shader, Transform};
+use tiny_skia::{BlendMode, Color, Paint, Pattern, Pixmap, Rect, Transform};
 
 pub struct TextRenderer {
     /// character info by char
@@ -15,7 +15,6 @@ pub struct TextOptions {
     pub align: TextAlign,
     pub padding_start: u32,
     pub padding_end: u32,
-    pub background_color: Option<Paint<'static>>,
 }
 
 #[derive(Default)]
@@ -71,10 +70,6 @@ impl TextRenderer {
         };
         let mut x = x_start;
         let y = bounding_box.y() + vertical_padding as f32;
-
-        if let Some(bg_color) = &options.background_color {
-            // target.fill_rect(bounding_box, bg_color, Transform::identity(), None);
-        }
 
         for byte in text.bytes() {
             if let Some(char) = self.chars.get(&(byte as u32)) {

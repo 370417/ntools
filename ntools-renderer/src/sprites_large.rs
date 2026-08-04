@@ -1,4 +1,4 @@
-use ntools_rs::{EntityId, replay::Replay};
+use ntools_rs::EntityId;
 use tiny_skia::{Mask, Pixmap, Rect, Transform};
 
 use crate::{ palette::{ColorTheme, Palette, to_paint}};

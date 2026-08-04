@@ -24,7 +24,6 @@ impl TextRenderer {
             align: TextAlign::Right,
             padding_start: 0,
             padding_end: 0,
-            background_color: None,
         };
 
         self.draw_text(base_pixmap, level_name, color, bottom_right_rect, &options_align_right);

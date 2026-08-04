@@ -36,9 +36,4 @@ impl Dimensions {
             pos.y as f32 * self.tile_size_px as f32 / 24.0,
         )
     }
-
-    pub fn to_pixel_int(&self, pos: DVec2) -> (i32, i32) {
-        let (x, y) = self.to_pixel(pos);
-        (x.round() as i32, y.round() as i32)
-    }
 }

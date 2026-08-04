@@ -2,45 +2,43 @@
 
 mod frame_reuse_optimization;
 
-use std::{assert_eq, borrow::Cow, fs::File, println};
+use std::{assert_eq, borrow::Cow, fs::File};
 
-use anyhow::{Context, anyhow};
+use anyhow::anyhow;
 use gif::{Encoder, Frame};
-use ntools_rs::replay::Replay;
 use tiny_skia::Pixmap;
 
-use crate::{dimensions::Dimensions, entity_renderer::SpriteSize, frame_renderer::FrameRenderer, offset_replay::OffsetReplay, palette::{ColorIndex, ColorTheme, Palette}};
-
-pub struct AnimGifArgs {
-    pub theme: ColorTheme,
-    pub players: Vec<String>,
-    pub scores: Vec<String>,
-}
+use crate::{cli::RenderArgs, dimensions::Dimensions, entity_renderer::SpriteSize, frame_renderer::FrameRenderer, palette::{ColorIndex, Palette}};
 
 /// frame_delay: deplay between frames in centiseconds, so fps = 100/frame_delay.
-pub fn anim_gif(output_filename: &str, replays: Vec<Replay>, args: &AnimGifArgs, frame_delay: u16, dims: &Dimensions) -> anyhow::Result<()> {
+pub fn anim_gif(args: RenderArgs, frame_delay: u16) -> anyhow::Result<()> {
     let palette = Palette::new();
-    let theme = args.theme;
+    let theme = args.common().theme()?;
     let color_index = palette.create_index(theme);
 
-    let mut image = File::create(output_filename)?;
+    let mut dims = Dimensions::new();
+    dims.force_alias = true;
+    dims.tile_size_px = 28;
+
+    let mut image = File::create(&args.common().output)?;
     let mut encoder = Encoder::new(&mut image, dims.frame_width_px() as u16, dims.frame_height_px() as u16, &color_index.to_flat_colors())?;
 
     encoder.set_repeat(gif::Repeat::Infinite)?;
 
-    let mut frame_renderer = FrameRenderer::new(SpriteSize::Small, &replays, &palette, theme, dims);
+    let replays = args.common().replays()?;
+
+    if replays.is_empty() {
+        return Err(anyhow!("at least one replay required"));
+    }
+
+    let mut frame_renderer = FrameRenderer::new(SpriteSize::Small, &replays, &palette, theme, &dims);
 
     // Render the initial frame that you see before any user input
-    let mut frame = frame_renderer.render(&replays, &palette, theme, &args.players, &args.scores, None, dims);
-
-    // We don't write the indexed frame right away because we need to know how long
-    // the frame should be visible for, and for that we need to process future
-    // frames to see if any will be skipped
-    let mut indexed = to_indexed(&frame, None, &Rect::entire_frame(&frame), &color_index)?;
+    let mut frame = frame_renderer.render(&replays, &palette, theme, &args.common().players, &args.common().scores, None, &dims);
+    let indexed = to_indexed(&frame, None, &Rect::entire_frame(&frame), &color_index, frame_delay)?;
+    encoder.write_frame(&indexed)?;
 
     let mut replays = replays;
-
-    let mut skipped_frames = 0;
 
     // Because gifs can't hit exact 60fps, we decouple the game frame rate
     // from the render frame rate, just like you would when rendering at a variable
@@ -66,20 +64,17 @@ pub fn anim_gif(output_filename: &str, replays: Vec<Replay>, args: &AnimGifArgs,
         let partial_frame = accumulator / ms_per_game_tick;
         
         // prepare the next frame to get rendered
-        let new_frame = frame_renderer.render_anim_frame(&replays, &palette, theme, Some(partial_frame), dims);
-        if let Some(dirty) = find_dirty_rectangle(&frame, &new_frame) {
-            // render the previous frame now that we know its duration
-            indexed.delay = frame_delay * (1 + skipped_frames);
-            skipped_frames = 0;
+        let new_frame = frame_renderer.render_anim_frame(&replays, &palette, theme, Some(partial_frame), &dims);
+        if let Some(dirty) = find_dirty_rectangle(&frame, &new_frame) {            
+            // render the next frame
+            let indexed = to_indexed(&new_frame, Some(&frame), &dirty, &color_index, frame_delay)?;
             encoder.write_frame(&indexed)?;
-
-            // prepare the next frame
-            indexed = to_indexed(&new_frame, Some(&frame), &dirty, &color_index)?;
-            frame = new_frame;
         } else {
-            // skip frame because nothing has changed
-            skipped_frames += 1;
+            // render a blank frame
+            let indexed = to_indexed(&new_frame, Some(&frame), &Rect { left: 0, right: 2, top: 0, bottom: 2, }, &color_index, frame_delay)?;
+            encoder.write_frame(&indexed)?;
         }
+        frame = new_frame
     }
 
     // render the last frame left over
@@ -208,7 +203,7 @@ fn find_dirty_rectangle(old_frame: &Pixmap, new_frame: &Pixmap) -> Option<Rect> 
     })
 }
 
-fn to_indexed(frame: &Pixmap, prev_frame: Option<&Pixmap>, bounding_box: &Rect, color_index: &ColorIndex) -> anyhow::Result<Frame<'static>> {
+fn to_indexed(frame: &Pixmap, prev_frame: Option<&Pixmap>, bounding_box: &Rect, color_index: &ColorIndex, frame_delay: u16) -> anyhow::Result<Frame<'static>> {
     let data = frame.pixels();
     let mut indexed = vec![color_index.transparent_index(); bounding_box.area() as usize];
     let mut indexed_i = 0;
@@ -228,7 +223,7 @@ fn to_indexed(frame: &Pixmap, prev_frame: Option<&Pixmap>, bounding_box: &Rect, 
     }
 
     Ok(Frame {
-        delay: 2, // gets overriden later
+        delay: frame_delay,
         dispose: gif::DisposalMethod::Keep,
         transparent: Some(color_index.transparent_index()),
         needs_user_input: false,

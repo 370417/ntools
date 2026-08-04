@@ -1,7 +1,7 @@
 use ntools_rs::{EntityId, GaussState, RocketState, glam::DVec2, replay::Replay};
-use tiny_skia::{BlendMode, ColorU8, Mask, Paint, Path, PathBuilder, Pixmap, PixmapPaint, Rect, Stroke, StrokeDash, Transform};
+use tiny_skia::{BlendMode, Paint, Path, PathBuilder, Pixmap, PixmapPaint, Stroke, StrokeDash, Transform};
 
-use crate::{dimensions::Dimensions, offset_replay::OffsetReplay, palette::{ColorTheme, Palette, to_paint}, sprites_large, sprites_small};
+use crate::{dimensions::Dimensions, palette::{ColorTheme, Palette, to_paint}, sprites_large, sprites_small};
 
 /// Stores sprites for entities so that we don't need to recreate them over and over.
 pub struct EntityRenderer {
@@ -117,7 +117,7 @@ impl EntityRenderer {
 
     pub fn render(&mut self, base_pixmap: &mut Pixmap, replays: &[Replay], palette: &Palette, theme: ColorTheme, partial_frame: f64, dims: &Dimensions) {
         let entities = replays[0].entities();
-
+       
         // trap doors
         for door in &entities.doors.trap {
             if door.frames_since_close.is_some() {
@@ -366,7 +366,9 @@ impl EntityRenderer {
             let (x, y) = dims.to_pixel(DVec2::new(replay.ninja_x(partial_frame), replay.ninja_y(partial_frame)));
             if let Some(path) = ninja_path(bones, dims) {
                 let mut color = to_paint(palette.entity_color(EntityId::Ninja, i as u32, theme));
-                color.anti_alias = false;
+                if dims.force_alias {
+                    color.anti_alias = false;
+                }
                 let mut stroke = Stroke::default();
                 stroke.width = dims.tile_size_px as f32 / 24.0;
                 base_pixmap.stroke_path(&path, &color, &stroke, Transform::from_translate(x, y), None);

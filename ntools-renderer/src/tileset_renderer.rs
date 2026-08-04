@@ -1,5 +1,5 @@
 use ntools_rs::{glam::DVec2, replay::Replay, segment::Segment};
-use tiny_skia::{Color, FillRule, Mask, Paint, Path, PathBuilder, Pixmap, PixmapPaint, Rect, Stroke, Transform};
+use tiny_skia::{FillRule, Mask, Path, PathBuilder, Pixmap, PixmapPaint, Rect, Stroke, Transform};
 
 use crate::{dimensions::Dimensions, palette::{ColorTheme, Palette, to_color, to_paint}};
 
