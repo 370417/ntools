@@ -2,7 +2,9 @@ use std::collections::BTreeSet;
 
 use anyhow::anyhow;
 use ntools_rs::EntityId;
-use tiny_skia::{Color, Paint, Pixmap, PremultipliedColorU8};
+use tiny_skia::{Color, Paint, Pixmap, PremultipliedColorU8, Shader};
+
+use crate::entity_renderer::pride_colors;
 
 pub struct Palette {
     colors: Pixmap,
@@ -88,6 +90,13 @@ impl Palette {
             let color = self.colors.pixel(x, theme as u32).unwrap_or(PremultipliedColorU8::TRANSPARENT).demultiply();
             let color = (color.red(), color.green(), color.blue());
             colors.insert(color);
+        }
+
+        for color in pride_colors() {
+            if let Shader::SolidColor(color) = color.shader {
+                let color = color.to_color_u8();
+                colors.insert((color.red(), color.green(), color.blue()));
+            }
         }
 
         ColorIndex {

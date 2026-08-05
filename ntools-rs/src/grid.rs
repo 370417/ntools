@@ -23,6 +23,11 @@ pub struct Grid<T> {
     cells: Vec<Vec<T>>,
 }
 
+/// Like Grid, but each cell only contains one value, not a vec of values
+pub struct FlatGrid<T> {
+    cells: Vec<T>,
+}
+
 impl <T> Grid<T> {
     pub fn new() -> Self {
         let mut cells = Vec::with_capacity(ROWS * COLS);
@@ -38,7 +43,7 @@ impl <T> Grid<T> {
         self.cells.iter().flat_map(|cell| cell.iter())
     }
 
-    /// Iterator over the items contained in a reactangular region bounded by two points.
+    /// Iterator over the items contained in a rectangular region bounded by two points.
     pub fn iter_rect_region(&self, a: DVec2, b: DVec2, padding: f64) -> impl Iterator<Item = &T> {
         let min = a.min(b);
         let max = a.max(b);
@@ -51,6 +56,105 @@ impl <T> Grid<T> {
     /// Iterator over the items in a 3x3 neighborhood centered around a point.
     pub fn iter_neighborhood(&self, pos: DVec2) -> impl Iterator<Item = &T> {
         GridPos::iter_neighborhood(pos).flat_map(|pos| self[pos].iter())
+    }
+}
+
+/// Iterator over the grid positions in a rectangular region bounded by two points.
+/// Workaround for not being able to create a mutable iterator over cells (at least not with closures)
+pub fn iter_rect_region_indices(a: DVec2, b: DVec2, padding: f64) -> impl Iterator<Item = GridPos> {
+    let min = a.min(b);
+    let max = a.max(b);
+    let padding = DVec2::splat(padding);
+    let grid_pos1 = GridPos::from_world_pos(min - padding).clamp();
+    let grid_pos2 = GridPos::from_world_pos(max + padding).clamp();
+    GridPos::iter_range_inclusive(grid_pos1, grid_pos2)
+}
+
+/// Vec of the grid positions intersected by a segment.
+/// Uses a similar algorithm as in get_raycast_distance, but I haven't refactored
+/// get_raycast_distance to use this function.
+pub fn iter_segment_cover(from: DVec2, to: DVec2) -> Vec<GridPos> {
+    let mut covered = Vec::new();
+
+    let delta = to - from;
+
+    let start = GridPos::from_world_pos(from);
+    let end = GridPos::from_world_pos(to);
+
+    let step_x = (delta.x.signum() as i8, 0);
+    let step_y = (0, delta.y.signum() as i8);
+
+    let t_delta_x = if delta.x == 0.0 {
+        f64::INFINITY
+    } else {
+        TILE_SIZE / delta.x.abs()
+    };
+    let t_delta_y = if delta.y == 0.0 {
+        f64::INFINITY
+    } else {
+        TILE_SIZE / delta.y.abs()
+    };
+
+    let first_x_boundary = start.to_world_pos().x + TILE_SIZE * (0.5 + 0.5 * delta.x.signum());
+    let first_y_boundary = start.to_world_pos().y + TILE_SIZE * (0.5 + 0.5 * delta.y.signum());
+
+    let mut t_max_x = if delta.x == 0.0 {
+        f64::INFINITY
+    } else {
+        (first_x_boundary - from.x) / delta.x
+    };
+    let mut t_max_y = if delta.y == 0.0 {
+        f64::INFINITY
+    } else {
+        (first_y_boundary - from.y) / delta.y
+    };
+
+    let mut pos = start;
+
+    while pos != end {
+        covered.push(pos);
+
+        if t_max_x < t_max_y {
+            pos = pos.plus(step_x);
+            t_max_x += t_delta_x;
+        } else if t_max_y < t_max_x {
+            pos = pos.plus(step_y);
+            t_max_y += t_delta_y;
+        } else {
+            // Crossed a corner
+            pos = pos.plus(step_x);
+            covered.push(pos);
+            pos = pos.plus(step_y);
+
+            t_max_x += t_delta_x;
+            t_max_y += t_delta_y;
+        }
+    }
+
+    covered.push(end);
+
+    covered
+}
+
+impl <T: Default> FlatGrid<T> {
+    pub fn new() -> Self {
+        let mut cells = Vec::with_capacity(ROWS * COLS);
+        for _ in 0..ROWS * COLS {
+            cells.push(T::default());
+        }
+        Self {
+            cells,
+        }
+    }
+}
+
+impl <T: Copy> FlatGrid<T> {
+    pub fn get(&self, grid_pos: GridPos) -> Option<T> {
+        if grid_pos.in_bounds() {
+            Some(self[grid_pos])
+        } else {
+            None
+        }
     }
 }
 
@@ -70,6 +174,7 @@ impl <T: Clone> Clone for Grid<T> {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(debug_assertions, derive(Debug))]
 pub struct GridPos {
     pub x: i8,
     pub y: i8,
@@ -88,9 +193,11 @@ impl GridPos {
     }
 
     pub fn clamp(self) -> GridPos {
+        // Do not use built in .clamp - because it can panic, it is really slow
+        // in hot loops
         GridPos {
-            x: self.x.clamp(1, COLS as i8),
-            y: self.y.clamp(1, ROWS as i8)
+            x: self.x.max(1).min(COLS as i8),
+            y: self.y.max(1).min(ROWS as i8),
         }
     }
 
@@ -190,6 +297,22 @@ impl <T> IndexMut<GridPos> for Grid<T> {
     }
 }
 
+impl <T> Index<GridPos> for FlatGrid<T> {
+    type Output = T;
+
+    fn index(&self, index: GridPos) -> &Self::Output {
+        let i = (index.y as usize - 1) * COLS + (index.x as usize - 1);
+        &self.cells[i]
+    }
+}
+
+impl <T> IndexMut<GridPos> for FlatGrid<T> {
+    fn index_mut(&mut self, index: GridPos) -> &mut Self::Output {
+        let i = (index.y as usize - 1) * COLS + (index.x as usize - 1);
+        &mut self.cells[i]
+    }
+}
+
 impl <T> Index<DVec2> for Grid<T> {
     type Output = Vec<T>;
 
@@ -207,4 +330,30 @@ impl <T> IndexMut<DVec2> for Grid<T> {
 pub fn is_pos_in_bounds(pos: DVec2) -> bool {
     pos.x >= TILE_SIZE && pos.x <= TILE_SIZE * (1.0 + COLS as f64) &&
     pos.y >= TILE_SIZE && pos.y <= TILE_SIZE * (1.0 + ROWS as f64)
+}
+
+#[cfg(test)]
+mod tests {
+    use std::println;
+
+    use glam::DVec2;
+
+    use crate::grid::{GridPos, iter_segment_cover};
+
+    #[test]
+    fn test_iter_segment_cover() {
+        let endpoints = [
+            (DVec2::new(5.0, 85.0), DVec2::new(123.0, 22.0)),
+            (DVec2::new(5.0, 805.0), DVec2::new(5.0, 22.0)),
+            (DVec2::new(5.0, 22.0), DVec2::new(90.0, 22.0)),
+        ];
+        for (start, end) in endpoints {
+            let cover = iter_segment_cover(start, end);
+            for t in 0..=1000 {
+                let t = t as f64 / 1000.0;
+                let pos = start + t * (end - start);
+                assert!(cover.contains(&GridPos::from_world_pos(pos)));
+            }
+        }
+    }
 }

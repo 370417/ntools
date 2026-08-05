@@ -2,10 +2,11 @@
 
 mod frame_reuse_optimization;
 
-use std::{assert_eq, borrow::Cow, fs::File};
+use std::{assert_eq, borrow::Cow, fs::File, println};
 
 use anyhow::anyhow;
 use gif::{Encoder, Frame};
+use ntools_rs::{glam::DVec2, grid::{FlatGrid, GridPos}, snapshot::Snapshot};
 use tiny_skia::Pixmap;
 
 use crate::{cli::RenderArgs, dimensions::Dimensions, entity_renderer::SpriteSize, frame_renderer::FrameRenderer, palette::{ColorIndex, Palette}};
@@ -35,8 +36,9 @@ pub fn anim_gif(args: RenderArgs, frame_delay: u16) -> anyhow::Result<()> {
 
     // Render the initial frame that you see before any user input
     let mut frame = frame_renderer.render(&replays, &palette, theme, &args.common().players, &args.common().scores, None, &dims);
-    let indexed = to_indexed(&frame, None, &Rect::entire_frame(&frame), &color_index, frame_delay)?;
+    let indexed = to_indexed(&frame, None, &Rect::entire_frame(&frame), &color_index, frame_delay, &dims, None)?;
     encoder.write_frame(&indexed)?;
+    let mut old_snapshot = Snapshot::from_replays(&replays, 0.0);
 
     let mut replays = replays;
 
@@ -64,17 +66,20 @@ pub fn anim_gif(args: RenderArgs, frame_delay: u16) -> anyhow::Result<()> {
         let partial_frame = accumulator / ms_per_game_tick;
         
         // prepare the next frame to get rendered
-        let new_frame = frame_renderer.render_anim_frame(&replays, &palette, theme, Some(partial_frame), &dims);
+        let snapshot = Snapshot::from_replays(&replays, partial_frame as f64);
+        let diff = snapshot.diff(&old_snapshot);
+        let new_frame = frame_renderer.render_anim_frame(&snapshot, &diff, &replays, &palette, theme, partial_frame, &dims);
         if let Some(dirty) = find_dirty_rectangle(&frame, &new_frame) {            
             // render the next frame
-            let indexed = to_indexed(&new_frame, Some(&frame), &dirty, &color_index, frame_delay)?;
+            let indexed = to_indexed(&new_frame, Some(&frame), &dirty, &color_index, frame_delay, &dims, Some(&diff))?;
             encoder.write_frame(&indexed)?;
         } else {
             // render a blank frame
-            let indexed = to_indexed(&new_frame, Some(&frame), &Rect { left: 0, right: 2, top: 0, bottom: 2, }, &color_index, frame_delay)?;
+            let indexed = to_indexed(&new_frame, Some(&frame), &Rect { left: 0, right: 2, top: 0, bottom: 2, }, &color_index, frame_delay, &dims, Some(&diff))?;
             encoder.write_frame(&indexed)?;
         }
-        frame = new_frame
+        frame = new_frame;
+        old_snapshot = snapshot;
     }
 
     // render the last frame left over
@@ -203,13 +208,18 @@ fn find_dirty_rectangle(old_frame: &Pixmap, new_frame: &Pixmap) -> Option<Rect> 
     })
 }
 
-fn to_indexed(frame: &Pixmap, prev_frame: Option<&Pixmap>, bounding_box: &Rect, color_index: &ColorIndex, frame_delay: u16) -> anyhow::Result<Frame<'static>> {
+fn to_indexed(frame: &Pixmap, prev_frame: Option<&Pixmap>, bounding_box: &Rect, color_index: &ColorIndex, frame_delay: u16, dims: &Dimensions, diff: Option<&FlatGrid<bool>>) -> anyhow::Result<Frame<'static>> {
     let data = frame.pixels();
     let mut indexed = vec![color_index.transparent_index(); bounding_box.area() as usize];
     let mut indexed_i = 0;
     for y in bounding_box.top..bounding_box.bottom {
         for x in bounding_box.left..bounding_box.right {
             let i = (y * frame.width() + x) as usize;
+            let grid_pos = GridPos::new((x / dims.tile_size_px) as i8, (y / dims.tile_size_px) as i8);
+            if diff.is_some_and(|diff| diff.get(grid_pos).is_some_and(|is_changed| !is_changed)) {
+                indexed_i += 1;
+                continue;
+            }
             let color = data[i];
             if !color.is_opaque() || prev_frame.is_some_and(|frame| frame.pixels()[i] == color) {
                 // do nothing

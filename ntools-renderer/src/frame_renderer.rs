@@ -1,4 +1,4 @@
-use ntools_rs::replay::Replay;
+use ntools_rs::{grid::FlatGrid, replay::Replay, snapshot::Snapshot};
 use tiny_skia::Pixmap;
 
 use crate::{dimensions::Dimensions, entity_renderer::{EntityRenderer, SpriteSize}, palette::{ColorTheme, Palette, to_color}, text_renderer::TextRenderer, tileset_renderer::TilesetRenderer};
@@ -13,7 +13,7 @@ impl FrameRenderer {
     pub fn new(sprite_size: SpriteSize, replays: &[Replay], palette: &Palette, theme: ColorTheme, dims: &Dimensions) -> Self {
         Self {
             tileset_renderer: TilesetRenderer::new(&replays[0], palette, theme, &dims),
-            entity_renderer: EntityRenderer::new(sprite_size, palette, theme),
+            entity_renderer: EntityRenderer::new(sprite_size, palette, theme, &dims),
             text_renderer: TextRenderer::new(),
         }
     }
@@ -32,15 +32,14 @@ impl FrameRenderer {
 
         self.text_renderer.render_super_text(&mut pixmap, replays, players, scores, palette, theme, dims);
 
-        self.text_renderer.render_sub_text(&mut pixmap, "Twenty Seven", "Immune system", palette, theme, dims);
+        self.text_renderer.render_sub_text(&mut pixmap, "", "", palette, theme, dims);
         
         pixmap
     }
 
-    pub fn render_anim_frame(&mut self, replays: &[Replay], palette: &Palette, theme: ColorTheme, partial_frame: Option<f32>, dims: &Dimensions) -> Pixmap {
-        let partial_frame = partial_frame.unwrap_or(1.0) as f64;
+    pub fn render_anim_frame(&mut self, snapshot: &Snapshot, diff: &FlatGrid<bool>, replays: &[Replay], palette: &Palette, theme: ColorTheme, partial_frame: f32, dims: &Dimensions) -> Pixmap {
         let mut pixmap = self.tileset_renderer.anim_base();
-        self.entity_renderer.render(&mut pixmap, replays, palette, theme, partial_frame, dims);
+        self.entity_renderer.render2(&mut pixmap, replays, palette, theme, snapshot, diff, dims);
         pixmap
     }
 }

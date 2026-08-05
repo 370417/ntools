@@ -1,5 +1,5 @@
-use ntools_rs::{EntityId, GaussState, RocketState, glam::DVec2, replay::Replay};
-use tiny_skia::{BlendMode, Paint, Path, PathBuilder, Pixmap, PixmapPaint, Stroke, StrokeDash, Transform};
+use ntools_rs::{EntityId, GaussState, RocketState, glam::DVec2, grid::{FlatGrid, iter_rect_region_indices}, replay::Replay, snapshot::{Snapshot, entity_radius}};
+use tiny_skia::{BlendMode, Color, Mask, MaskType, Paint, Path, PathBuilder, Pixmap, PixmapPaint, Rect, Stroke, StrokeDash, Transform};
 
 use crate::{dimensions::Dimensions, palette::{ColorTheme, Palette, to_paint}, sprites_large, sprites_small};
 
@@ -67,7 +67,7 @@ impl SpriteSize {
 }
 
 impl EntityRenderer {
-    pub fn new(sprite_size: SpriteSize, palette: &Palette, theme: ColorTheme) -> Self {
+    pub fn new(sprite_size: SpriteSize, palette: &Palette, theme: ColorTheme, dims: &Dimensions) -> Self {
         Self {
             sprite_size,
             mine_sprite: create_entity_sprite(sprite_size, EntityId::Mine, 0, palette, theme),
@@ -112,6 +112,86 @@ impl EntityRenderer {
             shove_thwump_sprite: create_entity_sprite(sprite_size, EntityId::ShoveThwump, 0, palette, theme),
             shove_thwump_touched_sprite: create_entity_sprite(sprite_size, EntityId::ShoveThwump, 1, palette, theme),
             shove_thwump_core_sprite: create_entity_sprite(sprite_size, EntityId::ShoveThwump, 2, palette, theme),
+        }
+    }
+
+    pub fn render2(&mut self, base_pixmap: &mut Pixmap, replays: &[Replay], palette: &Palette, theme: ColorTheme, snapshot: &Snapshot, diff: &FlatGrid<bool>, dims: &Dimensions) {
+        for entity_snapshot in &snapshot.entities {
+            if let Some(sprite) = self.sprite(entity_snapshot.id, entity_snapshot.state) {
+                if let (EntityId::GaussTurret, Some(secondary_pos)) = (entity_snapshot.id, entity_snapshot.secondary_pos) {
+                    // gauss turret beam
+                    let (start_x, start_y) = dims.to_pixel(entity_snapshot.pos);
+                    let (end_x, end_y) = dims.to_pixel(secondary_pos);
+                    let mut path = PathBuilder::new();
+                    path.move_to(start_x, start_y);
+                    path.line_to(end_x, end_y);
+                    if let Some(path) = path.finish() {
+                        let mut paint = to_paint(palette.entity_color(EntityId::GaussTurret, 3, theme));
+                        paint.blend_mode = BlendMode::SourceAtop;
+                        if dims.force_alias {
+                            paint.anti_alias = false;
+                        }
+                        let mut stroke = Stroke::default();
+                        stroke.width = dims.tile_size_px as f32 / 24.0;
+                        base_pixmap.stroke_path(&path, &paint, &stroke, Transform::identity(), None);
+                    }
+                }
+
+                // skip drawing the entity if it doesn't overlap changed area
+                let overlaps_diff = iter_rect_region_indices(entity_snapshot.pos, entity_snapshot.pos, entity_radius(entity_snapshot.id))
+                    .any(|grid_pos| diff[grid_pos.clamp()]);
+                if overlaps_diff {
+                    self.draw_sprite(base_pixmap, sprite, entity_snapshot.pos, entity_snapshot.rotation_deg, dims);
+                } else {
+                    self.draw_sprite(base_pixmap, 
+                        sprite,
+                        // self.sprite(EntityId::BounceBlock, 0).unwrap(),
+                         entity_snapshot.pos, entity_snapshot.rotation_deg, dims);
+                }
+            } else if let (EntityId::Ninja, Some(i)) = (entity_snapshot.id, entity_snapshot.entity_index) {
+                // ninjas
+                let replay = &replays[i];
+                let partial_frame = snapshot.partial_frame;
+                if i == 0 {
+                    let (x, y) = dims.to_pixel(entity_snapshot.pos);
+                    pride_ninja(base_pixmap, replay.ninja_bones(partial_frame), x, y, dims);
+                } else {
+                    let bones = replay.ninja_bones(partial_frame);
+                    let (x, y) = dims.to_pixel(entity_snapshot.pos);
+                    if let Some(path) = ninja_path(bones, dims) {
+                        let mut color = to_paint(palette.entity_color(EntityId::Ninja, i as u32, theme));
+                        color.blend_mode = BlendMode::SourceAtop;
+                        if dims.force_alias {
+                            color.anti_alias = false;
+                        }
+                        let mut stroke = Stroke::default();
+                        stroke.width = dims.tile_size_px as f32 / 24.0;
+                        base_pixmap.stroke_path(&path, &color, &stroke, Transform::from_translate(x, y), None);
+                    }
+                }
+            } else if let (EntityId::EvilNinja, Some(i)) = (entity_snapshot.id, entity_snapshot.entity_index) {
+                // evil ninjas
+                let replay = &replays[0];
+                if let Some(bones) = replay.evil_ninja_bones(i) {
+                    let (x, y) = dims.to_pixel(entity_snapshot.pos);
+                    if let Some(path) = ninja_path(bones, dims) {
+                        let color = palette.entity_color(EntityId::EvilNinja, 1, theme).demultiply();
+                        let mut paint = Paint::default();
+                        paint.set_color_rgba8(color.red(), color.green(), color.blue(), 255);
+                        paint.blend_mode = BlendMode::SourceAtop;
+                        paint.anti_alias = false;
+                        let mut stroke = Stroke::default();
+                        let stroke_size = 2.0 * 28.08 / dims.tile_size_px as f32;
+                        stroke.dash = Some(StrokeDash::new(vec![stroke_size, stroke_size], 0.0).unwrap());
+                        stroke.width = dims.tile_size_px as f32 / 24.0;
+                        base_pixmap.stroke_path(&path, &paint, &stroke, Transform::from_translate(x, y), None);
+                    }
+                }
+            } else if let (EntityId::GaussTurret, Some(sprite)) = (entity_snapshot.id, self.sprite(entity_snapshot.id, entity_snapshot.state - 1000)) {
+                // gauss crosshairs
+                self.draw_sprite(base_pixmap, sprite, entity_snapshot.pos, entity_snapshot.rotation_deg, dims);
+                self.draw_sprite(base_pixmap, self.sprite(EntityId::GaussTurret, 5).unwrap(), entity_snapshot.pos, entity_snapshot.rotation_deg, dims);
+            }
         }
     }
 
@@ -362,16 +442,21 @@ impl EntityRenderer {
 
         // ninjas
         for (i, replay) in replays.iter().enumerate().rev() {
-            let bones = replay.ninja_bones(partial_frame);
-            let (x, y) = dims.to_pixel(DVec2::new(replay.ninja_x(partial_frame), replay.ninja_y(partial_frame)));
-            if let Some(path) = ninja_path(bones, dims) {
-                let mut color = to_paint(palette.entity_color(EntityId::Ninja, i as u32, theme));
-                if dims.force_alias {
-                    color.anti_alias = false;
+            if i == 0 {
+                let (x, y) = dims.to_pixel(DVec2::new(replay.ninja_x(partial_frame), replay.ninja_y(partial_frame)));
+                pride_ninja(base_pixmap, replay.ninja_bones(partial_frame), x, y, dims);
+            } else {
+                let bones = replay.ninja_bones(partial_frame);
+                let (x, y) = dims.to_pixel(DVec2::new(replay.ninja_x(partial_frame), replay.ninja_y(partial_frame)));
+                if let Some(path) = ninja_path(bones, dims) {
+                    let mut color = to_paint(palette.entity_color(EntityId::Ninja, i as u32, theme));
+                    if dims.force_alias {
+                        color.anti_alias = false;
+                    }
+                    let mut stroke = Stroke::default();
+                    stroke.width = dims.tile_size_px as f32 / 24.0;
+                    base_pixmap.stroke_path(&path, &color, &stroke, Transform::from_translate(x, y), None);
                 }
-                let mut stroke = Stroke::default();
-                stroke.width = dims.tile_size_px as f32 / 24.0;
-                base_pixmap.stroke_path(&path, &color, &stroke, Transform::from_translate(x, y), None);
             }
         }
 
@@ -401,6 +486,62 @@ impl EntityRenderer {
         }
     }
 
+    fn sprite(&self, entity: EntityId, state: u32) -> Option<&Pixmap> {
+        match (entity, state) {
+            (EntityId::Mine, 0) => Some(&self.mine_sprite),
+            (EntityId::Mine, 1) => Some(&self.toggle_mine_sprite),
+            (EntityId::Mine, 2) => Some(&self.toggling_mine_sprite),
+            (EntityId::Gold, 0) => Some(&self.gold_sprite),
+            (EntityId::ExitDoor, 0) => Some(&self.exit_door_closed_sprite),
+            (EntityId::ExitDoor, 1) => Some(&self.exit_door_open_sprite),
+            (EntityId::ExitSwitch, 0) => Some(&self.exit_switch_closed_sprite),
+            (EntityId::ExitSwitch, 1) => Some(&self.exit_switch_open_sprite),
+            (EntityId::RegularDoor, 0) => Some(&self.regular_door_closed_sprite),
+            (EntityId::LockedDoor, 0) => Some(&self.locked_door_closed_sprite),
+            (EntityId::LockedSwitch, 0) => Some(&self.locked_switch_sprite),
+            (EntityId::LockedSwitch, 1) => Some(&self.locked_switch_collected_sprite),
+            (EntityId::TrapDoor, 0) => Some(&self.trap_door_closed_sprite),
+            (EntityId::TrapSwitch, 0) => Some(&self.trap_switch_collected_sprite),
+            (EntityId::TrapSwitch, 1) => Some(&self.trap_switch_sprite),
+            (EntityId::LaunchPad, 0) => Some(&self.launch_pad_sprite),
+            (EntityId::OneWay, 0) => Some(&self.one_way_sprite),
+            (EntityId::ChaingunDrone, 0) => Some(&self.chaingun_drone_sprite),
+            (EntityId::LaserDrone, 0) => Some(&self.laser_drone_sprite),
+            (EntityId::ZapDrone, 0) => Some(&self.zap_drone_sprite),
+            (EntityId::ChaseDrone, 0) => Some(&self.chase_drone_sprite),
+            (EntityId::FloorGuard, 0) => Some(&self.floor_guard_sprite),
+            (EntityId::BounceBlock, 0) => Some(&self.bounce_block_sprite),
+            (EntityId::RocketTurret, 0) => Some(&self.rocket_turret_sprite),
+            (EntityId::RocketTurret, 1) => Some(&self.rocket_turret_homing_sprite),
+            (EntityId::RocketTurret, 2) => Some(&self.rocket_turret_prefire_sprite),
+            (EntityId::RocketTurret, 3) => Some(&self.rocket_sprite),
+            (EntityId::GaussTurret, 0) => Some(&self.gauss_turret_sprite),
+            (EntityId::GaussTurret, 1) => Some(&self.gauss_turret_firing_sprite),
+            (EntityId::GaussTurret, 2) => Some(&self.gauss_turret_aim_0_sprite),
+            (EntityId::GaussTurret, 3) => Some(&self.gauss_turret_aim_1_sprite),
+            (EntityId::GaussTurret, 4) => Some(&self.gauss_turret_aim_2_sprite),
+            (EntityId::GaussTurret, 5) => Some(&self.gauss_turret_crosshairs_sprite),
+            (EntityId::Thwump, 0) => Some(&self.thwump_sprite),
+            (EntityId::EvilNinja, 0) => Some(&self.evil_ninja_spawner_sprite),
+            (EntityId::EvilNinja, 1) => Some(&self.evil_ninja_active_spawner_sprite),
+            (EntityId::LaserTurret, 0) => Some(&self.laser_turret_sprite),
+            (EntityId::BoostPad, 0) => Some(&self.boost_pad_sprite),
+            (EntityId::Deathball, 0) => Some(&self.deathball_sprite),
+
+            // (EntityId::MiniDrone, 0) => vec![
+            //     (include_bytes!("../object_layers/1A-0_0.png"), 0),
+            //     (include_bytes!("../object_layers/1A-0_1.png"), 1),
+            // ],
+            // (EntityId::Bat, 0) => vec![
+            //     (include_bytes!("../object_layers/1B-0_0.png"), 0),
+            // ],
+            (EntityId::ShoveThwump, 0) => Some(&self.shove_thwump_sprite),
+            (EntityId::ShoveThwump, 1) => Some(&self.shove_thwump_touched_sprite),
+            (EntityId::ShoveThwump, 2) => Some(&self.shove_thwump_core_sprite),
+            _ => None,
+        }
+    }
+
     fn draw_sprite(&self, base_pixmap: &mut Pixmap, sprite: &Pixmap, pos: DVec2, rotation_deg: f64, dims: &Dimensions) {
         let pos = dims.to_pixel(pos);
         let scale = dims.tile_size_px as f32 / self.sprite_size.size() as f32;
@@ -425,6 +566,96 @@ impl EntityRenderer {
             None,
         );
     }
+}
+
+fn pride_ninja(base_pixmap: &mut Pixmap, bones: Box<[f64]>, x: f32, y: f32, dims: &Dimensions) {
+    // draw ninja at center of a tile-sized pixmap
+    // we only transform it be an integer amount so that we preserve the
+    // (anti)-aliasing effect that we would get had we drawn the strokes directly
+    // on the final pixmap
+    let mut pixmap = Pixmap::new(dims.tile_size_px, dims.tile_size_px).unwrap();
+
+    // dx, dy are displacement from ninja's pos to become centered on pixmap
+    let dx = dims.tile_size_px as f32 / 2.0 - x.round();
+    let dy = dims.tile_size_px as f32 / 2.0 - y.round();
+
+    // draw ninja
+    if let Some(path) = ninja_path(bones, dims) {
+        let mut color = Paint::default();
+        color.set_color(Color::BLACK);
+        if dims.force_alias {
+            color.anti_alias = false;
+        }
+        let mut stroke = Stroke::default();
+        stroke.width = 3.0 * dims.tile_size_px as f32 / 24.0;
+        pixmap.stroke_path(&path, &color, &stroke, Transform::from_translate(dx + x, dy + y), None);
+    }
+
+    // add stripes
+    let colors = pride_colors();
+    let stripes = pride_stripes(dims);
+    for (i, mut paint) in colors.into_iter().enumerate() {
+        paint.blend_mode = BlendMode::SourceAtop;
+        let stripe = stripes[i];
+        pixmap.fill_rect(stripe, &paint, Transform::identity(), None);
+    }
+
+    // draw final result
+    let mut paint = PixmapPaint::default();
+    paint.blend_mode = BlendMode::SourceAtop;
+    base_pixmap.draw_pixmap(-dx as i32, -dy as i32, pixmap.as_ref(), &paint, Transform::identity(), None);
+}
+
+pub fn pride_colors() -> [Paint<'static>; 6] {
+    let mut red = Paint::default();
+    red.set_color_rgba8(0xe5, 0x00, 0x00, 0xff);
+
+    let mut orange = Paint::default();
+    orange.set_color_rgba8(0xff, 0x8d, 0x00, 0xff);
+
+    let mut yellow = Paint::default();
+    yellow.set_color_rgba8(0xff, 0xee, 0x00, 0xff);
+
+    let mut green = Paint::default();
+    green.set_color_rgba8(0x02, 0x81, 0x21, 0xff);
+
+    let mut blue = Paint::default();
+    blue.set_color_rgba8(0x00, 0x4c, 0xcf, 0xff);
+
+    let mut purple = Paint::default();
+    purple.set_color_rgba8(0x77, 0x00, 0x88, 0xff);
+
+    return [
+        red,
+        orange,
+        yellow,
+        green,
+        blue,
+        purple,
+    ];
+}
+
+fn pride_stripes(dims: &Dimensions) -> Vec<Rect> {
+    let stripe_size = dims.tile_size_px / 6;
+    let top_stripe_size = (dims.tile_size_px - 4 * stripe_size) / 2;
+    let bottom_stripe_size = dims.tile_size_px - 4 * stripe_size - top_stripe_size;
+
+    let mut y = 0;
+
+    [
+        top_stripe_size,
+        stripe_size,
+        stripe_size,
+        stripe_size,
+        stripe_size,
+        bottom_stripe_size,
+    ]
+    .into_iter()
+    .map(|size| {
+        let rect = Rect::from_xywh(0.0, y as f32, dims.tile_size_px as f32, size as f32).unwrap();
+        y += size;
+        rect
+    }).collect()
 }
 
 fn create_entity_sprite(sprite_size: SpriteSize, entity: EntityId, state: u32, palette: &Palette, theme: ColorTheme) -> Pixmap {

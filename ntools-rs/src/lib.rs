@@ -3,7 +3,7 @@ mod attract;
 mod collision_util;
 pub mod editor;
 mod entity;
-mod grid;
+pub mod grid;
 mod map_file;
 mod mode;
 mod ninja;
@@ -12,6 +12,7 @@ pub mod replay;
 mod replay_file;
 mod rocket_ninja;
 pub mod segment;
+pub mod snapshot;
 mod simulation;
 mod tile;
 

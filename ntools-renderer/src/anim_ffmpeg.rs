@@ -20,7 +20,7 @@ pub fn anim_ffmpeg(args: RenderArgs) -> anyhow::Result<()> {
     }
 
     let mut dims = Dimensions::new();
-    dims.tile_size_px = 28;
+    dims.tile_size_px = SpriteSize::Small.size();
     
     let mut frame_renderer = FrameRenderer::new(SpriteSize::Small, &replays, &palette, theme, &dims);
 
