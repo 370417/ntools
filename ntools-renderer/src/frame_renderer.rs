@@ -1,4 +1,4 @@
-use ntools_rs::{grid::FlatGrid, replay::Replay, snapshot::Snapshot};
+use ntools_rs::{grid::FlatGrid, replay::Replay, snapshot::Snapshot, tile::Tiles};
 use tiny_skia::Pixmap;
 
 use crate::{dimensions::Dimensions, entity_renderer::{EntityRenderer, SpriteSize}, palette::{ColorTheme, Palette, to_color}, text_renderer::TextRenderer, tileset_renderer::TilesetRenderer};
@@ -37,9 +37,10 @@ impl FrameRenderer {
         pixmap
     }
 
-    pub fn render_anim_frame(&mut self, snapshot: &Snapshot, diff: &FlatGrid<bool>, replays: &[Replay], palette: &Palette, theme: ColorTheme, partial_frame: f32, dims: &Dimensions) -> Pixmap {
+    pub fn render_anim_frame(&mut self, snapshot: &Snapshot, old_snapshot: &Snapshot, tiles: &Tiles, palette: &Palette, theme: ColorTheme, dims: &Dimensions) -> Pixmap {
         let mut pixmap = self.tileset_renderer.anim_base();
-        self.entity_renderer.render2(&mut pixmap, replays, palette, theme, snapshot, diff, dims);
+        self.entity_renderer.render3(&mut pixmap, snapshot, old_snapshot, tiles, dims);
+        // self.entity_renderer.render2(&mut pixmap, palette, theme, snapshot, diff, dims);
         pixmap
     }
 }

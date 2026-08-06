@@ -76,6 +76,10 @@ impl EditorState {
         &self.tiles
     }
 
+    pub fn take_tiles(self) -> Tiles {
+        self.tiles
+    }
+
     pub fn entities(&self) -> &EditorEntities {
         &self.entities
     }

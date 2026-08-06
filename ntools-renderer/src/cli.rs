@@ -1,6 +1,6 @@
 use anyhow::Error;
 use clap::{Args, Parser};
-use ntools_rs::{editor::Editor, replay::Replay};
+use ntools_rs::{editor::Editor, replay::Replay, tile::Tiles};
 
 use crate::palette::ColorTheme;
 
@@ -61,16 +61,22 @@ impl RenderArgs {
 }
 
 impl CommonArgs {
-    pub fn replays(&self) -> anyhow::Result<Vec<Replay>> {
+    pub fn replays(&self) -> anyhow::Result<(Tiles, Vec<Replay>)> {
         let map_bytes = std::fs::read(&self.map)?;
 
-        self.replays.iter().map(|filename| -> anyhow::Result<Replay> {
+        let mut editor = Editor::new();
+        editor.load_map(&map_bytes).map_err(|err| Error::msg(err))?;
+        let tiles = editor.take_tiles();
+
+        let replays = self.replays.iter().map(|filename| -> anyhow::Result<Replay> {
             let replay_bytes = std::fs::read(filename)?;
             let mut editor = Editor::new();
             editor.set_anim_data(Box::new(*include_bytes!("../anim_data")));
             editor.load_map(&map_bytes).map_err(|err| Error::msg(err))?;
             editor.load_outte_replay(&replay_bytes, false, false).map_err(|err| Error::msg(err))
-        }).collect()
+        }).collect::<anyhow::Result<Vec<Replay>>>()?;
+
+        Ok((tiles, replays))
     }
 
     pub fn theme(&self) -> anyhow::Result<ColorTheme> {

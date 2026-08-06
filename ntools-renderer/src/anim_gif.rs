@@ -26,7 +26,7 @@ pub fn anim_gif(args: RenderArgs, frame_delay: u16) -> anyhow::Result<()> {
 
     encoder.set_repeat(gif::Repeat::Infinite)?;
 
-    let replays = args.common().replays()?;
+    let (tiles, replays) = args.common().replays()?;
 
     if replays.is_empty() {
         return Err(anyhow!("at least one replay required"));
@@ -34,10 +34,12 @@ pub fn anim_gif(args: RenderArgs, frame_delay: u16) -> anyhow::Result<()> {
 
     let mut frame_renderer = FrameRenderer::new(SpriteSize::Small, &replays, &palette, theme, &dims);
 
+    let mut indexed = Vec::new();
+
     // Render the initial frame that you see before any user input
     let mut frame = frame_renderer.render(&replays, &palette, theme, &args.common().players, &args.common().scores, None, &dims);
-    let indexed = to_indexed(&frame, None, &Rect::entire_frame(&frame), &color_index, frame_delay, &dims, None)?;
-    encoder.write_frame(&indexed)?;
+    to_indexed(&mut indexed, &frame, &Rect::entire_frame(&frame), &color_index, frame_delay, &dims, None)?;
+    encoder.write_frame(&to_frame(&indexed, &Rect::entire_frame(&frame), &color_index, frame_delay))?;
     let mut old_snapshot = Snapshot::from_replays(&replays, 0.0);
 
     let mut replays = replays;
@@ -64,26 +66,23 @@ pub fn anim_gif(args: RenderArgs, frame_delay: u16) -> anyhow::Result<()> {
             accumulator -= ms_per_game_tick;
         }
         let partial_frame = accumulator / ms_per_game_tick;
-        
+
         // prepare the next frame to get rendered
         let snapshot = Snapshot::from_replays(&replays, partial_frame as f64);
         let diff = snapshot.diff(&old_snapshot);
-        let new_frame = frame_renderer.render_anim_frame(&snapshot, &diff, &replays, &palette, theme, partial_frame, &dims);
+        let new_frame = frame_renderer.render_anim_frame(&snapshot, &old_snapshot, &tiles, &palette, theme, &dims);
         if let Some(dirty) = find_dirty_rectangle(&frame, &new_frame) {            
             // render the next frame
-            let indexed = to_indexed(&new_frame, Some(&frame), &dirty, &color_index, frame_delay, &dims, Some(&diff))?;
-            encoder.write_frame(&indexed)?;
+            to_indexed(&mut indexed, &new_frame, &dirty, &color_index, frame_delay, &dims, Some(&diff))?;
+            encoder.write_frame(&to_frame(&indexed, &dirty, &color_index, frame_delay))?;
         } else {
             // render a blank frame
-            let indexed = to_indexed(&new_frame, Some(&frame), &Rect { left: 0, right: 2, top: 0, bottom: 2, }, &color_index, frame_delay, &dims, Some(&diff))?;
-            encoder.write_frame(&indexed)?;
+            to_indexed(&mut indexed, &new_frame, &Rect { left: 0, right: 2, top: 0, bottom: 2, }, &color_index, frame_delay, &dims, Some(&diff))?;
+            encoder.write_frame(&to_frame(&indexed, &Rect { left: 0, right: 2, top: 0, bottom: 2, }, &color_index, frame_delay))?;
         }
         frame = new_frame;
         old_snapshot = snapshot;
     }
-
-    // render the last frame left over
-    encoder.write_frame(&indexed)?;
 
     Ok(())
 }
@@ -208,9 +207,10 @@ fn find_dirty_rectangle(old_frame: &Pixmap, new_frame: &Pixmap) -> Option<Rect> 
     })
 }
 
-fn to_indexed(frame: &Pixmap, prev_frame: Option<&Pixmap>, bounding_box: &Rect, color_index: &ColorIndex, frame_delay: u16, dims: &Dimensions, diff: Option<&FlatGrid<bool>>) -> anyhow::Result<Frame<'static>> {
+fn to_indexed(indexed: &mut Vec<u8>, frame: &Pixmap, bounding_box: &Rect, color_index: &ColorIndex, frame_delay: u16, dims: &Dimensions, diff: Option<&FlatGrid<bool>>) -> anyhow::Result<()> {
     let data = frame.pixels();
-    let mut indexed = vec![color_index.transparent_index(); bounding_box.area() as usize];
+    indexed.clear();
+    indexed.resize(bounding_box.area() as usize, color_index.transparent_index());
     let mut indexed_i = 0;
     for y in bounding_box.top..bounding_box.bottom {
         for x in bounding_box.left..bounding_box.right {
@@ -221,7 +221,7 @@ fn to_indexed(frame: &Pixmap, prev_frame: Option<&Pixmap>, bounding_box: &Rect, 
                 continue;
             }
             let color = data[i];
-            if !color.is_opaque() || prev_frame.is_some_and(|frame| frame.pixels()[i] == color) {
+            if !color.is_opaque() {
                 // do nothing
             } else if let Some(i) = color_index.get(&(color.red(), color.green(), color.blue())) {
                 indexed[indexed_i] = i;
@@ -232,7 +232,11 @@ fn to_indexed(frame: &Pixmap, prev_frame: Option<&Pixmap>, bounding_box: &Rect, 
         }
     }
 
-    Ok(Frame {
+    Ok(())
+}
+
+fn to_frame<'a>(indexed: &'a [u8], bounding_box: &Rect, color_index: &ColorIndex, frame_delay: u16) -> Frame<'a> {
+    Frame {
         delay: frame_delay,
         dispose: gif::DisposalMethod::Keep,
         transparent: Some(color_index.transparent_index()),
@@ -243,6 +247,6 @@ fn to_indexed(frame: &Pixmap, prev_frame: Option<&Pixmap>, bounding_box: &Rect, 
         height: (bounding_box.bottom - bounding_box.top) as u16,
         interlaced: false,
         palette: None,
-        buffer: Cow::Owned(indexed),
-    })
+        buffer: Cow::Borrowed(indexed),
+    }
 }

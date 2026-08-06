@@ -14,7 +14,7 @@ mod rocket_ninja;
 pub mod segment;
 pub mod snapshot;
 mod simulation;
-mod tile;
+pub mod tile;
 
 pub use glam;
 pub use editor::editor_entity::EntityId;

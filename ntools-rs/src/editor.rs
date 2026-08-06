@@ -1560,6 +1560,10 @@ impl Editor {
             _ => self.cursor_pos,
         }
     }
+
+    pub fn take_tiles(self) -> Tiles {
+        self.state.take_tiles()
+    }
 }
 
 struct PaintTileArgs {

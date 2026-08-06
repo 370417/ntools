@@ -13,7 +13,7 @@ pub fn anim_ffmpeg(args: RenderArgs) -> anyhow::Result<()> {
     let palette = Palette::new();
     let theme = args.common().theme()?;
 
-    let mut replays = args.common().replays()?;
+    let (_tiles, mut replays) = args.common().replays()?;
 
     if replays.is_empty() {
         return Err(anyhow!("at least one replay required"));

@@ -140,7 +140,8 @@ impl ColorIndex {
 
 pub fn to_paint(color: PremultipliedColorU8) -> Paint<'static> {
     let mut paint = Paint::default();
-    paint.set_color(to_color(color));
+    let color = color.demultiply();
+    paint.set_color_rgba8(color.red(), color.green(), color.blue(), color.alpha());
     paint
 }
 
