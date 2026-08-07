@@ -77,12 +77,23 @@ impl BoundingBox {
     pub fn transform(self, transform: Mat2) -> Self {
         let a = transform * self.top_left.as_vec2();
         let b = transform * self.bottom_right.as_vec2();
-        let top_left = a.min(b).floor().as_ivec2();
-        let bottom_right = a.max(b).ceil().as_ivec2();
+        let c = transform * self.top_right().as_vec2();
+        let d = transform * self.bottom_left().as_vec2();
+
+        let top_left = a.min(b).min(c).min(d).floor().as_ivec2();
+        let bottom_right = a.max(b).max(c).max(d).ceil().as_ivec2();
         Self {
             top_left,
             bottom_right,
         }
+    }
+
+    fn top_right(self) -> IVec2 {
+        IVec2::new(self.right(), self.top())
+    }
+
+    fn bottom_left(self) -> IVec2 {
+        IVec2::new(self.left(), self.bottom())
     }
 }
 

@@ -1,4 +1,4 @@
-use ntools_rs::{EntityId, GaussState, RocketState, glam::{DVec2, IVec2}, grid::{FlatGrid, GridPos, iter_rect_region_indices, iter_segment_cover}, replay::Replay, snapshot::{EntitySnapshot, Snapshot, entity_radius}, tile::{Tile, Tiles}};
+use ntools_rs::{EntityId, GaussState, RocketState, glam::{DVec2, IVec2, Mat2}, grid::{FlatGrid, GridPos, iter_rect_region_indices, iter_segment_cover}, replay::Replay, snapshot::{EntitySnapshot, Snapshot, entity_radius}, tile::{Tile, Tiles}};
 use tiny_skia::{BlendMode, Color, MaskType, Paint, Path, PathBuilder, Pixmap, PixmapPaint, PremultipliedColorU8, Rect, Stroke, StrokeDash, Transform};
 
 use crate::{bytemap::Bytemap, dimensions::Dimensions, indexed_palette::IndexedPalette, mask::Mask, palette::{ColorTheme, Palette, to_paint}, sprites_indexed, sprites_large, sprites_small};
@@ -104,7 +104,8 @@ impl IndexedEntityRenderer {
         for entity in &snapshot.entities {
             if let Some(sprite) = self.sprite(entity.id, entity.state) {
                 let pos = dims.to_pixel2(entity.pos).round().as_ivec2();
-                bytemap.blit_with_mask(pos, sprite, &self.inverse_tileset_mask);
+                // bytemap.blit_with_mask(pos, sprite, &self.inverse_tileset_mask);
+                bytemap.blit_with_transform(pos, sprite, Mat2::from_angle(1.0));
             }
         }
     }
