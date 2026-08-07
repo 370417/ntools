@@ -150,7 +150,7 @@ pub fn to_color(color: PremultipliedColorU8) -> Color {
     Color::from_rgba8(color.red(), color.green(), color.blue(), color.alpha())
 }
 
-fn calc_palette_x(file: PaletteFile, index: u32) -> u32 {
+pub fn calc_palette_x(file: PaletteFile, index: u32) -> u32 {
     let mut index = index;
     for n in 0..=34 {
         if n < file as u32 {
@@ -290,7 +290,7 @@ pub enum ColorTheme {
 
 /// Enum value is order in palette png
 #[derive(Clone, Copy)]
-enum PaletteFile {
+pub enum PaletteFile {
     Background = 0,
     Ninja = 1,
     EntityMine = 2,
@@ -409,7 +409,7 @@ impl PaletteFile {
         }
     }
 
-    fn from_entity(entity: EntityId) -> Self {
+    pub fn from_entity(entity: EntityId) -> Self {
         match entity {
             EntityId::Ninja => Self::Ninja,
             EntityId::Mine => Self::EntityMine,

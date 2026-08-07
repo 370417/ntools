@@ -31,7 +31,7 @@ impl TilesetRenderer {
             let mut stroke = Stroke::default();
             // stroke width scales with resolution, is always even so that half the stroke
             // takes up an exact amount of pixels, and is at least 2
-            stroke.width = 2.0 * (dims.tile_size_px as f32 / 24.0).round().max(1.0);
+            stroke.width = 4.0 * (dims.tile_size_px as f32 / 24.0).round().max(1.0);
             pixmap.stroke_path(&path, &tile_outline_color, &stroke, Transform::identity(), None);
 
             let mut mask = Mask::new(dims.frame_width_px(), dims.frame_height_px()).unwrap();
@@ -63,7 +63,7 @@ impl TilesetRenderer {
 
 /// Same logic as extract_path_from_segments from ntools, but uses tiny-skia's path type instead
 /// of a string in svg path format.
-fn extract_path_from_segments(mut segments: Vec<Segment>, outer_border: bool, dims: &Dimensions) -> Option<Path> {
+pub fn extract_path_from_segments(mut segments: Vec<Segment>, outer_border: bool, dims: &Dimensions) -> Option<Path> {
     let mut path = PathBuilder::new();
 
     if outer_border {

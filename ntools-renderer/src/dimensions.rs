@@ -36,4 +36,8 @@ impl Dimensions {
             pos.y as f32 * self.tile_size_px as f32 / 24.0,
         )
     }
+
+    pub fn to_pixel2(&self, pos: DVec2) -> DVec2 {
+        pos * self.tile_size_px as f64 / 24.0
+    }
 }

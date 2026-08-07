@@ -20,7 +20,7 @@ pub fn create_small_sprite(entity: EntityId, state: u32, palette: &Palette, them
 /// The offset tells us which color of the palette we pick.
 /// We store the offset in sprite base images by treating rgb colors like
 /// a 3-digit binary number.
-fn offset_from_color(color: &PremultipliedColorU8) -> u32 {
+pub fn offset_from_color(color: &PremultipliedColorU8) -> u32 {
     let r = color.red() > 0;
     let g = color.green() > 0;
     let b = color.blue() > 0;
@@ -29,7 +29,7 @@ fn offset_from_color(color: &PremultipliedColorU8) -> u32 {
 }
 
 /// Given an entity and a state, return the corresponding sprite base as raw png bytes
-fn sprite_base(entity: EntityId, state: u32) -> Option<&'static [u8]> {
+pub fn sprite_base(entity: EntityId, state: u32) -> Option<&'static [u8]> {
     match (entity, state) {
         (EntityId::Mine, 0) => Some(include_bytes!("../small_objects/mine_0.png")),
         (EntityId::Mine, 1) => Some(include_bytes!("../small_objects/mine_1.png")),

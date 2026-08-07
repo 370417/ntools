@@ -2,17 +2,25 @@ use std::{eprintln, process::ExitCode};
 
 use clap::Parser;
 
-use crate::{anim_ffmpeg::anim_ffmpeg, anim_gif::anim_gif, cli::RenderArgs, screenshot::screenshot};
+use crate::{anim_ffmpeg::anim_ffmpeg, anim_gif2::anim_gif, cli::RenderArgs, screenshot::screenshot};
 
 mod anim_ffmpeg;
 mod anim_gif;
+mod anim_gif2;
+mod bounding_box;
+mod bytemap;
 mod cli;
 mod dimensions;
 mod entity_renderer;
 mod frame_renderer;
+mod indexed_entity_renderer;
+mod indexed_palette;
+mod indexed_tileset_renderer;
+mod mask;
 mod offset_replay;
 mod palette;
 mod screenshot;
+mod sprites_indexed;
 mod sprites_large;
 mod sprites_small;
 mod sub_text_rendering;
