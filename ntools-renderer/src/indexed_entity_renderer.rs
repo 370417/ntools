@@ -1,12 +1,15 @@
-use ntools_rs::{EntityId, GaussState, RocketState, glam::{DVec2, IVec2, Mat2}, grid::{FlatGrid, GridPos, iter_rect_region_indices, iter_segment_cover}, replay::Replay, snapshot::{EntitySnapshot, Snapshot, entity_radius}, tile::{Tile, Tiles}};
+use std::println;
+
+use ntools_rs::{EntityId, GaussState, RocketState, glam::{DVec2, IVec2, Mat2}, grid::{FlatGrid, GridPos, iter_rect_region_indices, iter_segment_cover}, replay::Replay, tile::{Tile, Tiles}};
 use tiny_skia::{BlendMode, Color, MaskType, Paint, Path, PathBuilder, Pixmap, PixmapPaint, PremultipliedColorU8, Rect, Stroke, StrokeDash, Transform};
 
-use crate::{bytemap::Bytemap, dimensions::Dimensions, indexed_palette::IndexedPalette, mask::Mask, palette::{ColorTheme, Palette, to_paint}, sprites_indexed, sprites_large, sprites_small};
+use crate::{bounding_box::{BoundingBox, MaybeBoundingBox}, bytemap::{BlitOptions, Bytemap}, dimensions::Dimensions, indexed_palette::IndexedPalette, mask::Mask, palette::{ColorTheme, Palette, to_paint}, snapshot::{EntitySnapshot, Snapshot}, sprites_indexed, sprites_large, sprites_small};
 
 /// Stores sprites for entities so that we don't need to recreate them over and over.
 pub struct IndexedEntityRenderer {
     inverse_tileset_mask: Mask,
 
+    ninja_sprite: [Bytemap; 4],
     mine_sprite: Bytemap,
     toggle_mine_sprite: Bytemap,
     toggling_mine_sprite: Bytemap,
@@ -55,6 +58,12 @@ impl IndexedEntityRenderer {
     pub fn new(palette: &IndexedPalette, dims: &Dimensions, inverse_tileset_mask: Mask) -> Self {
         Self {
             inverse_tileset_mask,
+            ninja_sprite: [
+                sprites_indexed::create_sprite(EntityId::Ninja, 0, palette),
+                sprites_indexed::create_sprite(EntityId::Ninja, 1, palette),
+                sprites_indexed::create_sprite(EntityId::Ninja, 2, palette),
+                sprites_indexed::create_sprite(EntityId::Ninja, 3, palette),
+            ],
             mine_sprite: sprites_indexed::create_sprite(EntityId::Mine, 0, palette),
             toggle_mine_sprite: sprites_indexed::create_sprite(EntityId::Mine, 1, palette),
             toggling_mine_sprite: sprites_indexed::create_sprite(EntityId::Mine, 2, palette),
@@ -102,16 +111,63 @@ impl IndexedEntityRenderer {
 
     pub fn render(&self, bytemap: &mut Bytemap, snapshot: &Snapshot, dims: &Dimensions) {
         for entity in &snapshot.entities {
-            if let Some(sprite) = self.sprite(entity.id, entity.state) {
-                let pos = dims.to_pixel2(entity.pos).round().as_ivec2();
-                // bytemap.blit_with_mask(pos, sprite, &self.inverse_tileset_mask);
-                bytemap.blit_with_transform(pos, sprite, Mat2::from_angle(1.0));
+            self.draw_entity(bytemap, entity, None, false, dims);
+        }
+    }
+
+    pub fn render_anim_frame(&self, snapshot: &Snapshot, old_snapshot: &Snapshot, palette: &IndexedPalette, dims: &Dimensions) -> Bytemap {
+        let changed_bounds = old_snapshot.entities.iter().zip(snapshot.entities.iter())
+            .filter(|(old, new)| old != new)
+            .map(|(old, new)| {
+                let old_bounds = self.sprite(old.id, old.state).map(|sprite| sprite.bounds() + old.display_pos);
+                let new_bounds = self.sprite(new.id, new.state).map(|sprite| sprite.bounds() + new.display_pos);
+                (old_bounds, new_bounds)
+            })
+            .fold(None, |net_bounds: Option<BoundingBox>, (a, b)| {
+                net_bounds.union(a).union(b)
+            });
+
+        let Some(changed_bounds) = changed_bounds else {
+            // no changed entities
+            return Bytemap::new(1, 1);
+        };
+
+        let mut bytemap = Bytemap::new(changed_bounds.width() as u32, changed_bounds.height() as u32);
+        bytemap.anchor = -changed_bounds.top_left;
+
+        let bg_color = palette.bg_color();
+
+        for (old, new) in old_snapshot.entities.iter().zip(snapshot.entities.iter()) {
+            if old != new {
+                self.draw_entity(&mut bytemap, old, Some(bg_color), false, dims);
             }
+        }
+
+        for (old, new) in old_snapshot.entities.iter().zip(snapshot.entities.iter()) {
+            // If the entity hasn't changed, we only need to draw it where it
+            // overlaps a changed entity.
+            let source_atop = old == new;
+            self.draw_entity(&mut bytemap, new, None, source_atop, dims);
+        }
+
+        bytemap
+    }
+
+    fn draw_entity(&self, bytemap: &mut Bytemap, entity: &EntitySnapshot, recolor: Option<u8>, source_atop: bool, dims: &Dimensions) {
+        if let Some(sprite) = self.sprite(entity.id, entity.state) {
+            // TODO: avoid converting between deg and radians over and over?
+            bytemap.blit(entity.display_pos, sprite, BlitOptions {
+                transform: Some(Mat2::from_angle(entity.rotation_deg.to_radians() as f32)),
+                mask: Some(&self.inverse_tileset_mask),
+                recolor,
+                source_atop,
+            });
         }
     }
 
     fn sprite(&self, entity: EntityId, state: u32) -> Option<&Bytemap> {
         match (entity, state) {
+            (EntityId::Ninja, i) => self.ninja_sprite.get(i as usize),
             (EntityId::Mine, 0) => Some(&self.mine_sprite),
             (EntityId::Mine, 1) => Some(&self.toggle_mine_sprite),
             (EntityId::Mine, 2) => Some(&self.toggling_mine_sprite),

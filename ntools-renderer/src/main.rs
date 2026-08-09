@@ -20,6 +20,7 @@ mod mask;
 mod offset_replay;
 mod palette;
 mod screenshot;
+mod snapshot;
 mod sprites_indexed;
 mod sprites_large;
 mod sprites_small;

@@ -1,4 +1,4 @@
-use ntools_rs::glam::DVec2;
+use ntools_rs::glam::{DVec2, IVec2};
 
 /// Store dimensions and other options
 pub struct Dimensions {
@@ -39,5 +39,9 @@ impl Dimensions {
 
     pub fn to_pixel2(&self, pos: DVec2) -> DVec2 {
         pos * self.tile_size_px as f64 / 24.0
+    }
+
+    pub fn to_int_pixel(&self, pos: DVec2) -> IVec2 {
+        (pos * self.tile_size_px as f64 / 24.0).round().as_ivec2()
     }
 }

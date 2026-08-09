@@ -2,10 +2,10 @@ use std::ops::Add;
 
 use ntools_rs::glam::{IVec2, Mat2};
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct BoundingBox {
-    top_left: IVec2,
-    bottom_right: IVec2,
+    pub top_left: IVec2,
+    pub bottom_right: IVec2,
 }
 
 impl BoundingBox {
@@ -74,6 +74,14 @@ impl BoundingBox {
         }
     }
 
+    /// Calculate the smallest bounding box that contains self and other
+    pub fn union(self, other: BoundingBox) -> Self {
+        Self {
+            top_left: self.top_left.min(other.top_left),
+            bottom_right: self.bottom_right.max(other.bottom_right),
+        }
+    }
+
     pub fn transform(self, transform: Mat2) -> Self {
         let a = transform * self.top_left.as_vec2();
         let b = transform * self.bottom_right.as_vec2();
@@ -104,6 +112,22 @@ impl Add<IVec2> for BoundingBox {
         Self {
             top_left: self.top_left + rhs,
             bottom_right: self.bottom_right + rhs,
+        }
+    }
+}
+
+/// Extension trait to allow for more easily operating on Option<BoundingBox>.
+pub trait MaybeBoundingBox {
+    fn union(self, other: Self) -> Self;
+}
+
+impl MaybeBoundingBox for Option<BoundingBox> {
+    fn union(self, other: Self) -> Self {
+        match (self, other) {
+            (Some(a), Some(b)) => Some(a.union(b)),
+            (Some(a), None) => Some(a),
+            (None, Some(b)) => Some(b),
+            (None, None) => None,
         }
     }
 }

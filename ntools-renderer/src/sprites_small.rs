@@ -31,6 +31,10 @@ pub fn offset_from_color(color: &PremultipliedColorU8) -> u32 {
 /// Given an entity and a state, return the corresponding sprite base as raw png bytes
 pub fn sprite_base(entity: EntityId, state: u32) -> Option<&'static [u8]> {
     match (entity, state) {
+        (EntityId::Ninja, 0) => Some(include_bytes!("../small_objects/ninja_0.png")),
+        (EntityId::Ninja, 1) => Some(include_bytes!("../small_objects/ninja_1.png")),
+        (EntityId::Ninja, 2) => Some(include_bytes!("../small_objects/ninja_2.png")),
+        (EntityId::Ninja, 3) => Some(include_bytes!("../small_objects/ninja_3.png")),
         (EntityId::Mine, 0) => Some(include_bytes!("../small_objects/mine_0.png")),
         (EntityId::Mine, 1) => Some(include_bytes!("../small_objects/mine_1.png")),
         (EntityId::Mine, 2) => Some(include_bytes!("../small_objects/mine_2.png")),
