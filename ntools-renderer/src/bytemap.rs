@@ -41,7 +41,11 @@ impl Bytemap {
 
     pub fn blit<'m>(&mut self, pos: IVec2, source: &Bytemap, options: impl Into<BlitOptions<'m>>) {
         let options = options.into();
-        let transform = options.transform.unwrap_or(Mat2::IDENTITY);
+        let transform = match options.transform {
+            None => return self.blit_without_transform(pos, source, options),
+            Some(transform) if transform == Mat2::IDENTITY => return self.blit_without_transform(pos, source, options),
+            Some(transform) => transform,
+        };
 
         let self_bounds = self.bounds();
         let dest_bounds = source.bounds().transform(transform) + pos;
@@ -80,6 +84,49 @@ impl Bytemap {
                         continue;
                     }
 
+                    let source_i = source_pos.y * source.size.x + source_pos.x;
+
+                    // position of the dest pixel in self.data
+                    let dest_pos = IVec2::new(x, y) + self.anchor;
+                    let dest_i = dest_pos.y * self.size.x + dest_pos.x;
+
+                    let source_color = source.data[source_i as usize];
+                    if source_color > 0 && (!options.source_atop || self.data[dest_i as usize] > 0) {
+                        self.data[dest_i as usize] = options.recolor.unwrap_or(source_color);
+                    }
+                }
+            }
+        }
+    }
+
+    fn blit_without_transform<'m>(&mut self, pos: IVec2, source: &Bytemap, options: impl Into<BlitOptions<'m>>) {
+        let options = options.into();
+
+        let self_bounds = self.bounds();
+        let dest_bounds = source.bounds() + pos;
+
+        let Some(blit_bounds) = self_bounds.intersect(dest_bounds) else { return };
+
+        for y in blit_bounds.top()..blit_bounds.bottom() {
+            if y < 0 {
+                continue;
+            }
+
+            let mask_row = if let Some(mask) = options.mask {
+                match mask.rows.get(y as usize) {
+                    Some(mask_row) => mask_row,
+                    None => continue,
+                }
+            } else {
+                &MaskRow {
+                    ranges: vec![MaskRange::new(blit_bounds.left(), blit_bounds.right())],
+                }
+            };
+
+            for range in mask_row.bounded_iter(blit_bounds.left(), blit_bounds.right()) {
+                for x in range.start..range.end {
+                    // position of the source pixel in source.data
+                    let source_pos = IVec2::new(x, y) - pos + source.anchor;
                     let source_i = source_pos.y * source.size.x + source_pos.x;
 
                     // position of the dest pixel in self.data
