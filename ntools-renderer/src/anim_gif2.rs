@@ -60,7 +60,10 @@ pub fn anim_gif(args: RenderArgs, frame_delay: u16) -> anyhow::Result<()> {
 
         let snapshot = Snapshot::from_replays(&replays, partial_frame as f64, &dims);
         let bytemap = entity_renderer.render_anim_frame(&snapshot, &old_snapshot, &palette, &dims);
-        encoder.write_frame(&to_frame(&bytemap, frame_delay))?;
+        // encoder.write_frame(&to_frame(&bytemap, frame_delay))?;
+        let mut frame = to_frame(&bytemap, frame_delay);
+        custom_make_lzw_pre_encoded(&mut frame, &palette);
+        encoder.write_lzw_pre_encoded_frame(&frame)?;
         old_snapshot = snapshot;
     }
 
@@ -81,4 +84,23 @@ fn to_frame<'a>(bytemap: &'a Bytemap, frame_delay: u16) -> Frame<'a> {
         palette: None,
         buffer: Cow::Borrowed(&bytemap.data),
     }
+}
+
+/// Based on Frame::make_lzw_pre_encoded.
+fn custom_make_lzw_pre_encoded(frame: &mut Frame<'_>, palette: &IndexedPalette) {
+    let mut buffer = Vec::new();
+    buffer.try_reserve(frame.buffer.len() / 2).expect("OOM");
+    custom_lzw_encode(&frame.buffer, &mut buffer, palette.max_byte());
+    frame.buffer = Cow::Owned(buffer);
+}
+
+/// Based on gif::encoder::lzw_encode.
+fn custom_lzw_encode(data: &[u8], buffer: &mut Vec<u8>, max_byte: u8) {
+    let palette_min_len = u32::from(max_byte) + 1;
+    // As per gif spec: The minimal code size has to be >= 2
+    let min_code_size = palette_min_len.max(4).next_power_of_two().trailing_zeros() as u8;
+    buffer.push(min_code_size);
+    let mut enc = weezl::encode::Encoder::new(weezl::BitOrder::Lsb, min_code_size);
+    let len = enc.into_vec(buffer).encode_all(data).consumed_out;
+    buffer.truncate(len + 1);
 }

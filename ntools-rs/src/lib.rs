@@ -23,3 +23,4 @@ pub use orientation::{Orientation, OrientationBinary, OrientationCardinal, Orien
 pub use entity::gauss::GaussState;
 pub use entity::rocket::RocketState;
 pub use entity::shove_thwump::ShoveThwumpState;
+pub use entity::Entities;

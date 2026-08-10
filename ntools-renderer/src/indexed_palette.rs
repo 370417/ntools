@@ -1,4 +1,4 @@
-use std::collections::BTreeSet;
+use std::{collections::BTreeSet, println};
 
 use ntools_rs::EntityId;
 use tiny_skia::Pixmap;
@@ -60,6 +60,12 @@ impl IndexedPalette {
             palette.extend([r, g, b]);
         }
         palette
+    }
+
+    /// Largest index stored in palette.
+    /// Used for determining min code size in gif lzw encoding.
+    pub fn max_byte(&self) -> u8 {
+        self.full_colors.len() as u8
     }
 
     pub fn bg_color(&self) -> u8 {
