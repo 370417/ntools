@@ -60,6 +60,8 @@ impl Snapshot {
     pub fn from_replays(replays: &[Replay], partial_frame: f64, dims: &Dimensions) -> Self {
         let entities = replays[0].entities();
         let capacity = count_entities(entities);
+        // add capacity for each ninja
+        let capacity = capacity + replays.len();
         let mut entity_snapshots = Vec::with_capacity(capacity);
 
         // make sure to populate entity snapshots in draw order
