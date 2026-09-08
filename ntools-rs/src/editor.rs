@@ -1390,7 +1390,7 @@ impl Editor {
         if let Some(&tile_variant) = self.pressed_tile_variants.last() {
             self.last_tile_variant = tile_variant;
         }
-        if let Some(Orientation::W) = self.pressed_orientation {
+        if let Some(Orientation::E) = self.pressed_orientation {
             self.pressed_orientation = None;
         }
     }
